@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-parallel:
 
@@ -14,9 +14,9 @@ parallelization adapted to its specificities in order to
 obtain a good load balancing. You may build your own parallelization
 using the mesh regions to parallelize assembly procedures.
 
-Nevertheless, the brick system offers a generic parallelization based on MPI
+Nevertheless, the brick system offers a generic parallelization based on `Open MPI <https://www.open-mpi.org>`_
 (communication between processes),
-`METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_ 
+`METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_
 (partition of the mesh)
 and `MUMPS <http://graal.ens-lyon.fr/MUMPS>`_ (parallel sparse direct solver).
 It is available with the compiler option ``-D GETFEM_PARA_LEVEL=2``
@@ -33,7 +33,7 @@ be used to drive the parallel version of getfem (the other interfaces has
 not been parallelized for the moment). See demo_parallel_laplacian.py in
 the interface/test/python directory.
 
-With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitely
+With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitly
 partitionned (using METIS) into a
 number of regions corresponding to the number of processors and the assembly
 procedures are parallelized. This means that the tangent matrix and the
@@ -68,7 +68,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
 
   Most of assembly procedures (in :file:`getfem/getfem_assembling.h`) have a parameter corresponding to the region in which the assembly is to be computed. They are not parallelized themselves but aimed to be called with a different region in each process to distribute the job. Note that the file :file:`getfem/getfem_config.h` contains a procedures called MPI_SUM_SPARSE_MATRIX allowing to gather the contributions of a distributed sparse matrix.
 
-  The following assembly procedures are implicitely parallelized using the option ``-D GETFEM_PARA_LEVEL=2``:
+  The following assembly procedures are implicitly parallelized using the option ``-D GETFEM_PARA_LEVEL=2``:
 
   * computation of norms (``asm_L2_norm``, ``asm_H1_norm``, ``asm_H2_norm`` ..., in :file:`getfem/getfem_assembling.h`),
 
@@ -90,7 +90,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   assembly procedures of standard bricks use a METIS partition of the
   meshes to distribute the assembly. The tangent/stiffness matrices
   remain distibuted and the standard solve call the parallel version
-  of MUMPS (which accept distributed matrices). 
+  of MUMPS (which accept distributed matrices).
 
   For the moment, the procedure ``actualize_sizes()`` of the model
   object remains sequential and is executed on each process.
@@ -105,7 +105,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   * The explicit rhs brick: the given vector is not considered to be
     distributed. Only the given vector on the master process is taken into
     account.
-  
+
   * Constraint brick: The given matrix and rhs are not considered to be
     distributed. Only the given matrix and vector on the master process are
     taken into account.

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2001-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2001-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -57,18 +57,20 @@ namespace getfem {
     return s2;
   }
 
-  /** @brief VTK export.
+  /** @brief VTK/VTU export.
 
-      export class to VTK ( http://www.kitware.com/vtk.html ) file format
-      (not the XML format, but the old format)
+      export class to VTK/VTU file format
+      ( http://www.kitware.com/vtk.html,
+      legacy and serial vtkUnstructuredGrid)
 
       A vtk_export can store multiple scalar/vector fields.
   */
   class vtk_export {
   protected:
     std::ostream &os;
-    char header[256]; // hard limit in vtk
+    char header[256]; // hard limit in vtk/vtu
     bool ascii;
+    bool vtk;         // true for vtk, false for vtu
     const stored_mesh_slice *psl;
     std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
@@ -76,6 +78,7 @@ namespace getfem {
     std::ofstream real_os;
     dim_type dim_;
     bool reverse_endian;
+    std::vector<unsigned char> vals;
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
            IN_POINT_DATA } state;
 
@@ -83,31 +86,13 @@ namespace getfem {
     template<class V> void write_vec(V p, size_type qdim);
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
+    void clear_vals();
+    void write_vals();
 
   public:
-    typedef enum { VTK_VERTEX = 1,
-                   VTK_LINE = 3,
-                   VTK_TRIANGLE = 5,
-                   VTK_PIXEL = 8,
-                   VTK_QUAD = 9,
-                   VTK_TETRA = 10,
-                   VTK_VOXEL = 11,
-                   VTK_HEXAHEDRON = 12,
-                   VTK_WEDGE = 13,
-                   VTK_PYRAMID = 14,
-                   VTK_QUADRATIC_EDGE = 21,
-                   VTK_QUADRATIC_TRIANGLE = 22,
-                   VTK_QUADRATIC_QUAD = 23,
-                   VTK_QUADRATIC_TETRA = 24,
-                   VTK_QUADRATIC_HEXAHEDRON = 25,
-                   VTK_QUADRATIC_WEDGE = 26,
-                   VTK_QUADRATIC_PYRAMID = 27,
-                   VTK_BIQUADRATIC_QUAD = 28,
-                   VTK_TRIQUADRATIC_HEXAHEDRON = 29,
-                   VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32 } vtk_cell_type;
-    vtk_export(const std::string& fname, bool ascii_ = false);
-    vtk_export(std::ostream &os_, bool ascii_ = false);
-
+    vtk_export(const std::string& fname, bool ascii_ = false, bool vtk_= true);
+    vtk_export(std::ostream &os_, bool ascii_ = false, bool vtk_ = true);
+    ~vtk_export(); // a vtu file is completed upon calling the destructor
     /** should be called before write_*_data */
     void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
@@ -119,9 +104,9 @@ namespace getfem {
     void set_header(const std::string& s);
     void write_mesh();
 
-    /** append a new scalar or vector field defined on mf to the .vtk file.  If
-        you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
-        be interpolated on the slice, or on get_exported_mesh_fem().
+    /** append a new scalar or vector field defined on mf to the .vtk/.vtu file.
+        If you are exporting a slice, or if mf != get_exported_mesh_fem(), U
+        will be interpolated on the slice, or on get_exported_mesh_fem().
 
         Note that vectors should be written AFTER scalars, and tensors
         after vectors
@@ -174,10 +159,17 @@ namespace getfem {
     if (ascii) os << " " << v;
     else {
       char *p = (char*)&v;
-      if (reverse_endian)
-        for (size_type i=0; i < sizeof(v)/2; ++i)
-          std::swap(p[i], p[sizeof(v)-i-1]);
-      os.write(p, sizeof(T));
+      if (vtk) {
+        if (reverse_endian)
+          for (size_type i=0; i < sizeof(v)/2; ++i)
+            std::swap(p[i], p[sizeof(v)-i-1]);
+        os.write(p, sizeof(T));
+      } else {
+        union { T value; unsigned char bytes[sizeof(T)]; } UNION;
+        UNION.value = v;
+        for (size_type i=0; i < sizeof(T); i++)
+          vals.push_back(UNION.bytes[i]);
+      }
     }
   }
 
@@ -262,30 +254,52 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
-    write_separ();
+    if (vtk) write_separ();
+    if (!vtk && !ascii) write_val(float(gmm::vect_size(U)));
     if (Q == 1) {
-      os << "SCALARS " << remove_spaces(name) << " float 1\n";
-      os << "LOOKUP_TABLE default\n";
-      for (size_type i=0; i < nb_val; ++i) {
+      if (vtk)
+        os << "SCALARS " << remove_spaces(name) << " float 1\n"
+           << "LOOKUP_TABLE default\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_val(float(U[i]));
-      }
     } else if (Q <= 3) {
-      os << "VECTORS " << remove_spaces(name) << " float\n";
-      for (size_type i=0; i < nb_val; ++i) {
+      if (vtk)
+        os << "VECTORS " << remove_spaces(name) << " float\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name) << "\" "
+           << "NumberOfComponents=\"3\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_vec(U.begin() + i*Q, Q);
-      }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
-         in the VTK file, they are written with C (row major) order
+         in the VTK/VTU file, they are written with C (row major) order
        */
-      os << "TENSORS " << remove_spaces(name) << " float\n";
-      for (size_type i=0; i < nb_val; ++i) {
+      if (vtk)
+        os << "TENSORS " << remove_spaces(name) << " float\n";
+      else
+        os << "<DataArray type=\"Float32\" Name=\"" << remove_spaces(name)
+           << "\" NumberOfComponents=\"9\" "
+           << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      for (size_type i=0; i < nb_val; ++i)
         write_3x3tensor(U.begin() + i*Q);
-      }
-    } else GMM_ASSERT1(false, "vtk does not accept vectors of dimension > 3");
-    write_separ();
+    } else
+      GMM_ASSERT1(false, std::string(vtk ? "vtk" : "vtu")
+                         + " does not accept vectors of dimension > 3");
+    write_vals();
+    if (vtk) write_separ();
+    if (!vtk) os << "\n" << "</DataArray>\n";
   }
 
+
+  class vtu_export : public vtk_export {
+  public:
+    vtu_export(const std::string& fname, bool ascii_ = false) : vtk_export(fname, ascii_, false) {}
+    vtu_export(std::ostream &os_, bool ascii_ = false) : vtk_export(os_, ascii_, false) {}
+  };
 
   /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 
@@ -568,7 +582,7 @@ namespace getfem {
 
     size_type view;
     dim_type dim;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA} state;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA } state;
     std::ofstream real_os;
 
   public:

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2001-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2001-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -421,8 +421,8 @@ namespace getfem {
     dim_type qqdim = dim_type(gmm::vect_size(UU)/mf_source.nb_dof());
 
     std::vector<T> U(mf_source.nb_basic_dof()*qqdim);
-    gmm::row_matrix<gmm::rsvector<scalar_type> >
-      M(gmm::mat_nrows(MM), mf_source.nb_basic_dof());
+    gmm::row_matrix<gmm::rsvector<scalar_type> > M;
+    if (version != 0) M.resize(gmm::mat_nrows(MM), mf_source.nb_basic_dof());
 
     if (version == 0) mf_source.extend_vector(UU, U);
 
@@ -565,8 +565,8 @@ namespace getfem {
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
     mf_target.extend_vector(VV,V);
-    gmm::row_matrix<gmm::rsvector<scalar_type> >
-      M(mf_target.nb_basic_dof(), mf_source.nb_dof());
+    gmm::row_matrix<gmm::rsvector<scalar_type> > M;
+    if (version != 0) M.resize(mf_target.nb_basic_dof(), mf_source.nb_dof());
 
     const mesh &msh(mf_source.linked_mesh());
     getfem::mesh_trans_inv mti(msh, EPS);
@@ -605,7 +605,7 @@ namespace getfem {
           }
           else
 	    mti.add_point_with_id(mf_target.point_of_basic_dof(dof),dof/qdim_t);
-        }  
+        }
     }
     interpolation(mf_source, mti, U, V, M, version, extrapolation, 0,rg_source);
 
@@ -704,28 +704,22 @@ namespace getfem {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     else {
       omp_distribute<VECTV> V_distributed;
-      thread_exception exception;
+      auto partitioning_allowed = rg_source.is_partitioning_allowed();
       rg_source.prohibit_partitioning();
-
-      #pragma omp parallel default(shared)
-      {
-        exception.run(
-        [&] {
+      GETFEM_OMP_PARALLEL(
           auto &V_thrd = V_distributed.thrd_cast();
           gmm::resize(V_thrd, V.size());
           interpolation(
             mf_source, mf_target, U, V_thrd, M, 0, extrapolation, EPS,
             rg_source, rg_target);
-
-          #pragma omp critical
-            for (size_type i = 0; i < V_thrd.size(); ++i) {
-              if (abs(V_thrd[i]) > EPS) V[i] = V_thrd[i];
-            }
-        });
+      )
+      for (size_type thread=0; thread != V_distributed.num_threads(); ++thread){
+        auto &V_thrd2 = V_distributed(thread);
+        for (size_type i = 0; i < V_thrd2.size(); ++i) {
+          if (gmm::abs(V_thrd2[i]) > EPS) V[i] = V_thrd2[i];
+        }
       }
-
-      rg_source.allow_partitioning();
-      exception.rethrow();
+      if (partitioning_allowed) rg_source.allow_partitioning();
     }
   }
 
@@ -795,7 +789,7 @@ namespace getfem {
 
     base_matrix G;
     base_vector coeff;
-    bgeot::base_tensor tensor_int_point(im_target.tensor_size());    
+    bgeot::base_tensor tensor_int_point(im_target.tensor_size());
     fem_precomp_pool fppool;
     for (dal::bv_visitor cv(im_data_convex_index); !cv.finished(); ++cv) {
 

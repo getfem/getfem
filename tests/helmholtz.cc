@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -26,7 +26,7 @@
    Diffraction of a plane wave by a circular obstacle. 
 
    This program is used to check that getfem++ is working. This is also 
-   a good example of use of GetFEM++.
+   a good example of use of GetFEM.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -37,7 +37,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
@@ -220,6 +220,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -231,16 +232,23 @@ int main(int argc, char *argv[]) {
   
   if (p.PARAM.int_value("VTK_EXPORT")) {
     cout << "export to " << p.datafilename + ".vtk" << "..\n";
-    getfem::vtk_export exp(p.datafilename + ".vtk",
-			   p.PARAM.int_value("VTK_EXPORT")==1);
+    getfem::vtk_export vtk_exp(p.datafilename + ".vtk",
+			   p.PARAM.int_value("VTK_EXPORT")==1, true);
+    cout << "export to " << p.datafilename + ".vtu" << "..\n";
+    getfem::vtu_export vtu_exp(p.datafilename + ".vtu");
     getfem::stored_mesh_slice sl(p.mesh, p.mesh.nb_convex() < 2000 ? 8 : 6);
-    exp.exporting(sl);
-    exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
-    exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
+    vtk_exp.exporting(sl);
+    vtk_exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
+    vtk_exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
+    vtu_exp.exporting(sl);
+    vtu_exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
+    vtu_exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi2 -d helmholtz.vtk -f WarpScalar -m Surface -m Outline"
       "\n";
   }
+
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

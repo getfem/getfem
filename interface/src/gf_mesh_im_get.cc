@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -221,7 +221,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('save',@str filename[, 'with mesh'])
-      Saves a @tmim in a text file (and optionaly its linked mesh object).@*/
+      Saves a @tmim in a text file (and optionally its linked mesh object).@*/
     sub_command
       ("save", 1, 2, 0, 0,
        std::string s = in.pop().to_string();

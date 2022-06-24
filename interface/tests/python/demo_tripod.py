@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -23,13 +23,14 @@
   importing the mesh.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   $Id$
 """
 
-import getfem as gf
 import numpy as np
+
+import getfem as gf
 
 with_graphics=True
 try:
@@ -62,8 +63,8 @@ P=m.pts()
 print('test', P[1,:])
 ctop=(abs(P[1,:] - 13) < 1e-6)
 cbot=(abs(P[1,:] + 10) < 1e-6)
-pidtop=np.compress(ctop, range(0, m.nbpts()))
-pidbot=np.compress(cbot, range(0, m.nbpts()))
+pidtop=np.compress(ctop, list(range(0, m.nbpts())))
+pidbot=np.compress(cbot, list(range(0, m.nbpts())))
 
 ftop=m.faces_from_pid(pidtop)
 fbot=m.faces_from_pid(pidbot)

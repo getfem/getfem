@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -84,16 +84,17 @@ namespace getfem {
     GA_QUOTE,       // ''' transpose
     GA_COLON_EQ,    // ':=' macro def
     GA_DEF,         // 'Def' macro def
-    GA_SYM,         // 'Sym' operator
-    GA_SKEW,        // 'Skew' operator
-    GA_TRACE,       // 'Trace' operator
+    GA_SYM,         // 'Sym(M)' operator
+    GA_SKEW,        // 'Skew(M)' operator
+    GA_TRACE,       // 'Trace(M)' operator
     GA_DEVIATOR,    // 'Deviator' operator
     GA_INTERPOLATE, // 'Interpolate' operation
     GA_INTERPOLATE_FILTER, // 'Interpolate_filter' operation
+    GA_INTERPOLATE_DERIVATIVE, // 'Interpolate_derivative' operation
     GA_ELEMENTARY,  // 'Elementary' operation (operation at the element level)
     GA_SECONDARY_DOMAIN,  // For the integration on a product of two domains
-    GA_XFEM_PLUS,   // Évaluation on the + side of a level-set for fem_level_set
-    GA_XFEM_MINUS,  // Évaluation on the - side of a level-set for fem_level_set
+    GA_XFEM_PLUS,   // Evaluation on the + side of a level-set for fem_level_set
+    GA_XFEM_MINUS,  // Evaluation on the - side of a level-set for fem_level_set
     GA_PRINT,       // 'Print' Print the tensor
     GA_DOT,         // '.'
     GA_DOTMULT,     // '.*' componentwise multiplication
@@ -127,6 +128,7 @@ namespace getfem {
     GA_NODE_MACRO_PARAM,
     GA_NODE_PARAMS,
     GA_NODE_RESHAPE,
+    GA_NODE_CROSS_PRODUCT,
     GA_NODE_SWAP_IND,
     GA_NODE_IND_MOVE_LAST,
     GA_NODE_CONTRACT,
@@ -156,6 +158,8 @@ namespace getfem {
     GA_NODE_INTERPOLATE_HESS_TEST,
     GA_NODE_INTERPOLATE_DIVERG_TEST,
     GA_NODE_INTERPOLATE_X,
+    GA_NODE_INTERPOLATE_ELT_K,
+    GA_NODE_INTERPOLATE_ELT_B,
     GA_NODE_INTERPOLATE_NORMAL,
     GA_NODE_INTERPOLATE_DERIVATIVE,
     GA_NODE_ELEMENTARY,
@@ -201,11 +205,11 @@ namespace getfem {
   typedef std::shared_ptr<std::string> pstring;
   // Print error message indicating the position in the assembly string
   void ga_throw_error_msg(pstring expr, size_type pos,
-			  const std::string &msg);
+                          const std::string &msg);
 
 # define ga_throw_error(expr, pos, msg)               \
-  { std::stringstream ss; ss << msg;		      \
-    ga_throw_error_msg(expr, pos, ss.str());	      \
+  { std::stringstream ss; ss << msg;                  \
+    ga_throw_error_msg(expr, pos, ss.str());          \
     GMM_ASSERT1(false, "Error in assembly string" );  \
   }
   
@@ -277,6 +281,14 @@ namespace getfem {
     void init_matrix_tensor(size_type n, size_type m)
     { set_to_original(); t.adjust_sizes(n, m); }
 
+    void init_identity_matrix_tensor(size_type n) {
+      init_matrix_tensor(n, n);
+      auto itw = t.begin();
+      for (size_type i = 0; i < n; ++i)
+        for (size_type j = 0; j < n; ++j)
+          *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+    }
+
     void init_third_order_tensor(size_type n, size_type m,  size_type l)
     { set_to_original(); t.adjust_sizes(n, m, l); }
 
@@ -318,6 +330,8 @@ namespace getfem {
                                       // name of transformation
     std::string elementary_name;  // For Elementary_transformation :
                                   // name of transformation
+    std::string elementary_target;// For Elementary_transformation :
+                                  // target variable (for its mesh_fem) 
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     bool symmetric_op;
@@ -360,6 +374,11 @@ namespace getfem {
       return true;
     }
 
+    inline bool is_constant() {
+      return (node_type == GA_NODE_CONSTANT ||
+              (node_type == GA_NODE_ZERO && test_function_type == 0));
+    }
+    
     inline void init_scalar_tensor(scalar_type v)
     { t.init_scalar_tensor(v); test_function_type = 0; }
 
@@ -368,6 +387,9 @@ namespace getfem {
 
     inline void init_matrix_tensor(size_type n, size_type m)
     { t.init_matrix_tensor(n, m); test_function_type = 0; }
+
+    inline void init_identity_matrix_tensor(size_type n)
+    { t.init_identity_matrix_tensor(n); test_function_type = 0; }
 
     inline void init_third_order_tensor(size_type n, size_type m,  size_type l)
     { t.init_third_order_tensor(n, m, l); test_function_type = 0; }
@@ -391,7 +413,7 @@ namespace getfem {
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
       nbc1(0), nbc2(0), nbc3(0), pos(0), expr(0), der1(0), der2(0),
         symmetric_op(false), hash_value(0) {}
-  ga_tree_node(GA_NODE_TYPE ty, size_type p, pstring expr_)
+    ga_tree_node(GA_NODE_TYPE ty, size_type p, pstring expr_)
       : node_type(ty), test_function_type(-1),
         qdim1(0), qdim2(0), nbc1(0), nbc2(0), nbc3(0),
       pos(p), expr(expr_), der1(0), der2(0), symmetric_op(false),
@@ -421,7 +443,7 @@ namespace getfem {
     void add_scalar(scalar_type val, size_type pos, pstring expr);
     void add_allindices(size_type pos, pstring expr);
     void add_name(const char *name, size_type length, size_type pos,
-		  pstring expr);
+                  pstring expr);
     void add_sub_tree(ga_tree &sub_tree);
     void add_params(size_type pos, pstring expr);
     void add_matrix(size_type pos, pstring expr);
@@ -446,9 +468,9 @@ namespace getfem {
       std::swap(secondary_domain, tree.secondary_domain);
     }
 
-  ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
+    ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
 
-  ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
+    ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
       secondary_domain(tree.secondary_domain)
     { if (tree.root) copy_node(tree.root, nullptr, root); }
 
@@ -473,16 +495,16 @@ namespace getfem {
   // Transform the expression of a node and its sub-nodes in the equivalent
   // assembly string sent to ostream str
   void ga_print_node(const pga_tree_node pnode,
-		     std::ostream &str);
+                     std::ostream &str);
   // The same for the whole tree, the result is a std::string
   std::string ga_tree_to_string(const ga_tree &tree);
 
   // Syntax analysis of an assembly string. Conversion to a tree.
   // No semantic analysis is done. The tree can be inconsistent.
   void ga_read_string(const std::string &expr, ga_tree &tree,
-		      const ga_macro_dictionnary &macro_dict);
+                      const ga_macro_dictionary &macro_dict);
   void ga_read_string_reg(const std::string &expr, ga_tree &tree,
-			  ga_macro_dictionnary &macro_dict);
+                          ga_macro_dictionary &macro_dict);
 
 
 } /* end of namespace */

@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # -*- python -*-
 #
-# Copyright (C) 2004-2018 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2022 Yves Renard, Julien Pommier.
 #                                                       
-# This file is a part of GetFEM++                                         
+# This file is a part of GetFEM                                         
 #                                                                         
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version.
@@ -111,15 +111,15 @@ def ExtractGlobalDoc(filename):
 
 
 #
-# Extracting command extention for a specific langage
+# Extracting command extention for a specific language
 #
-def ExtractExt(filename, langage):
-  langage = langage.upper() + 'EXT'
+def ExtractExt(filename, language):
+  language = language.upper() + 'EXT'
   doc = ''
   fl = open(filename)
   in_doc = 0
   for l in fl:
-    if (l.strip().startswith('/*@'+langage)):
+    if (l.strip().startswith('/*@'+language)):
       in_doc = 1
     elif (in_doc and l.find('@*/') != -1):
       in_doc = 0
@@ -133,8 +133,8 @@ def ExtractExt(filename, langage):
 #
 # Extracting one sub-command doc from a file 
 #
-def ExtractSubDoc(fl, langage):
-    langage = langage.upper()
+def ExtractSubDoc(fl, language):
+    language = language.upper()
     doc = ''
     in_doc = 0
     dtype = 0
@@ -163,25 +163,25 @@ def ExtractSubDoc(fl, langage):
             in_doc = 1
             dtype = 5
             l = l.strip()[7:].strip()
-          if (l.startswith('/*@'+langage+'GET')):
+          if (l.startswith('/*@'+language+'GET')):
             in_doc = 1; dtype = 2
-            l = l.strip()[6+len(langage):].strip()
-          elif (l.startswith('/*@'+langage+'SET')):
+            l = l.strip()[6+len(language):].strip()
+          elif (l.startswith('/*@'+language+'SET')):
             in_doc = 1
             dtype = 3
-            l = l.strip()[6+len(langage):].strip()
-          elif (l.startswith('/*@'+langage+'RDATTR')):
+            l = l.strip()[6+len(language):].strip()
+          elif (l.startswith('/*@'+language+'RDATTR')):
             in_doc = 1
             dtype = 1
-            l = l.strip()[9+len(langage):].strip()
-          elif (l.startswith('/*@'+langage+'FUNC')):
+            l = l.strip()[9+len(language):].strip()
+          elif (l.startswith('/*@'+language+'FUNC')):
             in_doc = 1
             dtype = 4
-            l = l.strip()[7+len(langage):].strip()
-          elif (l.startswith('/*@'+langage+'INIT')):
+            l = l.strip()[7+len(language):].strip()
+          elif (l.startswith('/*@'+language+'INIT')):
             in_doc = 1
             dtype = 5
-            l = l.strip()[7+len(langage):].strip()
+            l = l.strip()[7+len(language):].strip()
         elif (in_doc and l.find('@*/') != -1):
           in_doc = 0
           doc += l[:l.find('@*/')]
@@ -231,13 +231,13 @@ def StandardObjectName(o):
 
 
 #
-# Filter the documentation for a certain langage (matlab, scilab or python)
+# Filter the documentation for a certain language (matlab, scilab or python)
 #
 
-def FilterDoc(d, langage, objects, commands, set_replace = set()):
+def FilterDoc(d, language, objects, commands, set_replace = set()):
 
   markup = ['@MATLAB{', '@PYTHON{', '@SCILAB{']
-  mmarkup = '@' + langage.upper() + '{'
+  mmarkup = '@' + language.upper() + '{'
 
   for m in markup:
     i = d.find(m)
@@ -250,7 +250,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
       d += r[(j+1):]
       i = d.find(m)
 
-  if (langage == 'scilab'):
+  if (language == 'scilab'):
     # Replace the :math:` ... ` by scilab latex xml tag
     i = d.find(':math:`')
     while (i != -1):
@@ -265,7 +265,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
       d = d[:i] + d[i:].replace('`','</literal>',1)
       i = d.find('`')
           
-  if (langage == 'matlab' or langage == 'scilab'):
+  if (language == 'matlab' or language == 'scilab'):
     for o in objects:
       [r, I] = StandardObjectName(o)
       # transforme OBJET:INIT en gf_objet
@@ -311,7 +311,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = d.replace('@tsp',    'spmat')
     d = d.replace('@tpre',   'precond')
 
-  elif (langage == 'python'):
+  elif (language == 'python'):
     d = d.replace('\\', '\\\\')
     for o in objects:
       [oname, I] = StandardObjectName(o)
@@ -470,7 +470,7 @@ def cmp_to_key(mycmp):
 #######################################################################
 
 
-valid_options = 'matlab-com, matlab-doc, scilab-com, scilab-doc, python-com, python-doc'
+valid_options = 'matlab-com, octave-com, matlab-doc, scilab-com, scilab-doc, python-com, python-doc'
 
 if (len(sys.argv) != 3):
     raise SystemExit('Format : extract_doc directory option')
@@ -571,7 +571,7 @@ elif (option == 'cubature_loc'):
 
 elif (option == 'matlab-com'):
 
-  langage = 'matlab'
+  language = 'matlab'
 
   for o in objects+commands:
 
@@ -585,9 +585,9 @@ elif (option == 'matlab-com'):
 
         [r, initiale] = StandardObjectName(o)
         [gdoc, args] = ExtractGlobalDoc(src_dir);
-        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        gdoc = FilterDoc(gdoc, language, objects, commands)
         if (args != ''):
-          args = FilterDoc(args, langage, objects, commands) + ', '
+          args = FilterDoc(args, language, objects, commands) + ', '
         if (ext == ''):
           firstarg = '(' + args
         else:
@@ -604,12 +604,12 @@ elif (option == 'matlab-com'):
 
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
         while (ok):
-            params = FilterDoc(params, langage, objects, commands)
+            params = FilterDoc(params, language, objects, commands)
             if (ret != ''):
-                ret = FilterDoc(ret, langage, objects, commands)
+                ret = FilterDoc(ret, language, objects, commands)
                 ret += ' = '
             if (mname[0] != '.'):
               mname = '\'' + mname + '\''
@@ -620,14 +620,14 @@ elif (option == 'matlab-com'):
             mfile.write('%   * ' + ret + 'gf_'+o+ext+firstarg+mname + params+')\n')
             
 
-            doc = FilterDoc(doc, langage, objects, commands)
+            doc = FilterDoc(doc, language, objects, commands)
             for l in doc.split('\n'):
                 mfile.write('%   ' + l.strip()+'\n')
             mfile.write('%\n')
-            [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+            [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
         fl.close()
-        matlabext = ExtractExt(src_dir, langage);
+        matlabext = ExtractExt(src_dir, language);
 
         mfile.write('%\n')
         mfile.write('function [varargout]=gf_'+o+ext+'(varargin)\n')
@@ -655,14 +655,14 @@ elif (option == 'matlab-com'):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         fl = open(src_dir)
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
           mname = mname.replace(' ', '_');
           mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         fl.close()
 
   # Build directory and files for Matlab OO-commands
@@ -684,7 +684,7 @@ elif (option == 'matlab-com'):
     mfile.write('  if (isa(a,this_class)),\n')
     mfile.write('    m=a;\n')
     mfile.write('  else\n')
-    mfile.write('    if (isstruct(a) & isfield(a,\'id\') & isfield(a,\'cid\'))\n')
+    mfile.write('    if (isstruct(a) && isfield(a,\'id\') && isfield(a,\'cid\'))\n')
     mfile.write('      cname = gf_workspace(\'class name\',a);\n')
     mfile.write('      if (strcmp(cname, this_class))\n')
     mfile.write('	 m = a;\n')
@@ -764,7 +764,7 @@ elif (option == 'matlab-com'):
       src_dir = directory + '/gf_' + o + '_set.cc'
       fl = open(src_dir)
       doc = '';
-      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       while (ok):
         mname = mname.replace(' ', '_');
         mname = mname.replace('-', '_');
@@ -781,7 +781,7 @@ elif (option == 'matlab-com'):
         mfile.write('            end;\n')
         mfile.write('          end;\n')
         mfile.write('          return;\n')
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       fl.close()
       mfile.write('        case \'set\'\n')
       mfile.write('          if (nargout)\n')
@@ -790,7 +790,7 @@ elif (option == 'matlab-com'):
       mfile.write('            FSET(obj,index(2).subs{:});\n')
       mfile.write('            if (exist(\'ans\', \'var\') == 1)\n')
       mfile.write('              h=ans;\n')
-      mfile.write('              if (isstruct(h) & isfield(h,\'id\') & isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('              if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
       mfile.write('              varargout{1}=h;\n')
       mfile.write('            end;\n')
       mfile.write('          end;\n')
@@ -800,13 +800,13 @@ elif (option == 'matlab-com'):
       mfile.write('        case \'get\'\n')
       mfile.write('          if (nargout) \n')
       mfile.write('            h = FGET(obj, index(2).subs{:});\n')
-      mfile.write('            if (isstruct(h) & isfield(h,\'id\') & isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
       mfile.write('            [varargout{1:nargout}] = h;\n')
       mfile.write('          else\n')
       mfile.write('	     FGET(obj,index(2).subs{:});\n')
       mfile.write('            if (exist(\'ans\', \'var\') == 1)\n')
       mfile.write('              h=ans;\n')
-      mfile.write('              if (isstruct(h) & isfield(h,\'id\') & isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('              if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
       mfile.write('              varargout{1}=h;\n')
       mfile.write('            end;\n')
       mfile.write('          end;\n')
@@ -814,12 +814,12 @@ elif (option == 'matlab-com'):
     mfile.write('        otherwise\n')
     mfile.write('          if ((numel(index) > 1) && (strcmp(index(2).type, \'()\')))\n')
     mfile.write('            h = FGET(obj,index(1).subs, index(2).subs{:});\n')
-    mfile.write('            if (isstruct(h) & isfield(h,\'id\') & isfield(h,\'cid\')), h = gfObject(h); end;\n');
+    mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
     mfile.write('            [varargout{1:nargout}] = h;\n')
     mfile.write('            cnt = cnt + 1;\n')
     mfile.write('          else\n')
     mfile.write('            h = FGET(obj, index(1).subs);\n')
-    mfile.write('            if (isstruct(h) & isfield(h,\'id\') & isfield(h,\'cid\')), h = gfObject(h); end;\n');
+    mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
     mfile.write('            [varargout{1:nargout}] = h;\n')
     mfile.write('          end\n')
     mfile.write('      end\n')
@@ -854,6 +854,312 @@ elif (option == 'matlab-com'):
         mfile.write('% autogenerated mfile;\n')
         mfile.close() 
 
+#######################################################################
+#
+#
+#
+# Option octave-com
+#      Extract the octave commands, produces m-files and Octave object
+#      sub directories.
+#
+#
+#
+#######################################################################
+
+elif (option == 'octave-com'):
+
+  language = 'matlab'
+
+  for o in objects+commands:
+
+    for ext in ['', '_set', '_get']:
+
+      src_dir = directory + '/gf_' + o + ext + '.cc'
+
+      if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+
+        mfile = open('gf_'+o+ext+'.m', 'w')
+
+        [r, initiale] = StandardObjectName(o)
+        [gdoc, args] = ExtractGlobalDoc(src_dir);
+        gdoc = FilterDoc(gdoc, language, objects, commands)
+        if (args != ''):
+          args = FilterDoc(args, language, objects, commands) + ', '
+        if (ext == ''):
+          firstarg = '(' + args
+        else:
+          firstarg = '(' + o + ' ' + initiale +', '
+
+        mfile.write('% FUNCTION [...] = gf_' + o + ext + firstarg + '[operation [, args]])\n')
+        mfile.write('%\n')
+        if ((o in set_objects) and (ext == '')):
+          mfile.write('%   General constructor for ' + o + ' objects.\n%\n')
+        for l in gdoc.split('\n'):
+          mfile.write('%   ' + l.strip()+'\n')
+        mfile.write('%\n')
+
+
+        fl = open(src_dir)
+        doc = '';
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+
+        while (ok):
+            params = FilterDoc(params, language, objects, commands)
+            if (ret != ''):
+                ret = FilterDoc(ret, language, objects, commands)
+                ret += ' = '
+            if (mname[0] != '.'):
+              mname = '\'' + mname + '\''
+            else:
+              mname = ''
+              params = params[1:].strip()
+               
+            mfile.write('%   * ' + ret + 'gf_'+o+ext+firstarg+mname + params+')\n')
+            
+
+            doc = FilterDoc(doc, language, objects, commands)
+            for l in doc.split('\n'):
+                mfile.write('%   ' + l.strip()+'\n')
+            mfile.write('%\n')
+            [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+
+        fl.close()
+        matlabext = ExtractExt(src_dir, language);
+
+        mfile.write('%\n')
+        mfile.write('function [varargout]=gf_'+o+ext+'(varargin)\n')
+        if (matlabext != ''):
+          mfile.write('\n' + matlabext + '\n');
+        mfile.write('  for i = 1:nargin \n');
+        mfile.write('    if (isobject(varargin{i})) \n');
+        mfile.write('      varargin{i} = struct(varargin{i}); \n');
+        mfile.write('    endif \n');
+        mfile.write('    if (islogical(varargin{i})) \n');
+        mfile.write('      varargin{i} = round(varargin{i}); \n');
+        mfile.write('    endif \n');
+        mfile.write('  endfor \n');
+        mfile.write('  if (nargout),\n')
+        mfile.write('    [varargout{1:nargout}]=gf_octave(\'' + o + ext + '\', varargin{:});\n')
+        mfile.write('  else\n')
+        mfile.write('    gf_octave(\'' + o + ext + '\', varargin{:});\n')
+        mfile.write('    if (exist(\'ans\', \'var\') == 1), varargout{1}=ans; end;\n')
+        mfile.write('  end;\n')
+        mfile.write('% autogenerated mfile;\n')
+        mfile.close()
+
+  # one pass to find the set methods having identical name with a get method
+  # in that case 'set_' is added to the set method.
+  set_replace = set()
+  ob = sorted(objects)
+  for o in ob:
+    src_dir = directory + '/gf_' + o + '.cc'
+    [oname, initiale] = StandardObjectName(o)
+    sub_com = set()
+    for ext in ['_get', '_set']:
+      src_dir = directory + '/gf_' + o + ext + '.cc'
+      [r, initiale] = StandardObjectName(o)
+      if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+        fl = open(src_dir)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+        while (ok):
+          mname = mname.replace(' ', '_');
+          mname = mname.replace('-', '_');
+          if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
+            set_replace.add(oname+'::'+mname)
+          sub_com.add(mname)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+        fl.close()
+
+  # Build directory and files for Matlab OO-commands
+  for o in objects:
+
+    [oname, I] = StandardObjectName(o)
+    oname = 'gf' + oname
+    # Create directory
+    path = '@'+oname
+    if (not os.path.isdir(path)):
+      os.mkdir(path)
+    
+    # Create pseudo-constructor
+    mfile = open(path+'/'+oname+'.m', 'w')
+    mfile.write('function [m,b]='+oname+'(a, varargin)\n')
+    mfile.write('% ' + oname +' class pseudo-constructor\n')
+    mfile.write('  this_class = \'' + oname +'\';\n')
+    mfile.write('  if (nargin==0) error(\'can''t create an empty ' + o + ' reference\'); end;\n')
+    mfile.write('  if (isa(a,this_class)),\n')
+    mfile.write('    m=a;\n')
+    mfile.write('  else\n')
+    mfile.write('    if (isstruct(a) && isfield(a,\'id\') && isfield(a,\'cid\'))\n')
+    mfile.write('      cname = gf_workspace(\'class name\',a);\n')
+    mfile.write('      if (strcmp(cname, this_class))\n')
+    mfile.write('	 m = a;\n')
+    mfile.write('      else\n')
+    mfile.write('	 m = gf_'+o+'(a,varargin{:});\n')
+    mfile.write('      end;\n')
+    mfile.write('    else\n')
+    mfile.write('      m = gf_'+o+'(a,varargin{:});\n')
+    mfile.write('    end;\n')
+    mfile.write('    m.txt = \'\';\n')
+    mfile.write('    m = class(m, this_class);\n')
+    mfile.write('  end;\n')
+    
+    mfile.write('% autogenerated mfile;\n')
+    mfile.close()
+
+    src_dir = directory + '/gf_' + o + '_get.cc'
+    if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+      # Create display command
+      mfile = open(path+'/display.m', 'w')
+      mfile.write('function display(cs)\n')
+      mfile.write('% ' + oname + '/display displays a short summary for a ' + oname + ' object \n')
+      mfile.write('  for i=1:numel(cs),\n')
+      mfile.write('    gf_' + o + '_get(struct(cs(i)), \'display\');\n')
+      mfile.write('  end;\n')
+      mfile.write('% autogenerated mfile;\n')
+      mfile.close()
+      
+      # Create char command
+      mfile = open(path+'/char.m', 'w')
+      mfile.write('function s=char(m)\n')
+      mfile.write('% ' + oname + '/char output a textual representation of the object\n')
+      mfile.write('  s=gf_' + o + '_get(struct(m),\'char\');\n')
+      mfile.write('% autogenerated mfile;\n')
+      mfile.close()
+
+    # Create saveobj command
+    mfile = open(path+'/saveobj.m', 'w')
+    mfile.write('function b=saveobj(a)\n')
+    mfile.write('% ' + oname + '/saveobj\n')
+    mfile.write('% this function is automatically called by octave when objects of class\n')
+    mfile.write('% ' + oname + 'are saved in a MAT-file\n')
+    mfile.write('  b=a; b.txt=char(a);\n')
+    mfile.write('% autogenerated mfile;\n')
+    mfile.close()
+
+    # Create loadobj command
+    mfile = open(path+'/loadobj.m', 'w')
+    mfile.write('function a=loadobj(a)\n')
+    mfile.write('% ' + oname + '/loadobj\n')
+    mfile.write('% this function is automatically called by octave when objects of class\n')
+    mfile.write('% ' + oname + 'are loaded from a MAT-file\n')
+    mfile.write('  a=' + oname + '(\'from string\',b.txt);\n')
+    mfile.write('% autogenerated mfile;\n')
+    mfile.close()
+    
+    # Create subref command
+    mfile = open(path+'/subsref.m', 'w')
+    mfile.write('function [varargout]=subsref(obj, index)\n')
+    mfile.write('% ' + oname + '/subsref\n')
+    mfile.write('  obj=struct(obj);\n')
+    mfile.write('  nout = max(nargout, 1); cnt=1;\n')
+    mfile.write('  FGET = @gf_'+o+'_get;\n')
+    mfile.write('  FSET = @gf_'+o+'_set;\n')
+    mfile.write('  switch index(1).type\n')
+    mfile.write('    case \'{}\'\n')
+    mfile.write('      error(\'Cell array indexing not supported by ' + oname + ' objects\')\n')
+    mfile.write('    case \'()\'\n')
+    mfile.write('      error(\'array indexing not supported by ' + oname + ' objects\')\n')
+    mfile.write('    case \'.\'\n')
+    mfile.write('      switch index(1).subs\n')
+    mfile.write('        case \'id\'\n')
+    mfile.write('          [varargout{1:nout}] = obj.id;\n')
+    src_dir = directory + '/gf_' + o + '_set.cc'
+    if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+      # + la liste des commandes set ...
+
+      src_dir = directory + '/gf_' + o + '_set.cc'
+      fl = open(src_dir)
+      doc = '';
+      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+      while (ok):
+        mname = mname.replace(' ', '_');
+        mname = mname.replace('-', '_');
+        if (oname[2:]+'::'+mname in set_replace):
+          mfile.write('        case \'set_' + mname + '\'\n')
+        else:
+          mfile.write('        case \'' + mname + '\'\n')
+        mfile.write('          if (nargout)\n')
+        mfile.write('            [varargout{1:nargout}] = FSET(obj, \'' + mname + '\', index(2).subs{:});\n')
+        mfile.write('          else\n')
+        mfile.write('            FSET(obj, \'' + mname + '\', index(2).subs{:});\n')
+        mfile.write('            if (exist(\'ans\', \'var\') == 1)\n')
+        mfile.write('              varargout{1}=ans;\n')
+        mfile.write('            end;\n')
+        mfile.write('          end;\n')
+        mfile.write('          return;\n')
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
+      fl.close()
+      mfile.write('        case \'set\'\n')
+      mfile.write('          if (nargout)\n')
+      mfile.write('            [varargout{1:nargout}] = FSET(obj, index(2).subs{:});\n')
+      mfile.write('          else\n')
+      mfile.write('            FSET(obj,index(2).subs{:});\n')
+      mfile.write('            if (exist(\'ans\', \'var\') == 1)\n')
+      mfile.write('              h=ans;\n')
+      mfile.write('              if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('              varargout{1}=h;\n')
+      mfile.write('            end;\n')
+      mfile.write('          end;\n')
+      mfile.write('          return;\n')
+    src_dir = directory + '/gf_' + o + '_get.cc'
+    if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+      mfile.write('        case \'get\'\n')
+      mfile.write('          if (nargout) \n')
+      mfile.write('            h = FGET(obj, index(2).subs{:});\n')
+      mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('            [varargout{1:nargout}] = h;\n')
+      mfile.write('          else\n')
+      mfile.write('	     FGET(obj,index(2).subs{:});\n')
+      mfile.write('            if (exist(\'ans\', \'var\') == 1)\n')
+      mfile.write('              h=ans;\n')
+      mfile.write('              if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
+      mfile.write('              varargout{1}=h;\n')
+      mfile.write('            end;\n')
+      mfile.write('          end;\n')
+      mfile.write('          return;\n')
+    mfile.write('        otherwise\n')
+    mfile.write('          if ((numel(index) > 1) && (strcmp(index(2).type, \'()\')))\n')
+    mfile.write('            h = FGET(obj,index(1).subs, index(2).subs{:});\n')
+    mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
+    mfile.write('            [varargout{1:nargout}] = h;\n')
+    mfile.write('            cnt = cnt + 1;\n')
+    mfile.write('          else\n')
+    mfile.write('            h = FGET(obj, index(1).subs);\n')
+    mfile.write('            if (isstruct(h) && isfield(h,\'id\') && isfield(h,\'cid\')), h = gfObject(h); end;\n');
+    mfile.write('            [varargout{1:nargout}] = h;\n')
+    mfile.write('          end\n')
+    mfile.write('      end\n')
+    mfile.write('  end\n')
+    mfile.write('  % if there are others indexes, let octave do its work\n')
+    mfile.write('  if (numel(index) > cnt)\n')
+    mfile.write('    for i=1:nout,\n')
+    mfile.write('      varargout{i} = subsref(varargout{i}, index((cnt+1):end));\n')
+    mfile.write('    end;\n')
+    mfile.write('  end;\n')
+    mfile.write('% autogenerated mfile;\n')
+    mfile.close()
+
+    
+    
+    for ext in ['set', 'get']:
+
+      src_dir = directory + '/gf_' + o + '_' + ext + '.cc'
+
+      if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+        mfile = open(path+'/' + ext + '.m', 'w')
+        mfile.write('function varargout=' + ext + '(obj, varargin)\n')
+        mfile.write('% ' + oname + '/' + ext + '.m\n')
+        mfile.write('% see gf_' + o + '_' + ext + ' for more help.\n')
+        mfile.write('if (nargout), \n')
+        mfile.write('  [varargout{1:nargout}] = gf_'+o+'_'+ext+'(struct(obj), varargin{:});\n')
+        mfile.write('else\n')
+        mfile.write('  gf_'+o+'_'+ext+'(struct(obj),varargin{:});\n')
+        mfile.write('  if (exist(\'ans\',\'var\') == 1), varargout{1}=ans;\n')
+        mfile.write('  end;\n')
+        mfile.write('end;\n')
+        mfile.write('% autogenerated mfile;\n')
+        mfile.close() 
+
 
 
 #######################################################################
@@ -869,7 +1175,7 @@ elif (option == 'matlab-com'):
 
 elif (option == 'matlab-doc'):
 
-  langage = 'matlab'
+  language = 'matlab'
   
   print('.. Automatically generated file, do not edit it.')
   print('.. If some modification are necessary, please modify')
@@ -878,7 +1184,7 @@ elif (option == 'matlab-doc'):
   print('')
   print('.. include:: ../replaces.txt')
   print('')
-  print('.. highlightlang:: matlab')
+  print('.. highlight:: matlab')
   print('')
   print('.. _mlab-cmdref:')
   print('')
@@ -898,7 +1204,7 @@ elif (option == 'matlab-doc'):
   print('')
   print('=====================  ==================================================')
   print('`int`                  integer value')
-  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`hobj`                 a handle for any GetFEM object')
   print('`scalar`               scalar value')
   print('`string`               string')
   print('`ivec`                 vector of integer values')
@@ -948,18 +1254,18 @@ elif (option == 'matlab-doc'):
         print('')
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
-          args = FilterDoc(args, langage, objects, commands) + ', '
+          args = FilterDoc(args, language, objects, commands) + ', '
         if (ext == ''):
           firstarg = '(' + args
         else:
           firstarg = '(' + o + ' ' + initiale +', '
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -967,7 +1273,7 @@ elif (option == 'matlab-doc'):
             mname = ''
             params = params[1:].strip()
           print('  ' + ret + 'gf_'+o+ext+firstarg+mname + params+')')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
         fl.close()
         print('')
@@ -976,7 +1282,7 @@ elif (option == 'matlab-doc'):
         print('')
         if ((o in set_objects) and (ext == '')):
           print('General constructor for ' + o + ' objects.\n')
-        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        gdoc = FilterDoc(gdoc, language, objects, commands)
         print(gdoc)
         print('')
         print('**Command list :**')
@@ -984,11 +1290,11 @@ elif (option == 'matlab-doc'):
         print('')
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -998,7 +1304,7 @@ elif (option == 'matlab-doc'):
           print('')
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
           print('')
-          doc = FilterDoc(doc, langage, objects, commands)
+          doc = FilterDoc(doc, language, objects, commands)
           nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
@@ -1031,7 +1337,7 @@ elif (option == 'matlab-doc'):
                 print('    '+l)
                 
           print('')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
     
         fl.close()
 
@@ -1049,7 +1355,7 @@ elif (option == 'matlab-doc'):
 
 elif (option == 'scilab-com'):
 
-  langage = 'scilab'
+  language = 'scilab'
 
   # Write XML page related to types
   
@@ -1087,7 +1393,7 @@ elif (option == 'scilab-com'):
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>hobj</term>\n')
   mfile.write('        <listitem>\n')
-  mfile.write('          <para>a handle for any GetFEM++ object</para>\n')
+  mfile.write('          <para>a handle for any GetFEM object</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
@@ -1281,7 +1587,7 @@ elif (option == 'scilab-com'):
         mfile.write('          xmlns:db="http://docbook.org/ns/docbook">\n')
 
         [gdoc, args] = ExtractGlobalDoc(src_dir);
-        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        gdoc = FilterDoc(gdoc, language, objects, commands)
 
         mfile.write('  <refnamediv>\n')
         mfile.write('    <refname>gf_' + o + ext + '</refname>\n')
@@ -1293,18 +1599,18 @@ elif (option == 'scilab-com'):
 
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
-          args = FilterDoc(args, langage, objects, commands) + ', '
+          args = FilterDoc(args, language, objects, commands) + ', '
         if (ext == ''):
           firstarg = '(' + args
         else:
           firstarg = '(' + o + ' ' + initiale +', '
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -1312,7 +1618,7 @@ elif (option == 'scilab-com'):
             mname = ''
             params = params[1:].strip()
           mfile.write('    <synopsis>' + ret + 'gf_'+o+ext+firstarg+mname + params+')</synopsis>\n')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
         mfile.write('  </refsynopsisdiv>\n\n')
         fl.close()
@@ -1323,7 +1629,7 @@ elif (option == 'scilab-com'):
         if ((o in set_objects) and (ext == '')):
           mfile.write('    <para>General constructor for ' + o + ' objects.</para>\n\n')
 
-        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        gdoc = FilterDoc(gdoc, language, objects, commands)
         mfile.write('    <para>' + gdoc + '</para>\n')
         mfile.write('  </refsection>\n\n')
 
@@ -1333,11 +1639,11 @@ elif (option == 'scilab-com'):
 
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -1349,13 +1655,13 @@ elif (option == 'scilab-com'):
           mfile.write('    <para><literal>' + ret + 'gf_'+o+ext+firstarg+mname + params+')</literal></para>\n\n')
 
           mfile.write('    <para>')
-          doc = FilterDoc(doc, langage, objects, commands)
+          doc = FilterDoc(doc, language, objects, commands)
           mfile.write('   ' + doc + '\n')
 
           mfile.write('    </para>\n')
           mfile.write('    </listitem>\n\n')
 
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
     
         fl.close()
         mfile.write('    </itemizedlist>\n')
@@ -1391,7 +1697,7 @@ elif (option == 'scilab-com'):
 
 elif (option == 'scilab-doc-rst'):
 
-  langage = 'scilab'
+  language = 'scilab'
   
   print('.. Automatically generated file, do not edit it.')
   print('.. If some modification are necessary, please modify')
@@ -1400,7 +1706,7 @@ elif (option == 'scilab-doc-rst'):
   print('')
   print('.. include:: ../replaces.txt')
   print('')
-  print('.. highlightlang:: matlab')
+  print('.. highlight:: matlab')
   print('')
   print('.. _scilab-cmdref:')
   print('')
@@ -1420,7 +1726,7 @@ elif (option == 'scilab-doc-rst'):
   print('')
   print('=====================  ==================================================')
   print('`int`                  integer value')
-  print('`hobj`                 a handle for any GetFEM++ object')
+  print('`hobj`                 a handle for any GetFEM object')
   print('`scalar`               scalar value')
   print('`string`               string')
   print('`ivec`                 vector of integer values')
@@ -1470,18 +1776,18 @@ elif (option == 'scilab-doc-rst'):
         print('')
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
-          args = FilterDoc(args, langage, objects, commands) + ', '
+          args = FilterDoc(args, language, objects, commands) + ', '
         if (ext == ''):
           firstarg = '(' + args
         else:
           firstarg = '(' + o + ' ' + initiale +', '
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -1489,7 +1795,7 @@ elif (option == 'scilab-doc-rst'):
             mname = ''
             params = params[1:].strip()
           print('  ' + ret + 'gf_'+o+ext+firstarg+mname + params+')')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
         fl.close()
         print('')
@@ -1498,7 +1804,7 @@ elif (option == 'scilab-doc-rst'):
         print('')
         if ((o in set_objects) and (ext == '')):
           print('General constructor for ' + o + ' objects.\n')
-        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        gdoc = FilterDoc(gdoc, language, objects, commands)
         print(gdoc)
         print('')
         print('**Command list :**')
@@ -1506,11 +1812,11 @@ elif (option == 'scilab-doc-rst'):
         print('')
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
-          params = FilterDoc(params, langage, objects, commands)
+          params = FilterDoc(params, language, objects, commands)
           if (ret != ''):
-            ret = FilterDoc(ret, langage, objects, commands)
+            ret = FilterDoc(ret, language, objects, commands)
             ret += ' = '
           if (mname[0] != '.'):
             mname = '\'' + mname + '\''
@@ -1520,7 +1826,7 @@ elif (option == 'scilab-doc-rst'):
           print('')
           print('  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``')
           print('')
-          doc = FilterDoc(doc, langage, objects, commands)
+          doc = FilterDoc(doc, language, objects, commands)
           nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
@@ -1553,7 +1859,7 @@ elif (option == 'scilab-doc-rst'):
                 print('    '+l)
 
           print('')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
     
         fl.close()
 
@@ -1572,18 +1878,18 @@ elif (option == 'scilab-doc-rst'):
 #######################################################################
 
 elif (option == 'python-com' or option == 'python-com-par'):
-  langage = 'python'
+  language = 'python'
 
   print("""#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 #
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2018 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2022 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -1622,7 +1928,11 @@ except ImportError:
 
 from numpy import *
 
-from _getfem import *
+try:
+  from ._getfem import *
+except ImportError:
+  from _getfem import *
+
 obj_count = {}
 getfem('workspace', 'clear all')
 
@@ -1668,14 +1978,14 @@ def generic_destructor(self, destructible=True):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         fl = open(src_dir)
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
           mname = mname.replace(' ', '_');
           mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         fl.close()
 
 
@@ -1698,14 +2008,14 @@ def generic_destructor(self, destructible=True):
     else:
       gdoc = ''; args = '';
     if (args != ''):
-      args = FilterDoc(args, langage, objects, commands, set_replace) + ', '
+      args = FilterDoc(args, language, objects, commands, set_replace) + ', '
     firstarg = '(' + args
 
 
     print('\n#\n# GetFEM class ' + oname + ' definition.\n#\n')
     print('class ' + oname + ':')
-    print('  """GeFEM ' + oname + ' object\n')
-    gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
+    print('  """GetFEM ' + oname + ' object\n')
+    gdoc = FilterDoc(gdoc, language, objects, commands, set_replace)
     print(gdoc)
     print('  """')
     print('  def __init__(self, *args):')
@@ -1713,11 +2023,11 @@ def generic_destructor(self, destructible=True):
     # documentation for constructors
     if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
       fl = open(src_dir)
-      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       while (ok):
-        params = FilterDoc(params, langage, objects, commands, set_replace)
+        params = FilterDoc(params, language, objects, commands, set_replace)
         if (ret != ''):
-          ret = FilterDoc(ret, langage, objects, commands, set_replace)
+          ret = FilterDoc(ret, language, objects, commands, set_replace)
           ret += ' = '
         if (mname[0] != '.'):
           mname = '\'' + mname + '\''
@@ -1725,7 +2035,7 @@ def generic_destructor(self, destructible=True):
           mname = ''
           params = params[1:].strip()
         print('  * ``' + ret + oname+firstarg+mname + params+')``')
-        doc = FilterDoc(doc, langage, objects, commands, set_replace)
+        doc = FilterDoc(doc, language, objects, commands, set_replace)
         nbspace = -1; util_pos = -1; nbsp = -1
         for l in doc.split('\n'):
           if (nbspace == -1 and len(l.strip()) > 0):
@@ -1758,7 +2068,7 @@ def generic_destructor(self, destructible=True):
               print('    '+l)
               
         print('')
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
       fl.close()
     print('    """')
@@ -1780,7 +2090,7 @@ def generic_destructor(self, destructible=True):
     print('  def __str__(self):')
     print('    return self.char()')
     if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
-      pythonext = ExtractExt(src_dir, langage);
+      pythonext = ExtractExt(src_dir, language);
       if (pythonext != ''):
         print('\n' + pythonext)
     # add the list of get and set methods
@@ -1791,14 +2101,14 @@ def generic_destructor(self, destructible=True):
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         
         if (args != ''):
-          args = FilterDoc(args, langage, objects, commands, set_replace) + ', '
+          args = FilterDoc(args, language, objects, commands, set_replace) + ', '
         if (ext == ''):
           firstarg = '(' + args
         else:
           firstarg = '(' + o + ' ' + initiale +', '
         fl = open(src_dir)
         doc = '';
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
           mname = mname.replace(' ', '_');
           mname = mname.replace('-', '_');
@@ -1806,7 +2116,7 @@ def generic_destructor(self, destructible=True):
           if ((ext == '_set') and (oname+'::'+mname in set_replace)):
             set_extend = True
           sub_com.add(mname)
-          mparams = FilterDoc(params, langage, objects, commands)
+          mparams = FilterDoc(params, language, objects, commands)
           params = SynopsisToPythonArgs(params)
           print('')
           sys.stdout.write('  def ')
@@ -1818,13 +2128,13 @@ def generic_destructor(self, destructible=True):
           sys.stdout.write('):\n    """')
           if (len(params)>0 and params[len(params)-1] == '*args'):
             if (ret != ''):
-              ret = FilterDoc(ret, langage, objects, commands)
+              ret = FilterDoc(ret, language, objects, commands)
               ret += ' = '
             if (mmname[0] == '.'):
               mmname = ''
               mparams = mparams[1:].strip()
             sys.stdout.write('Synopsis: ' + ret + oname + '.'+ mmname + '(self' + mparams+')\n\n    ')
-          doc = FilterDoc(doc, langage, objects, commands)
+          doc = FilterDoc(doc, language, objects, commands)
           nbspace = -1; util_pos = -1; nbsp = -1
           for l in doc.split('\n'):
             if (nbspace == -1 and len(l.strip()) > 0):
@@ -1862,10 +2172,10 @@ def generic_destructor(self, destructible=True):
           for p in params:
             sys.stdout.write(', ' + p.split('=')[0])
           sys.stdout.write(')\n\n')
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
     
         fl.close()
-        pythonext = ExtractExt(src_dir, langage);
+        pythonext = ExtractExt(src_dir, language);
         if (pythonext != ''):
           print('\n' + pythonext)
 
@@ -1877,15 +2187,15 @@ def generic_destructor(self, destructible=True):
     if (c != 'workspace' and os.path.exists(src_dir) and os.path.isfile(src_dir)):
       print('#\n# ' + c + ' module\n#\n')
       [gdoc, args] = ExtractGlobalDoc(src_dir);
-      margs = FilterDoc(args, langage, objects, commands).strip()
+      margs = FilterDoc(args, language, objects, commands).strip()
       args = SynopsisToPythonArgs(args)
       fl = open(src_dir)
       doc = '';
-      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       while (ok):
         mname = mname.replace(' ', '_');
         mname = mname.replace('-', '_');
-        mparams = FilterDoc(params, langage, objects, commands).strip()
+        mparams = FilterDoc(params, language, objects, commands).strip()
         params = SynopsisToPythonArgs(params)
         print('')
         if (mname[0] == '.'):
@@ -1904,7 +2214,7 @@ def generic_destructor(self, destructible=True):
         sys.stdout.write('):\n  """')
         if (len(params)>0 and params[len(params)-1] == '*args'):
             if (ret != ''):
-              ret = FilterDoc(ret, langage, objects, commands)
+              ret = FilterDoc(ret, language, objects, commands)
               ret += ' = '
             mmname = mname
             mc = c + '_'
@@ -1914,7 +2224,7 @@ def generic_destructor(self, destructible=True):
             if (margs == ''):
               mparams = mparams[1:].strip()
             sys.stdout.write('Synopsis: ' + ret + mc + mmname + '(' + margs + mparams+')\n\n  ')
-        doc = FilterDoc(doc, langage, objects, commands, set_replace)
+        doc = FilterDoc(doc, language, objects, commands, set_replace)
         nbspace = -1; util_pos = -1; nbsp = -1
         for l in doc.split('\n'):
           if (nbspace == -1 and len(l.strip()) > 0):
@@ -1956,10 +2266,10 @@ def generic_destructor(self, destructible=True):
         for p in params:
           sys.stdout.write(', ' + p.split('=')[0])
         sys.stdout.write(')\n\n')
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
 
       fl.close()
-      pythonext = ExtractExt(src_dir, langage);
+      pythonext = ExtractExt(src_dir, language);
       if (pythonext != ''):
         print('\n' + pythonext)
 
@@ -2013,7 +2323,7 @@ def generic_destructor(self, destructible=True):
 
 elif (option == 'python-doc'):
 
-  langage = 'python'
+  language = 'python'
 
   print(".. Autogenerated by interface/bin/extract_doc. Do not edit it.\n")
   print(".. include:: ../replaces.txt\n")
@@ -2040,14 +2350,14 @@ elif (option == 'python-doc'):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
         fl = open(src_dir)
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         while (ok):
           mname = mname.replace(' ', '_');
           mname = mname.replace('-', '_');
           if (mname in sub_com or mname=='classical_fem' or mname=='classical_discontinuous_fem'):
             set_replace.add(oname+'::'+mname)
           sub_com.add(mname)
-          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
         fl.close()
 
   
@@ -2068,7 +2378,7 @@ elif (option == 'python-doc'):
       print('\nModule ' + c)
       print('--------------------------\n')
       [gdoc, args] = ExtractGlobalDoc(src_dir);
-      gdoc = FilterDoc(gdoc, langage, objects, commands, set_replace)
+      gdoc = FilterDoc(gdoc, language, objects, commands, set_replace)
       nbspace = -1; util_pos = -1; nbsp = -1
       for l in doc.split('\n'):
         if (nbspace == -1 and len(l.strip()) > 0):
@@ -2104,7 +2414,7 @@ elif (option == 'python-doc'):
       print('')
       fl = open(src_dir)
       doc = '';
-      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+      [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       while (ok):
         mname = mname.replace(' ', '_');
         mname = mname.replace('-', '_');
@@ -2113,7 +2423,7 @@ elif (option == 'python-doc'):
           print('.. autofunction:: getfem.' + c)
         else:
           print('.. autofunction:: getfem.' + c +'_'+mname)
-        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, language)
       fl.close()
 
 

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -134,8 +134,7 @@ namespace bgeot {
     bool invert(const base_node& n, base_node& n_ref, bool &converged, 
                 scalar_type IN_EPS=1e-12, bool project_into_element=false);
   private:
-    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS,
-                    bool project_into_element);
+    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
     bool invert_nonlin(const base_node& n, base_node& n_ref,
                        scalar_type IN_EPS, bool &converged, bool throw_except,
                        bool project_into_element);

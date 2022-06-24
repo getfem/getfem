@@ -2,11 +2,11 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: bash
+.. highlight:: bash
 
 .. _gmm-install:
 
-Installation 
+Installation
 ============
 
 Since we use standard GNU tools, the installation of the |gmm| library is somewhat standard.

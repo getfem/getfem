@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. _dp-libdesc_event:
 
@@ -13,7 +13,7 @@ Events management
 Description
 ^^^^^^^^^^^
 
-The ``mesh``, |mf|, |mim| and |mo| description are linkedtogether in the sense
+The ``mesh``, |mf|, |mim| and |mo| description are linked together in the sense
 that there is some dependencies between them. For instance, when an element is
 suppressed to a mesh, the |mf| object has to react.
 
@@ -36,23 +36,23 @@ order to deal with the dependencies of an object, the object
 ``context_dependencies`` needs to be a parent class of this object. It adds the
 following methods to the object:
 
-.. c:function:: add_dependency(ct)
+.. cpp:function:: getfem::context_dependencies::add_dependency(ct)
 
    Add an object (which has to have ``context_dependencies`` as a parent class)
    to the list of objects from which the current object depend.
 
-.. c:function:: touch()
+.. cpp:function:: getfem::context_dependencies::touch()
 
    Indicates to the dependent objects that something has change in the object.
 
-.. c:function:: context_check()
+.. cpp:function:: getfem::context_dependencies::context_check()
 
    Check if the object has to be updated. if it is the case it makes first a
    check to the dependency list and call the update function of the object. (the
    update function of the dependencies are called before the update function of
    the current object).
 
-.. c:function:: context_valid()
+.. cpp:function:: getfem::context_dependencies::context_valid()
 
    Says if the object has still a valid context, i.e. if the object in the
    dependency list still exist.
@@ -70,7 +70,7 @@ has changed between two calls.
 Perspectives
 ^^^^^^^^^^^^
 
-The event management of some objects should be analysed with care  This is the case for instance of|mls|, |mfls|, |pmf|, etc.
+The event management of some objects should be analysed with care. This is the case for instance of |mls|, |mfls|, |pmf|, etc.
 
 The event management still have to be improved to be a fully reactive system.
 

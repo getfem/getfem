@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -22,8 +22,5 @@ EXTRA_DIST = $(IM_METHODS_LOC) make_getfem_im_list getfem_im_list.h
 
 getfem_im_list.h :  $(IM_METHODS)
 	$(top_srcdir)/cubature/make_getfem_im_list $(top_srcdir)/cubature
-	cp ./getfem_im_list.h ../src/getfem/getfem_im_list.h
-
-
 
 CLEANFILES = getfem_im_list.h

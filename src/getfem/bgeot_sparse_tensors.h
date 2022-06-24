@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Julien Pommier
+ Copyright (C) 2000-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -174,8 +174,8 @@ namespace bgeot {
     void unset_card() const { card_uptodate = false; }
     index_type card(bool just_look=false) const {       
       if (!card_uptodate || just_look) {
-	index_type c = index_type(std::count_if(m.begin(), m.end(), 
-			          std::bind2nd(std::equal_to<bool>(),true)));
+        index_type c = index_type(std::count_if(m.begin(), m.end(),
+                                  [](const auto &x) {return x == true;}));
 	if (just_look) return c;
 	card_ = c;
       }

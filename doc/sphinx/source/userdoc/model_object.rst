@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -34,84 +34,95 @@ numbers.
 
    The (tangent) linear system
 
-There are different kinds of variables/data in the model. The variables are the 
-unknown of the model. They will be (generally) computed by solving the (tangent) 
-linear system built by the model. Generally, the model will have several 
-variables. Each variable has a certain size (number of degrees of freedom) and the 
-different variables are sorted in alphanumeric order to form the global unknown 
-(:math:`U` in Fig. :ref:`ud-fig-syslin`). Each variable will be associated to an 
-interval :math:`I = [n_1, n_2]` which will represent the degrees of freedom 
-indices corresponding to this variable in the global system. The model stores also 
-some data (in the same format as the variables). The difference between data 
-and variables is that data is not an unknown of the model. The value of the 
-data should be provided. In some cases (nonlinear models) some variables can be 
-considered as some data for certain terms. Variables and data are of two kinds. 
-They can have a fixed size, or they can depend on a finite element method (be the 
+There are different kinds of variables/data in the model. The variables are the
+unknown of the model. They will be (generally) computed by solving the (tangent)
+linear system built by the model. Generally, the model will have several
+variables. Each variable has a certain size (number of degrees of freedom) and the
+different variables are sorted in alphanumeric order to form the global unknown
+(:math:`U` in Fig. :ref:`ud-fig-syslin`). Each variable will be associated to an
+interval :math:`I = [n_1, n_2]` which will represent the degrees of freedom
+indices corresponding to this variable in the global system. The model stores also
+some data (in the same format as the variables). The difference between data
+and variables is that data is not an unknown of the model. The value of the
+data should be provided. In some cases (nonlinear models) some variables can be
+considered as some data for certain terms. Variables and data are of two kinds.
+They can have a fixed size, or they can depend on a finite element method (be the
 d.o.f. of a finite element method).
 
-For instance, in the situation described in Fig. :ref:`ud-fig-syslin`, there are four variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of 
-the model object will be to assemble the linear system, i.e. to fill the sub 
-matrices corresponding to each variable (:math:`R_{X,X}, R_{Y,Y}, R_{V,V}`, and 
-:math:`R_{W,W}`) and the coupling terms between two variables (:math:`R_{X,Y}, 
-R_{X,V}, R_{W,V}, \cdots`). This different contributions will be given by the 
+For instance, in the situation described in Fig. :ref:`ud-fig-syslin`, there are four variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of
+the model object will be to assemble the linear system, i.e. to fill the sub
+matrices corresponding to each variable (:math:`R_{X,X}, R_{Y,Y}, R_{V,V}`, and
+:math:`R_{W,W}`) and the coupling terms between two variables (:math:`R_{X,Y},
+R_{X,V}, R_{W,V}, \cdots`). This different contributions will be given by the
 different bricks added to the model.
 
 The main useful methods on a |mo| object are
 
-.. c:function:: m.is_complex()
+.. cpp:function:: getfem::model::is_complex()
 
    A boolean which says if the model deals with real or complex unknowns and data.
 
-.. c:function:: add_fixed_size_variable(name, size, niter=1)
+.. cpp:function:: getfem::model::add_fixed_size_variable(name, size, niter=1)
 
    Add a variable of fixed size. ``name`` is a string which designate the
    variable. ``niter`` is the number of copy of the variable.
 
-.. c:function:: add_fixed_size_variable(name, sizes, niter=1)
+.. cpp:function:: getfem::model::add_fixed_size_variable(name, sizes, niter=1)
 
    Add a variable of fixed size. ``name`` is a string which designate the
    variable. ``sizes`` is a vector of dimension for matrix or tensor fixed
    size variables. ``niter`` is the number of copy of the variable.
 
-.. c:function:: add_fixed_size_data(name, size, niter=1)
+.. cpp:function:: getfem::model::add_fixed_size_data(name, size, niter=1)
 
    Add a data of fixed size. ``name`` is a string which designate the data.
    ``niter`` is the number of copy of the data.
 
-.. c:function:: add_fixed_size_data(name, sizes, niter=1)
+.. cpp:function:: getfem::model::add_fixed_size_data(name, sizes, niter=1)
 
    Add a data of fixed size. ``name`` is a string which designate the data.
    ``sizes`` is a vector of dimension for matrix or tensor fixed
    size variables. ``niter`` is the number of copy of the data.
 
-.. c:function:: add_initialized_fixed_size_data(name, V)
+.. cpp:function:: getfem::model::add_initialized_fixed_size_data(name, V)
 
    Add a data of fixed size initialized with the given vector ``V``. ``name`` is a
    string which designate the data.
 
-.. c:function:: add_initialized_scalar_data(name, e)
+.. cpp:function:: getfem::model::add_initialized_scalar_data(name, e)
 
    Add a data of size 1 initialized with the given scalar value ``e``. ``name`` is
    a string which designate the data.
 
-.. c:function:: add_fem_variable(name, mf, niter=1)
+.. cpp:function:: getfem::model::add_fem_variable(name, mf, niter=1)
 
    Add a variable being the dofs of a finite element method ``mf``. ``name`` is a
    string which designate the variable. ``niter`` is the number of copy of the
    variable.
 
-.. c:function:: add_fem_data(name, mf, niter=1)
+.. cpp:function:: getfem::model::add_filtered_fem_variable(name, mf, region)
+
+   Add a variable being the dofs of a finite element method ``mf`` only
+   specific to a given region.
+   (The standard way to define ``mf`` in |gf| is to define in the whole domain.)
+   ``name`` is a string which designate the variable. ``region`` is the region
+   number. This function will select the degree of freedom whose shape
+   function is non-zero on the given region. Internally, a ``partial_mesh_fem``
+   object will be used. The method ``mesh_fem_of_variable('name')`` allows to
+   access to the ``partial_mesh_fem`` built. 
+
+.. cpp:function:: getfem::model::add_fem_data(name, mf, niter=1)
 
    Add a data being the dofs of a finite element method ``mf``. ``name`` is a
    string which designate the data. ``niter`` is the number of copy of the data.
 
-.. c:function:: add_initialized_fem_data(name, mf, V, niter=1)
+.. cpp:function:: getfem::model::add_initialized_fem_data(name, mf, V, niter=1)
 
    Add a data being the dofs of a finite element method ``mf`` initialized with
    the given vector ``V``. ``name`` is a string which designate the data.
    ``niter`` is the number of copy of the data.
 
-.. c:function:: add_multiplier(name, mf, primal_name, niter=1)
+.. cpp:function:: getfem::model::add_multiplier(name, mf, primal_name, niter=1)
 
    Add a special variable linked to the finite element method ``mf`` and being a
    multiplier for certain constraints (Dirichlet condition for instance) on a
@@ -125,35 +136,58 @@ The main useful methods on a |mo| object are
    variable. Note that for complex terms, only
    the real part is considered to filter the multiplier.
 
-.. c:function:: real_variable(name, niter=1)
+.. cpp:function:: getfem::model::add_im_variable(name, imd)
+
+   Add a variable defined on the integration points of the ``im_data`` object imd.
+   The variable can be scalar-valued, vector-valued or tensor-valued depending on
+   the dimension of imd.
+   It increases the model degrees of freedom by the number of integration points
+   time the size of the variable at one integration point.
+
+.. cpp:function:: getfem::model::add_internal_im_variable(name, imd)
+
+   Add a variable defined on the integration points of the ``im_data`` object
+   ``imd`` that will be statically condensed out during the linearization of the
+   problem. The variable can be scalar-valued, vector-valued or tensor-valued
+   depending on the dimension of imd.
+   It does not add degrees of freedom to the model.
+
+.. cpp:function:: getfem::model::add_im_data(name, imd)
+
+   Add a data object deignated with the string ``name``, defined at all
+   integration points of the ``im_data`` object ``imd``.
+   The data can be scalar-valued, vector-valued or tensor-valued depending on
+   the dimension of imd.
+
+.. cpp:function:: getfem::model::real_variable(name, niter=1)
 
    Gives the access to the vector value of a variable or data. Real version.
 
-.. c:function:: complex_variable(name, niter=1)
+.. cpp:function:: getfem::model::complex_variable(name, niter=1)
 
    Gives the access to the vector value of a variable or data. Complex version.
 
-.. c:function:: mesh_fem_of_variable(name)
+.. cpp:function:: getfem::model::mesh_fem_of_variable(name)
 
    Gives a reference on the |mf| on which the variable is defined. Throw an
    exception if this is not a fem variable.
 
-.. c:function:: real_tangent_matrix()
+.. cpp:function:: getfem::model::real_tangent_matrix()
 
    Gives the access to tangent matrix. Real version. A computation of the tangent
    system have to be done first.
 
-.. c:function:: complex_tangent_matrix()
+.. cpp:function:: getfem::model::complex_tangent_matrix()
 
    Gives the access to tangent matrix. Complex version. A computation of the
    tangent system have to be done first.
 
-.. c:function:: real_rhs()
+.. cpp:function:: getfem::model::real_rhs()
 
    Gives the access to right hand side vector of the linear system. real version.
    A computation of the tangent system have to be done first.
 
-.. c:function:: complex_rhs()
+.. cpp:function:: getfem::model::complex_rhs()
 
    Gives the access to right hand side vector of the linear system. Complex
    version. A computation of the tangent system have to be done first.
@@ -308,7 +342,7 @@ although it is guaranteed that the matrices in ``matl`` have good sizes they
 maybe not cleared before the call of ``asm_real_tangent_terms``.
 
 Note that this simple brick has only one term and is linear. In the case of a
-linear birck, either the matrix or the right hand side vector have to be filled
+linear brick, either the matrix or the right hand side vector have to be filled
 but not both the two. Depending on the declaration of the term. See below the
 integration of the brick to the model.
 
@@ -328,10 +362,10 @@ to this condition prescribed with a Lagrange multiplier are
 
    \int_{\Gamma} u \mu\ d\Gamma = \int_{\Gamma} u_D \mu\ d\Gamma, \forall \mu \in M,
 
-where :math:`M` is an appropriate multiplier space. The contributions to the 
-global linear system can be viewed in Fig. :ref:`ud-fig-syslinDir`. The matrix 
-:math:`B` is the "mass matrix" between the finite element space of the variable 
-:math:`u` and the finite element space of the multiplier :math:`\mu`. 
+where :math:`M` is an appropriate multiplier space. The contributions to the
+global linear system can be viewed in Fig. :ref:`ud-fig-syslinDir`. The matrix
+:math:`B` is the "mass matrix" between the finite element space of the variable
+:math:`u` and the finite element space of the multiplier :math:`\mu`.
 :math:`L_{u}` is the right hand side corresponding to the data :math:`u_D`.
 
 .. _ud-fig-syslinDir:
@@ -445,7 +479,7 @@ defined as folows::
   size_t add_my_Laplacian_brick(getfem::model &md, const getfem::mesh_im &mim,
                                 const std::string &varname,
                                 size_t region = size_t(-1)) {
-    getfem::pbrick pbr = new my_Laplacian_brick;
+    getfem::pbrick pbr = std::make_shared<my_Laplacian_brick>();
     getfem::model::termlist tl;
 
     tl.push_back(getfem::model::term_description(varname, varname, true));
@@ -494,7 +528,7 @@ defined as follows::
                                           const std::string &multname,
                                           size_t region,
                                           const std::string &dataname) {
-    pbrick pbr = new my_Dirichlet_brick;
+    pbrick pbr = std::make_shared<my_Dirichlet_brick>();
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);

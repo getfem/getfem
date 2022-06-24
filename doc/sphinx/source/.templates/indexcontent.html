@@ -1,135 +1,148 @@
 {% extends "layout.html" %}
-{% set title = 'GetFEM++ Homepage' %}
+{% set title = 'GetFEM Homepage' %}
 {% set dlbase = 'dist' %}
 {% block body %}
 
-<META NAME="Keywords" CONTENT=" finite element library, finite element package, finite element software, finite elements">
+<META NAME="Keywords" CONTENT="{%trans%} finite element library, finite element package, finite element software, finite elements{%endtrans%}">
 
-<div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the GetFEM++ logo"><br/> An open-source finite element library </div>
+<div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the GetFEM logo"><br/> {%trans%}An open-source finite element library {%endtrans%}</div>
 <br/><br/>
 
-<p><strong>NEW</strong> (June 2018): Version 5.3 has been released.<br/></p>
+<p>{%trans%}<strong>NEW</strong> (April 2020): Version 5.4 has been released.{%endtrans%}<br/></p>
 
-  <p><strong>Parts of the documentation:</strong></p>
+<p>{%trans%}Thank you for citing <a class="biglink" href="https://hal.archives-ouvertes.fr/hal-02532422/document"> [GetFEM2020]</a> in scientific works that use GetFEM.{%endtrans%}<br/></p>
+
+
+  <p><strong>{%trans%}Parts of the documentation:{%endtrans%}</strong></p>
   <table class="contentstable" align="center"><tr>
     <td width="50%">
       <p class="biglink">
-         <a class="biglink" href="index.html#what-is-getfem">What is GetFEM++?</a><br/>
-         <span class="linkdescr">what is GetFEM++?</span></p>
+         <a class="biglink" href="index.html#what-is-getfem">{%trans%}What is GetFEM?{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}what is GetFEM?{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("tutorial/index") }}">Tutorial</a><br/>
-         <span class="linkdescr">Begin with GetFEM++</span></p>
+         <a class="biglink" href="{{ pathto("tutorial/index") }}">{%trans%}Tutorial{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}Begin with GetFEM{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("screenshots/shots") }}">Screenshots</a><br/>
-         <span class="linkdescr">GetFEM++ in action</span></p>
+         <a class="biglink" href="{{ pathto("screenshots/shots") }}">{%trans%}Screenshots{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}GetFEM in action{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("whatsnew/" + version) }}">What's new in GetFEM++ {{ version }}?</a><br/>
-         <span class="linkdescr">or <a href="{{ pathto("whatsnew/index") }}">all "What's new" documents</a> since 1.0</span></span></p>
+         <a class="biglink" href="{{ pathto("whatsnew/" + version) }}">{%trans%}What's new in GetFEM {{ version }}?{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}or{%endtrans%} <a href="{{ pathto("whatsnew/index") }}">{%trans%}all "What's new" documents{%endtrans%}</a> {%trans%}since 1.0{%endtrans%}</span></span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("userdoc/index") }}">Using the Library</a><br/>
-         <span class="linkdescr">User Documentation</span></p>
+         <a class="biglink" href="{{ pathto("userdoc/index") }}">{%trans%}Using the Library{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}User Documentation{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/getfem_reference/">Library Reference</a><br/>
-         <span class="linkdescr">keep this under your pillow</span></p>
+         <a class="biglink" href="http://download-mirror.savannah.gnu.org/releases/getfem/doc/getfem_reference/">{%trans%}Library Reference{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}keep this under your pillow{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("project/index") }}">Contributor's guide</a><br/>
-         <span class="linkdescr">Description of the project and how to contribute</span></p>
+         <a class="biglink" href="{{ pathto("project/index") }}">{%trans%}Contributor's guide{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}Description of the project and how to contribute{%endtrans%}</span></p>
     </td><td width="50%">
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("python/index") }}">Python Interface</a><br/>
-         <span class="linkdescr">documentation for Python programmers</span></p>
+         <a class="biglink" href="{{ pathto("python/index") }}">{%trans%}Python Interface{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}documentation for Python programmers{%endtrans%}</span></p>
       <p class="biglink">
-	<a class="biglink" href="{{ pathto("matlab/index") }}">Matlab Interface</a><br/>
-         <span class="linkdescr">documentation for Matlab programmers</span></p>
+	<a class="biglink" href="{{ pathto("matlab_octave/index") }}">{%trans%}Octave/Matlab Interface{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}documentation for Octave/Matlab programmers{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("scilab/index") }}">SciLab Interface</a><br/>
-         <span class="linkdescr">documentation for SciLab programmers</span></p>
+         <a class="biglink" href="{{ pathto("scilab/index") }}">{%trans%}SciLab Interface{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}documentation for SciLab programmers{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("documenting/index") }}">Documenting</a><br/>
-         <span class="linkdescr">guide for documentation authors</span></p>
+         <a class="biglink" href="{{ pathto("documenting/index") }}">{%trans%}Documenting{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}guide for documentation authors{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("gmm") }}">Gmm++ template matrix library</a><br/>
-         <span class="linkdescr">What is Gmm++?</span></p>
+         <a class="biglink" href="{{ pathto("gmm") }}">{%trans%}Gmm++ template matrix library{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}What is Gmm++?{%endtrans%}</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("download") }}">Download/Install</a><br/>
-         <span class="linkdescr">Download and install {{ project }} </span></p>
+         <a class="biglink" href="{{ pathto("download") }}">{%trans%}Download/Install{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}Download and install {{ project }} {%endtrans%}</span></p>
     </td></tr>
   </table>
 
-  <p><strong>Indices and tables:</strong></p>
+  <p><strong>{%trans%}Indices and tables:{%endtrans%}</strong></p>
   <table class="contentstable" align="center"><tr>
     <td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("genindex") }}">General Index</a><br/>
-         <span class="linkdescr">all functions, classes, terms</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("glossary") }}">Glossary</a><br/>
-         <span class="linkdescr">the most important terms explained</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("genindex") }}">{%trans%}General Index{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}all functions, classes, terms{%endtrans%}</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("glossary") }}">{%trans%}Glossary{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}the most important terms explained{%endtrans%}</span></p>
     </td><td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("search") }}">Search page</a><br/>
-         <span class="linkdescr">search this documentation</span></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">Complete Table of Contents</a><br/>
-         <span class="linkdescr">lists all sections and subsections</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("search") }}">{%trans%}Search page{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}search this documentation{%endtrans%}</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">{%trans%}Complete Table of Contents{%endtrans%}</a><br/>
+         <span class="linkdescr">{%trans%}lists all sections and subsections{%endtrans%}</span></p>
     </td></tr>
   </table>
 
-  <p><strong>Meta information:</strong></p>
+  <p><strong>{%trans%}Meta information:{%endtrans%}</strong></p>
   <table class="contentstable" align="center"><tr>
     <td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("bugs") }}">Reporting bugs</a></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("about") }}">About the documentation</a></p>
-     <p class="biglink"><a class="biglink" href="{{ pathto("lists") }}">Mailing lists</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("bugs") }}">{%trans%}Reporting bugs{%endtrans%}</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("about") }}">{%trans%}About the documentation{%endtrans%}</a></p>
+     <p class="biglink"><a class="biglink" href="{{ pathto("lists") }}">{%trans%}Mailing lists{%endtrans%}</a></p>
     </td><td width="50%">
-      <p class="biglink"><a class="biglink" href="{{ pathto("license") }}">History and License of GetFEM++</a></p>
-      <p class="biglink"><a class="biglink" href="{{ pathto("copyright") }}">Legal information</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("license") }}">{%trans%}History and License of GetFEM{%endtrans%}</a></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("copyright") }}">{%trans%}Legal information{%endtrans%}</a></p>
     </td></tr>
   </table>
 
 <div class="section" id="what-is-getfem">
-<p><h1>What is GetFEM++<a class="headerlink" href="#what-is-getfem" title="Permalink to this headline">¶</a></h1></p>
+<p><h1>{%trans%}What is GetFEM{%endtrans%}<a class="headerlink" href="#what-is-getfem" title="Permalink to this headline">¶</a></h1></p>
 
     <p>
-    GetFEM++ is an open source library based on collaborative development. It aims to offer the most flexible framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method. GetFEM++ is interfaced with some script languages (Python, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM++ can be summarized as follows:
+    {%trans%}
+    GetFEM is an open source library based on collaborative development. It aims to offer the most flexible framework for solving potentially coupled systems of linear and nonlinear partial differential equations with the finite element method (see the basic principle in <a class="biglink" href="https://hal.archives-ouvertes.fr/hal-02532422/document"> [GetFEM2020]</a>). GetFEM is interfaced with some script languages (Python, Octave, Scilab and Matlab) so that almost all of the functionalities can be used just writing scripts. It works in arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong points of GetFEM can be summarized as follows:
+    {%endtrans%}
     </p>
 
     <ul>
-      <li> A weak form language (in terms of operators) that allows to translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. </li>
-      <li> A model description that gather the variables, data and terms of a problem and some predefined bricks representing classical models : elasticity in small and large deformations, Helmholtz problem, scalar elliptic problem, Dirichlet, contact and Neumann boundary conditions, incompressibility constraint, ... </li>
-      <li> A complete separation between geometric transformation, finite element method, integration methods and partial differential term description, which allows to easily switch from a method to another. </li>
-      <li> A large set of predefined methods : isoparametric/subparametric/overparametric elements, Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, pyramidal elements, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...  </li>
-      <li> A large set of predefined integration methods.  </li>
-      <li> Structural mechanics terms (elasticity, contact with friction, plasticity ...) </li>
-      <li> Level-set and finite element cut by one or several level-set (Xfem) </li>
-      <li> Computation of terms between two meshes with an arbitrary transformation: this is a very powerful tool of the generic assembly that allows to use a parameterized transformation. The derivative of the transformation with respect to the potential dependance in the variables is taken into account. Possible use : contact problems, fluid-structure interaction, special boundary conditions ... </li>
-      <li> Post-processing directly with Scilab or Matlab interfaces or with the export of vtk or gmsh files. Many possibility to interpolate arbitrary quantities, make slices, projections ... </li>
+      <li>{%trans%} A weak form language (in terms of operators) that allows to translate quite arbitrary weak formulations.  A symbolic derivation that allows to automatically obtain the tangent system for nonlinear problems. A compilation of assembly terms into optimized basic instructions. {%endtrans%}</li>
+      <li>{%trans%} A model description that gather the variables, data and terms of a problem and some predefined bricks representing classical models : elasticity in small and large deformations, Helmholtz problem, scalar elliptic problem, Dirichlet, contact and Neumann boundary conditions, incompressibility constraint, ... {%endtrans%}</li>
+      <li>{%trans%} A complete separation between geometric transformation, finite element method, integration methods and partial differential term description, which allows to easily switch from a method to another. {%endtrans%}</li>
+      <li>{%trans%} A large set of predefined methods : isoparametric/subparametric/overparametric elements, Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, pyramidal elements, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...  {%endtrans%}</li>
+      <li>{%trans%} A large set of predefined integration methods.  {%endtrans%}</li>
+      <li>{%trans%} Structural mechanics terms (elasticity, contact with friction, plasticity ...) {%endtrans%}</li>
+      <li>{%trans%} Level-set and finite element cut by one or several level-set (Xfem) {%endtrans%}</li>
+      <li>{%trans%} Computation of terms between two meshes with an arbitrary transformation: this is a very powerful tool of the generic assembly that allows to use a parameterized transformation. The derivative of the transformation with respect to the potential dependance in the variables is taken into account. Possible use : contact problems, fluid-structure interaction, special boundary conditions ... {%endtrans%}</li>
+      <li>{%trans%} Post-processing directly with Scilab, Octave or Matlab interfaces or with the export of vtk or gmsh files. Many possibility to interpolate arbitrary quantities, make slices, projections ... {%endtrans%}</li>
     </ul>
 
     <p>  
-    GetFEM++ can be used to construct very generic finite element codes,
+    {%trans%}
+    GetFEM can be used to construct very generic finite element codes,
     where finite element methods, integration methods and the dimension
     of the problem are the parameters that can be 
     changed very easily. This allows a wide range of experiments.
     Many examples and demos are provided.
+    {%endtrans%}
     </p>
     
     <p>
-    GetFEM++ has only an experimental meshing procedure (and produces regular meshes). It is therefore often necessary to import meshes. The formats 
+    {%trans%}
+    GetFEM has only an experimental meshing procedure (and produces regular meshes). It is therefore often necessary to import meshes. The formats 
     currently supported are GID, GMSH, EMC2 and ANSYS.
+    {%endtrans%}
     </p>
 </div>
 
 <div class="section" id="gmm">
-<p><h1>Gmm++<a class="headerlink" href="#gmm" title="Permalink to this headline">¶</a></h1></p>
+<p><h1>{%trans%}Gmm++{%endtrans%}<a class="headerlink" href="#gmm" title="Permalink to this headline">¶</a></h1></p>
     <p>
-      GetFEM++ includes a <a href="gmm/index.html" title="Generic Matrix Methods">generic matrix template</a> library inspired by <a
+      {%trans%}
+      GetFEM includes a <a href="gmm/index.html" title="Generic Matrix Methods">generic matrix template</a> library inspired by <a
       href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a> and <a
       href="http://www.osl.iu.edu/research/itl/" title="Iterative Template Library">ITL</a>.  
+      {%endtrans%}
     </p>
 </div>
  
 <div class="section" id="awards">
-<p><h1>Awards<a class="headerlink" href="#awards" title="Permalink to this headline">¶</a></h1></p>
+<p><h1>{%trans%}Awards{%endtrans%}<a class="headerlink" href="#awards" title="Permalink to this headline">¶</a></h1></p>
     <p>
-      GetFEM++ has been awarded by the second price at the
+      {%trans%}
+      GetFEM has been awarded by the second price at the
       <a href="http://fr.wikipedia.org/wiki/Les_Troph%C3%A9es_du_libre"> "Trophees du Libre 2007"</a> in the category of scientific softwares.
+      {%endtrans%}
     </p>
 </div>
 

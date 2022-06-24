@@ -15,7 +15,7 @@ The text of this website and the documentations are available for modification a
 
 Publication director : Yves Renard, INSA Lyon, France.
 
-Editorial directors : Konstantinos Poulios, Technical University of Denmark  and Franz Chouly, |Universite| de Franche |Comte|, |Besancon|, France. 
+Editorial directors : Konstantinos Poulios, Technical University of Denmark  and Franz Chouly, |Universite| de Franche |Comte|, |Besancon|, France.
 
 The Website is hosted by GdS 2754 Mathrice, CNRS, France.
 

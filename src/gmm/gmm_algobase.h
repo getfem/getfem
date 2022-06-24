@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -49,39 +49,36 @@ namespace gmm {
   /* ********************************************************************* */
   
   template <class T>
-    struct less : public std::binary_function<T, T, int> {
+    struct less {
     inline int operator()(const T& x, const T& y) const
     { return (x < y) ? -1 : ((y < x) ? 1 : 0); }
   };
 
-  template<> struct less<int> : public std::binary_function<int, int, int>
-  { int operator()(int x, int y) const { return x-y; } };
-  template<> struct less<char> : public std::binary_function<char, char, int>
-  { int operator()(char x, char y) const { return int(x-y); } };
-  template<> struct less<short> : public std::binary_function<short,short,int>
-  { int operator()(short x, short y) const { return int(x-y); } };
-  template<> struct less<unsigned char>
-     : public std::binary_function<unsigned char, unsigned char, int> {
+  template<> struct less<int> {
+    int operator()(int x, int y) const { return x-y; } };
+  template<> struct less<char> {
+    int operator()(char x, char y) const { return int(x-y); } };
+  template<> struct less<short> {
+    int operator()(short x, short y) const { return int(x-y); } };
+  template<> struct less<unsigned char> {
     int operator()(unsigned char x, unsigned char y) const
     { return int(x)-int(y); }
   };
   
 
   template <class T>
-    struct greater : public std::binary_function<T, T, int> {
+    struct greater {
     inline int operator()(const T& x, const T& y) const
     { return (y < x) ? -1 : ((x < y) ? 1 : 0); }
   };
 
-  template<> struct greater<int> : public std::binary_function<int, int, int>
-  { int operator()(int x, int y) const { return y-x; } };
-  template<> struct greater<char> : public std::binary_function<char,char,int>
-  { int operator()(char x, char y) const { return int(y-x); } };
-  template<> struct greater<short>
-      : public std::binary_function<short, short, int>
-  { int operator()(short x, short y) const { return int(y-x); } };
-  template<> struct greater<unsigned char>
-    : public std::binary_function<unsigned char, unsigned char, int> {
+  template<> struct greater<int> {
+    int operator()(int x, int y) const { return y-x; } };
+  template<> struct greater<char> {
+    int operator()(char x, char y) const { return int(y-x); } };
+  template<> struct greater<short> {
+    int operator()(short x, short y) const { return int(y-x); } };
+  template<> struct greater<unsigned char> {
     int operator()(unsigned char x, unsigned char y) const
       { return int(y)-int(x); }
   };
@@ -89,7 +86,7 @@ namespace gmm {
   template <typename T> inline T my_abs(T a) { return (a < T(0)) ? T(-a) : a; }
   
   template <class T>
-    struct approx_less : public std::binary_function<T, T, int> { 
+    struct approx_less { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) <= eps) return 0; if (x < y) return -1; return 1; }
@@ -97,7 +94,7 @@ namespace gmm {
   };
 
   template <class T>
-    struct approx_greater : public std::binary_function<T, T, int> { 
+    struct approx_greater { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) <= eps) return 0; if (x > y) return -1; return 1; }
@@ -116,8 +113,7 @@ namespace gmm {
   }
 
   template<class CONT, class COMP = gmm::less<typename CONT::value_type> >
-    struct lexicographical_less : public std::binary_function<CONT, CONT, int>
-  { 
+    struct lexicographical_less {
     COMP c;
     int operator()(const CONT &x, const CONT &y) const {
       return gmm::lexicographical_compare(x.begin(), x.end(),
@@ -127,8 +123,7 @@ namespace gmm {
   };
 
   template<class CONT, class COMP = gmm::less<typename CONT::value_type> >
-  struct lexicographical_greater
-    : public std::binary_function<CONT, CONT, int> { 
+  struct lexicographical_greater {
     COMP c;
     int operator()(const CONT &x, const CONT &y) const {
       return -gmm::lexicographical_compare(x.begin(), x.end(),

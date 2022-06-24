@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -42,7 +42,10 @@ check_PROGRAMS =                   \
 	test_mat_elem              \
 	test_interpolation         \
 	test_assembly              \
+	test_assembly_assignment   \
 	test_interpolated_fem      \
+	test_internal_variables    \
+	test_condensation          \
 	test_range_basis           \
 	laplacian                  \
 	laplacian_with_bricks      \
@@ -81,6 +84,7 @@ test_small_vector_SOURCES = test_small_vector.cc
 test_kdtree_SOURCES = test_kdtree.cc
 test_rtree_SOURCES = test_rtree.cc
 test_assembly_SOURCES = test_assembly.cc
+test_assembly_assignment_SOURCES = test_assembly_assignment.cc
 laplacian_SOURCES = laplacian.cc
 laplacian_with_bricks_SOURCES = laplacian_with_bricks.cc
 plate_SOURCES = plate.cc
@@ -96,6 +100,8 @@ test_mesh_SOURCES = test_mesh.cc
 geo_trans_inv_SOURCES = geo_trans_inv.cc
 test_int_set_SOURCES = test_int_set.cc
 test_interpolated_fem_SOURCES = test_interpolated_fem.cc
+test_internal_variables_SOURCES = test_internal_variables.cc
+test_condensation_SOURCES = test_condensation.cc
 test_tree_sorted_SOURCES = test_tree_sorted.cc
 test_mat_elem_SOURCES = test_mat_elem.cc
 test_slice_SOURCES = test_slice.cc
@@ -116,7 +122,7 @@ test_continuation_SOURCES = test_continuation.cc
 test_gmm_matrix_functions_SOURCES = test_gmm_matrix_functions.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = \
 	dynamic_array.pl              \
@@ -134,7 +140,10 @@ TESTS = \
 	test_slice.pl                 \
 	integration.pl                \
 	test_assembly.pl              \
+	test_assembly_assignment.pl   \
 	test_interpolated_fem.pl      \
+	test_internal_variables.pl    \
+	test_condensation.pl          \
 	test_range_basis.pl           \
 	laplacian.pl                  \
 	laplacian_with_bricks.pl      \
@@ -163,6 +172,7 @@ EXTRA_DIST =                               			\
 	test_rtree.pl                      			\
 	test_interpolation.pl              			\
 	test_assembly.pl                   			\
+	test_assembly_assignment.pl        			\
 	laplacian.pl                       			\
 	laplacian_with_bricks.pl 	   			\
 	elastostatic.pl                    			\
@@ -174,6 +184,8 @@ EXTRA_DIST =                               			\
 	geo_trans_inv.pl                   			\
 	test_int_set.pl                    			\
 	test_interpolated_fem.pl           			\
+	test_internal_variables.pl         			\
+	test_condensation.pl                                    \
 	test_slice.pl			   			\
 	test_mesh_im_level_set.pl          			\
 	thermo_elasticity_electrical_coupling.pl		\

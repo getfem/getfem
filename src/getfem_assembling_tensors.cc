@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2003-2017 Julien Pommier
+ Copyright (C) 2003-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -22,6 +22,7 @@
 #include "gmm/gmm_blas_interface.h"
 #include "getfem/getfem_arch_config.h"
 #include "getfem/getfem_assembling_tensors.h"
+#include "getfem/getfem_locale.h"
 #include "getfem/getfem_mat_elem.h"
 
 namespace getfem {
@@ -153,7 +154,7 @@ namespace getfem {
         tensor_ranges rn(child(n).ranges());
         const std::string &s = red[n].second;
         GMM_ASSERT1(rn.size() == s.size(), "Wrong size !");
-        for (unsigned i=0; i < rn.size(); ++i)
+        for (unsigned i=0; i < rn.size(); ++i) {
           if (s[i] != ' ') {
             size_type p = s.find(s[i]);
             if (p != size_type(-1) && p < i && rn[p] != rn[i])
@@ -161,16 +162,9 @@ namespace getfem {
               "of size " << rn << " with '"
               << s << "'");
           }
-          //cerr << "ts = " << child(n).ranges() << ", red="
-          //     << red[n].second << "\n";
-          bgeot::tensor_reduction::diag_shape(ts, red[n].second);
-          // cerr << "REDUCTION '" << red[n].second
-          //        << "' -> sending required to child#" << int(n)
-          //        << " " << child(n).name() << ":" << endl;
-          // cerr << ts << endl;
-          child(n).merge_required_shape(ts);
-          // cerr << "------>required shape is now: "
-          //      << child(n).required_shape() << endl;
+        }
+        bgeot::tensor_reduction::diag_shape(ts, red[n].second);
+        child(n).merge_required_shape(ts);
       }
     }
 
@@ -354,7 +348,8 @@ namespace getfem {
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
         }
         red.do_reduction();
-        long one = 1, n = int(red.out_data.size()); assert(n);
+        BLAS_INT one = BLAS_INT(1), n = BLAS_INT(red.out_data.size());
+        assert(n);
 	gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
 		    &one, (double*)&(t[0]), &one);
       }
@@ -588,7 +583,12 @@ namespace getfem {
         tensor_mask m(trng,ti);
         v.resize(r*target_dim);
         tensor_ranges cnt(2);
-        for (cnt[1]=0; cnt[1] < r; cnt[1]++) {
+        for (index_type i=0; i < r; ++i) {
+          // the value in cnt[1] is not directly used as the loop variable
+          // as this makes the INTEL 2019 compiler wrongly optimize the loop check,
+          // making the outer loop go one more than it needs to;
+          // creating SEH exceptions
+          cnt[1] = i;
           for (index_type k=0; k < target_dim; ++k) {
             cnt[0] = k*qmult + (cnt[1]%qmult); //(cnt[1] % qmult)*target_dim + k;
             m.set_mask_val(m.lpos(cnt), true);
@@ -1147,7 +1147,7 @@ namespace getfem {
   }
 
   void asm_tokenizer::get_tok() {
-    gmm::standard_locale sl;
+    standard_locale sl;
     curr_tok_ival = -1;
     while (tok_pos < str.length() && isspace(str[tok_pos])) ++tok_pos;
     if (tok_pos == str.length()) {

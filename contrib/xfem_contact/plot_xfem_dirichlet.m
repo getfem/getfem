@@ -1,4 +1,4 @@
-% Copyright (C) 2008-2017 Yves Renard, Julien Pommier.
+% Copyright (C) 2008-2020 Yves Renard, Julien Pommier.
 %
 % This file is a part of GetFEM++
 %

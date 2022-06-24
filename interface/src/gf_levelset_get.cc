@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Julien Pommier.
+ Copyright (C) 2006-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -73,10 +73,10 @@ void gf_levelset_get(getfemint::mexargs_in& m_in,
     
 
     /*@GET V = ('values', @int nls)
-    Return the vector of dof for `nls` funtion.
+    Return the vector of dof for `nls` function.
 
     If `nls` is 0, the method return the vector of dof for the primary
-    level-set funtion. If `nls` is 1, the method return the vector of
+    level-set function. If `nls` is 1, the method return the vector of
     dof for the secondary level-set function (if any).@*/
     sub_command
       ("values", 0, 1, 0, 1,

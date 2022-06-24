@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard
+ Copyright (C) 2007-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -80,9 +80,12 @@ namespace bgeot {
 	or size_type(-1) otherwise.
     */
     size_type search_node(const base_node &pt, const scalar_type radius=0) const;
-    /** Add a point to the array or identify it with a very close existing
-	point. If remove_duplicated_nodes = false, the identification of close existing points will be
-    omitted and the point simply added to the array.
+    /** Add a point to the array or use an existing point, located within
+        a distance smaller than radius. If radius is negative, the detection
+        of proximate existing points will be skipped and the point will simply
+        be added to the array.
+        The optional argument remove_duplicated_nodes is deprecated. Setting it
+        to false has the same effect as passing a negative value to radius.
     */
     size_type add_node(const base_node &pt, const scalar_type radius=0,
                        bool remove_duplicated_nodes = true);

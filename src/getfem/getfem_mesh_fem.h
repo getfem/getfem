@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -64,7 +64,7 @@ namespace getfem {
     iterator &operator ++()
     { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
     iterator &operator --()
-    { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
+    { if (ii == 0) { ii = N; --it; } --ii; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
 
@@ -257,8 +257,9 @@ namespace getfem {
 
     template<typename VECT1, typename VECT2>
     void extend_vector(const VECT1 &V1, const VECT2 &V2) const {
-      if (is_reduced()) {
-        size_type qqdim = gmm::vect_size(V1) / nb_dof();
+      size_type nbd = nb_dof();
+      if (is_reduced() && nbd) {
+        size_type qqdim = gmm::vect_size(V1) / nbd;
         if (qqdim == 1)
           gmm::mult(extension_matrix(), V1, const_cast<VECT2 &>(V2));
         else
@@ -453,7 +454,7 @@ namespace getfem {
     }
     ind_dof_ct ind_dof_of_element(size_type cv) const IS_DEPRECATED
     { return ind_basic_dof_of_element(cv); }
-    virtual const bgeot::mesh_structure::ind_cv_ct &
+    virtual const std::vector<size_type> &
     ind_scalar_basic_dof_of_element(size_type cv) const
     { return dof_structure.ind_points_of_convex(cv); }
     /** Give an array of the dof numbers lying of a convex face (all
@@ -553,12 +554,14 @@ namespace getfem {
     /** Return the total number of basic degrees of freedom (before the
      * optional reduction). */
     virtual size_type nb_basic_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return nb_total_dof;
     }
     /// Return the total number of degrees of freedom.
     virtual size_type nb_dof() const {
-      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      context_check();
+      if (!dof_enumeration_made) enumerate_dof();
       return use_reduction ? gmm::mat_nrows(R_) : nb_total_dof;
     }
     /** Get a list of basic dof lying on a given mesh_region.
@@ -569,7 +572,7 @@ namespace getfem {
     /** Get a list of dof lying on a given mesh_region. For a reduced mesh_fem
         a dof is lying on a region if its potential corresponding shape
         function is nonzero on this region. The extension matrix is used
-        to make the correspondance between basic and reduced dofs.
+        to make the correspondence between basic and reduced dofs.
         @param b the mesh_region.
         @return the list in a dal::bit_vector.
     */

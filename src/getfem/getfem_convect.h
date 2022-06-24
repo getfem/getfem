@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yves Renard
+ Copyright (C) 2009-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -59,8 +59,8 @@ namespace getfem {
   void convect(const mesh_fem &mf, VECT1 &U, const mesh_fem &mf_v,
 	       const VECT2 &V, scalar_type dt, size_type nt,
 	       convect_boundary_option option = CONVECT_EXTRAPOLATION,
-               base_node &per_min = base_node(),
-               base_node &per_max = base_node()) {
+               const base_node &per_min = base_node(),
+               const base_node &per_max = base_node()) {
     // Should be robustified on the boundaries -> control of the nodes going
     //   out the mesh.
     // Should control that the point do not move to fast ( < h/2 for instance).

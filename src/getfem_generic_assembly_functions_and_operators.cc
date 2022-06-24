@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -28,24 +28,11 @@
    compilers
 */
 
-#if defined(_MSC_VER) && _MSC_VER < 1800
-#include <boost/math/special_functions/acosh.hpp>
-#include <boost/math/special_functions/asinh.hpp>
-#include <boost/math/special_functions/atanh.hpp>
-#include <boost/math/special_functions/erf.hpp>
-typedef double (*BoostMathFunction)(double);
-BoostMathFunction const acosh = boost::math::acosh<double>;
-BoostMathFunction const asinh = boost::math::asinh<double>;
-BoostMathFunction const atanh = boost::math::atanh<double>;
-BoostMathFunction const erf = boost::math::erf<double>;
-BoostMathFunction const erfc = boost::math::erfc<double>;
-#endif
-
 namespace getfem {
 
   base_matrix& __mat_aux1()
   {
-    DEFINE_STATIC_THREAD_LOCAL(base_matrix, m);
+    THREAD_SAFE_STATIC base_matrix m;
     return m;
   }
 
@@ -86,8 +73,8 @@ namespace getfem {
     }
     return false;
   }
-  
-  
+
+
   static scalar_type ga_Heaviside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
   static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
   static scalar_type ga_reg_pos_part(scalar_type t, scalar_type eps)
@@ -297,7 +284,8 @@ namespace getfem {
       }
     }
 
-    // Second derivative : det(M)(M^{-T}@M^{-T} - M^{-T}_{jk}M^{-T}_{li})
+    // Second derivative : det(M)(M^{-T}@M^{-T} - M^{-T}_{kj}M^{-T}_{il})
+    //                   = det(M)(M^{-1}_{ji}@M^{-1}_{lk} - M^{-1}_{jk}M^{-1}_{li})
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -308,13 +296,13 @@ namespace getfem {
         gmm::clear(result.as_vector());
       else {
         auto it = result.begin();
-        auto ita = __mat_aux1().begin(), ita_l = ita;
-        for (size_type l = 0; l < N; ++l, ++ita_l) {
-          auto ita_lk = ita_l, ita_jk = ita;
-          for (size_type k = 0; k < N; ++k, ita_lk += N, ita_jk += N) {
-            auto ita_j = ita;
-            for (size_type j = 0; j < N; ++j, ++ita_j, ++ita_jk) {
-              auto ita_ji = ita_j, ita_li = ita_l;
+        auto ita = __mat_aux1().begin();
+        for (size_type l = 0; l < N; ++l) {
+          auto ita_lk = ita + l, ita_0k = ita;
+          for (size_type k = 0; k < N; ++k, ita_lk += N, ita_0k += N) {
+            auto ita_jk = ita_0k;
+            for (size_type j = 0; j < N; ++j, ++ita_jk) {
+              auto ita_ji = ita + j, ita_li = ita + l;
               for (size_type i = 0; i < N; ++i, ++it, ita_ji += N, ita_li += N)
                 *it = ((*ita_ji) * (*ita_lk) - (*ita_jk) * (*ita_li)) * det;
             }
@@ -343,10 +331,11 @@ namespace getfem {
       gmm::copy(__mat_aux1().as_vector(), result.as_vector());
     }
 
-    // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> M^{-1}HM^{-1})
+    // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> -M^{-1}HM^{-1})
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
+      if (!N) return;
       __mat_aux1().base_resize(N, N);
       gmm::copy(args[0]->as_vector(), __mat_aux1().as_vector());
       bgeot::lu_inverse(__mat_aux1());
@@ -355,9 +344,11 @@ namespace getfem {
       for (size_type l = 0; l < N; ++l, ++ita_l) {
         auto ita_k = ita;
         for (size_type k = 0; k < N; ++k, ita_k += N) {
-          auto ita_lj = ita_l;
-          for (size_type j = 0; j < N; ++j, ita_lj += N) {
-            auto ita_ik = ita_k;
+          auto ita_lj = ita_l, ita_ik = ita_k;
+          for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
+              *it = -(*ita_ik) * (*ita_lj);
+          for (size_type j = 1; j < N; ++j) {
+            ita_lj += N; ita_ik = ita_k;
             for (size_type i = 0; i < N; ++i, ++it, ++ita_ik)
               *it = -(*ita_ik) * (*ita_lj);
           }
@@ -383,7 +374,7 @@ namespace getfem {
               for (size_type j = 0; j < N; ++j)
                 for (size_type i = 0; i < N; ++i, ++it)
                   *it = __mat_aux1()(i,k)*__mat_aux1()(l,m)*__mat_aux1()(n,j)
-                    + __mat_aux1()(i,m)*__mat_aux1()(m,k)*__mat_aux1()(l,j);
+                    + __mat_aux1()(i,m)*__mat_aux1()(n,k)*__mat_aux1()(l,j);
       GA_DEBUG_ASSERT(it == result.end(), "Internal error");
     }
   };
@@ -410,9 +401,9 @@ namespace getfem {
     : ftype_(1), dtype_(3), nbargs_(1), expr_(expr__),
       derivative1_(""), derivative2_(""), t(1, 0.), u(1, 0.), gis(nullptr) {}
 
-  
+
   ga_predef_function_tab::ga_predef_function_tab() {
-    
+
     ga_predef_function_tab &PREDEF_FUNCTIONS = *this;
 
     // Power functions and their derivatives
@@ -420,7 +411,7 @@ namespace getfem {
     PREDEF_FUNCTIONS["sqr"] = ga_predef_function(ga_sqr, 2, "2*t");
     PREDEF_FUNCTIONS["pow"] = ga_predef_function(pow, 1, "DER_PDFUNC1_POW",
                                                  "DER_PDFUNC2_POW");
-    
+
     PREDEF_FUNCTIONS["DER_PDFUNC_SQRT"] =
       ga_predef_function(ga_der_sqrt, 2, "-0.25/(t*sqrt(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC1_POW"] =
@@ -528,7 +519,7 @@ namespace getfem {
       = ga_predef_function(ga_der_reg_pos_part, 1, "DER2_REG_POS_PART", "");
     PREDEF_FUNCTIONS["DER_REG_POS_PART"]
       = ga_predef_function(ga_der2_reg_pos_part);
-    
+
     PREDEF_FUNCTIONS["max"]
       = ga_predef_function(ga_max, 1, "DER_PDFUNC1_MAX", "DER_PDFUNC2_MAX");
     PREDEF_FUNCTIONS["min"]
@@ -544,7 +535,7 @@ namespace getfem {
   ga_spec_function_tab::ga_spec_function_tab() {
     // Predefined special functions
     ga_spec_function_tab &SPEC_FUNCTIONS = *this;
-    
+
     SPEC_FUNCTIONS.insert("pi");
     SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("timestep");
@@ -604,7 +595,8 @@ namespace getfem {
   void ga_define_function(const std::string &name, size_type nbargs,
                           const std::string &expr, const std::string &der1,
                           const std::string &der2) {
-    auto guard = omp_guard{};
+
+    GLOBAL_OMP_GUARD
 
     auto &PREDEF_FUNCTIONS = dal::singleton<ga_predef_function_tab>::instance(0);
     if(PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) return;
@@ -623,7 +615,7 @@ namespace getfem {
     PREDEF_FUNCTIONS[name] = ga_predef_function(expr);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     F.gis = std::make_unique<instruction_set>();
-    for (size_type thread = 0; thread < num_threads(); ++thread)
+    for (size_type thread = 0; thread < F.workspace.num_threads(); ++thread)
     {
       F.workspace(thread).add_fixed_size_variable("t", gmm::sub_interval(0,1),
                                                   F.t(thread));
@@ -645,7 +637,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_onearg f,
                           const std::string &der) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
@@ -656,7 +648,7 @@ namespace getfem {
 
   void ga_define_function(const std::string &name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
@@ -668,7 +660,7 @@ namespace getfem {
   }
 
   void ga_undefine_function(const std::string &name) {
-    auto guard = omp_guard{};
+    GLOBAL_OMP_GUARD
     ga_predef_function_tab &PREDEF_FUNCTIONS
       = dal::singleton<ga_predef_function_tab>::instance(0);
     ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
@@ -689,7 +681,8 @@ namespace getfem {
 
   ga_function::ga_function(const ga_workspace &workspace_,
                            const std::string &e)
-    : local_workspace(true, workspace_), expr(e), gis(0) {}
+    : local_workspace(workspace_, ga_workspace::inherit::ALL),
+      expr(e), gis(0) {}
 
   ga_function::ga_function(const model &md, const std::string &e)
     : local_workspace(md), expr(e), gis(0) {}

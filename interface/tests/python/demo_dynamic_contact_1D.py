@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2017-2018 Yves Renard, Franz Chouly.
+# Copyright (C) 2017-2020 Yves Renard, Franz Chouly.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -24,13 +24,16 @@
     Comparison to the closed-form solution.
 
     This program is used to check that python-getfem is working.
-    This is also a good example of use of GetFEM++.
+    This is also a good example of use of GetFEM.
 """
 
-import getfem as gf
-import numpy as np
+import os
+import sys
+
 import matplotlib.pyplot as plt
-import time, os, sys
+import numpy as np
+
+import getfem as gf
 
 # Numerical parameters
 NX = 20               # Number of elements
@@ -73,15 +76,15 @@ do_export_in_files = False;
 # Read optional parameters on the command line 
 for i in range(1,len(sys.argv)): exec(sys.argv[i])
 
-print "Begin experiment for",
-if    (version == 0): print "Pure Signorini contact",
-elif  (version == 1): print "Paoli-Schatzman scheme",
-elif  (version == 2): print "Penalized contact",
-elif  (version == 3): print "Nitsche's method",
-elif  (version == 4): print "Taylor-Flanagan method",
-print " in P%d, with NX = %d, dt = %g" % (u_degree,NX, dt)
+print("Begin experiment for", end=' ')
+if    (version == 0): print("Pure Signorini contact", end=' ')
+elif  (version == 1): print("Paoli-Schatzman scheme", end=' ')
+elif  (version == 2): print("Penalized contact", end=' ')
+elif  (version == 3): print("Nitsche's method", end=' ')
+elif  (version == 4): print("Taylor-Flanagan method", end=' ')
+print(" in P%d, with NX = %d, dt = %g" % (u_degree,NX, dt))
 
-if (version == 4 and beta != 0): print 'Incompatibility'; exit(1)
+if (version == 4 and beta != 0): print('Incompatibility'); exit(1)
 
 # Deduced parameters
 h = 1./NX
@@ -90,8 +93,8 @@ NT = TT.size
 dt_max_approx = h/(2* u_degree);
 if (version == 2): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_P))
 if (version == 3): dt_max_approx = min(dt_max_approx, 2*h/(gamma0_N))
-print 'Approximative dt_max for CFL :', dt_max_approx
-if (beta == 0 and dt > dt_max_approx): print 'Time step too large'; exit(1)
+print('Approximative dt_max for CFL :', dt_max_approx)
+if (beta == 0 and dt > dt_max_approx): print('Time step too large'); exit(1)
 
 # Exact solution. The solution is periodic of period 3
 # Return the displacement (d=0), x derivative (d=1) or time derivative (d=2)
@@ -377,8 +380,8 @@ for nit in range(0, NT):
     # Draw the approximated and exact solutions
     if (t >= tplot-(1e-10)):
         tplot += dtplot;
-        print ("Time %3f"% t), "/", T,
-        print (" Energy %7f" % E), (" Mech energy %7f" % E_org)
+        print(("Time %3f"% t), "/", T, end=' ')
+        print((" Energy %7f" % E), (" Mech energy %7f" % E_org))
         
         if (do_inter_plot):
             UUex = np.copy(Xdraw)
@@ -407,23 +410,23 @@ for nit in range(0, NT):
     
 # print the main relative errors
 LinfL2u = np.amax(store_UL2) / np.amax(store_UL2_ex)
-print 'L^\intfy(0,T,L^2)-norm of the error on u: ', LinfL2u
+print('L^\intfy(0,T,L^2)-norm of the error on u: ', LinfL2u)
 LinfH1u = np.amax(store_UH1) / np.amax(store_UH1_ex)
-print 'L^\intfy(0,T,H^1)-norm of the error on u: ', LinfH1u
+print('L^\intfy(0,T,H^1)-norm of the error on u: ', LinfH1u)
 LinfL2v = np.amax(store_VL2) / np.amax(store_VL2_ex)
-print 'L^\intfy(0,T,L^2)-norm of the error on v: ', LinfL2v
+print('L^\intfy(0,T,L^2)-norm of the error on v: ', LinfL2v)
 Nor = np.sqrt(np.sum(np.square(store_UL2_ex))*dt)
 L2L2u = np.sqrt(np.sum(np.square(store_UL2))*dt) / Nor
-print 'L^2(0,T,L^2)-norm of the error on u: ', L2L2u
+print('L^2(0,T,L^2)-norm of the error on u: ', L2L2u)
 Nor = np.sqrt(np.sum(np.square(store_UH1_ex))*dt)
 L2H1u = np.sqrt(np.sum(np.square(store_UH1))*dt) / Nor
-print 'L^2(0,T,H^1)-norm of the error on u: ', L2H1u
+print('L^2(0,T,H^1)-norm of the error on u: ', L2H1u)
 Nor = np.sqrt(np.sum(np.square(store_VL2_ex))*dt)
 L2L2v = np.sqrt(np.sum(np.square(store_VL2))*dt) / Nor
-print 'L^2(0,T)-norm of the error on v: ', L2L2v
+print('L^2(0,T)-norm of the error on v: ', L2L2v)
 Nor = np.sqrt(np.sum(np.square(store_s0_ex))*dt)
 L2sn = np.sqrt(np.sum(np.square(store_s0-store_s0_ex))*dt) / Nor
-print 'L^2(0,T)-norm of the error on contact stress: ', L2sn
+print('L^2(0,T)-norm of the error on contact stress: ', L2sn)
 
 
 if (do_export_in_files):

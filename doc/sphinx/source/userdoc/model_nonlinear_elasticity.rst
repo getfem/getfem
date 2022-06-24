@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. index:: models, model bricks
 
@@ -113,7 +113,7 @@ The stress in the reference configuration can be describe by the second Piola-Ki
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= \frac{\partial}{\partial E} {W}(E) = 2\frac{\partial}{\partial C} {W}(C)
+  {\hat{\hat{\sigma}}} = \frac{\partial}{\partial E} {W}(E) = 2\frac{\partial}{\partial C} {W}(C)
 
 where :math:`{W}` is the density of strain energy of the material. The total strain energy is given by
 
@@ -222,10 +222,10 @@ Incompressible material.
 .. math::
 
   {d_1} = 0
-  \intertext{with the additional constraint:}
+  \mbox{ with the additional constraint: }
   i_3( C) = 1
 
-The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure) 
+The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure)
 
 constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi`
 
@@ -238,7 +238,7 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 .. math::
 
   B &= -\int_{\Omega_0} p(\nabla\Phi)^{-T} \det \nabla\Phi : \nabla v  dX \\
-  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dX - 
+  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dX -
   p(\nabla\Phi)^{-T}(\det \nabla\Phi(\nabla\Phi)^{-T}:\nabla h) : \nabla v \right)  dX\\
   &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi dX - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi dX
 
@@ -248,7 +248,7 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 
 .. math::
 
-  {W} &= a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
+  {W} = a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
 
 with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}-\frac{\lambda}{4})<a<\frac{\mu}{2}` (see [ciarlet1988]_).
 
@@ -258,14 +258,14 @@ with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}
 
 .. math::
 
- {W} &= (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)^n
+ {W} = (a i_1(C) + b i_3(C)^{1/2} + c\frac{i_2(C)}{i_3(C)} + d)^n
 
 Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\partial W}{\partial i_j(C)} \frac{\partial i_j(C)}{\partial C}`, and :math:`\frac{\partial^2}{\partial C^2} {W}(C) = \displaystyle\sum_{j} \displaystyle\sum_{k} \frac{\partial^2 W}{\partial i_j(C) \partial i_k(C)} \frac{\partial i_k(C)}{\partial C} \otimes \frac{\partial i_j(C)}{\partial C} + \displaystyle\sum_{j} \frac{\partial W}{\partial i_j(C)} \frac{\partial^2 i_j(C)}{\partial C^2}` we must compute the derivatives of the strain energy function with respect to the Cauchy-Green tensor invariants (we don't need to compute the invariants derivatives with respect to :math:`E` since :math:`\frac{\partial i_j}{\partial E}(C;H) = 2 \frac{\partial i_j}{\partial C}(C;H)`) :
 
 .. math::
   \begin{array}{l}
   \frac{\partial W}{\partial i_1(C)} = naZ^{n-1}
-  ~~~~\mbox{with } Z = (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)\\
+  ~~~~\mbox{with } Z = (a i_1(C) + b i_3(C)^{1/2} + c\frac{i_2(C)}{i_3(C)} + d)\\
   \frac{\partial W}{\partial i_2(C)} = n\frac{c}{i_3(C)}Z^{n-1}\\
   \frac{\partial W}{\partial i_3(C)} = n(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})Z^{n-1}\\
   \frac{\partial W^2}{\partial^2 i_1(C)} = n(n-1)A^2Z^{n-2}\\
@@ -279,7 +279,7 @@ Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\pa
 ``Plane strain hyper-elasticity``
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-All previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
+All previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.
 
 
 
@@ -305,7 +305,7 @@ The Mooney-Rivlin law accepts two optional flags, the first one determines if th
 
 The plane strain hyperelastic law takes a pointer on a hyperelastic law as a parameter and performs a 2D plane strain approximation.
 
-``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or decribe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh). 
+``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or describe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh).
 
 
 The program :file:`nonlinear_elastostatic.cc` in :file:`tests` directory and :file:`demo_nonlinear_elasticity.m` in :file:`interface/tests/matlab` directory are some examples of use of this brick with or without an incompressibility condition.
@@ -345,7 +345,7 @@ where ``md`` is the model, ``mim`` the integration method, ``varname`` the varia
 High-level generic assembly versions
 ++++++++++++++++++++++++++++++++++++
 
-The weak form language gives access to the hyperelastic potential and constitutive laws implemented in |gf|. This allows to directly use them in the language, for instance using a generic assembly brick in a model or for interpolation of certain quantities (the stress for instance).
+The generic weak form language (GWFL) gives access to the hyperelastic potential and constitutive laws implemented in |gf|. This allows to directly use them in the language, for instance using a generic assembly brick in a model or for interpolation of certain quantities (the stress for instance).
 
 Here is the list of nonlinear operators in the language which can be useful for nonlinear elasticity::
 
@@ -383,33 +383,33 @@ The potentials::
 
 The second Piola-Kirchhoff stress tensors::
 
-  Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
-  Plane_Strain_Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
-  Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
-  Plane_Strain_Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
-  Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
-  Plane_Strain_Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
-  Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
-  Plane_Strain_Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
-  Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
-  Plane_Strain_Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
-  Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
-  Plane_Strain_Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
-  Compressible_Neo_Hookean_sigma(Grad_u, [c1;d1])
-  Plane_Strain_Compressible_Neo_Hookean_sigma(Grad_u, [c1;d1])
-  Compressible_Neo_Hookean_Bonet_sigma(Grad_u, [lambda;mu])
-  Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma(Grad_u, [lambda;mu])
-  Compressible_Neo_Hookean_Ciarlet_sigma(Grad_u, [lambda;mu])
-  Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma(Grad_u, [lambda;mu])
+  Saint_Venant_Kirchhoff_PK2(Grad_u, [lambda; mu])
+  Plane_Strain_Saint_Venant_Kirchhoff_PK2(Grad_u, [lambda; mu])
+  Generalized_Blatz_Ko_PK2(Grad_u, [a;b;c;d;n])
+  Plane_Strain_Generalized_Blatz_Ko_PK2(Grad_u, [a;b;c;d;n])
+  Ciarlet_Geymonat_PK2(Grad_u, [lambda;mu;a])
+  Plane_Strain_Ciarlet_Geymonat_PK2(Grad_u, [lambda;mu;a])
+  Incompressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2])
+  Plane_Strain_Incompressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2])
+  Compressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2;d1])
+  Plane_Strain_Compressible_Mooney_Rivlin_PK2(Grad_u, [c1;c2;d1])
+  Incompressible_Neo_Hookean_PK2(Grad_u, [c1])
+  Plane_Strain_Incompressible_Neo_Hookean_PK2(Grad_u, [c1])
+  Compressible_Neo_Hookean_PK2(Grad_u, [c1;d1])
+  Plane_Strain_Compressible_Neo_Hookean_PK2(Grad_u, [c1;d1])
+  Compressible_Neo_Hookean_Bonet_PK2(Grad_u, [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Bonet_PK2(Grad_u, [lambda;mu])
+  Compressible_Neo_Hookean_Ciarlet_PK2(Grad_u, [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Ciarlet_PK2(Grad_u, [lambda;mu])
 
 
 Note that the derivatives with respect to the material parameters have not been implemented apart for the Saint Venant Kirchhoff hyperelastic law. Therefore, it is not possible to make the parameter depend on other variables of a model (derivatives are not necessary complicated to implement but for the moment, only a wrapper with old implementations has been written).
 
-Note that the coupling of models is to be done at the weak formulation level. In a general way, it is recommended not to use the potential to define a problem. Two reasons are first that the second order derivative of the potential (necessary to obtain the tangent system) can be very complicated and non-optimized and main couplings cannot be obtained at the potential level. Thus the use of potential should be restricted to the actual computation of the potential.
+Note that the coupling of models is to be done at the weak formulation level. In a general way, it is recommended not to use the potential to define a problem. Main couplings cannot be obtained at the potential level. Thus the use of potential should be restricted to the actual computation of the potential.
 
 An example of use to add a Saint Venant-Kirchhoff hyperelastic term to a variable ``u`` in a model or a ga_workspace is given by the addition of the following assembly string::
 
-  "((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,[lambda;mu]))):Grad_Test_u"
+  "((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_PK2(Grad_u,[lambda;mu]))):Grad_Test_u"
 
 Note that in that case, ``lambda`` and ``mu`` have to be declared data of the model/ga_workspace. It is of course possible to replace them by explicit constants or expressions depending on several data.
 

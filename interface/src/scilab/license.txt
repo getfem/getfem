@@ -1,4 +1,4 @@
-## Copyright (C) 2009-2017 Yann Colette
+## Copyright (C) 2009-2020 Yann Colette
 ## 
 ##  This scilab getfem interface is a part of GetFEM++
 ## 

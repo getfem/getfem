@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard.
+ Copyright (C) 2002-2020 Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -333,7 +333,8 @@ void test3() {
 
 int main(int argc, char *argv[]) {
   
-  // try {
+  GETFEM_MPI_INIT(argc, argv);
+
   test3(); // test for vectorial fems
   test2(); // test for scalar fems
   lap_pb p;
@@ -345,6 +346,7 @@ int main(int argc, char *argv[]) {
   cout << "Assembling \n";
   p.assemble();
   
-  // } GMM_STANDARD_CATCH_ERROR;
+  GETFEM_MPI_FINALIZE;
+  
   return 0; 
 }

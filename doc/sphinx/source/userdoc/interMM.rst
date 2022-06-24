@@ -2,33 +2,33 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. _ud-intermm:
 
-Interpolation of arbitary quantities
-====================================
+Interpolation of arbitrary quantities
+=====================================
 
 Once a solution has been computed, it is quite easy to extract any quantity of interest on it with the interpolation functions for instance for post-treatment.
 
 Basic interpolation
 *******************
 
-The file :file:`getfem/getfem_interpolation.h` defines the function 
-``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite 
+The file :file:`getfem/getfem_interpolation.h` defines the function
+``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite
 element method on another mesh and/or another Lagrange finite element method::
 
   getfem::interpolation(mf1, mf2, U, V, extrapolation = 0);
 
-where ``mf1`` is a variable of type |gf_mf| and describes the finite element 
-method on which the source field ``U`` is defined, ``mf2`` is the finite element 
-method on which ``U`` will be interpolated. ``extrapolation`` is an optional 
-parameter. The values are ``0`` not to allow the extrapolation, ``1`` for an 
-extrapolation of the exterior points near the boundary and ``2`` for the 
+where ``mf1`` is a variable of type |gf_mf| and describes the finite element
+method on which the source field ``U`` is defined, ``mf2`` is the finite element
+method on which ``U`` will be interpolated. ``extrapolation`` is an optional
+parameter. The values are ``0`` not to allow the extrapolation, ``1`` for an
+extrapolation of the exterior points near the boundary and ``2`` for the
 extrapolation of all exterior points (could be expensive).
 
 
-The dimension of ``U`` should be a multiple of ``mf1.nb_dof()``, and the 
+The dimension of ``U`` should be a multiple of ``mf1.nb_dof()``, and the
 interpolated data ``V`` should be correctly sized (multiple of ``mf2.nb_dof()``).
 
 ... important::
@@ -51,10 +51,10 @@ the interpolation is done with a simple matrix multiplication::
   gmm::mult(M, U, V);
 
 
-Interpolation based on the high-level weak form language
-********************************************************
+Interpolation based on the generic weak form language (GWFL)
+************************************************************
 
-It is possible to extract some arbitrary expressions on possibly several fields thanks to the weak form language and the interpolation functions.
+It is possible to extract some arbitrary expressions on possibly several fields thanks to GWFL and the interpolation functions.
 
 This is specially dedicated to the model object (but it can also be used with a ga_workspace object). For instance if ``md`` is a valid object containing some defined variables ``u`` (vectorial) and ``p`` (scalar), one can interpolate on a Lagrange finite element method an expression such as ``p*Trace(Grad_u)``. The resulting expression can be scalar, vectorial or tensorial. The size of the resulting vector is automatically adapted.
 

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. _ud-install-mac:
 
@@ -19,10 +19,6 @@ First, verify that you have installed the following components on your system:
 
 (Xquartz is not strictly necessary but more confortable).
 
-Then execute on a console (if not already done),
-
-   $ brew tap homebrew/science
-
 Then, if you download the current git version
 
    $ brew install m4
@@ -31,13 +27,13 @@ Then, if you download the current git version
 
    $ brew install libtool
 
-For the sequential mumps, 
+For the sequential mumps,
 
-   $ brew options mumps
+   $ brew tap brewsci/num
 
-   $ brew install mumps --without-mpi
+   $ brew install brewsci-mumps --without-mpi
 
-For the parallel one, just forget --without-mpi and install also mpi and metis. 
+For the parallel one, just forget --without-mpi and install also mpi and metis.
 
 For Qhull
 
@@ -118,13 +114,7 @@ Configure Options
     $ ./configure ``--enable-matlab``
 
   depending on the interface you want to build. Note that the python interface
-  is build by default and for python 2 version. If you want to build the
-  python 3 interface use::
-
-    $ ./configure ``--enable-python3``
-
-  In that case, you have of course to install a python 3 version on your system
-  together with at least ``numpy`` and ``scipy`` packages.
+  is build by default and for python 3 version.
 
 * If you want to use a specific **BLAS** library, you may have to
   supply the necessary link flags and libs to the configure script
@@ -145,12 +135,24 @@ Configure Options
 Note that there are other options to the configure script. A
 ``./configure --help`` will list them.
 
+Octave interface
+^^^^^^^^^^^^^^^^
+
+The compilation of the Octave interface is performed with the ``--enable-octave`` option of the ``configure`` script.
+
+First, you need ``octave`` and ``mkoctfile`` commands accessible from your shell prompt (for instance invoking ``brew install octave``).
+
+
+The last step is to add the path to the toolbox in the octave path:
+
+* you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
+* you can simply use the ``addpath`` command in the octave command line. 
 
 
 Matlab interface
 ^^^^^^^^^^^^^^^^
 
-The compilation of the matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
+The compilation of the Matlab interface (with the ``--enable-matlab`` option of the ``configure`` script) may fail due to a bad configuration of the Matlab compiler `mex`.
 
 First, you need ``matlab`` and ``mex`` commands accessible from your shell prompt. If not, add ``Applications/MATLAB_RXXXX.app/bin`` on your path (for instance with ``export PATH=$PATH:Applications/MATLAB_RXXXX.app/bin`` if your shell is ``bash`` and for ``XXXX`` your Matlab installed version. Alternatively, you can make symbolic links to ``matlab`` and ``mex`` executable in ``/usr/local/bin`` thanks to the command ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/matlab matlab`` and ``sudo ln -s Applications/MATLAB_RXXXX.app/bin/mex mex``.
 
@@ -158,7 +160,7 @@ Then, you will probably have to run
 
     $ mex -setup
 
-To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adpated to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
+To produce the correct ``mexopts.sh`` file in the ``.matlab/`` directory of your home directory. If it still does not work, then you can try to modify the ``.matlab/mexopts.sh`` or replace it. Some ``mexopts.sh`` specially adapted to macOS X/Xcode are available on the internet (See for instance here for `MATLAB_R2015 <https://gist.github.com/varunagrawal/811e05ee4ca0f6a9952d>`_).
 
 
 
@@ -243,11 +245,11 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
- 
-  - launch scilab
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - load the getfem++ toolbox with:
+  - launch Scilab
+
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:

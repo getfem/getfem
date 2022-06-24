@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Yann Colette
+// Copyright (C) 2009-2020 Yann Colette
 // 
 //  This file is a part of GetFEM++
 // 
@@ -82,7 +82,7 @@ try
   if (nargout == 3) then
     gf_workspace('keep', MF2);
   end;
-catch,
+catch
   gf_workspace('pop');
   error(lasterror());
 end

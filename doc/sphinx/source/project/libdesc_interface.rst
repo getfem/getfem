@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-libdesc_interface:
 
@@ -14,7 +14,7 @@ A simplified (but rather complete) interface of |gf| is provided, so that it is 
 
 Description
 ^^^^^^^^^^^
- 
+
 All sources are located in the :file:`interface/src` directory. The interface is
 composed of one large library ``getfemint`` (which stands for getfem
 interaction), which acts as a layer above the |gf| library, and is used by
@@ -33,75 +33,75 @@ All the files in the directory :file:`interface\src`. A short description of mai
 
 * :file:`getfem_interface.cc`.
 
-  This is the bridge between the script language and the getfem interface. The 
-  function getfem_interface_main is exported as an ``extern "C"`` function, so 
-  this is a sort of c++ barrier between the script language and the getfem 
+  This is the bridge between the script language and the getfem interface. The
+  function getfem_interface_main is exported as an ``extern "C"`` function, so
+  this is a sort of c++ barrier between the script language and the getfem
   interface (exporting only a C interface avoids many compilation problems).
 
 * :file:`matlab/gfm_mex.c`.
 
-  The matlab interface. The only thing it knows about getfem is in 
+  The matlab interface. The only thing it knows about getfem is in
   :file:`getfem_interface.h`.
 
 * :file:`python/getfem_python.c`.
 
-  The python interface. The only thing it knows about getfem is in 
+  The python interface. The only thing it knows about getfem is in
   :file:`getfem_interface.h`.
 
 * :file:`gfi_array.h`, :file:`gfi_array.c`.
 
-  Both :file:`gfm_mex.c` and :file:`getfem_python.c` need a simple convention on 
-  how to send and receive arrays, and object handles, from 
+  Both :file:`gfm_mex.c` and :file:`getfem_python.c` need a simple convention on
+  how to send and receive arrays, and object handles, from
   ``getfem_interface_main()``. This file provide such functionnality.
 
 * :file:`getfemint_gsparse.h`, :file:`getfemint_precond.h`, etc.
 
-  Files specific to an interfaced object if needed. 
-  (getfemint_gsparse which export some kind of mutable sparse matrix that can 
+  Files specific to an interfaced object if needed.
+  (getfemint_gsparse which export some kind of mutable sparse matrix that can
   switch between different storage types, and real of complex elements).
 
 * :file:`gf_workspace.cc`, :file:`gf_delete.cc`.
 
   Memory management for getfem objects. There is a layer which handles the
   dependency between for example a ``mesh`` and a ``mesh_fem``.
-  It makes sure that no object 
+  It makes sure that no object
   will be destroyed while there is still another getfem_object using it.
-  The goal 
-  is to make sure that under no circumstances the user is able to crash getfem 
+  The goal
+  is to make sure that under no circumstances the user is able to crash getfem
   (and the host program, matlab, scilab or python) by passing incorrect
   argument to the getfem interface.
 
-  It also provides a kind of workspace stack, which was designed to simplify 
-  handling and cleaning of many getfem objects in matlab (since matlab does not 
+  It also provides a kind of workspace stack, which was designed to simplify
+  handling and cleaning of many getfem objects in matlab (since matlab does not
   have "object destructors").
 
 * :file:`getfemint.h`, :file:`getfemint.cc`.
 
-  Define the ``mexarg_in``, ``mexarg_out`` classes, which are used to parse the 
+  Define the ``mexarg_in``, ``mexarg_out`` classes, which are used to parse the
   list of input and output arguments to the getfem interface functions.
   The name  is not adequate anymore since any reference to "mex"
-  has been moved into 
+  has been moved into
   :file:`gfm_mex.c`.
 
 * :file:`gf_mesh.cc`, :file:`gf_mesh_get.cc`, :file:`gf_mesh_set.cc`,
   :file:`gf_fem.cc`, etc.
 
-  All the functions exported be the getfem interfaces, sorted by object type 
-  (``gf_mesh*``, ``gf_mesh_fem*``, ``gf_fem*``), and then organized as one for 
-  the object construction (``gf_mesh``), one for the object modification 
-  (``gf_mesh_set``), and one for the object inquiry (``gf_mesh_get``). Each of 
-  these files contain one main function, that receives a ``mexargs_in`` and 
-  ``mexargs_out`` stack of arguments. It parses then, and usually interprets the 
-  first argument as the name of a subfunction (``gf_mesh_get('nbpts')`` in 
+  All the functions exported be the getfem interfaces, sorted by object type
+  (``gf_mesh*``, ``gf_mesh_fem*``, ``gf_fem*``), and then organized as one for
+  the object construction (``gf_mesh``), one for the object modification
+  (``gf_mesh_set``), and one for the object inquiry (``gf_mesh_get``). Each of
+  these files contain one main function, that receives a ``mexargs_in`` and
+  ``mexargs_out`` stack of arguments. It parses then, and usually interprets the
+  first argument as the name of a subfunction (``gf_mesh_get('nbpts')`` in
   matlab, or ``Mesh.nbpts()`` in python).
 
 * :file:`matlab/gfm_rpx_mexint.c`.
 
-  An alternative to :file:`gfm_mex.c` which is used when the 
-  ``--enable-matlab-rpc`` is passed to the ``./configure`` script. The main use 
-  for that is debugging the interface, since in that case, the matlab interface 
-  communicates via sockets with a "getfem_server" program, so it is possible to 
-  debug that server program, and identify memory leaks or anything else without 
+  An alternative to :file:`gfm_mex.c` which is used when the
+  ``--enable-matlab-rpc`` is passed to the ``./configure`` script. The main use
+  for that is debugging the interface, since in that case, the matlab interface
+  communicates via sockets with a "getfem_server" program, so it is possible to
+  debug that server program, and identify memory leaks or anything else without
   having to mess with matlab (it is pain to debug).
 
 * :file:`python/getfem.py`.
@@ -112,13 +112,13 @@ All the files in the directory :file:`interface\src`. A short description of mai
 
 
 
-Objects, methods and functions of the interface 
+Objects, methods and functions of the interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The main concepts manipulated by the interface are a limited number of objects
 (Fem, Mesh, MeshFem, Model ...), the associated methods and some functions defined on these objects.
 
-A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separetaly for each partsupported script language (Python, Scilab, Matlab).
+A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separately for each part supported script language (Python, Scilab, Octave, Matlab).
 
 
 All the information needed to build the interface for the different objects, methods and functions is contained in the files `interface/src/gf*.cc`. A python script (`bin/extract_doc`) produces all the necessary files from the information it takes there. In particular, it produces the python file getfem.py, the matlab m-files for the different functions and objects (including subdirectories) and it also produces the automatic documentations.
@@ -134,8 +134,8 @@ To make all the things work automatically, a certain number of rules have to be 
 
   - :file:`gf_objectname_set.cc` : contains the methods which transform the object (if any).
 
-* A list of function is defined by only one file :file:`gf_commandname.cc`
-  it contains a list of sub-comands.
+* A list of function is defined by only one file :file:`gf_commandname.cc`.
+  It contains a list of sub-commands.
 
 
 * For each file, the main commentary on the list of functions or methods is delimited by the tags '/*@GFDOC' and '@*/'. For a file corresponding to the constructors of an object, the commentary should correspond to the description of the object.
@@ -161,14 +161,14 @@ To make all the things work automatically, a certain number of rules have to be 
   method/function with a special syntax and also gives a description of the
   method/function which will be included in the documentations. The first
   line of this commentary is important since it will be analyzed to produce
-  the right interface for Python, Matlab and Scilab.
+  the right interface for Python, Octave, Matlab and Scilab.
 
   The syntax for the description of the call of a method/function is the
   following: After ``/*@`` a special keyword should be present. It is either
   ``INIT``, ``GET``, ``SET``, ``RDATTR`` or ``FUNC``. The keyword
   ``INIT`` means that
   this is the description of a constructor of an object. ``RDATTR`` is for
-  a short method allowing to get an attribut of an object. ``GET`` is for a
+  a short method allowing to get an attribute of an object. ``GET`` is for a
   method of an object which does not modify it. ``SET`` is for a method which
   modifies an object and ``FUNC`` is for the sub-command of a function list.
 
@@ -177,7 +177,7 @@ To make all the things work automatically, a certain number of rules have to be 
 
   The parameters of the method/function are described. For a method, the
   object itself is not mentionned. The first parameter should be the method
-  or sub-command name between single quotes (a speical case is when
+  or sub-command name between single quotes (a special case is when
   this name begins with a dot; this means that it corresponds to a
   method/function where the command name is not required).
 
@@ -202,7 +202,7 @@ To make all the things work automatically, a certain number of rules have to be 
 
   Moreover, ``@tobj`` refers to an object defined by the interface.
   For instance, ou can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
-  There are some authorized abreviations:
+  There are some authorized abbreviations:
 
         - ``@tcs``  for  ``@tcont_struct``
         - ``@tmf``  for  ``@tmesh_fem``
@@ -217,10 +217,10 @@ To make all the things work automatically, a certain number of rules have to be 
         - ``@tpre``  for  ``@tprecond``
 
 
-  Three dots at the end of the parameter list (``...``) mean that 
+  Three dots at the end of the parameter list (``...``) mean that
   additional parameters are possible. Optional parameters can be described
   with brackets. For instance ``/*@SET v = ('name'[, @int i])``. But
-  be carreful how it is interpreted by the :file:`extract_doc` script
+  be careful how it is interpreted by the :file:`extract_doc` script
   to build the python interface.
 
   The second to fifth parameters of the macro correspond respectively to
@@ -236,19 +236,19 @@ To make all the things work automatically, a certain number of rules have to be 
 
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 
-* The parts of documentation included in the c++ commentaries should be in 
+* The parts of documentation included in the c++ commentaries should be in
   `reStructuredText`_ format. In particular, math formulas can be included
   with \:math\:\`f(x) = 3x^2+2x+4\` or with::
-  
+
     .. math::
- 
+
       f(x) = 3x^2+2x+4
 
   It is possible to refer to another method or function of the interface
   with the syntax ``INIT::OBJNAME('method-name', ...)``,
   ``GET::OBJNAME('method-name', ...)``, ``SET::OBJNAME('method-name', ...)``,
   ``FUNC::FUNCNAME('subcommand-name', ...)``. This will be replaced with
-  the right syntax depending on the language (Matlab, Scilab or Python).
+  the right syntax depending on the language (Octave, Matlab, Scilab or Python).
 
 * Still in the documentations, parts for a specific language can be added by
   ``@MATLAB{specific part ...}``, ``@SCILAB{specific part ...}`` and
@@ -274,18 +274,18 @@ Adding a new function or object method to the getfem interface
 
 If one want to add a new function ``gf_mesh_get(m, "foobar", .)``, then the
 main file to modify is :file:`gf_mesh_get.cc`. Remember to check every argument
-passed to the function in order to make sure that the user cannot crash scilab, matlab or python when using that function. Use the macro defined in :file:`gf_mesh_get.cc` to add your function.
+passed to the function in order to make sure that the user cannot crash Scilab, Octave, Matlab or Python when using that function. Use the macro defined in :file:`gf_mesh_get.cc` to add your function.
 
 Do not forget to add documentation for that function: in :file:`gf_mesh_get.cc`,
-this is the documentation that appears in the matlab/scilab/python help files (that is when on
+this is the documentation that appears in the Octave/Matlab/Scilab/Python help files (that is when on
 type "``help gf_mesh_get``" at the matlab prompt), and in the getfem_python
 autogenerated documentation.
 
-IMPORTANT. Note that the array indices start at 0 in Python and 1 in Matlab and Scilab. A specific function::
+IMPORTANT. Note that the array indices start at 0 in Python and 1 in Octave, Matlab and Scilab. A specific function::
 
    config::base_index()
 
-whose value is 0 in python and 1 in Matlab and Scilab has to be used to exchange indices and array of indices. Take care not to make the correction twice. Some Array of indices are automatically shifted.
+whose value is 0 in python and 1 in Octave, Matlab and Scilab has to be used to exchange indices and array of indices. Take care not to make the correction twice. Some Array of indices are automatically shifted.
 
 Adding a new object to the getfem interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -298,18 +298,18 @@ For the management of the object, you have to declare the class at the begining 
   id_type store_"name"_object(const std::shared_ptr<object_class> &shp);
   object_class *to_"name"_object(const mexarg_in &p);
 
-where "name" is the name of the object in the interface and ``object_class`` is the class name in getfem (for instance  ``getfem::mesh`` for the mesh object). Alternatively, for the object that are manipulated by a shared pointer in |gf|, the third function can return a shared pointer. 
+where "name" is the name of the object in the interface and ``object_class`` is the class name in getfem (for instance  ``getfem::mesh`` for the mesh object). Alternatively, for the object that are manipulated by a shared pointer in |gf|, the third function can return a shared pointer.
 
 IMPORTANT: In order to be interfaced, a |gf| object has to derive from ``dal::static_stored_object``. However, if it is not the case, a wrapper class can be defined such as the one for ``bgeot::base_poly`` (see the end of :file:`getfemint.h`).
 
-The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The firs macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
+The previous three functions have to be implemented at the end of :file:`getfemint.cc`.It is possible to use one of the two macros defined in :file:`getfemint.cc`. The first macro is for a standard object and the second one for an object which is manipulated in |gf| with a shared pointer.
 
 You have also to complete functions ``name_of_getfemint_class_id`` and ``class_id_of_object`` at the end of :file:`getfemint.cc`.
 
 
 You have to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
 
-The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionnaly, a constructor from a string is necessary to load the object from a file.
+The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionaly, a constructor from a string is necessary to load the object from a file.
 
 For the Scilab interface the file :file:`sci_gateway/c/builder_gateway_c.sce.in` has to be modified and the files in the directory :file:`macros/overload`.
 

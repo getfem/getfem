@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2011-2017 Andriy Andreykiv.
+ Copyright (C) 2011-2020 Andriy Andreykiv.
 
  This file is a part of GetFEM++
 
@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 {
     using namespace getfem;
 
+    GETFEM_MPI_INIT(argc, argv);
     gmm::set_traces_level(1);
     gmm::set_warning_level(1);
 
@@ -184,6 +185,8 @@ int main(int argc, char *argv[])
         exp_s.write_point_data(scb.get_ls_mesh_fem(), scb.ls_values(), "level set");
         std::cout << "end iter " << std::endl;
     }
+
+    GETFEM_MPI_FINALIZE;
 
     return 0;
 }

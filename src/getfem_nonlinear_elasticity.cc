@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -221,8 +221,7 @@ namespace getfem {
       const base_matrix &di2_ = grad_i2();
       const base_matrix &di3_ = grad_i3();
       scalar_type coeff1 = scalar_type(2) / (scalar_type(3)*i3());
-      scalar_type coeff2 = scalar_type(5) * coeff1 * coeff1 * i2()
-                           / scalar_type(2);
+      scalar_type coeff2 = scalar_type(5)*coeff1*coeff1*i2() / scalar_type(2);
       ddj2 = sym_grad_grad_i2();
       gmm::add(gmm::scaled(sym_grad_grad_i3().as_vector(), -i2() * coeff1),
                ddj2.as_vector());
@@ -1316,12 +1315,12 @@ namespace getfem {
       for (size_type i = 0; i < N; ++i)
         for (size_type j = 0; j < N; ++j)
           tr2 += t[i+ j*N] * t[j + i*N];
-      result[0] = (tr*tr - tr2)/2;
+      result[0] = (tr*tr-tr2)/scalar_type(2);
     }
 
     // Derivative : Trace(M)I - M^T
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       scalar_type tr = scalar_type(0);
@@ -1335,7 +1334,7 @@ namespace getfem {
 
     // Second derivative : I@I - \delta_{il}\delta_{jk}
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       gmm::clear(result.as_vector());
        for (size_type i = 0; i < N; ++i)
@@ -1372,7 +1371,7 @@ namespace getfem {
 
     // Derivative : (I-Trace(M)*M^{-T}/3)/(det(M)^1/3)
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       base_matrix M(N, N);
       gmm::copy(args[0]->as_vector(), M.as_vector());
@@ -1394,7 +1393,7 @@ namespace getfem {
     // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{ik}M^{-T}_{lj}
     //                      -I@M^{-T} + Trace(M)*M^{-T}@M^{-T}/3)/(3det(M)^1/3)
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       base_matrix M(N, N);
       gmm::copy(args[0]->as_vector(), M.as_vector());
@@ -1441,7 +1440,6 @@ namespace getfem {
           tr2 += M(i,j)*M(j,i);
       scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
       scalar_type det = bgeot::lu_det(&(*(M.begin())), N);
-
       if (det > 0)
         result[0] = i2 / pow(det, scalar_type(2)/scalar_type(3));
       else
@@ -1450,7 +1448,7 @@ namespace getfem {
 
     // Derivative : (Trace(M)*I-M^T-2i2(M)M^{-T}/3)/(det(M)^2/3)
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       base_matrix M(N, N);
@@ -1467,14 +1465,14 @@ namespace getfem {
       for (size_type j = 0; j < N; ++j)
         for (size_type i = 0; i < N; ++i, ++it)
           *it = (((i == j) ? tr : scalar_type(0)) - t[j+N*i]
-                 - scalar_type(2)*i2*M(j,i)/scalar_type(3))
+                 - scalar_type(2)*i2*M(j,i)/(scalar_type(3)))
             / pow(det, scalar_type(2)/scalar_type(3));
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
 
     // Second derivative
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // To be verified
+                           base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
       const base_tensor &t = *args[0];
       base_matrix M(N, N);
@@ -1492,13 +1490,12 @@ namespace getfem {
         for (size_type k = 0; k < N; ++k)
           for (size_type j = 0; j < N; ++j)
             for (size_type i = 0; i < N; ++i, ++it)
-              *it = ( ((i==j) ? 1. : 0.) * ((k==l) ? 1. : 0.)
-                      - ((i==l) ? 1. : 0.) * ((k==j) ? 1. : 0.)
-                      - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/3.
-                      + 2.*tr*M(j,i)*M(l,k)/3.
-                      - 2.*i2*M(i,k)*M(l,j)/3.
-                      - 2.*((tr*((i==j) ? 1. : 0.))-t[j+N*i]
-                            - 2.*i2*M(j,i)/3)*M(l,k)/3.)
+              *it = ( + (((i==j) && (k==l)) ? 1. : 0.)
+                      - (((i==l) && (k==j)) ? 1. : 0.)
+                      + 10.*i2*M(j,i)*M(l,k)/(9.)
+                      - 2.*(M(j,i)*(tr*((k==l) ? 1.:0.)-t[l+N*k]))/(3.)
+                      - 2.*(M(l,k)*(tr*((i==j) ? 1.:0.)-t[j+N*i]))/(3.)
+                      - 2.*i2*(M(j,i)*M(l,k)-M(j,k)*M(l,i))/(3.))
                 / pow(det, scalar_type(2)/scalar_type(3));
     }
   };
@@ -1588,7 +1585,7 @@ namespace getfem {
     // Derivative : F{jl}delta{ik}+F{il}delta{kj}
     // (comes from H -> HF^{T} + FH^{T})
     void derivative(const arg_list &args, size_type,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
       base_tensor::iterator it = result.begin();
       for (size_type l = 0; l < n; ++l)
@@ -1606,7 +1603,7 @@ namespace getfem {
     // A{ijklop}=delta{ki}delta{lp}delta{oj} + delta{oi}delta{pl}delta{kj}
     // comes from (H,K) -> HK^{T} + KH^{T}
     void second_derivative(const arg_list &args, size_type, size_type,
-                           base_tensor &result) const { // to be verified
+                           base_tensor &result) const {
       size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
       base_tensor::iterator it = result.begin();
       for (size_type p = 0; p < n; ++p)
@@ -2045,11 +2042,17 @@ namespace getfem {
       ("Saint_Venant_Kirchhoff_sigma",
        std::make_shared<Saint_Venant_Kirchhoff_sigma>());
     PREDEF_OPERATORS.add_method
+      ("Saint_Venant_Kirchhoff_PK2",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
+    PREDEF_OPERATORS.add_method
       ("Saint_Venant_Kirchhoff_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<SaintVenant_Kirchhoff_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Saint_Venant_Kirchhoff_sigma",
+       std::make_shared<Saint_Venant_Kirchhoff_sigma>());
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Saint_Venant_Kirchhoff_PK2",
        std::make_shared<Saint_Venant_Kirchhoff_sigma>());
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Saint_Venant_Kirchhoff_potential",
@@ -2061,12 +2064,19 @@ namespace getfem {
     PREDEF_OPERATORS.add_method
       ("Generalized_Blatz_Ko_sigma",
        std::make_shared<AHL_wrapper_sigma>(gbklaw));
-    PREDEF_OPERATORS.add_method
+     PREDEF_OPERATORS.add_method
+      ("Generalized_Blatz_Ko_PK2",
+       std::make_shared<AHL_wrapper_sigma>(gbklaw));
+   PREDEF_OPERATORS.add_method
       ("Generalized_Blatz_Ko_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<generalized_Blatz_Ko_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Generalized_Blatz_Ko_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Generalized_Blatz_Ko_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(gbklaw)));
     PREDEF_OPERATORS.add_method
@@ -2077,6 +2087,8 @@ namespace getfem {
     phyperelastic_law cigelaw
       = std::make_shared<Ciarlet_Geymonat_hyperelastic_law>();
     PREDEF_OPERATORS.add_method
+      ("Ciarlet_Geymonat_PK2", std::make_shared<AHL_wrapper_sigma>(cigelaw));
+    PREDEF_OPERATORS.add_method
       ("Ciarlet_Geymonat_sigma", std::make_shared<AHL_wrapper_sigma>(cigelaw));
     PREDEF_OPERATORS.add_method
       ("Ciarlet_Geymonat_potential",
@@ -2084,6 +2096,10 @@ namespace getfem {
        (std::make_shared<Ciarlet_Geymonat_hyperelastic_law>()));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Ciarlet_Geymonat_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Ciarlet_Geymonat_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cigelaw)));
     PREDEF_OPERATORS.add_method
@@ -2097,9 +2113,16 @@ namespace getfem {
       ("Incompressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>(morilaw));
     PREDEF_OPERATORS.add_method
+      ("Incompressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>(morilaw));
+    PREDEF_OPERATORS.add_method
       ("Incompressible_Mooney_Rivlin_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(morilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>
@@ -2115,9 +2138,16 @@ namespace getfem {
       ("Compressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>(cmorilaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cmorilaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Mooney_Rivlin_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Mooney_Rivlin_PK2",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cmorilaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Mooney_Rivlin_sigma",
        std::make_shared<AHL_wrapper_sigma>
@@ -2133,11 +2163,18 @@ namespace getfem {
       ("Incompressible_Neo_Hookean_sigma",
        std::make_shared<AHL_wrapper_sigma>(ineolaw));
     PREDEF_OPERATORS.add_method
+      ("Incompressible_Neo_Hookean_PK2",
+       std::make_shared<AHL_wrapper_sigma>(ineolaw));
+    PREDEF_OPERATORS.add_method
       ("Incompressible_Neo_Hookean_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(false,true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Incompressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Neo_Hookean_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(ineolaw)));
     PREDEF_OPERATORS.add_method
@@ -2151,11 +2188,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneolaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneolaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Mooney_Rivlin_hyperelastic_law>(true,true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneolaw)));
     PREDEF_OPERATORS.add_method
@@ -2169,11 +2213,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_Bonet_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneobolaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Bonet_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneobolaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_Bonet_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Neo_Hookean_hyperelastic_law>(true)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Bonet_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneobolaw)));
     PREDEF_OPERATORS.add_method
@@ -2187,11 +2238,18 @@ namespace getfem {
       ("Compressible_Neo_Hookean_Ciarlet_sigma",
        std::make_shared<AHL_wrapper_sigma>(cneocilaw));
     PREDEF_OPERATORS.add_method
+      ("Compressible_Neo_Hookean_Ciarlet_PK2",
+       std::make_shared<AHL_wrapper_sigma>(cneocilaw));
+    PREDEF_OPERATORS.add_method
       ("Compressible_Neo_Hookean_Ciarlet_potential",
        std::make_shared<AHL_wrapper_potential>
        (std::make_shared<Neo_Hookean_hyperelastic_law>(false)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma",
+       std::make_shared<AHL_wrapper_sigma>
+       (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_PK2",
        std::make_shared<AHL_wrapper_sigma>
        (std::make_shared<plane_strain_hyperelastic_law>(cneocilaw)));
     PREDEF_OPERATORS.add_method
@@ -2252,12 +2310,12 @@ namespace getfem {
                 "fem variables");
     size_type Q = mf->get_qdim();
     GMM_ASSERT1(Q == N, "Finite strain elasticity brick can only be applied "
-                "on a fem variable having the same dimension than the mesh");
+                "on a fem variable having the same dimension as the mesh");
 
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
     std::string expr = "((Id(meshdim)+Grad_"+varname+")*(" + adapted_lawname
-      + "_sigma(Grad_"+varname+","+params+"))):Grad_" + test_varname;
+      + "_PK2(Grad_"+varname+","+params+"))):Grad_" + test_varname;
 
     return add_nonlinear_generic_assembly_brick
       (md, mim, expr, region, true, false,
@@ -2289,7 +2347,7 @@ namespace getfem {
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
     std::string expr = "sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2("
-      + adapted_lawname + "_sigma(Grad_" + varname + "," + params + "),Grad_"
+      + adapted_lawname + "_PK2(Grad_" + varname + "," + params + "),Grad_"
       + varname + ")))";
     ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM, rg);
   }

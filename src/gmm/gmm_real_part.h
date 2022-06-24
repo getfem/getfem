@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2003-2017 Yves Renard
+ Copyright (C) 2003-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -39,6 +39,7 @@
 
 #include "gmm_def.h"
 #include "gmm_vector.h"
+#include <functional>
 
 namespace gmm {
 
@@ -137,8 +138,10 @@ namespace gmm {
     
     part_vector_iterator(void) {}
     explicit part_vector_iterator(const IT &i) : it(i) {}
-    part_vector_iterator(const part_vector_iterator<MIT, MIT, PART> &i) : it(i.it) {}
-    
+    part_vector_iterator(const part_vector_iterator<MIT, MIT, PART> &i)
+      : it(i.it) {}
+    part_vector_iterator &operator =
+    (const part_vector_iterator<MIT, MIT, PART> &i) { it = i.it; return *this; }
 
     size_type index(void) const { return it.index(); }
     part_vector_iterator operator ++(int)

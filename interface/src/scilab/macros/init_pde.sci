@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Yann Colette
+// Copyright (C) 2009-2020 Yann Colette
 // 
 //  This file is a part of GetFEM++
 // 
@@ -39,8 +39,7 @@ pde = mlist(['pde', ...
              'PR', ...
              'E', ...
              'pdetool', ... // pde('pdetool')('b'), pde('pdetool')('e'), 
-             'bound', ...
-             ]); 
+             'bound']); 
 
 pde('verbosity')     = 0; // integer
 pde('type')          = [];     // 'laplacian', 'linear elasticity', 'stockes'

@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -19,6 +19,10 @@ if BUILDMEX
 subdirMATLAB=matlab
 endif
 
+if BUILDOCTAVE
+subdirOCTAVE=octave
+endif
+
 if BUILDPYTHON
 subdirPYTHON=python
 endif
@@ -27,7 +31,7 @@ if BUILDSCILAB
 subdirSCILAB=scilab
 endif
 
-SUBDIRS = . $(subdirMATLAB) $(subdirPYTHON) $(subdirSCILAB)
+SUBDIRS = . $(subdirMATLAB) $(subdirOCTAVE) $(subdirPYTHON) $(subdirSCILAB)
 
 RPC_INC_DIR=@RPC_INC_DIR@
 

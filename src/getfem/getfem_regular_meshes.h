@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -123,7 +123,7 @@ namespace getfem
      @param pgt the geometric transformation to use. For example, use 
      @code
      pgt = geometric_trans_descriptor("GT_PK(2,1"); // to build a mesh of triangles
-     pgt = geometric_trans_descriptor("QK(3,2)"); // to build a mesh of order 2 parallelepipeded
+     pgt = geometric_trans_descriptor("QK(3,2)"); // to build a mesh of order 2 parallelepiped
      @endcode
 
      @param nsubdiv is the number of cells in each direction.  
@@ -167,6 +167,28 @@ namespace getfem
      @param m the output mesh.    
   */
   void regular_ball_mesh(mesh& m, const std::string &st);
+
+  /**
+     Build a regular mesh on a ball shell, parametrized by the string st.
+     The format of st is similar to getfem::regular_mesh.
+     @see getfem::import_mesh.
+     All parameters except the geometric transformation GT are optional.
+     Here, parameter NSUBDIV has to be a vector of size 2 that holds the
+     number of subdivisions in the circumferential and radial direction
+     of the mesh.
+     SIZES is a two element vector that provides the ball radius and shell
+     thickness (default radius is equal to 1 and default thickness is
+     ewual to 0.5).
+     If NOISED=1 the nodes in the interior of the individual sub-regions
+     of the mesh are randomly "shaken" (default value NOISED=0).
+     An additional integer paramater called SYMMETRIES receiving the
+     values 1, 2 or 3 (in three dimensions) permits to respectively request
+     one half, one quarter or one eighth of the ball to be meshed
+     (default value SYMMETRIES=0).
+
+     @param m the output mesh.
+  */
+  void regular_ball_shell_mesh(mesh& m, const std::string &st);
 
 }  /* end of namespace getfem.                                             */
 

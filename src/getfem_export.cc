@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2001-2017 Yves Renard
+ Copyright (C) 2001-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -26,12 +26,84 @@
 
 namespace getfem
 {
+
+  /* try to check if a quad or hexahedric cell is "rectangular" and oriented
+     along the axes */
+  template<typename C> static bool check_voxel(const C& c) {
+    scalar_type h[3];
+    unsigned N = c[0].size();
+    if (c.size() != (1U << N)) return false;
+    const base_node P0 = c[0];
+    h[0] = c[1][0] - P0[0];
+    h[1] = c[2][0] - P0[0];
+    if (c.size() != 4) h[2] = c[4][0] - P0[0];
+    for (unsigned i=1; i < c.size(); ++i) {
+      const base_node d = c[i] - P0;
+      for (unsigned j=0; j < N; ++j)
+        if (gmm::abs(d[j]) > 1e-7*h[j] && gmm::abs(d[j] - h[j]) > 1e-7*h[j])
+          return false;
+    }
+    return true;
+  }
+
+  /* Base64 encoding (https://en.wikipedia.org/wiki/Base64) */
+  std::string base64_encode(const std::vector<unsigned char>& src)
+  {
+    const std::string table("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+    std::string dst;
+    for (size_type i = 0; i < src.size(); ++i) {
+      switch (i % 3) {
+      case 0:
+        dst.push_back(table[(src[i] & 0xFC) >> 2]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x03) << 4]);
+          dst.push_back('=');
+          dst.push_back('=');
+        }
+        break;
+      case 1:
+        dst.push_back(table[((src[i - 1] & 0x03) << 4) | ((src[i + 0] & 0xF0) >> 4)]);
+        if (i + 1 == src.size()) {
+          dst.push_back(table[(src[i] & 0x0F) << 2]);
+          dst.push_back('=');
+        }
+        break;
+      case 2:
+        dst.push_back(table[((src[i - 1] & 0x0F) << 2) | ((src[i + 0] & 0xC0) >> 6)]);
+        dst.push_back(table[src[i] & 0x3F]);
+        break;
+      }
+    }
+    return dst;
+  }
+
   /* -------------------------------------------------------------
    * VTK export
    * ------------------------------------------------------------- */
 
   struct gf2vtk_dof_mapping : public std::vector<std::vector<unsigned> > {};
   struct gf2vtk_vtk_type : public std::vector<int> {};
+
+  typedef enum { VTK_VERTEX = 1,
+                 VTK_LINE = 3,
+                 VTK_TRIANGLE = 5,
+                 VTK_PIXEL = 8,
+                 VTK_QUAD = 9,
+                 VTK_TETRA = 10,
+                 VTK_VOXEL = 11,
+                 VTK_HEXAHEDRON = 12,
+                 VTK_WEDGE = 13,
+                 VTK_PYRAMID = 14,
+                 VTK_QUADRATIC_EDGE = 21,
+                 VTK_QUADRATIC_TRIANGLE = 22,
+                 VTK_QUADRATIC_QUAD = 23,
+                 VTK_QUADRATIC_TETRA = 24,
+                 VTK_QUADRATIC_HEXAHEDRON = 25,
+                 VTK_QUADRATIC_WEDGE = 26,
+                 VTK_QUADRATIC_PYRAMID = 27,
+                 VTK_BIQUADRATIC_QUAD = 28,
+                 VTK_TRIQUADRATIC_HEXAHEDRON = 29,
+                 VTK_BIQUADRATIC_QUADRATIC_WEDGE = 32 } vtk_cell_type;
 
   typedef enum { NO_VTK_MAPPING,
                  N1_TO_VTK_VERTEX,
@@ -66,48 +138,48 @@ namespace getfem
     vtkmaps.resize(25);
     vtktypes.resize(25);
 
-    vtktypes[N1_TO_VTK_VERTEX] = vtk_export::VTK_VERTEX;
+    vtktypes[N1_TO_VTK_VERTEX] = VTK_VERTEX;
     vtkmaps [N1_TO_VTK_VERTEX] = {0};
-    vtktypes[N2_TO_VTK_LINE] = vtk_export::VTK_LINE;
+    vtktypes[N2_TO_VTK_LINE] = VTK_LINE;
     vtkmaps [N2_TO_VTK_LINE] = {0, 1};
-    vtktypes[N3_TO_VTK_TRIANGLE] = vtk_export::VTK_TRIANGLE;
+    vtktypes[N3_TO_VTK_TRIANGLE] = VTK_TRIANGLE;
     vtkmaps [N3_TO_VTK_TRIANGLE] = {0, 1, 2};
-    vtktypes[N4_TO_VTK_PIXEL] = vtk_export::VTK_PIXEL;
+    vtktypes[N4_TO_VTK_PIXEL] = VTK_PIXEL;
     vtkmaps [N4_TO_VTK_PIXEL] = {0, 1, 2, 3};
-    vtktypes[N4_TO_VTK_QUAD] = vtk_export::VTK_QUAD;
+    vtktypes[N4_TO_VTK_QUAD] = VTK_QUAD;
     vtkmaps [N4_TO_VTK_QUAD] = {0, 1, 3, 2};
-    vtktypes[N4_TO_VTK_TETRA] = vtk_export::VTK_TETRA;
+    vtktypes[N4_TO_VTK_TETRA] = VTK_TETRA;
     vtkmaps [N4_TO_VTK_TETRA] = {0, 1, 2, 3};
-    vtktypes[N8_TO_VTK_VOXEL] = vtk_export::VTK_VOXEL;
+    vtktypes[N8_TO_VTK_VOXEL] = VTK_VOXEL;
     vtkmaps [N8_TO_VTK_VOXEL] = {0, 1, 2, 3, 4, 5, 6, 7};
-    vtktypes[N8_TO_VTK_HEXAHEDRON] = vtk_export::VTK_HEXAHEDRON;
+    vtktypes[N8_TO_VTK_HEXAHEDRON] = VTK_HEXAHEDRON;
     vtkmaps [N8_TO_VTK_HEXAHEDRON] = {0, 1, 3, 2, 4, 5, 7, 6};
-    vtktypes[N6_TO_VTK_WEDGE] = vtk_export::VTK_WEDGE;
+    vtktypes[N6_TO_VTK_WEDGE] = VTK_WEDGE;
     vtkmaps [N6_TO_VTK_WEDGE] = {0, 1, 2, 3, 4, 5};
-    vtktypes[N5_TO_VTK_PYRAMID] = vtk_export::VTK_PYRAMID;
+    vtktypes[N5_TO_VTK_PYRAMID] = VTK_PYRAMID;
     vtkmaps [N5_TO_VTK_PYRAMID] = {0, 1, 3, 2, 4};
-    vtktypes[N3_TO_VTK_QUADRATIC_EDGE] = vtk_export::VTK_QUADRATIC_EDGE;
+    vtktypes[N3_TO_VTK_QUADRATIC_EDGE] = VTK_QUADRATIC_EDGE;
     vtkmaps [N3_TO_VTK_QUADRATIC_EDGE] = {0, 2, 1};
-    vtktypes[N6_TO_VTK_QUADRATIC_TRIANGLE] = vtk_export::VTK_QUADRATIC_TRIANGLE;
+    vtktypes[N6_TO_VTK_QUADRATIC_TRIANGLE] = VTK_QUADRATIC_TRIANGLE;
     vtkmaps [N6_TO_VTK_QUADRATIC_TRIANGLE] = {0, 2, 5, 1, 4, 3};
-    vtktypes[N8_TO_VTK_QUADRATIC_QUAD] = vtk_export::VTK_QUADRATIC_QUAD;
+    vtktypes[N8_TO_VTK_QUADRATIC_QUAD] = VTK_QUADRATIC_QUAD;
     vtkmaps [N8_TO_VTK_QUADRATIC_QUAD] = {0, 2, 7, 5, 1, 4, 6, 3};
-    vtktypes[N10_TO_VTK_QUADRATIC_TETRA] = vtk_export::VTK_QUADRATIC_TETRA;
+    vtktypes[N10_TO_VTK_QUADRATIC_TETRA] = VTK_QUADRATIC_TETRA;
     vtkmaps [N10_TO_VTK_QUADRATIC_TETRA] = {0, 2, 5, 9, 1, 4, 3, 6, 7, 8};
-    vtktypes[N20_TO_VTK_QUADRATIC_HEXAHEDRON] = vtk_export::VTK_QUADRATIC_HEXAHEDRON;
+    vtktypes[N20_TO_VTK_QUADRATIC_HEXAHEDRON] = VTK_QUADRATIC_HEXAHEDRON;
     vtkmaps [N20_TO_VTK_QUADRATIC_HEXAHEDRON] = {0, 2, 7, 5, 12, 14, 19, 17, 1, 4, 6, 3, 13, 16, 18, 15, 8, 9, 11, 10};
-    vtktypes[N15_TO_VTK_QUADRATIC_WEDGE] = vtk_export::VTK_QUADRATIC_WEDGE;
+    vtktypes[N15_TO_VTK_QUADRATIC_WEDGE] = VTK_QUADRATIC_WEDGE;
     vtkmaps [N15_TO_VTK_QUADRATIC_WEDGE] = {0, 2, 5, 9, 11, 14, 1, 4, 3, 10, 13, 12, 6, 7, 8};
                                       // = {0, 5, 2, 9, 14, 11, 3, 4, 1, 12, 13, 10, 6, 8, 7};
-    vtktypes[N13_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtktypes[N13_TO_VTK_QUADRATIC_PYRAMID] = VTK_QUADRATIC_PYRAMID;
     vtkmaps [N13_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 7, 5, 12, 1, 4, 6, 3, 8, 9, 11, 10};
-    vtktypes[N14_TO_VTK_QUADRATIC_PYRAMID] = vtk_export::VTK_QUADRATIC_PYRAMID;
+    vtktypes[N14_TO_VTK_QUADRATIC_PYRAMID] = VTK_QUADRATIC_PYRAMID;
     vtkmaps [N14_TO_VTK_QUADRATIC_PYRAMID] = {0, 2, 8, 6, 13, 1, 5, 7, 3, 9, 10, 12, 11};
-    vtktypes[N9_TO_VTK_BIQUADRATIC_QUAD] = vtk_export::VTK_BIQUADRATIC_QUAD;
+    vtktypes[N9_TO_VTK_BIQUADRATIC_QUAD] = VTK_BIQUADRATIC_QUAD;
     vtkmaps [N9_TO_VTK_BIQUADRATIC_QUAD] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
-    vtktypes[N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = vtk_export::VTK_TRIQUADRATIC_HEXAHEDRON;
+    vtktypes[N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = VTK_TRIQUADRATIC_HEXAHEDRON;
     vtkmaps [N27_TO_VTK_TRIQUADRATIC_HEXAHEDRON] = {0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22};
-    vtktypes[N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE] = vtk_export::VTK_BIQUADRATIC_QUADRATIC_WEDGE;
+    vtktypes[N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE] = VTK_BIQUADRATIC_QUADRATIC_WEDGE;
     vtkmaps [N18_TO_VTK_BIQUADRATIC_QUADRATIC_WEDGE]  = {0, 2, 5, 12, 14, 17, 1, 4, 3, 13, 16, 15, 6, 8, 11, 7, 10, 9};
   }
 
@@ -124,72 +196,67 @@ namespace getfem
     return vtktypes[t];
   }
 
-  vtk_export::vtk_export(std::ostream &os_, bool ascii_)
-    : os(os_), ascii(ascii_) { init(); }
 
-  vtk_export::vtk_export(const std::string& fname, bool ascii_)
-    : os(real_os), ascii(ascii_),
-    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out :
-                                    std::ios_base::out) {
-    GMM_ASSERT1(real_os, "impossible to write to vtk file '" << fname << "'");
+  vtk_export::vtk_export(std::ostream &os_, bool ascii_, bool vtk_)
+    : os(os_), ascii(ascii_), vtk(vtk_) { init(); }
+
+  vtk_export::vtk_export(const std::string& fname, bool ascii_, bool vtk_)
+    : os(real_os), ascii(ascii_), vtk(vtk_),
+    real_os(fname.c_str(), !ascii ? std::ios_base::binary | std::ios_base::out
+                                  : std::ios_base::out) {
+    GMM_ASSERT1(real_os, "impossible to write to file '" << fname << "'");
     init();
   }
 
+  vtk_export::~vtk_export(){
+    if (!vtk) {
+      if (state == IN_CELL_DATA) os << "</CellData>\n";
+      if (state == IN_POINT_DATA) os << "</PointData>\n";
+      os << "</Piece>\n";
+      os << "</UnstructuredGrid>\n";
+      os << "</VTKFile>\n";
+    }
+  }
+
   void vtk_export::init() {
-    static int test_endian = 0x01234567;
-    strcpy(header, "Exported by getfem++");
+    strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1);
-    if (*((char*)&test_endian) == 0x67)
-      reverse_endian = true;
-    else reverse_endian = false;
+    static int test_endian = 0x01234567;
+    reverse_endian = (*((char*)&test_endian) == 0x67);
     state = EMPTY;
+    clear_vals();
   }
 
   void vtk_export::switch_to_cell_data() {
     if (state != IN_CELL_DATA) {
-      state = IN_CELL_DATA;
-      write_separ();
-      if (psl) {
-        os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1)
-         + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
+      if (vtk) {
+        size_type nb_cells=0;
+        if (psl) for (auto i : {0,1,2,3}) nb_cells += psl->nb_simplexes(i);
+        else nb_cells = pmf->convex_index().card();
+        write_separ();
+        os << "CELL_DATA " << nb_cells << "\n";
+        write_separ();
       } else {
-        os << "CELL_DATA " << pmf->convex_index().card() << "\n";
+        if (state == IN_POINT_DATA) os << "</PointData>\n";
+        os << "<CellData>\n";
       }
-      write_separ();
+      state = IN_CELL_DATA;
     }
   }
 
   void vtk_export::switch_to_point_data() {
     if (state != IN_POINT_DATA) {
-      state = IN_POINT_DATA;
-      write_separ();
-      if (psl) {
-        write_separ(); os << "POINT_DATA " << psl->nb_points() << "\n";
+      if (vtk) {
+        write_separ();
+        os << "POINT_DATA " << (psl ? psl->nb_points()
+                                    : pmf_dof_used.card()) << "\n";
+        write_separ();
       } else {
-        os << "POINT_DATA " << pmf_dof_used.card() << "\n";
+        if (state == IN_CELL_DATA) os << "</CellData>\n";
+        os << "<PointData>\n";
       }
-      write_separ();
+      state = IN_POINT_DATA;
     }
-  }
-
-
-  /* try to check if a quad or hexahedric cell is "rectangular" and oriented
-     along the axes */
-  template<typename C> static bool check_voxel(const C& c) {
-    scalar_type h[3];
-    unsigned N = c[0].size();
-    if (c.size() != (1U << N)) return false;
-    const base_node P0 = c[0];
-    h[0] = c[1][0] - P0[0];
-    h[1] = c[2][0] - P0[0];
-    if (c.size() != 4) h[2] = c[4][0] - P0[0];
-    for (unsigned i=1; i < c.size(); ++i) {
-      const base_node d = c[i] - P0;
-      for (unsigned j=0; j < N; ++j)
-        if (gmm::abs(d[j]) > 1e-7*h[j] && gmm::abs(d[j] - h[j]) > 1e-7*h[j])
-          return false;
-    }
-    return true;
   }
 
 
@@ -202,7 +269,7 @@ namespace getfem
   void vtk_export::exporting(const mesh& m) {
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-              << "D slice (not supported)");
+                << "D mesh (not supported)");
     pmf = std::make_unique<mesh_fem>(const_cast<mesh&>(m), dim_type(1));
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -215,7 +282,7 @@ namespace getfem
   void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-              << "D slice (not supported)");
+                << "D mesh_fem (not supported)");
     if (&mf != pmf.get())
       pmf = std::make_unique<mesh_fem>(mf.linked_mesh());
     /* initialize pmf with finite elements suitable for VTK (which only knows
@@ -251,7 +318,7 @@ namespace getfem
                                 classical_fem(pgt, degree, true));
       }
     }
-    /* find out which dof will be exported to VTK */
+    /* find out which dof will be exported to VTK/VTU */
 
     const mesh &m = pmf->linked_mesh();
     pmf_mapping_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
@@ -325,14 +392,32 @@ namespace getfem
 
   void vtk_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
-    os << "# vtk DataFile Version 2.0\n";
-    os << header << "\n";
-    if (ascii) os << "ASCII\n"; else os << "BINARY\n";
+    if (vtk) {
+      os << "# vtk DataFile Version 2.0\n";
+      os << header << "\n";
+      os << (ascii ? "ASCII\n" : "BINARY\n");
+    } else {
+      os << "<?xml version=\"1.0\"?>\n";
+      os << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" ";
+      os << "byte_order=\"" << (reverse_endian ? "LittleEndian" : "BigEndian") << "\">\n";
+      os << "<!--" << header << "-->\n";
+      os << "<UnstructuredGrid>\n";
+    }
     state = HEADER_WRITTEN;
   }
 
   void vtk_export::write_separ()
   { if (ascii) os << "\n"; }
+
+  void vtk_export::clear_vals()
+  { if (!vtk && !ascii) vals.clear(); }
+
+  void vtk_export::write_vals() {
+    if (!vtk && !ascii) {
+      os << base64_encode(vals);
+      clear_vals();
+    }
+  }
 
   void vtk_export::write_mesh() {
     if (psl) write_mesh_structure_from_slice();
@@ -345,9 +430,26 @@ namespace getfem
     static int vtk_simplex_code[4] = { VTK_VERTEX, VTK_LINE, VTK_TRIANGLE, VTK_TETRA };
     if (state >= STRUCTURE_WRITTEN) return;
     check_header();
-    /* possible improvement: detect structured grids */
-    os << "DATASET UNSTRUCTURED_GRID\n";
-    os << "POINTS " << psl->nb_points() << " float\n";
+    /* count total number of simplexes, and total number of entries */
+    size_type cells_cnt = 0, splx_cnt = 0;
+    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+      for (const slice_simplex &s : psl->simplexes(ic))
+       cells_cnt += s.dim() + 2;
+      splx_cnt += psl->simplexes(ic).size();
+    }
+    if (vtk) {
+      /* possible improvement: detect structured grids */
+      os << "DATASET UNSTRUCTURED_GRID\n";
+      os << "POINTS " << psl->nb_points() << " float\n";
+    } else {
+      os << "<Piece NumberOfPoints=\"" << psl->nb_points();
+      os << "\" NumberOfCells=\"" << splx_cnt << "\">\n";
+      os << "<Points>\n";
+      os << "<DataArray type=\"Float32\" Name=\"Points\" ";
+      os << "NumberOfComponents=\"3\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) write_val(int(sizeof(float)*psl->nb_points()*3));
+    }
     /*
        points are not merge, vtk is mostly fine with that (except for
        transparency and normals at vertices of 3D elements: all simplex faces
@@ -358,37 +460,85 @@ namespace getfem
        write_vec(psl->nodes(ic)[i].pt.begin(),psl->nodes(ic)[i].pt.size());
       write_separ();
     }
-    /* count total number of simplexes, and total number of entries
-     * in the CELLS section */
-    size_type cells_cnt = 0, splx_cnt = 0;
-    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      for (size_type i=0; i < psl->simplexes(ic).size(); ++i)
-       cells_cnt += psl->simplexes(ic)[i].dim() + 2;
-      splx_cnt += psl->simplexes(ic).size();
+    write_vals();
+    if (!vtk) {
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "</Points>\n";
     }
+
+    /* CELLS section */
     size_type nodes_cnt = 0;
-    write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
+    if (vtk) {
+      write_separ(); os << "CELLS " << splx_cnt << " " << cells_cnt << "\n";
+    } else {
+      os << "<Cells>\n";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+          for (const slice_simplex &s : psl->simplexes(ic))
+            size += int((s.dim()+1)*sizeof(int));
+        }
+        write_val(size);
+      }
+    }
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
-       write_val(int(s[i].dim()+1));
-       for (size_type j=0; j < s[i].dim()+1; ++j)
-         write_val(int(s[i].inodes[j] + nodes_cnt));
-       write_separ();
+      for (const slice_simplex &s : psl->simplexes(ic)) {
+        if (vtk)
+          write_val(int(s.dim()+1));
+        for (size_type j=0; j < s.dim()+1; ++j)
+          write_val(int(s.inodes[j] + nodes_cnt));
+        write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
     }
     assert(nodes_cnt == psl->nb_points()); // sanity check
-    write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
-    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
-       write_val(int(vtk_simplex_code[s[i].dim()]));
+    write_vals();
+    if (vtk) {
+      write_separ(); os << "CELL_TYPES " << splx_cnt << "\n";
+    } else {
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+          size += int(psl->simplexes(ic).size()*sizeof(int));
+        write_val(size);
       }
-      write_separ();
-      splx_cnt -= s.size();
     }
+    int cnt = 0;
+    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+      for (const slice_simplex &s : psl->simplexes(ic))
+        if (vtk) {
+          write_val(int(vtk_simplex_code[s.dim()]));
+        } else {
+          cnt += int(s.dim()+1);
+          write_val(cnt);
+        }
+      write_separ();
+      splx_cnt -= psl->simplexes(ic).size();
+    }
+    write_vals();
     assert(splx_cnt == 0); // sanity check
+    if (!vtk) {
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+          size += int(psl->simplexes(ic).size()*sizeof(int));
+        write_val(size);
+      }
+      for (size_type ic=0; ic < psl->nb_convex(); ++ic)
+        for (const slice_simplex &s : psl->simplexes(ic))
+          write_val(int(vtk_simplex_code[s.dim()]));
+      write_vals();
+      os << "\n" << "</DataArray>\n";
+      os << "</Cells>\n";
+    }
     state = STRUCTURE_WRITTEN;
   }
 
@@ -396,9 +546,19 @@ namespace getfem
   void vtk_export::write_mesh_structure_from_mesh_fem() {
     if (state >= STRUCTURE_WRITTEN) return;
     check_header();
-    /* possible improvement: detect structured grids */
-    os << "DATASET UNSTRUCTURED_GRID\n";
-    os << "POINTS " << pmf_dof_used.card() << " float\n";
+    if (vtk) {
+      /* possible improvement: detect structured grids */
+      os << "DATASET UNSTRUCTURED_GRID\n";
+      os << "POINTS " << pmf_dof_used.card() << " float\n";
+    } else {
+      os << "<Piece NumberOfPoints=\"" << pmf_dof_used.card()
+         << "\" NumberOfCells=\"" << pmf->convex_index().card() << "\">\n";
+      os << "<Points>\n";
+      os << "<DataArray type=\"Float32\" Name=\"Points\" ";
+      os << "NumberOfComponents=\"3\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) write_val(int(sizeof(float)*pmf_dof_used.card()*3));
+    }
     std::vector<int> dofmap(pmf->nb_dof());
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
@@ -407,26 +567,68 @@ namespace getfem
       write_vec(P.const_begin(),P.size());
       write_separ();
     }
+    write_vals();
 
     size_type nb_cell_values = 0;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
       nb_cell_values += (1 + select_vtk_dof_mapping(pmf_mapping_type[cv]).size());
 
-    write_separ(); os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
+    if (vtk) {
+      write_separ();
+      os << "CELLS " << pmf->convex_index().card() << " " << nb_cell_values << "\n";
+    } else {
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "</Points>\n";
+      os << "<Cells>\n";
+      os << "<DataArray type=\"Int32\" Name=\"connectivity\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii) {
+        int size = 0;
+        for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+          const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+          size += int(sizeof(int)*dmap.size());
+        }
+        write_val(size);
+      }
+    }
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
-      write_val(int(dmap.size()));
+      if (vtk) write_val(int(dmap.size()));
       for (size_type i=0; i < dmap.size(); ++i)
         write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
       write_separ();
     }
+    write_vals();
 
-    write_separ(); os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
-    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      write_val(select_vtk_type(pmf_mapping_type[cv]));
+    if (vtk) {
       write_separ();
+      os << "CELL_TYPES " << pmf->convex_index().card() << "\n";
+    } else {
+      os << (ascii ? "" : "\n") << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"offsets\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii)
+        write_val(int(pmf->convex_index().card()*sizeof(int)));
+      cnt = 0;
+      for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+        const std::vector<unsigned> &dmap = select_vtk_dof_mapping(pmf_mapping_type[cv]);
+        cnt += int(dmap.size());
+        write_val(cnt);
+      }
+      write_vals();
+      os << "\n" << "</DataArray>\n";
+      os << "<DataArray type=\"Int32\" Name=\"types\" ";
+      os << (ascii ? "format=\"ascii\">\n" : "format=\"binary\">\n");
+      if (!ascii)
+        write_val(int(pmf->convex_index().card()*sizeof(int)));
     }
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      write_val(int(select_vtk_type(pmf_mapping_type[cv])));
+      if (vtk) write_separ();
+    }
+    write_vals();
+    if (!vtk) os << "\n" << "</DataArray>\n" << "</Cells>\n";
 
     state = STRUCTURE_WRITTEN;
   }
@@ -477,7 +679,7 @@ namespace getfem
   }
 
   void dx_export::init() {
-    strcpy(header, "Exported by getfem++");
+    strcpy(header, "Exported by GetFEM");
     psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);
     psl_use_merged = false;
     header_written = false;
@@ -768,16 +970,15 @@ namespace getfem
 
     size_type nodes_cnt = 0; /* <- a virer , global_index le remplace */
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
-      for (size_type i=0; i < s.size(); ++i) {
-        if (s[i].dim() == connections_dim) {
-          for (size_type j=0; j < s[i].dim()+1; ++j) {
-           size_type k;
-           if (psl_use_merged)
-             k = psl->merged_index(ic, s[i].inodes[j]);
-           else k = psl->global_index(ic, s[i].inodes[j]);
-            write_val(int(k));
-         }
+      for (const slice_simplex &s : psl->simplexes(ic)) {
+        if (s.dim() == connections_dim) {
+          for (size_type j=0; j < s.dim()+1; ++j) {
+            size_type k;
+            if (psl_use_merged)
+              k = psl->merged_index(ic, s.inodes[j]);
+            else k = psl->global_index(ic, s.inodes[j]);
+              write_val(int(k));
+          }
           write_separ();
         }
       }
@@ -906,7 +1107,7 @@ namespace getfem
   }
 
   void pos_export::init() {
-    strcpy(header, "Exported by GetFEM++");
+    strcpy(header, "Exported by GetFEM");
     state = EMPTY;
     view  = 0;
   }
@@ -1006,10 +1207,9 @@ namespace getfem
                 << int(dim) << "D slice (not supported)");
 
     for (size_type ic=0, pcnt=0; ic < psl->nb_convex(); ++ic) {
-      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
-           it != psl->simplexes(ic).end(); ++it) {
+      for (const slice_simplex &s : psl->simplexes(ic)) {
         int t = -1;
-        switch ((*it).dim()){
+        switch (s.dim()){
           case 0: t = POS_PT; break;
           case 1: t = POS_LN; break;
           case 2: t = POS_TR; break;
@@ -1024,15 +1224,14 @@ namespace getfem
         std::vector<unsigned> cell_dof;
         cell_dof.resize(dmap.size(),unsigned(-1));
         for (size_type i=0; i < dmap.size(); ++i)
-          cell_dof[i] = unsigned(it->inodes[dmap[i]] + pcnt);
+          cell_dof[i] = unsigned(s.inodes[dmap[i]] + pcnt);
         pos_cell_dof.push_back(cell_dof);
       }
-      for(getfem::mesh_slicer::cs_nodes_ct::const_iterator it=psl->nodes(ic).begin();
-          it != psl->nodes(ic).end(); ++it) {
+      for (const slice_node &n : psl->nodes(ic)) {
         std::vector<float> pt;
         pt.resize(dim,float(0));
         for (size_type i=0; i<dim; ++i)
-          pt[i] = float(it->pt[i]);
+          pt[i] = float(n.pt[i]);
         pos_pts.push_back(pt);
       }
       pcnt += psl->nodes(ic).size();

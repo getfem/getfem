@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -11,7 +11,7 @@
 Large sliding/large deformation contact with friction bricks
 ------------------------------------------------------------
 
-The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in the weak form language. Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in the weak form language.
+The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in GWFL (the generic weak form language). Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in GWFL.
 
 Of course, the computational cost of large sliding/large deformation contact algorithms is greatly higher than small sliding-small deformation ones.
 
@@ -20,7 +20,7 @@ Of course, the computational cost of large sliding/large deformation contact alg
 Raytracing interpolate transformation
 *************************************
 
-In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high-transf` for more explanations on interpolate tranformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described below. The interpolate transformation stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
+In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high-transf` for more explanations on interpolate transformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described below. The interpolate transformation stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
 
 .. _ud-fig-masterslave:
 
@@ -28,7 +28,7 @@ In order to incorporate the contact detection in the high-level generic assembly
    :align: center
    :scale: 45
 
-The slave surface is the "contactor" and the master one the "target". Rigid obstacle are also considered. They are always master surfaces.  The basic rule is that the contact is considered between a slave surface and a master one. However, the multi-contact frame object and the |gf| bricks allow multi-contact situations, including contact between two master surfaces, self-contact of a master surface and an arbitrary number of slave and master surfaces. 
+The slave surface is the "contactor" and the master one the "target". Rigid obstacle are also considered. They are always master surfaces.  The basic rule is that the contact is considered between a slave surface and a master one. However, the multi-contact frame object and the |gf| bricks allow multi-contact situations, including contact between two master surfaces, self-contact of a master surface and an arbitrary number of slave and master surfaces.
 
 Basically, in order to detect the contact pairs, Gauss points or f.e.m. nodes of slave surfaces are projected on master surfaces (see  :ref:`figure<ud-fig-masterslave>`). If self-contact is considered, Gauss points or f.e.m. nodes of master surface are also projected on master surfaces.
 
@@ -38,7 +38,7 @@ The addition of a raytracing transformation to a model::
   void add_raytracing_transformation(model &md, const std::string &transname,
                                       scalar_type d)
 
-where ``transname`` is a name given to the transformation which allows to refer to it in the weak form language and ``d`` is the release distance (see above).
+where ``transname`` is a name given to the transformation which allows to refer to it in GWFL and ``d`` is the release distance (see above).
 
 The raytracing transformation is added without any slave or master contact boundary. The following functions allows to add some boundaries to the transformation::
 
@@ -53,15 +53,15 @@ The raytracing transformation is added without any slave or master contact bound
 where ``dispname`` is the variable name which represent the displacement on that contact
 boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
 
-It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function:: 
+It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function::
 
   add_rigid_obstacle_to_raytracing_transformation(model &md,
              const std::string &transname,
              const std::string &expr, size_type N)
 
-where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the weak form language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of GWFL (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1.
 
-In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifiant which can be used by the `Interpolate_filter` command of the weak form language (see :ref:`ud-gasm-high-transf`). The different values:
+In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifier which can be used by the `Interpolate_filter` command of GWFL (see :ref:`ud-gasm-high-transf`). The different values:
 
 * 0 : no contact found on this Gauss point
 
@@ -75,7 +75,7 @@ such that it is possible to differentiate the treatment of these three cases usi
   Interpolate_filter(transname, expr2, 1)
   Interpolate_filter(transname, expr3, 2)
 
-in the weak form language, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
+in GWFL, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
 
 Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
 
@@ -116,12 +116,12 @@ Some details on the algorithm:
     of contact pairs. The influence boxes are stored in a region tree object
     in order to find the boxes containing a point with an algorithm having
     a mean complexity in :math:`O(log(N))`.
-  
+
   - **What is a potential contact pair.** A potential contact pair is a pair
     slave point - master element face which will be investigated.
     The projection of the slave point on the master surface will be done
     and criteria will be applied.
- 
+
   - **Projection algorithm.** The projection of the slave point onto a
     master element face is done by a parametrization of the surface on the
     reference element via the geometric transformation and the displacement
@@ -153,7 +153,7 @@ The list of criteria:
     When Newton's algorithms (and BFGS one for projection) used to compute the
     projection/raytrace of the slave point on the master element surface
     fails to converge, the pair is not considered. A warning is generated.
-    
+
   - **Criterion 3 : the projected point should be inside the element.**
     The slave point is projected on the surface of the master element
     without the constraint to remain inside the face
@@ -195,7 +195,7 @@ The list of criteria:
 Nodal contact brick with projection
 +++++++++++++++++++++++++++++++++++
 
-Notations: :math:`\Omega \subset \Reel^d` denotes the reference configuration of a deformable body, possibly constituted by several unconnected parts (see  :ref:`figure<ud-fig-masterslave>`). :math:`\Omega_t` is the deformed configuration and :math:`\varphi^h: \Omega \rightarrow \Omega_t` is the approximated deformation on a finite element space :math:`V^h`. The displacement  :math:`u^h: \Omega \rightarrow \Reel^d` is defined by :math:`\varphi^h(X) = X + u^h(X)`. A generic point of the reference configuration :math:`\Omega` is denoted by :math:`X` while the corresponding point of the deformed configuration is denoted by :math:`x = \varphi^h(X)`. :math:`\Gamma^S` denotes a slave boundary of :math:`\Omega` and :math:`\Gamma^M` a master one. The corresponding boundaries on the deformed configuration are :math:`\Gamma_t^S` and :math:`\Gamma_t^M`, respectively. The outward unit normal vector to the boundary (in the deformed configuration) at a point :math:`x = \varphi^h(X)` of that boundary is denoted by :math:`n_x`. Finally, the notation :math:`\delta A[B]` denotes the directional derivative of the quantity :math:`A` with respect to the deformation and in the direction :math:`B`. Similarly, The notation :math:`\delta^2 A[B,C]` is the second derivative in the directions  :math:`B` and :math:`C`.
+Notations: :math:`\Omega \subset \rm I\hspace{-0.15em}R^d` denotes the reference configuration of a deformable body, possibly constituted by several unconnected parts (see  :ref:`figure<ud-fig-masterslave>`). :math:`\Omega_t` is the deformed configuration and :math:`\varphi^h: \Omega \rightarrow \Omega_t` is the approximated deformation on a finite element space :math:`V^h`. The displacement  :math:`u^h: \Omega \rightarrow \rm I\hspace{-0.15em}R^d` is defined by :math:`\varphi^h(X) = X + u^h(X)`. A generic point of the reference configuration :math:`\Omega` is denoted by :math:`X` while the corresponding point of the deformed configuration is denoted by :math:`x = \varphi^h(X)`. :math:`\Gamma^S` denotes a slave boundary of :math:`\Omega` and :math:`\Gamma^M` a master one. The corresponding boundaries on the deformed configuration are :math:`\Gamma_t^S` and :math:`\Gamma_t^M`, respectively. The outward unit normal vector to the boundary (in the deformed configuration) at a point :math:`x = \varphi^h(X)` of that boundary is denoted by :math:`n_x`. Finally, the notation :math:`\delta A[B]` denotes the directional derivative of the quantity :math:`A` with respect to the deformation and in the direction :math:`B`. Similarly, The notation :math:`\delta^2 A[B,C]` is the second derivative in the directions  :math:`B` and :math:`C`.
 
 
 
@@ -207,7 +207,7 @@ We denote by :math:`x_i = \varphi^h(X_i)` the corresponding node on the deformed
 
   g_i = n_y . (\varphi^h(X_i) - \varphi^h(Y_i)) = \|\varphi^h(X_i) - \varphi^h(Y_i)\| \text{Sign}(n_y . (\varphi^h(X_i) - \varphi^h(Y_i))),
 
-where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`. 
+where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`.
 
 Considering only stationnary rigid obstacles and applying the principle of Alart-Curnier augmented Lagrangian [AL-CU1991]_, the problem with nodal contact with friction condition can be expressed as follows in an unsymmetric version (see [renard2013]_ for the linear elasticity case)
 
@@ -216,8 +216,8 @@ Considering only stationnary rigid obstacles and applying the principle of Alart
   \left\{\begin{array}{l}
   \mbox{Find } \varphi^h \in V^h \mbox{ such that } \\
   \displaystyle \delta J(\varphi^h)[\delta u^h] - \sum_{i \in I_{\text{def}}} \lambda_i \cdot (\delta u^h(X_i) - \delta u^h(Y_i)) - \sum_{i \in I_{\text{rig}}} \lambda_i \delta u^h(X_i) = 0 ~~~ \forall \delta u^h \in V^h, \\
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
+  \displaystyle \dfrac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
+  \displaystyle \dfrac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
   \end{array}\right.
 
 where :math:`W_T, \alpha, P_{n_y, {\mathscr F}}` ... + tangent system
@@ -231,7 +231,7 @@ Sorry, for the moment the brick is not working.
 Tools of the high-level generic assembly for contact with friction
 ******************************************************************
 
-The following nonlinear operators are defined in the weak form language (see :ref:`ud-gasm-high`):
+The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
 
   - ``Transformed_unit_vector(Grad_u, n)`` where ``Grad_u`` is the gradient of a
     displacement field and ``n`` a unit vector in the reference configuration.
@@ -239,15 +239,15 @@ The following nonlinear operators are defined in the weak form language (see :re
 
     .. math::
 
-      n_{trans} = \Frac{(I+ \nabla u)^{-T} n}{\|(I+\nabla u)^{-T} n\|}
+      n_{trans} = \dfrac{(I+ \nabla u)^{-T} n}{\|(I+\nabla u)^{-T} n\|}
 
     with the following partial derivatives
 
     .. math::
 
       \partial_{u} n_{trans}[\delta u] = -(I - n_{trans}\otimes n_{trans})(I+ \nabla u)^{-T}(\nabla \delta u)^T n_{trans}
-  
-      \partial_{n} n_{trans}[\delta n] = \Frac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
+
+      \partial_{n} n_{trans}[\delta n] = \dfrac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
 
   - ``Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)``
     where ``lambda`` is the contact force, ``n`` is a unit normal vector, ``Vs``
@@ -271,16 +271,16 @@ The following nonlinear operators are defined in the weak form language (see :re
       \partial_q P_{B(n,\tau)}(q) =
       \left\{\begin{array}{cl}
       0 & \mbox{for } \tau \le 0 \\
-      \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\ 
-      \Frac{\tau}{\|q_{_T}\|}
-      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\
+      \dfrac{\tau}{\|q_{_T}\|}
+      \left(\mathbf{T}_n - \dfrac{q_{_T}}{\|q_{_T}\|}\otimes \dfrac{q_{_T}}{\|q_{_T}\|}
       \right) & \mbox{otherwise }
       \end{array} \right.
 
       \partial_{\tau} P_{B(n,\tau)}(q) =
       \left\{\begin{array}{cl}
       0 & \mbox{for } \tau \le 0 \mbox{ or } \|q_{_T}\| \le \tau \\
-      \Frac{q_{_T}}{\|q_{_T}\|} & \mbox{otherwise}
+      \dfrac{q_{_T}}{\|q_{_T}\|} & \mbox{otherwise}
       \end{array} \right.
 
       \partial_n P_{B(n,\tau)}(q) =
@@ -289,9 +289,9 @@ The following nonlinear operators are defined in the weak form language (see :re
       0 & \mbox{for } \tau \le 0 \\
       -q \cdot n~\mathbf{T}_n - n \otimes q_{_T}
       & \mbox{for } \|q_{_T}\| \le \tau \\
-      -\Frac{\tau}{\|q_{_T}\|}
+      -\dfrac{\tau}{\|q_{_T}\|}
       \left( q \cdot n
-      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \left(\mathbf{T}_n - \dfrac{q_{_T}}{\|q_{_T}\|}\otimes \dfrac{q_{_T}}{\|q_{_T}\|}
       \right)
       + n \otimes q_{_T}
       \right) & \mbox{otherwise.}
@@ -305,7 +305,7 @@ The following nonlinear operators are defined in the weak form language (see :re
       \left|\begin{array}{l} \partial_n P_{B(n,\tau)}
       +\partial_{\tau} P_{B(n,\tau)} \otimes \partial_n \tau \\
       \hspace*{3em}+H(-\lambda\cdot n - r\,g) ~
-      \left(n \otimes \lambda - 
+      \left(n \otimes \lambda -
       (2~\lambda\cdot n + r\,g)~n \otimes n +
       (\lambda\cdot n + r\,g)~\mathbf{I}\right),
       \end{array}\right.
@@ -334,7 +334,7 @@ Add of the brick::
 
   indbrick = add_integral_large_sliding_contact_brick_raytracing
     (model &md, const std::string &dataname_r,
-     scalar_type release_distance, 
+     scalar_type release_distance,
      const std::string &dataname_friction_coeff = "0",
      const std::string &dataname_alpha = "1");
 
@@ -358,4 +358,4 @@ A rigid obstacle can be added to the brick with::
   add_rigid_obstacle_to_large_sliding_contact_brick(model &md,
       size_type indbrick, std::string expr, size_type N)
 
-where `expr` is an expression using the weak form language (with `X` is the current position) which should be a signed distance to the obstacle. `N` is the mesh dimension.
+where `expr` is an expression using GWFL (with `X` is the current position) which should be a signed distance to the obstacle. `N` is the mesh dimension.

@@ -1,6 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- GetFEM++ Documentation contents
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ GetFEM Documentation contents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 .. toctree::
    :maxdepth: 3
@@ -11,7 +11,7 @@
    project/index.rst
    gmm/index.rst
 
-   matlab/index.rst
+   matlab_octave/index.rst
    python/index.rst
    scilab/index.rst
 

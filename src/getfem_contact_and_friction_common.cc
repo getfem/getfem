@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2017 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2013-2020 Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -244,13 +244,10 @@ namespace getfem {
     obstacles_gw.push_back(ga_workspace());
     pt.resize(N); ptx.resize(1); pty.resize(1); ptz.resize(1); ptw.resize(1);
     obstacles_gw.back().add_fixed_size_constant("X", pt);
-    switch(N) {
-    default:
-    case 4: obstacles_gw.back().add_fixed_size_constant("w", ptw);
-    case 3: obstacles_gw.back().add_fixed_size_constant("z", ptz);
-    case 2: obstacles_gw.back().add_fixed_size_constant("y", pty);
-    case 1: obstacles_gw.back().add_fixed_size_constant("x", ptx);
-    }
+    if (N >= 4) obstacles_gw.back().add_fixed_size_constant("w", ptw);
+    if (N >= 3) obstacles_gw.back().add_fixed_size_constant("z", ptz);
+    if (N >= 2) obstacles_gw.back().add_fixed_size_constant("y", pty);
+    if (N >= 1) obstacles_gw.back().add_fixed_size_constant("x", ptx);
     obstacles_f.push_back(ga_function(obstacles_gw.back(), obs));
     obstacles_f.back().compile();
     return ind;
@@ -652,6 +649,7 @@ namespace getfem {
           element_boxes_info.push_back(influence_box(i, cv, v.f(), n_mean));
         }
       }
+    element_boxes.build_tree();
   }
 
   void multi_contact_frame::compute_potential_contact_pairs_influence_boxes() {
@@ -894,36 +892,27 @@ namespace getfem {
         // the release distance)
         size_type irigid_obstacle(-1);
         gmm::copy(x, pt);
-        switch(N) {
-        default:
-        case 4: ptw[0] = pt[3]; 
-        case 3: ptz[0] = pt[2]; 
-        case 2: pty[0] = pt[1]; 
-        case 1: ptx[0] = pt[0];
-        }
+        if (N >= 4) ptw[0] = pt[3];
+        if (N >= 3) ptz[0] = pt[2];
+        if (N >= 2) pty[0] = pt[1];
+        if (N >= 1) ptx[0] = pt[0];
         for (size_type i = 0; i < obstacles.size(); ++i) {
           d1 = (obstacles_f[i].eval())[0];
           if (gmm::abs(d1) < release_distance && d1 < d0) {
 
             for (size_type j=0; j < bpinfo.normals.size(); ++j) {
               gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt);
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
               d2 =  (obstacles_f[i].eval())[0];
               if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
               gmm::copy(x, pt);
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
             }
           }
         }
@@ -931,13 +920,10 @@ namespace getfem {
         if (irigid_obstacle != size_type(-1)) {
 
           gmm::copy(x, pt);
-          switch(N) {
-          default:
-          case 4: ptw[0] = pt[3]; 
-          case 3: ptz[0] = pt[2]; 
-          case 2: pty[0] = pt[1]; 
-          case 1: ptx[0] = pt[0];
-          }
+          if (N >= 4) ptw[0] = pt[3];
+          if (N >= 3) ptz[0] = pt[2];
+          if (N >= 2) pty[0] = pt[1];
+          if (N >= 1) ptx[0] = pt[0];
           gmm::copy(x, y);
           size_type nit = 0, nb_fail = 0;
           scalar_type alpha(0), beta(0);
@@ -974,13 +960,10 @@ namespace getfem {
               } else {
                 gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt);
               }
-              switch(N) {
-              default:
-              case 4: ptw[0] = pt[3]; 
-              case 3: ptz[0] = pt[2]; 
-              case 2: pty[0] = pt[1]; 
-              case 1: ptx[0] = pt[0];
-              }
+              if (N >= 4) ptw[0] = pt[3];
+              if (N >= 3) ptz[0] = pt[2];
+              if (N >= 2) pty[0] = pt[1];
+              if (N >= 1) ptx[0] = pt[0];
               d2 = (obstacles_f[irigid_obstacle].eval())[0];
 //               if (nit > 10)
 //                 cout << "nit = " << nit << " lambda = " << lambda
@@ -1476,7 +1459,7 @@ namespace getfem {
           }
         }
       }
-      
+      face_boxes.build_tree();
     }
 
   public:
@@ -1933,7 +1916,7 @@ namespace getfem {
           gmm::add(gmm::identity_matrix(), F_x);
           gmm::copy(F_x, F_x_inv);
           bgeot::lu_inverse(&(*(F_x_inv.begin())), N);
-        
+
 
           base_tensor base_ux;
           base_matrix vbase_ux;
@@ -1941,7 +1924,7 @@ namespace getfem {
           size_type qdim_ux = pfu_x->target_dim();
           size_type ndof_ux = pfu_x->nb_dof(cv_x) * N / qdim_ux;
           vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
-          
+
           base_tensor base_uy;
           base_matrix vbase_uy;
           size_type ndof_uy = 0;
@@ -1951,7 +1934,7 @@ namespace getfem {
             ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
             vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
           }
-          
+
           base_tensor grad_base_ux, vgrad_base_ux;
           ctx_x.grad_base_value(grad_base_ux);
           vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
@@ -1965,7 +1948,7 @@ namespace getfem {
           gmm::mult(F_y_inv, I_nxny, M1);
           base_matrix der_x(ndof_ux, N);
           gmm::mult(vbase_ux, gmm::transposed(M1), der_x);
-          
+
           // -F_y^{-1}*I_nxny*Test_u(Y)
           base_matrix der_y(ndof_uy, N);
           if (ret_type == 1) {
@@ -2743,22 +2726,22 @@ namespace getfem {
       scalar_type norm(0);
       
       if (tau > scalar_type(0)) {
-        gmm::add(lambda, gmm::scaled(Vs, -r), F);
-        scalar_type mu = gmm::vect_sp(F, n)/nn;
-        gmm::add(gmm::scaled(n, -mu/nn), F);
+        gmm::add(lambda, gmm::scaled(Vs, -r), F); // F <-- lambda -r*Vs
+        scalar_type mu = gmm::vect_sp(F, n)/nn;   // mu <-- (lambda -r*Vs).n/|n|
+        gmm::add(gmm::scaled(n, -mu/nn), F);      // F <-- (lambda -r*Vs)*(I-n x n / |n|²)
         norm = gmm::vect_norm2(F);
-        gmm::copy(gmm::identity_matrix(), dn);
-        gmm::scale(dn, -mu/nn);
-        gmm::rank_one_update(dn, gmm::scaled(n, mu/(nn*nn*nn)), n);
-        gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);
-        gmm::copy(gmm::identity_matrix(), dVs);
-        gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn)));
+        gmm::copy(gmm::identity_matrix(), dn);                          // dn <-- I
+        gmm::scale(dn, -mu/nn);                                         // dn <-- -(lambda -r*Vs).n/|n|² I
+        gmm::rank_one_update(dn, gmm::scaled(n, mu/(nn*nn*nn)), n);     // dn <-- -(lambda -r*Vs).n/|n|² (I - n x n/|n|²)
+        gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);  // dn <-- -(lambda -r*Vs).n/|n|² (I - n x n/|n|²) + n x ((lambda -r*Vs)*(I-n x n / |n|²)) /|n|²
+        gmm::copy(gmm::identity_matrix(), dVs);                                // dVs <-- I
+        gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn))); // dVs <-- I - n x n/|n|²
         
-        if (norm > tau) {
+        if (norm > tau) { // slip
           gmm::rank_one_update(dVs, F,
                                gmm::scaled(F, scalar_type(-1)/(norm*norm)));
           gmm::scale(dVs, tau / norm);
-          gmm::copy(gmm::scaled(F, scalar_type(1)/norm), dg);
+          gmm::copy(gmm::scaled(F, scalar_type(1)/norm), dg);                  // dg <-- Normalized((lambda -r*Vs)*(I-n x n / |n|²))
           gmm::rank_one_update(dn, gmm::scaled(F, mu/(norm*norm*nn)), F);
           gmm::scale(dn, tau / norm);
           gmm::scale(F, tau / norm);

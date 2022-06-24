@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _gmm-superlu:
 
@@ -11,7 +11,7 @@ Interface with SuperLU
 ============================
 
 
-It is possible to call SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/) from |gmm|. The following function defined in the file ``gmm/gmm_superlu_interface.h`` is available::
+It is possible to call SuperLU 3.0 (https://portal.nersc.gov/project/sparse/superlu/superlu_3.0.tar.gz) from |gmm|. The following function defined in the file ``gmm/gmm_superlu_interface.h`` is available::
 
   SuperLU_solve(A, X, B, condest, permc_spec = 1)
 

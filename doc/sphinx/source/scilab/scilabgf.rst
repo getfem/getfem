@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: matlab
+.. highlight:: matlab
 
 .. _scilab-gf:
 
@@ -80,8 +80,8 @@ Functions
 Objects
 -------
 
-Various "objects" can be manipulated by the |gfm| toolbox, see fig. 
-:ref:`scilab-fig-hierarchy`. The MESH and MESHFEM objects are the two most 
+Various "objects" can be manipulated by the |gfm| toolbox, see fig.
+:ref:`scilab-fig-hierarchy`. The MESH and MESHFEM objects are the two most
 important objects.
 
 .. _scilab-fig-hierarchy:
@@ -104,7 +104,7 @@ important objects.
 * :envvar:`gfCvStruct` : stores formal information convex structures (nb. of points,
   nb. of faces which are themselves convex structures).
 * :envvar:`gfMeshFem` : object linked to a mesh, where each convex has been assigned
-  a FEM. Created with ``gf_mesh_fem``.
+  an FEM. Created with ``gf_mesh_fem``.
 * :envvar:`gfMeshImM` : object linked to a mesh, where each convex has been assigned
   an integration method. Created with ``gf_mesh_im``.
 * :envvar:`gfMeshSlice` : object linked to a mesh, very similar to a

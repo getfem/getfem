@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yann Collette
+ Copyright (C) 2009-2020 Yann Collette
 
  This file is a part of GetFEM++
 
@@ -24,11 +24,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <stack-c.h>
+#include <api_scilab.h> 
+#include <api_stack_common.h> 
 #include <Scierror.h>
 #include <sciprint.h>
-#include <MALLOC.h>
-#include <api_scilab.h>
+#include <localization.h>
 
 #include "gfm_common.h"
 

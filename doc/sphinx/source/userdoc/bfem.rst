@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: fem, mesh, mesh_fem
 
@@ -137,20 +137,20 @@ The |mf| can call directly these functions via::
 
 Some other methods:
 
-.. function:: mf.convex_index()
+.. cpp:function:: getfem::mesh_fem::convex_index()
 
    Set of indexes (a |dal_bv|) on which a finite element method is defined.
 
-.. function:: mf.linked_mesh()
+.. cpp:function:: getfem::mesh_fem::linked_mesh()
 
    gives a reference to the linked mesh.
 
-.. function:: mf.fem_of_element(i)
+.. cpp:function:: getfem::mesh_fem::fem_of_element(i)
 
    gives a descriptor on the finite element method defined on element of index
    ``i`` (does not take into account the qdim nor the optional reduction).
 
-.. function:: mf.clear()
+.. cpp:function:: getfem::mesh_fem::clear()
 
    Clears the structure, no finite element method is still defined.
 
@@ -199,7 +199,7 @@ the one of the |mf| object have to match. To sum it up,
 Additionally, if the field to be represented is a tensor field instead of a vector field (for instance the stress or strain tensor field in elasticity), it is possible to specify the tensor dimensions with the methods::
 
   mf.set_qdim(dim_type M, dim_type N)
-  mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)  
+  mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)
   mf.set_qdim(const bgeot::multi_index &mii)
 
 respectively for a tensor field of order two, four and arbitrary (but limited to 6). For most of the operations, this is equivalent to declare a vector field of the size the product of the dimensions. However, the declared tensor dimensions are taken into account into the high level generic assembly. Remember that the components inside a tensor are stored in Fortran order.
@@ -209,50 +209,50 @@ respectively for a tensor field of order two, four and arbitrary (but limited to
 At this level are defined the basic degrees of freedom. Some methods of the
 |gf_mf| allows to obtain information on the basic dofs:
 
-.. function:: mf.nb_basic_dof_of_element(i)
+.. cpp:function:: getfem::mesh_fem::nb_basic_dof_of_element(i)
 
    gives the number of basic degrees of freedom on the element of index ``i``.
 
-.. function:: mf.ind_basic_dof_of_element(i)
+.. cpp:function:: getfem::mesh_fem::ind_basic_dof_of_element(i)
 
    gives a container (an array) with all the global indexes of the basic degrees
    of freedom of element of index ``i``.
 
-.. function:: mf.point_of_basic_dof(i, j)
+.. cpp:function:: getfem::mesh_fem::point_of_basic_dof(i, j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of local index ``j`` on element of index ``i``.
 
-.. function:: mf.point_of_basic_dof(j)
+.. cpp:function:: getfem::mesh_fem::point_of_basic_dof(j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of global index ``j``.
 
-.. function:: mf.reference_point_of_basic_dof(i, j)
+.. cpp:function:: getfem::mesh_fem::reference_point_of_basic_dof(i, j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of local index ``j`` on element of index ``i`` in the coordinates of
    the reference element.
 
-.. function:: mf.first_convex_of_basic_dof(j)
+.. cpp:function:: getfem::mesh_fem::first_convex_of_basic_dof(j)
 
    gives the index of the first element on which the basic degree of freedom of
    global index ``j`` is defined.
 
-.. function:: mf.nb_basic_dof()
+.. cpp:function:: getfem::mesh_fem::nb_basic_dof()
 
    gives the total number of different basic degrees of freedom.
 
-.. function:: mf.get_qdim()
+.. cpp:function:: getfem::mesh_fem::get_qdim()
 
    gives the target dimension ``Q``.
 
-.. function:: mf.basic_dof_on_region(i)
+.. cpp:function:: getfem::mesh_fem::basic_dof_on_region(i)
 
    Return a |dal_bv| which represents the indices of basic dof which are in the
    set of convexes or the set of faces of index ``i`` (see the |gf_m| object).
 
-.. function:: mf.dof_on_region(i)
+.. cpp:function:: getfem::mesh_fem::dof_on_region(i)
 
    Return a |dal_bv| which represents the indices of dof which are in the set of
    convexes or the set of faces of index ``i`` (see the |gf_m| object). For a
@@ -269,42 +269,42 @@ As described above, it is possible to provide two matrices, a reduction matrix
 transformation of the degrees of freedom. If :math:`V` is the vector of basic
 degrees of freedom, then :math:`U=RV` will be the vector of reduced degrees of
 freedom. Contrarily, given a vector :math:`U` of reduced dof, :math:`V=EU` will
-correspond to a vector of basic dof. In simle cases, :math:`E` will be simply the
+correspond to a vector of basic dof. In simple cases, :math:`E` will be simply the
 transpose of :math:`R`. NOTE that every line of the extension matrix should be
 sparse. Otherwise, each assembled matrix will be plain !
 
 A natural condition is that :math:`RE = I` where :math:`I` is the identity matrix.
 
-.. function:: mf.nb_dof()
+.. cpp:function:: getfem::mesh_fem::nb_dof()
 
    gives the total number of different degrees of freedom. If the optional
    reduction is used, this will be the number of columns of the reduction matrix.
    Otherwise it will return the number of basic degrees of freedom.
 
-.. function:: mf.is_reduced()
+.. cpp:function:: getfem::mesh_fem::is_reduced()
 
    return a boolean. True if the reduction is used.
 
-.. function:: mf.reduction_matrix()
+.. cpp:function:: getfem::mesh_fem::reduction_matrix()
 
    return a const reference to the reduction matrix :math:`R`.
 
-.. function:: mf.extension_matrix()
+.. cpp:function:: getfem::mesh_fem::extension_matrix()
 
    return a const reference to the extension matrix :math:`E`.
 
-.. function:: mf.set_reduction_matrices(R, E)
+.. cpp:function:: getfem::mesh_fem::set_reduction_matrices(R, E)
 
    Set the reduction and extension matrices to ``R`` and ``E`` and validate their
    use.
 
-.. function:: mf.set_reduction(b)
+.. cpp:function:: getfem::mesh_fem::set_reduction(b)
 
    Where :math:`b` is a boolean. Cancel the reduction if :math:`b` is false and
    validate it if ``b`` is true. If ``b`` is true, the extension and reduction
    matrices have to be set previously.
 
-.. function:: mf.reduce_to_basic_dof(idof)
+.. cpp:function:: getfem::mesh_fem::reduce_to_basic_dof(idof)
 
    Set the reduction and extension matrices corresponding to keep only the basic
    dofs present in ``idof``. The parameter ``idof`` is either a |dal_bv| or a

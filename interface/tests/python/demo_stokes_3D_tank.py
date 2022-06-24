@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -19,8 +19,9 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-from getfem import *
 from numpy import *
+
+from getfem import *
 
 print('3D stokes demonstration on a quadratic mesh')
 
@@ -46,7 +47,7 @@ print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
 
 
 P=m.pts()
-r = range(0, m.nbpts());
+r = list(range(0, m.nbpts()));
 INpid=compress(abs(P[0,:]+25) < 1e-4, r)
 OUTpid=compress(abs(P[0,:]-25) < 1e-4, r)
 TOPpid=compress(abs(P[2,:]-20) < 1e-4, r)
@@ -73,7 +74,7 @@ md.add_fem_variable('p', mfp);
 md.add_linear_incompressibility_brick(mim, 'u', 'p');
 md.add_variable('mult_spec', 1);
 M = Spmat('empty', 1, mfp.nbdof());
-M.add(range(1), range(mfp.nbdof()), ones((1, mfp.nbdof())));
+M.add(list(range(1)), list(range(mfp.nbdof())), ones((1, mfp.nbdof())));
 md.add_constraint_with_multipliers('p', 'mult_spec', M, [0]);
 md.add_initialized_data('NeumannData', [0, -10, 0]);
 md.add_source_term_brick(mim, 'u', 'NeumannData', 1);

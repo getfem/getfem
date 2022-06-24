@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-appendixa:
 
@@ -182,7 +182,7 @@ number of reductions have to be made:
   reduction with respect to :math:`i_4` with the matrix :math:`B`.
 
 * Concerning the third term (:math:`\partial^2_{i_7 / P, i_7\mbox{ mod }P}
-  \varphi_{i_6}^{i_5}`)` a reduction of :math:`\widehat{t}_0` with respect to :math:`i_7`
+  \varphi_{i_6}^{i_5}`) a reduction of :math:`\widehat{t}_0` with respect to :math:`i_7`
   with the matrix :math:`B_3` and a reduction of :math:`\widehat{t}_1` with respect also
   to :math:`i_7` with the matrix :math:`B_3 B_2`
 

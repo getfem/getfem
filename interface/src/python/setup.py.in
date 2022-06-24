@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Julien Pommier.
+# Copyright (C) 2004-2022 Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -68,7 +68,7 @@ getfemmod = Extension('_getfem',
 
 setup (name = 'getfem-interface',
        license='LGPL',
-       version = '5.3',
+       version = '5.4.2',
        maintainer="Yves Renard",
        maintainer_email="Yves.Renard@insa-lyon.fr",
        description = "This is the getfem-python-interface module",

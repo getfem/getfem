@@ -98,7 +98,7 @@ variable to configure. See ``configure --help'' for reference.
 	#
 	AC_MSG_CHECKING([for the distutils Python package])
 	ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`
-	if test -z "$ac_distutils_result"; then
+	if test $? -eq 0; then
 		AC_MSG_RESULT([yes])
 	else
 		AC_MSG_RESULT([no])

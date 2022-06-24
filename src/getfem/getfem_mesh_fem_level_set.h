@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -45,7 +45,7 @@
 
 namespace getfem {
 
-  class mesh_fem_level_set : public mesh_fem, public boost::noncopyable {
+  class mesh_fem_level_set : public mesh_fem {
   protected :
     const mesh_level_set &mls;
     const mesh_fem &mf;
@@ -71,6 +71,9 @@ namespace getfem {
     }
     
     mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef);
+
+    mesh_fem_level_set(const mesh_fem_level_set&) = delete;
+    mesh_fem_level_set& operator = (const mesh_fem_level_set&) = delete;
 
     ~mesh_fem_level_set() { clear_build_methods(); }
   };

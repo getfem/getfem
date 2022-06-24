@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _gmm-blas:
 
@@ -10,7 +10,7 @@ Basic linear algebra operations
 ========================================
 
 
-The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programming of optimized basic linear operations is greatly simplified.
+The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programming of optimized basic linear algebra operations is greatly simplified.
 
 
 scale and scaled
@@ -29,18 +29,18 @@ print to the standard output the vector ``V`` multiplied by ``10.0`` without cha
 transposition
 -------------
 
-``gmm::transposed(M)`` gives a possibily modifiable reference on the transposed matrix of ``M``.
+``gmm::transposed(M)`` gives a possibility modifiable reference on the transposed matrix of ``M``.
 
 imaginary and real part
 -----------------------
 
-For a complex matrix ``M`` or a complex vector ``V``, 
-``gmm::real_part(M)``, ``gmm::real_part(V)``, ``gmm::imag_part(M)`` or ``gmm::imag_part(V)`` give a possibily modifiable reference on the real or imaginary part of the matrix or vector (for instance ``gmm::clear(gmm::imag_part(M))`` will set to zero the imaginary part of a matrix ``M``). These functions cannot be applied to real matrices or vectors.
+For a complex matrix ``M`` or a complex vector ``V``,
+``gmm::real_part(M)``, ``gmm::real_part(V)``, ``gmm::imag_part(M)`` or ``gmm::imag_part(V)`` give a possibility modifiable reference on the real or imaginary part of the matrix or vector (for instance ``gmm::clear(gmm::imag_part(M))`` will set to zero the imaginary part of a matrix ``M``). These functions cannot be applied to real matrices or vectors.
 
 conjugate
 ---------
 
-For a matrix ``M`` or a vector ``V``, 
+For a matrix ``M`` or a vector ``V``,
 ``gmm::conjugated(M)`` and ``gmm::conjugated(V)`` give a constant reference on the conjugated vector or matrix. Of course, for a real vectors this has no effect (and no cost at all). Note : ``gmm::conjugated(M)`` transposes the matrix ``M`` so that this is the hermitian conjugate of ``M``. If you need only the conjugate of each component you have to use both transposition and conjugate with ``gmm::conjugated(gmm::transposed(M))`` or equivalently  ``gmm::transposed(gmm::conjugated(M))``.
 
 
@@ -90,9 +90,9 @@ Matrix-vector or matrix-matrix multiplication. Again, all the matrices and vecto
   gmm::col_matrix< gmm::wsvector<double> > M2(10, 10);
   gmm::col_matrix< gmm::vsvector<double> > M3(10, 10);
   ...
-  
+
   gmm::mult(M1, M2, M3); // M1 * M2 ---> M3
-  
+
   gmm::mult(gmm::sub_matrix(M1, sub_interval(0, 3)),
             gmm::sub_matrix(M2, sub_interval(4, 3)),
             gmm::sub_matrix(M3, sub_interval(2, 3)));

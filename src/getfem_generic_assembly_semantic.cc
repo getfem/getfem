@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -35,7 +35,7 @@ namespace getfem {
   static void ga_node_derivation
   (ga_tree &tree, const ga_workspace &workspace, const mesh &m,
    pga_tree_node pnode, const std::string &varname,
-   const std::string &interpolatename, size_type order);
+   const std::string &interpolatename, size_type order, bool any_trans = false);
 
   static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
                            const mesh &m, pga_tree_node pnode);
@@ -99,6 +99,8 @@ namespace getfem {
         pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       workspace.interpolate_transformation(pnode->interpolate_name)
         ->extract_variables(workspace, vars, ignore_data, m,
@@ -115,11 +117,11 @@ namespace getfem {
   static bool ga_node_mark_tree_for_variable
   (pga_tree_node pnode, const ga_workspace &workspace, const mesh &m,
    const std::string &varname,
-   const std::string &interpolatename) {
+   const std::string &interpolatename, bool any_trans = false) {
     bool marked = false;
     for (size_type i = 0; i < pnode->children.size(); ++i)
       if (ga_node_mark_tree_for_variable(pnode->children[i], workspace, m,
-                                         varname, interpolatename))
+                                         varname, interpolatename, any_trans))
         marked = true;
 
     bool plain_node(pnode->node_type == GA_NODE_VAL ||
@@ -155,10 +157,13 @@ namespace getfem {
     if ((plain_node || interpolate_node || secondary_node ||
          elementary_node || xfem_node) &&
         (pnode->name.compare(varname) == 0 &&
-         pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
+         (any_trans || pnode->interpolate_name.compare(interpolatename) == 0)))
+      marked = true;
 
     if (interpolate_node || interpolate_test_node ||
         pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       std::set<var_trans_pair> vars;
       workspace.interpolate_transformation(pnode->interpolate_name)
@@ -167,7 +172,8 @@ namespace getfem {
       for (std::set<var_trans_pair>::iterator it=vars.begin();
            it != vars.end(); ++it) {
         if (it->varname.compare(varname) == 0 &&
-            it->transname.compare(interpolatename) == 0) marked = true;
+            (any_trans ||
+             it->transname.compare(interpolatename) == 0)) marked = true;
       }
     }
     pnode->marked = marked;
@@ -255,28 +261,45 @@ namespace getfem {
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
       case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with interpolate transformations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with interpolate transformations. Future work.");
+        }
       case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
       case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with elementary transformations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with elementary transformations. Future work.");
+        }
       case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
       case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
       case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
       case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with secondary domains. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with secondary domains. Future work.");
+        }
       case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
       case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
       case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
       case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-        GMM_ASSERT1(false,
-                    "Sorry, directional derivative do not work for the moment "
-                    "with Xfem_plus and Xfem_minus operations. Future work.");
+        if (pexpr->node_type == GA_NODE_VAL_TEST) {
+          pnode->name = pexpr->name;
+        } else {
+          GMM_ASSERT1(false,
+                      "Sorry, directional derivative do not work for the "
+                      "moment with Xfem_plus and Xfem_minus operations. "
+                      "Future work.");
+        }
       default: break;
       }
     }
@@ -296,7 +319,7 @@ namespace getfem {
   static scalar_type ga_hash_code(const base_tensor &t) {
     scalar_type c(0);
     for (size_type i = 0; i < t.size(); ++i)
-      c += sin(M_E+t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
+      c += sin((1.+M_E)*t[i]+M_E*M_E*scalar_type(i+1))+scalar_type(i+1)*M_PI;
     return c;
   }
 
@@ -330,7 +353,7 @@ namespace getfem {
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
-      // No break. The hash code is completed with the next item
+      //[[fallthrough]]; // The hash code is completed with the next item
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -349,7 +372,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
-        + 2.63*ga_hash_code(pnode->elementary_name);
+        + 2.63*ga_hash_code(pnode->elementary_name)
+        + 3.47*ga_hash_code(pnode->elementary_target);
       break;
     case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
@@ -361,7 +385,9 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name));
       break;
-    case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+    case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_SECONDARY_DOMAIN_X: case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       c += M_PI*1.33*ga_hash_code(pnode->interpolate_name);
       break;
@@ -375,13 +401,13 @@ namespace getfem {
   }
 
 # define ga_valid_operand(pnode)                                \
- {                                                                \
-    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||      \
-                  pnode->node_type == GA_NODE_SPEC_FUNC ||        \
-                  pnode->node_type == GA_NODE_NAME ||             \
-                  pnode->node_type == GA_NODE_OPERATOR ||         \
-                  pnode->node_type == GA_NODE_ALLINDICES))        \
-      ga_throw_error(pnode->expr, pnode->pos, "Invalid term");    \
+  {                                                             \
+    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||    \
+                  pnode->node_type == GA_NODE_SPEC_FUNC ||      \
+                  pnode->node_type == GA_NODE_NAME ||           \
+                  pnode->node_type == GA_NODE_OPERATOR ||       \
+                  pnode->node_type == GA_NODE_ALLINDICES))      \
+      ga_throw_error(pnode->expr, pnode->pos, "Invalid term");  \
   }
 
   static void ga_node_analysis(ga_tree &tree,
@@ -397,10 +423,12 @@ namespace getfem {
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(tree, workspace, pnode->children[i], me,
                        ref_elt_dim, eval_fixed_size, ignore_X, option);
-      all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
+      all_cte = all_cte && (pnode->children[i]->is_constant());
       all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
-      GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
-                  "internal error on child " << i);
+      if (pnode->children[i]->test_function_type == size_type(-1)) {
+        cerr << "node : "; ga_print_node(pnode, cerr); cerr << endl;
+        GMM_ASSERT1(false, "internal error on child " << i);
+      }
       if (pnode->node_type != GA_NODE_PARAMS)
         ga_valid_operand(pnode->children[i]);
     }
@@ -425,8 +453,10 @@ namespace getfem {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
     case GA_NODE_ELT_K:  case GA_NODE_ELT_B: case GA_NODE_NORMAL:
-    case GA_NODE_RESHAPE: case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
+    case GA_NODE_RESHAPE: case GA_NODE_CROSS_PRODUCT:
+    case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
     case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
       pnode->test_function_type = 0; break;
@@ -471,13 +501,15 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
+        const im_data *imd = workspace.associated_im_data(pnode->name);
         size_type t_type = pnode->test_function_type;
         if (t_type == 1) {
           pnode->name_test1 = pnode->name;
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           pnode->interpolate_name_test2 = pnode->name_test2 = "";
-          pnode->qdim1 = (mf ? workspace.qdim(pnode->name)
-                          : gmm::vect_size(workspace.value(pnode->name)));
+          pnode->qdim1 = (mf || imd)
+                       ? workspace.qdim(pnode->name)
+                       : gmm::vect_size(workspace.value(pnode->name));
           if (option == 1)
             workspace.test1.insert
               (var_trans_pair(pnode->name_test1,
@@ -489,8 +521,9 @@ namespace getfem {
           pnode->interpolate_name_test1 = pnode->name_test1 = "";
           pnode->name_test2 = pnode->name;
           pnode->interpolate_name_test2 = pnode->interpolate_name;
-          pnode->qdim2 = (mf ? workspace.qdim(pnode->name)
-                          : gmm::vect_size(workspace.value(pnode->name)));
+          pnode->qdim2 = (mf || imd)
+                       ? workspace.qdim(pnode->name)
+                       : gmm::vect_size(workspace.value(pnode->name));
           if (option == 1)
             workspace.test2.insert
               (var_trans_pair(pnode->name_test2,
@@ -499,22 +532,32 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         }
-        if (!mf) {
-          size_type n = workspace.qdim(pnode->name);
-          if (!n)
-            ga_throw_error(pnode->expr, pnode->pos,
-                           "Invalid null size of variable");
-          if (n == 1) {
+        size_type q = workspace.qdim(pnode->name);
+        if (!q)
+          ga_throw_error(pnode->expr, pnode->pos,
+                         "Invalid null size of variable");
+        if (!mf & !imd) { // global variable
+          if (q == 1) {
             pnode->init_vector_tensor(1);
             pnode->tensor()[0] = scalar_type(1);
-            pnode->test_function_type = t_type;
+          } else
+            pnode->init_identity_matrix_tensor(q);
+          pnode->test_function_type = t_type;
+        } else if (imd) {
+          bgeot::multi_index mii = workspace.qdims(pnode->name);
+          if (q == 1 && mii.size() <= 1) {
+            pnode->init_vector_tensor(1);
+            pnode->tensor()[0] = scalar_type(1);
           } else {
-            pnode->init_matrix_tensor(n,n);
-            pnode->test_function_type = t_type;
-            for (size_type i = 0; i < n; ++i)
-              for (size_type j = 0; j < n; ++j)
-                pnode->tensor()(i,j) = (i==j) ? scalar_type(1) : scalar_type(0);
+            mii.insert(mii.begin(), q);
+            pnode->t.set_to_original();
+            pnode->t.adjust_sizes(mii);
+            auto itw = pnode->tensor().begin();
+            for (size_type i = 0; i < q; ++i) // set identity matrix
+              for (size_type j = 0; j < q; ++j)
+                *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
           }
+          pnode->test_function_type = t_type;
         }
       }
       break;
@@ -524,7 +567,7 @@ namespace getfem {
       if (tree.secondary_domain.size() == 0)
         ga_throw_error(pnode->expr, pnode->pos, "Secondary domain used "
                        "in a single domain term.");
-      // continue with what follows
+      //[[fallthrough]];
     case GA_NODE_INTERPOLATE:
       if (pnode->name.compare("X") == 0) {
         if (pnode->node_type == GA_NODE_INTERPOLATE) {
@@ -548,7 +591,24 @@ namespace getfem {
         }
         break;
       }
-      // else continue with what follows
+      if (pnode->name.compare("element_K") == 0) {
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_ELT_K;
+          if (ref_elt_dim == 1)
+            pnode->init_vector_tensor(meshdim);
+          else
+            pnode->init_matrix_tensor(meshdim, ref_elt_dim);
+        }
+        break;
+      }
+      if (pnode->name.compare("element_B") == 0) {
+        if (pnode->node_type == GA_NODE_INTERPOLATE) {
+          pnode->node_type = GA_NODE_INTERPOLATE_ELT_B;
+          pnode->init_matrix_tensor(ref_elt_dim, meshdim);
+        }
+        break;
+      }
+      //[[fallthrough]];
     case GA_NODE_ELEMENTARY: // and ... case GA_NODE_INTERPOLATE:
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_MINUS:
@@ -572,6 +632,13 @@ namespace getfem {
         size_type test = ga_parse_prefix_test(name);
         pnode->name = name;
 
+        if (ndt == 2) {
+          name = pnode->elementary_target;
+          ga_parse_prefix_operator(name);
+          ga_parse_prefix_test(name);
+          pnode->elementary_target = name;
+        }
+
         // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
           ga_throw_error(pnode->expr, pnode->pos,
@@ -593,7 +660,7 @@ namespace getfem {
                          "Tensor with too many dimensions. Limited to 6");
 
         if (test == 1) {
-          pnode->name_test1 = name;
+          pnode->name_test1 = pnode->name;
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           if (option == 1)
             workspace.test1.insert
@@ -604,7 +671,7 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Invalid null size of variable");
         } else if (test == 2) {
-          pnode->name_test2 = name;
+          pnode->name_test2 = pnode->name;
           pnode->interpolate_name_test2 = pnode->interpolate_name;
           if (option == 1)
             workspace.test2.insert
@@ -750,6 +817,15 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
           }
+          if (!(workspace.variable_or_group_exists(pnode->elementary_target))) {
+            ga_throw_error(pnode->expr, pnode->pos, "Unknown data or variable "
+                           << pnode->elementary_target);
+          }
+          const mesh_fem *mft = workspace.associated_mf(name);
+          if (!mft)
+            ga_throw_error(pnode->expr, pnode->pos,
+                           "Thir argument of the elementary transformation "
+                           "should be a finite element variables/data");
         } else if (ndt == 3) {
           if (!(workspace.secondary_domain_exists
                 (pnode->interpolate_name))) {
@@ -1554,6 +1630,15 @@ namespace getfem {
           for (int i = int(mi.size()-1); i >= to_add; --i)
             mi[i] = mi[i-to_add];
           for (int i = 0; i < to_add; ++i) mi[i] = 2;
+          if (pnode->test_function_type & 1 &&
+              !(workspace.associated_mf(pnode->name_test1))
+              && !(workspace.associated_im_data(pnode->name_test1)))
+            mi[0] = gmm::vect_size(workspace.value(pnode->name_test1));
+          if (pnode->test_function_type & 2 &&
+              !(workspace.associated_mf(pnode->name_test2))
+              && !(workspace.associated_im_data(pnode->name_test2)))
+            mi[(pnode->test_function_type & 1) ? 1 : 0]
+              = gmm::vect_size(workspace.value(pnode->name_test2));
           pnode->tensor().adjust_sizes(mi);
         }
 
@@ -1594,6 +1679,11 @@ namespace getfem {
         if (!(name.compare("element_size"))) {
           pnode->node_type = GA_NODE_ELT_SIZE;
           pnode->init_scalar_tensor(0);
+          break;
+        }
+        if (!(name.compare("Cross_product"))) {
+          pnode->node_type = GA_NODE_CROSS_PRODUCT;
+          pnode->test_function_type = 0;
           break;
         }
         if (!(name.compare("element_K"))) {
@@ -1730,8 +1820,8 @@ namespace getfem {
               workspace.test1.insert
                 (var_trans_pair(pnode->name_test1,
                                 pnode->interpolate_name_test1));
-            pnode->qdim1 = mf ? workspace.qdim(name)
-                              : gmm::vect_size(workspace.value(name));
+            pnode->qdim1 = (mf || imd) ? workspace.qdim(name)
+                                       : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim1))
               ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
@@ -1742,14 +1832,14 @@ namespace getfem {
               workspace.test2.insert
                 (var_trans_pair(pnode->name_test2,
                                 pnode->interpolate_name_test2));
-            pnode->qdim2 = mf ? workspace.qdim(name)
-                              : gmm::vect_size(workspace.value(name));
+            pnode->qdim2 = (mf || imd) ? workspace.qdim(name)
+                                       : gmm::vect_size(workspace.value(name));
             if (!(pnode->qdim2))
               ga_throw_error(pnode->expr, pnode->pos,
                              "Invalid null size of variable");
           }
 
-          if (!mf && (test || !imd)) {
+          if (!mf && !imd) { // global variable
             if (prefix_id)
               ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
                         "Divergence cannot be evaluated for fixed size data.");
@@ -1760,32 +1850,53 @@ namespace getfem {
             else
               pnode->node_type = GA_NODE_VAL;
 
-            size_type n = gmm::vect_size(workspace.value(name));
-            if (n == 1) {
+            size_type q = gmm::vect_size(workspace.value(name));
+            if (q == 1) {
               if (test) {
                 pnode->init_vector_tensor(1);
-                pnode->tensor()[0]=scalar_type(1);
+                pnode->tensor()[0] = scalar_type(1);
               }
-              else pnode->init_scalar_tensor(workspace.value(name)[0]);
+              else
+                pnode->init_scalar_tensor(workspace.value(name)[0]);
             } else {
               if (test) {
-                pnode->init_matrix_tensor(n,n);
-                for (size_type i = 0; i < n; ++i)
-                  for (size_type j = 0; j < n; ++j)
-                    pnode->tensor()(i,j)
-                      = ((i == j) ? scalar_type(1) : scalar_type(0));
+                pnode->init_identity_matrix_tensor(q);
               } else {
                 pnode->t.adjust_sizes(workspace.qdims(name));
                 gmm::copy(workspace.value(name), pnode->tensor().as_vector());
               }
             }
-          } else if (!test && imd) {
+          } else if (imd) { // im_data variable
+            size_type q = workspace.qdim(name);
+            bgeot::multi_index mii = workspace.qdims(name);
+
+            if (!q) ga_throw_error(pnode->expr, pnode->pos,
+                                   "Invalid null size of variable " << name);
+            if (mii.size() > 6)
+              ga_throw_error(pnode->expr, pnode->pos,
+                            "Tensor with too many dimensions. Limited to 6");
             if (prefix_id)
               ga_throw_error(pnode->expr, pnode->pos, "Gradient, Hessian or "
                              "Divergence cannot be evaluated for im data.");
-            pnode->node_type = GA_NODE_VAL;
-            pnode->t.adjust_sizes(workspace.qdims(name));
-          } else {
+
+            pnode->node_type = test ? GA_NODE_VAL_TEST : GA_NODE_VAL;
+
+            if (test) {
+              if (q == 1 && mii.size() <= 1) {
+                pnode->init_vector_tensor(1);
+                pnode->tensor()[0] = scalar_type(1);
+              } else {
+                mii.insert(mii.begin(), q);
+                pnode->t.set_to_original();
+                pnode->t.adjust_sizes(mii);
+                auto itw = pnode->tensor().begin();
+                for (size_type i = 0; i < q; ++i) // set identity matrix
+                  for (size_type j = 0; j < q; ++j)
+                    *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+              }
+            } else
+              pnode->t.adjust_sizes(mii);
+          } else { // mesh_fem variable
             size_type q = workspace.qdim(name);
             size_type n = mf->linked_mesh().dim();
             bgeot::multi_index mii = workspace.qdims(name);
@@ -1794,7 +1905,7 @@ namespace getfem {
                                    "Invalid null size of variable " << name);
             if (mii.size() > 6)
               ga_throw_error(pnode->expr, pnode->pos,
-                            "Tensor with too much dimensions. Limited to 6");
+                            "Tensor with too many dimensions. Limited to 6");
 
             switch (prefix_id) {
             case 0: // value
@@ -1804,10 +1915,8 @@ namespace getfem {
               if (test && q == 1 && mii.size() <= 1) {
                 mii.resize(1);
                 mii[0] = 2;
-              } else if (test) {
+              } else if (test)
                 mii.insert(mii.begin(), 2);
-                pnode->t.adjust_sizes(mii);
-              }
               break;
             case 1: // grad
               pnode->node_type = test ? GA_NODE_GRAD_TEST : GA_NODE_GRAD;
@@ -1894,8 +2003,10 @@ namespace getfem {
             ga_throw_error(pnode->expr, child2->pos, "Cannot derive further "
                            "this order two expression");
 
-          if (ga_node_mark_tree_for_variable(child1,workspace,me,vardiff,"")) {
-            ga_node_derivation(tree, workspace, me, child1, vardiff,"",order+1);
+          if (ga_node_mark_tree_for_variable(child1,workspace,me,
+                                             vardiff,"",true)) {
+            ga_node_derivation(tree, workspace, me, child1,
+                               vardiff,"",order+1, true);
             child1 = pnode->children[1];
             ga_node_analysis(tree, workspace, child1, me, ref_elt_dim,
                              eval_fixed_size, ignore_X, option);
@@ -1988,6 +2099,37 @@ namespace getfem {
         } else if (child1->node_type == GA_NODE_ZERO) {
           pnode->node_type = GA_NODE_ZERO;
           tree.clear_children(pnode);
+        }
+      }
+
+      // Cross product of two vectors
+      else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        if (pnode->children.size() != 3)
+          ga_throw_error(pnode->expr, child1->pos,
+                         "Wrong number of parameters for Cross_product");
+        pga_tree_node child2 = pnode->children[2];
+        
+        if (false && child1->is_constant() && child2->is_constant()) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->test_function_type = 0;
+          if (child1->tensor_proper_size() != 3 ||
+              child2->tensor_proper_size() != 3)
+            ga_throw_error(pnode->expr, child1->pos, "Cross_product is only "
+                           "defined on three-dimensional vectors");
+          pnode->t = child1->t;
+          base_tensor &t0 = pnode->tensor();
+          base_tensor &t1 = child1->tensor(), &t2 = child2->tensor();
+          t0[0] = t1[1]*t2[2] - t1[2]*t2[1];
+          t0[1] = t1[2]*t2[0] - t1[0]*t2[2];
+          t0[2] = t1[0]*t2[1] - t1[1]*t2[0];
+          if (pnode->tensor_is_zero())
+            pnode->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode);
+        } else {
+          pnode->mult_test(child1, child2);
+          mi = pnode->t.sizes();
+          mi.push_back(3);
+          pnode->t.adjust_sizes(mi);
         }
       }
 
@@ -2558,15 +2700,12 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in semantic analysis. Internal error.");
     }
-    // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
-    // cout << "node_type = " << pnode->node_type << " op_type = "
-    //      << pnode->op_type << " proper hash code = " << pnode->hash_value;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       pnode->hash_value += (pnode->children[i]->hash_value)
-        * 1.0101 * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1));
+        * 1.0101*(pnode->symmetric_op ? scalar_type(1) : scalar_type(1+i));
     }
-    // cout << " final hash code = " << pnode->hash_value << endl;
+    pnode->hash_value = sin(1.2003*pnode->hash_value);
   }
 
 
@@ -2576,11 +2715,13 @@ namespace getfem {
                             size_type ref_elt_dim,
                             bool eval_fixed_size,
                             bool ignore_X, int option) {
-    // cout << "Begin semantic analysis" << endl;
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root)) return;
+    // cout << "Begin semantic analysis with ";
+    // ga_print_node(tree.root, cout); cout << endl;
+    
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
@@ -2597,7 +2738,8 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "end of semantic analysis" << endl;
+    // cout << "End of semantic analysis";
+    // if (tree.root) ga_print_node(tree.root, cout); cout << endl;
   }
 
 
@@ -2674,6 +2816,27 @@ namespace getfem {
             if (i != 1)
               result_tree.copy_node(pnode->children[i], result_tree.root,
                                     result_tree.root->children[i]);
+        } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+          pga_tree_node child2 = pnode->children[2];
+          result_tree.insert_node(result_tree.root, pnode->node_type);
+          result_tree.root->pos = pnode->pos;
+          result_tree.root->expr = pnode->expr;
+          result_tree.root->children.resize(3, nullptr);
+          if (child1 == pnode_child) {
+            std::swap(result_tree.root->children[1],
+                      result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[0], result_tree.root,
+                                result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[2], result_tree.root,
+                                  result_tree.root->children[2]);
+          } else if (child2 == pnode_child) {
+            std::swap(result_tree.root->children[2],
+                      result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[0], result_tree.root,
+                                result_tree.root->children[0]);
+            result_tree.copy_node(pnode->children[1], result_tree.root,
+                                  result_tree.root->children[1]);
+          } else GMM_ASSERT1(false, "Corrupted tree");
         } else if (child0->node_type == GA_NODE_SWAP_IND) {
           GMM_ASSERT1(child1 == pnode_child, "Cannot extract a factor of a "
                       "Swap_indices size parameter");
@@ -2789,6 +2952,7 @@ namespace getfem {
     case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
     case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_PREDEF_FUNC:
     case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST: case GA_NODE_RESHAPE:
+    case GA_NODE_CROSS_PRODUCT:
     case GA_NODE_SWAP_IND: case GA_NODE_IND_MOVE_LAST: case GA_NODE_CONTRACT:
     case GA_NODE_ELT_SIZE: case GA_NODE_ELT_K: case GA_NODE_ELT_B:
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
@@ -2830,12 +2994,13 @@ namespace getfem {
 
     case GA_NODE_INTERPOLATE_FILTER:
       if (!child_0_is_constant) { is_constant = false; break; }
-      // No break intentionally
+      //[[fallthrough]];
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       {
@@ -2884,6 +3049,10 @@ namespace getfem {
           child0->node_type == GA_NODE_SWAP_IND ||
           child0->node_type == GA_NODE_IND_MOVE_LAST) {
         is_constant = child_1_is_constant;
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        bool child_2_is_constant
+          = ga_node_extract_constant_term(tree,pnode->children[2],workspace,m);
+        is_constant = (child_1_is_constant && child_2_is_constant);
       } else if (child0->node_type == GA_NODE_CONTRACT) {
         for (size_type i = 1; i < pnode->children.size(); ++i) {
           if (!(ga_node_extract_constant_term(tree, pnode->children[i],
@@ -3112,7 +3281,7 @@ namespace getfem {
                                  pga_tree_node pnode,
                                  const std::string &varname,
                                  const std::string &interpolatename,
-                                 size_type order) {
+                                 size_type order, bool any_trans) {
 
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
@@ -3153,7 +3322,8 @@ namespace getfem {
         bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
 
         bool ivar = (pnode->name.compare(varname) == 0 &&
-                     pnode->interpolate_name.compare(interpolatename) == 0);
+                     (any_trans ||
+                      pnode->interpolate_name.compare(interpolatename) == 0));
         bool itrans = !ivar;
         if (!itrans) {
           std::set<var_trans_pair> vars;
@@ -3174,9 +3344,8 @@ namespace getfem {
           tree.duplicate_with_addition(pnode);
           pnode_trans = pnode->parent->children[1];
         }
-
-        if (ivar) {
-          mi.resize(1); mi[0] = 2;
+        if (ivar) { // Derivative wrt the interpolated variable
+         mi.resize(1); mi[0] = 2;
           for (size_type i = 0; i < pnode->tensor_order(); ++i)
             mi.push_back(pnode->tensor_proper_size(i));
           pnode->t.adjust_sizes(mi);
@@ -3191,7 +3360,8 @@ namespace getfem {
           pnode->test_function_type = order;
         }
 
-        if (itrans) {
+        if (itrans) { // Derivative with respect to a variable that the
+                      // interpolate transformation depends on
           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
           size_type q = workspace.qdim(pnode_trans->name);
           size_type n = mf->linked_mesh().dim();
@@ -3307,6 +3477,14 @@ namespace getfem {
       }
       break;
 
+    case GA_NODE_INTERPOLATE_ELT_K:
+      GMM_ASSERT1(false, "Sorry, cannot derive the interpolated element_K");
+      break;
+
+    case GA_NODE_INTERPOLATE_ELT_B:
+      GMM_ASSERT1(false, "Sorry, cannot derive the interpolated element_B");
+      break;
+
     case GA_NODE_INTERPOLATE_NORMAL:
       GMM_ASSERT1(false, "Sorry, cannot derive the interpolated Normal");
       break;
@@ -3318,7 +3496,7 @@ namespace getfem {
 
     case GA_NODE_INTERPOLATE_FILTER:
       ga_node_derivation(tree, workspace, m, child0, varname,
-                         interpolatename, order);
+                         interpolatename, order, any_trans);
       break;
 
     case GA_NODE_SECONDARY_DOMAIN_VAL:
@@ -3384,16 +3562,16 @@ namespace getfem {
         case GA_PLUS: case GA_MINUS:
           if (mark0 && mark1) {
             ga_node_derivation(tree, workspace, m, child0, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             ga_node_derivation(tree, workspace, m, child1, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
           } else if (mark0) {
             ga_node_derivation(tree, workspace, m, child0, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             tree.replace_node_by_child(pnode, 0);
           } else {
             ga_node_derivation(tree, workspace, m, child1, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             if (pnode->op_type == GA_MINUS) {
               pnode->op_type = GA_UNARY_MINUS;
               tree.clear_node(child0);
@@ -3406,7 +3584,7 @@ namespace getfem {
       case GA_UNARY_MINUS: case GA_QUOTE: case GA_SYM: case GA_SKEW:
       case GA_TRACE: case GA_DEVIATOR: case GA_PRINT:
         ga_node_derivation(tree, workspace, m, child0, varname,
-                           interpolatename, order);
+                           interpolatename, order, any_trans);
         break;
 
       case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
@@ -3416,7 +3594,7 @@ namespace getfem {
               (pnode->op_type != GA_MULT || child0->tensor_order() < 2) &&
               (pnode->op_type != GA_DOT  || child0->tensor_order() < 2)) {
             ga_node_derivation(tree, workspace, m, child1, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             tree.insert_node(pnode, GA_NODE_OP);
             pnode->parent->op_type = GA_MULT;
             tree.add_child(pnode->parent);
@@ -3432,17 +3610,17 @@ namespace getfem {
                  child1->tensor_proper_size()== 1))
               std::swap(pnode->children[0], pnode->children[1]);
             ga_node_derivation(tree, workspace, m, child0, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             ga_node_derivation(tree, workspace, m,
                                pnode->parent->children[1]->children[1],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
           }
         } else if (mark0) {
           ga_node_derivation(tree, workspace, m, child0, varname,
-                             interpolatename, order);
+                             interpolatename, order, any_trans);
         } else
           ga_node_derivation(tree, workspace, m, child1, varname,
-                             interpolatename, order);
+                             interpolatename, order, any_trans);
         break;
 
       case GA_DIV: case GA_DOTDIV:
@@ -3454,7 +3632,7 @@ namespace getfem {
             if (mark0) {
               tree.duplicate_with_substraction(pnode);
               ga_node_derivation(tree, workspace, m, child0, varname,
-                                 interpolatename, order);
+                                 interpolatename, order, any_trans);
               pnode = pnode->parent->children[1];
             } else {
               tree.insert_node(pnode, GA_NODE_OP);
@@ -3477,10 +3655,10 @@ namespace getfem {
           tree.copy_node(pnode_param->children[1],
                          pnode_mult, pnode_mult->children[1]);
           ga_node_derivation(tree, workspace, m, pnode_mult->children[1],
-                             varname, interpolatename, order);
+                             varname, interpolatename, order, any_trans);
         } else {
           ga_node_derivation(tree, workspace, m, child0, varname,
-                             interpolatename, order);
+                             interpolatename, order, any_trans);
         }
         break;
 
@@ -3492,7 +3670,7 @@ namespace getfem {
       for (size_type i = 0; i < pnode->children.size(); ++i) {
         if (pnode->children[i]->marked)
           ga_node_derivation(tree, workspace, m, pnode->children[i],
-                             varname, interpolatename, order);
+                             varname, interpolatename, order, any_trans);
         else {
           pnode->children[i]->init_scalar_tensor(scalar_type(0));
           pnode->children[i]->node_type = GA_NODE_ZERO;
@@ -3506,12 +3684,28 @@ namespace getfem {
           child0->node_type == GA_NODE_SWAP_IND||
           child0->node_type == GA_NODE_IND_MOVE_LAST) {
         ga_node_derivation(tree, workspace, m, pnode->children[1],
-                           varname, interpolatename, order);
+                           varname, interpolatename, order, any_trans);
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        pga_tree_node child2 = pnode->children[2];
+        bool mark2 = child2->marked;
+        if (mark1 && mark2) {
+          tree.duplicate_with_addition(pnode);
+          ga_node_derivation(tree, workspace, m, child1, varname,
+                             interpolatename, order, any_trans);
+          ga_node_derivation(tree, workspace, m,
+                             pnode->parent->children[1]->children[2],
+                             varname, interpolatename, order, any_trans);
+        } else if (mark1) {
+          ga_node_derivation(tree, workspace, m, child1, varname,
+                             interpolatename, order, any_trans);
+        } else
+          ga_node_derivation(tree, workspace, m, child2, varname,
+                             interpolatename, order, any_trans);
       } else if (child0->node_type == GA_NODE_CONTRACT) {
 
         if (pnode->children.size() == 4) {
           ga_node_derivation(tree, workspace, m, pnode->children[1],
-                             varname, interpolatename, order);
+                             varname, interpolatename, order, any_trans);
         } else if (pnode->children.size() == 5 || pnode->children.size() == 7) {
           size_type n2 = (pnode->children.size()==5) ? 3 : 4;
           pga_tree_node child2 = pnode->children[n2];
@@ -3519,16 +3713,16 @@ namespace getfem {
           if (mark1 && child2->marked) {
             tree.duplicate_with_addition(pnode);
             ga_node_derivation(tree, workspace, m, child1, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
             ga_node_derivation(tree, workspace, m,
                                pnode->parent->children[1]->children[n2],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
           } else if (mark1) {
             ga_node_derivation(tree, workspace, m, child1, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
           } else
             ga_node_derivation(tree, workspace, m, child2, varname,
-                               interpolatename, order);
+                               interpolatename, order, any_trans);
 
         } else GMM_ASSERT1(false, "internal error");
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
@@ -3591,7 +3785,7 @@ namespace getfem {
             pnode_op->children.resize(2, nullptr);
             tree.copy_node(child1, pnode_op, pnode_op->children[1]);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
           }
         } else {
           pga_tree_node child2 = pnode->children[2];
@@ -3629,7 +3823,7 @@ namespace getfem {
             pnode_op->children.resize(2, nullptr);
             tree.copy_node(child1, pnode_op, pnode_op->children[1]);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
           }
           if (child2->marked) {
             pnode = pg2;
@@ -3662,7 +3856,7 @@ namespace getfem {
             pnode_op->children.resize(2, nullptr);
             tree.copy_node(child2, pnode_op, pnode_op->children[1]);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
           }
         }
       } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
@@ -3711,7 +3905,7 @@ namespace getfem {
             tree.copy_node(pnode->children[i], pnode_op,
                            pnode_op->children[1]);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
-                               varname, interpolatename, order);
+                               varname, interpolatename, order, any_trans);
 
             if (pnode2->children[0]->name.compare("Norm_sqr") == 0
                 && pnode2->children[0]->der1 == 1) {
@@ -3727,7 +3921,7 @@ namespace getfem {
 
       } else {
         ga_node_derivation(tree, workspace, m, child0, varname,
-                           interpolatename, order);
+                           interpolatename, order, any_trans);
       }
       break;
 
@@ -3806,6 +4000,8 @@ namespace getfem {
         (workspace.associated_mf(pnode->name) != 0)) marked = true;
       
     if (pnode->node_type == GA_NODE_INTERPOLATE_X ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
+        pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) marked = true;
 
     pnode->marked = marked;
@@ -3890,13 +4086,13 @@ namespace getfem {
                       "transformations having an explicit expression");
 
         ga_tree trans_tree;
-        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionnary());
+        ga_read_string(expr_trans, trans_tree, workspace.macro_dictionary());
         ga_semantic_analysis(trans_tree, workspace, m,
-                             ref_elt_dim_of_mesh(m), false, false, 1);
+                             ref_elt_dim_of_mesh(m, -1), false, false, 1);
         if (trans_tree.root) {
           ga_node_grad(trans_tree, workspace, m, trans_tree.root);
           ga_semantic_analysis(trans_tree, workspace, m,
-                               ref_elt_dim_of_mesh(m), false, false, 1);
+                               ref_elt_dim_of_mesh(m, -1), false, false, 1);
 
           GMM_ASSERT1(trans_tree.root->tensor().sizes().size() == 2,
                       "Problem in transformation" << tname);
@@ -3988,6 +4184,11 @@ namespace getfem {
     case GA_NODE_NORMAL:
     case GA_NODE_INTERPOLATE_NORMAL:
       GMM_ASSERT1(false, "Sorry, Gradient of Normal vector not implemented");
+
+    case GA_NODE_ELT_K: case GA_NODE_ELT_B:
+    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+      GMM_ASSERT1(false, "Sorry, Gradient of element_K or element_B "
+                         "not implemented");
 
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       GMM_ASSERT1(false, "Sorry, gradient of the derivative of a "
@@ -4476,6 +4677,9 @@ namespace getfem {
         ga_node_grad(tree, workspace, m, pnode->children[1]);
         tree.add_child(pnode, GA_NODE_CONSTANT);
         pnode->children.back()->init_scalar_tensor(scalar_type(m.dim()));
+      } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        GMM_ASSERT1(false, "Sorry, the gradient of a cross product"
+                    "has not been implemented. To be done.");
       } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
         size_type order = pnode->tensor_order();
         ga_node_grad(tree, workspace, m, pnode->children[1]);
@@ -4834,6 +5038,7 @@ namespace getfem {
       case GA_DIV: case GA_DOTDIV:
         if (mark1) return false;
         if (mark0) return ga_node_is_affine(child0);
+        return true;
 
       default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
       }
@@ -4851,6 +5056,13 @@ namespace getfem {
           child0->node_type == GA_NODE_SWAP_IND ||
           child0->node_type == GA_NODE_IND_MOVE_LAST)
         return ga_node_is_affine(child1);
+      if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
+        pga_tree_node child2 = pnode->children[2];
+        bool mark2 = child2->marked;
+        if (mark1 && mark2) return false;
+        if (mark1) return ga_node_is_affine(child1);
+        return ga_node_is_affine(child2);
+      }
       if (child0->node_type == GA_NODE_CONTRACT) {
         if (pnode->children.size() == 4) {
           return ga_node_is_affine(child1);

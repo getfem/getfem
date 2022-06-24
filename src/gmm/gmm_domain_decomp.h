@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -81,9 +81,9 @@ namespace gmm {
     std::vector<size_type> ns(dim), na(dim), nu(dim);
     for (size_type i = 0; i < nbpts; ++i) {
       for (int k = 0; k < dim; ++k) {
-	register double a = (pts[i][k] - pmin[k]) / msize;
-	ns[k] = size_type(a) - 1; na[k] = 0;
-	pts1[k] = int(a + overlap); pts2[k] = int(ceil(a-1.0-overlap));
+          double a = (pts[i][k] - pmin[k]) / msize;
+          ns[k] = size_type(a) - 1; na[k] = 0;
+          pts1[k] = int(a + overlap); pts2[k] = int(ceil(a-1.0-overlap));
       }
       size_type sum = 0;
       do {

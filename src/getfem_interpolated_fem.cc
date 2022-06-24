@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -25,14 +25,14 @@ namespace getfem {
 
   void interpolated_fem::build_rtree(void) const {
     base_node min, max;
-    scalar_type EPS=1E-13;
     boxtree.clear();
+    box_to_convexes_map.clear();
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bounding_box(min, max, mf.linked_mesh().points_of_convex(cv),
                    mf.linked_mesh().trans_of_convex(cv));
-      for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
-      boxtree.add_box(min, max, cv);
+      box_to_convexes_map[boxtree.add_box(min, max, cv)].push_back(cv);
     }
+    boxtree.build_tree();
   }
 
   bool interpolated_fem::find_a_point(base_node pt, base_node &ptr,
@@ -45,12 +45,14 @@ namespace getfem {
     bgeot::rtree::pbox_set::const_iterator it = boxlst.begin(),
       ite = boxlst.end();
     for (; it != ite; ++it) {
-      gic = bgeot::geotrans_inv_convex
-        (mf.linked_mesh().convex((*it)->id),
-         mf.linked_mesh().trans_of_convex((*it)->id));
-      cv_stored = (*it)->id;
-      if (gic.invert(pt, ptr, gt_invertible)) {
-        cv = (*it)->id; return true;
+      for (auto candidate : box_to_convexes_map.at((*it)->id)) {
+        gic = bgeot::geotrans_inv_convex
+          (mf.linked_mesh().convex(candidate),
+           mf.linked_mesh().trans_of_convex(candidate));
+        cv_stored = candidate;
+        if (gic.invert(pt, ptr, gt_invertible)) {
+          cv = candidate; return true;
+        }
       }
     }
     return false;
@@ -312,8 +314,8 @@ namespace getfem {
                   t(ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]],j,k)
                     = taux(i,j*(1-mdim),k);
         }
-          for (size_type i = 0; i < nbdof; ++i)
-            ind_dof[e.inddof[i]] = size_type(-1);
+        for (size_type i = 0; i < nbdof; ++i)
+          ind_dof[e.inddof[i]] = size_type(-1);
       }
     }
   }
@@ -376,7 +378,7 @@ namespace getfem {
                                      dal::bit_vector blocked_dof_,
                                      bool store_val)
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
-      blocked_dof(blocked_dof_), mi2(2), mi3(3) {
+      blocked_dof(blocked_dof_), boxtree{1E-13}, mi2(2), mi3(3) {
     DAL_STORED_OBJECT_DEBUG_CREATED(this, "Interpolated fem");
     this->add_dependency(mf);
     this->add_dependency(mim);

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -410,7 +410,8 @@ namespace getfem {
 
     virtual const mesh &linked_mesh() { return sl.linked_mesh(); }
 
-    ga_interpolation_context_mesh_slice(const stored_mesh_slice &sl_, base_vector &r)
+    ga_interpolation_context_mesh_slice(const stored_mesh_slice &sl_,
+                                        base_vector &r)
       : result(r), sl(sl_), initialized(false) { }
   };
 
@@ -442,23 +443,22 @@ namespace getfem {
 
     // Could be improved by not performing the assembly of the global mass matrix
     // working locally. This means a specific assembly.
-    model_real_sparse_matrix M(mf.nb_dof(), mf.nb_dof());
+    size_type nbdof = mf.nb_dof();
+    model_real_sparse_matrix M(nbdof, nbdof);
     asm_mass_matrix(M, mim, mf, region);
+    // FIXME: M should be cached for performance
 
-    ga_workspace workspace(md);
-    size_type nbdof = md.nb_dof();
-    gmm::sub_interval I(nbdof, mf.nb_dof());
+    ga_workspace workspace(md, ga_workspace::inherit::NONE);
+    gmm::sub_interval I(0,nbdof);
     workspace.add_fem_variable("c__dummy_var_95_", mf, I, base_vector(nbdof));
     if (mf.get_qdims().size() > 1)
       workspace.add_expression("("+expr+"):Test_c__dummy_var_95_",mim,region,2);
     else
       workspace.add_expression("("+expr+").Test_c__dummy_var_95_",mim,region,2);
-    base_vector residual(nbdof+mf.nb_dof());
-    workspace.set_assembled_vector(residual);
+    getfem::base_vector F(nbdof);
+    workspace.set_assembled_vector(F);
     workspace.assembly(1);
-    getfem::base_vector F(mf.nb_dof());
-    gmm::resize(result, mf.nb_dof());
-    gmm::copy(gmm::sub_vector(residual, I), F);
+    gmm::resize(result, nbdof);
 
     getfem::base_matrix loc_M;
     getfem::base_vector loc_U;
@@ -478,6 +478,16 @@ namespace getfem {
   //=========================================================================
   // Interpolate transformation with an expression
   //=========================================================================
+
+  struct rated_box_index_compare {
+    bool operator()(
+      const std::pair<scalar_type, const bgeot::box_index*> &x,
+      const std::pair<scalar_type, const bgeot::box_index*> &y) const {
+      GMM_ASSERT2(x.second != nullptr, "x contains nullptr");
+      GMM_ASSERT2(y.second != nullptr, "y contains nullptr");
+      return (x.first < y.first) || (!(y.first < x.first) && (x.second->id < y.second->id));
+    }
+  };
 
   class interpolate_transformation_expression
     : public virtual_interpolate_transformation, public context_dependencies {
@@ -504,6 +514,9 @@ namespace getfem {
     mutable bool extract_variable_done;
     mutable bool extract_data_done;
 
+  private:
+    mutable std::map<size_type, std::vector<size_type>> box_to_convexes;
+
   public:
     void update_from_context() const {
       recompute_elt_boxes = true;
@@ -519,8 +532,7 @@ namespace getfem {
           used_vars.clear();
         else
           used_data.clear();
-        ga_workspace aux_workspace;
-        aux_workspace = ga_workspace(true, workspace);
+        ga_workspace aux_workspace(workspace, ga_workspace::inherit::ALL);
         aux_workspace.clear_expressions();
         aux_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < aux_workspace.nb_trees(); ++i)
@@ -543,7 +555,7 @@ namespace getfem {
       size_type N = target_mesh.dim();
 
       // Expression compilation
-      local_workspace = ga_workspace(true, workspace);
+      local_workspace = ga_workspace(workspace, ga_workspace::inherit::ALL);
       local_workspace.clear_expressions();
 
       local_workspace.add_interpolation_expression(expr, source_mesh);
@@ -570,7 +582,7 @@ namespace getfem {
                         var.varname, var.transname, 1);
           if (tree.root)
             ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
-				 1, false, true);
+                                 1, false, true);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
@@ -578,6 +590,7 @@ namespace getfem {
       // Element_boxes update (if necessary)
       if (recompute_elt_boxes) {
 
+        box_to_convexes.clear();
         element_boxes.clear();
         base_node bmin(N), bmax(N);
         const dal::bit_vector&
@@ -612,8 +625,9 @@ namespace getfem {
           for (auto &&val : bmin) val -= h*0.2;
           for (auto &&val : bmax) val += h*0.2;
 
-          element_boxes.add_box(bmin, bmax, cv);
+          box_to_convexes[element_boxes.add_box(bmin, bmax)].push_back(cv);
         }
+        element_boxes.build_tree();
         recompute_elt_boxes = false;
       }
     }
@@ -637,12 +651,27 @@ namespace getfem {
                   bool compute_derivatives) const {
       int ret_type = 0;
 
-      ga_interpolation_single_point_exec(local_gis, local_workspace, ctx_x,
-                                         Normal, m);
+      local_gis.ctx = ctx_x;
+      local_gis.Normal = Normal;
+      local_gis.nbpt = 1;
+      local_gis.ipt = 0;
+      local_gis.pai = 0;
+      gmm::clear(local_workspace.assembled_tensor().as_vector());
 
-      GMM_ASSERT1(local_workspace.assembled_tensor().size() == m.dim(),
+      for (auto &&instr : local_gis.all_instructions) {
+        GMM_ASSERT1(instr.second.m == &m,
+                    "Incompatibility of meshes in interpolation");
+        auto &gilb = instr.second.begin_instructions;
+        for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+        auto &gile = instr.second.elt_instructions;
+        for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
+        auto &gil = instr.second.instructions;
+        for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+      }
+
+      GMM_ASSERT1(local_workspace.assembled_tensor().size()==target_mesh.dim(),
                   "Wrong dimension of the transformation expression");
-      P.resize(m.dim());
+      P.resize(target_mesh.dim());
       gmm::copy(local_workspace.assembled_tensor().as_vector(), P);
 
       *m_t = &target_mesh;
@@ -653,14 +682,15 @@ namespace getfem {
         element_boxes.find_boxes_at_point(P, bset);
 
         // using a std::set as a sorter
-        std::set<std::pair<scalar_type, const bgeot::box_index*> > rated_boxes;
+        std::set<std::pair<scalar_type, const bgeot::box_index*>,
+                 rated_box_index_compare> rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
           for (size_type i = 0; i < m.dim(); ++i) {
-            scalar_type h = box->max[i] - box->min[i];
+            scalar_type h = box->max->at(i) - box->min->at(i);
             if (h > scalar_type(0)) {
-              scalar_type r = std::min(box->max[i] - P[i],
-                                       P[i] - box->min[i]) / h;
+              scalar_type r = std::min(box->max->at(i) - P[i],
+                                       P[i] - box->min->at(i)) / h;
               rating = std::min(r, rating);
             }
           }
@@ -676,32 +706,33 @@ namespace getfem {
       scalar_type best_dist(1e10);
       size_type best_cv(-1);
       base_node best_P_ref;
-      for (size_type i = boxes.size(); i > 0; --i) {
+      for (size_type i = boxes.size(); i > 0 && !ret_type; --i) {
+        for (auto convex : box_to_convexes.at(boxes[i-1]->id)) {
+          gic.init(target_mesh.points_of_convex(convex),
+                   target_mesh.trans_of_convex(convex));
 
-        cv = boxes[i-1]->id;
-        gic.init(target_mesh.points_of_convex(cv),
-                 target_mesh.trans_of_convex(cv));
+          bool converged;
+          bool is_in = gic.invert(P, P_ref, converged, 1E-4);
+          // cout << "cv = " << convex << " P = " << P << " P_ref = " << P_ref;
+          // cout << " is_in = " << int(is_in) << endl;
+          // for (size_type iii = 0;
+          //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
+          //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
 
-        bool converged;
-        bool is_in = gic.invert(P, P_ref, converged, 1E-4);
-        // cout << "cv = " << cv << " P = " << P << " P_ref = " << P_ref << endl;
-        // cout << " is_in = " << int(is_in) << endl;
-        // for (size_type iii = 0;
-        //     iii < target_mesh.points_of_convex(cv).size(); ++iii)
-        //  cout << target_mesh.points_of_convex(cv)[iii] << endl;
-
-        if (converged) {
-          if (is_in) {
-            face_num = short_type(-1); // Should detect potential faces ?
-            ret_type = 1;
-            break;
-          } else {
-            scalar_type dist
-              = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
-            if (dist < best_dist) {
-              best_dist = dist;
-              best_cv = cv;
-              best_P_ref = P_ref;
+          if (converged) {
+            cv = convex;
+            if (is_in) {
+              face_num = short_type(-1); // Should detect potential faces ?
+              ret_type = 1;
+              break;
+            } else {
+              scalar_type dist
+                = target_mesh.trans_of_convex(cv)->convex_ref()->is_in(P_ref);
+              if (dist < best_dist) {
+                best_dist = dist;
+                best_cv = cv;
+                best_P_ref = P_ref;
+              }
             }
           }
         }
@@ -774,10 +805,10 @@ namespace getfem {
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for internal faces)
+  // Interpolate transformation on neighbor element (for internal faces)
   //=========================================================================
 
-  class interpolate_transformation_neighbour
+  class interpolate_transformation_neighbor
     : public virtual_interpolate_transformation, public context_dependencies {
 
   public:
@@ -804,7 +835,7 @@ namespace getfem {
       *m_t = &m_x;
       size_type cv_x = ctx_x.convex_num();
       short_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != short_type(-1), "Neighbour transformation can "
+      GMM_ASSERT1(face_x != short_type(-1), "Neighbor transformation can "
                   "only be applied to internal faces");
 
       auto adj_face = m_x.adjacent_face(cv_x, face_x);
@@ -815,9 +846,9 @@ namespace getfem {
                  m_x.trans_of_convex(adj_face.cv));
         bool converged = true;
         gic.invert(ctx_x.xreal(), P_ref, converged);
-	bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
-	GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
-                    "has failed in neighbour transformation");
+        bool is_in = (ctx_x.pgt()->convex_ref()->is_in(P_ref) < 1E-4);
+        GMM_ASSERT1(is_in && converged, "Geometric transformation inversion "
+                    "has failed in neighbor transformation");
         face_num = adj_face.f;
         cv = adj_face.cv;
         ret_type = 1;
@@ -827,17 +858,17 @@ namespace getfem {
       return ret_type;
     }
 
-    interpolate_transformation_neighbour() { }
+    interpolate_transformation_neighbor() { }
 
   };
 
 
-  pinterpolate_transformation interpolate_transformation_neighbour_instance() {
-    return (std::make_shared<interpolate_transformation_neighbour>());
+  pinterpolate_transformation interpolate_transformation_neighbor_instance() {
+    return (std::make_shared<interpolate_transformation_neighbor>());
   }
 
   //=========================================================================
-  // Interpolate transformation on neighbour element (for extrapolation)
+  // Interpolate transformation on neighbor element (for extrapolation)
   //=========================================================================
 
   class interpolate_transformation_element_extrapolation
@@ -893,7 +924,7 @@ namespace getfem {
       return ret_type;
     }
 
-    void set_correspondance(const std::map<size_type, size_type> &ec) {
+    void set_correspondence(const std::map<size_type, size_type> &ec) {
       elt_corr = ec;
     }
 
@@ -921,7 +952,7 @@ namespace getfem {
     workspace.add_interpolate_transformation(name, p);
   }
 
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr) {
     GMM_ASSERT1(workspace.interpolate_transformation_exists(name),
@@ -933,10 +964,10 @@ namespace getfem {
     GMM_ASSERT1(cpext,
                 "The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
-      ->set_correspondance(elt_corr);
+      ->set_correspondence(elt_corr);
   }
 
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (model &md, const std::string &name,
    std::map<size_type, size_type> &elt_corr) {
     GMM_ASSERT1(md.interpolate_transformation_exists(name),
@@ -948,7 +979,7 @@ namespace getfem {
     GMM_ASSERT1(cpext,
                 "The transformation is not of element extrapolation type");
     const_cast<interpolate_transformation_element_extrapolation *>(cpext)
-      ->set_correspondance(elt_corr);
+      ->set_correspondence(elt_corr);
   }
 
 
@@ -962,7 +993,7 @@ namespace getfem {
   public:
 
     virtual const mesh_region &give_region(const mesh &,
-					   size_type, short_type) const
+                                           size_type, short_type) const
     { return region; }
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;

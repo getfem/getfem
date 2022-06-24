@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -54,7 +54,7 @@ extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, in
 using std::endl; using std::cout;
 
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -457,7 +457,7 @@ h
     vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
     xadj[j] = k;
     bgeot::mesh_structure::ind_set s;
-    mesh.neighbours_of_convex(ic, s);
+    mesh.neighbors_of_convex(ic, s);
     for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }
@@ -870,7 +870,7 @@ int main(int argc, char *argv[]) {
 	vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
 	xadj[j] = k;
 	bgeot::mesh_structure::ind_set s;
-	mesh.neighbours_of_convex(ic, s);
+	mesh.neighbors_of_convex(ic, s);
 	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
 	  if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
 	}
@@ -1035,7 +1035,7 @@ int main(int argc, char *argv[]) {
       bgeot::mesh_structure::ind_set is;
       base_matrix Mloc;
       for (dal::bv_visitor i(elt_black_list); !i.finished(); ++i) {
-	mesh.neighbours_of_convex(i, is);
+	mesh.neighbors_of_convex(i, is);
 	size_type cv2 = size_type(-1);
 	scalar_type ratio = scalar_type(0);
 	for (size_type j = 0; j < is.size(); ++j) {

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Jean-Yves Heddebaut.
+ Copyright (C) 2002-2020 Jean-Yves Heddebaut.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -39,7 +39,7 @@ using std::ends; using std::cin;
 template <typename T> std::ostream &operator <<
   (std::ostream &o, const std::vector<T>& m) { gmm::write(o,m); return o; }
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::base_vector;
@@ -460,6 +460,7 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
 
 int main(int argc, char *argv[]) {
   
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
@@ -477,5 +478,6 @@ int main(int argc, char *argv[]) {
     }
   
   GMM_STANDARD_CATCH_ERROR;	
+  GETFEM_MPI_FINALIZE;
   return 0; 
 }

@@ -12,7 +12,7 @@ In this example of a deformable ''wheel'' enters in contact with a deformable fo
 The problem setting
 -------------------
 
-Let :math:`\Omega^1 \subset \R^2` be the reference configuration of a 2D wheel and :math:`\Omega^2 \subset \R^2` the reference configuration of a deformable foundation. We consider small deformation of these two bodies (linearized elasticity) and the contact between them. We also consider that the rim of the wheel is rigid and apply a vertical force on the wheel.
+Let :math:`\Omega^1 \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of a 2D wheel and :math:`\Omega^2 \subset \rm I\hspace{-0.15em}R^2` the reference configuration of a deformable foundation. We consider small deformation of these two bodies (linearized elasticity) and the contact between them. We also consider that the rim of the wheel is rigid and apply a vertical force on the wheel.
 
 
 Building the program
@@ -35,7 +35,7 @@ Let us begin by loading Getfem and fixing the parameters of the problem
 
   h = 1                      # Approximate mesh size
   elements_degree = 2        # Degree of the finite element methods
-  gamma0 = 1./E;             # Augmentation parameter for the augmented Lagrangian 
+  gamma0 = 1./E;             # Augmentation parameter for the augmented Lagrangian
 
 
 
@@ -51,7 +51,7 @@ We consider that the radius of the wheel is 15cm and the one of the rim 8cm and 
   mo3 = gf.MesherObject('set minus', mo1, mo2)
   gf.util('trace level', 2)   # No trace for mesh generation
   mesh1 = gf.Mesh('generate', mo3, h, 2)
-  
+
   mesh2 = gf.Mesh('import','structured','GT="GT_PK(2,1)";SIZES=[30,10];NOISED=0;NSUBDIV=[%d,%d];' % (int(30/h)+1, int(10/h)+1));
   mesh2.translate([-15.,-10.])
 
@@ -80,7 +80,7 @@ We have to select the different parts of the boundary where we will set some bou
   mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)
   mesh2.set_region(BOTTOM_BOUND, fb3)
 
-Note that the command `mesh1.outer_faces_with_direction([0., -1.], n.pi/4)` allows to select all the faces having a unit outward normal having an angle less or equal to `n.pi/4` with the vector `[0., -1.]`. The command `mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)` allow to delete the faces corresponding to the rim in the contact boundary.
+Note that the command `mesh1.outer_faces_with_direction([0., -1.], np.pi/4)` allows to select all the faces having a unit outward normal having an angle less or equal to `np.pi/4` with the vector `[0., -1.]`. The command `mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)` allow to delete the faces corresponding to the rim in the contact boundary.
 
 Definition of finite elements methods and integration method
 ************************************************************
@@ -143,7 +143,7 @@ Contact condition (use of interpolate transformations)
 
 Now, let us see how to prescribed the contact condition between the two structures. It is possible to use predefined bricks (see  :ref:`ud-model-contact-friction` for small deformation/small sliding contact and :ref:`ud-model-contact-friction-large` for large deformation/large sliding contact). However, we will see here how to directly prescribe a contact condition using an augmented Lagrangian formulation and the interpolate transformations.
 
-For small deformation contact, the correspondence between points of one contact surface to the other have to be described on the reference configuration and is not evolving, which is of course simpler but is an approximation. 
+For small deformation contact, the correspondence between points of one contact surface to the other have to be described on the reference configuration and is not evolving, which is of course simpler but is an approximation.
 
 We consider that the contact boundary of the wheel is the slave one and we have to describe the transformation from the contact boundary of the wheel to the contact boundary of the foundation. This is quite simple here, since the contact boundary of the foundation corresponds to a vanishing vertical coordinate. So we define the transformation
 
@@ -157,18 +157,18 @@ where :math:`X` is the vector of coordinates of the point. We add this transform
 
   md.add_interpolate_transformation_from_expression('Proj1', mesh1, mesh2, '[X(1);0]')
 
-As a consequence, it will be possible to use this transformation, from the mesh of the wheel to the mesh of the foundation, into weak form language expressions. Notes that this is here a very simple constant expression. More complex expressions depending on the data or even the variables of the model can be used. If the expression of a transformation depends on the variable of the model, the tangent linear system will automatically takes into account this dependence (see :ref:`ud-gasm-high-transf` for more details. Note also that transformation corresponding to a large sliding contact and automatically searching for the correspondence between contact boundaries exist in |gf| (see :ref:`ud-model-contact-friction-large-hlgav`).
- 
+As a consequence, it will be possible to use this transformation, from the mesh of the wheel to the mesh of the foundation, into GWFL expressions. Notes that this is here a very simple constant expression. More complex expressions depending on the data or even the variables of the model can be used. If the expression of a transformation depends on the variable of the model, the tangent linear system will automatically takes into account this dependence (see :ref:`ud-gasm-high-transf` for more details). Note also that transformation corresponding to a large sliding contact and automatically searching for the correspondence between contact boundaries exist in |gf| (see :ref:`ud-model-contact-friction-large-hlgav`).
+
 Using the defined transformation, we can write an integral contact condition using an augmented Lagrangian formulation (see :ref:`ud-model-contact-friction` for more details). The corresponding term (to be added to the rest of the weak formulation) reads:
 
 .. math::
 
-  & \cdots + \ds \int_{\Gamma_c} \lambda_N(X) (\delta_{u^1}(X)-\delta_{u^2}(\Pi(X)))\cdot n d\Gamma \\
-  & -  \ds \int_{\Gamma_c} \left(\lambda_N(X) + \left(\lambda_N(X) + \Frac{1}{h_T\gamma_0}((X + u^1(X))\cdot n - (\Pi(X) - u^2(\Pi(X)))\cdot n\right)_-\right)\delta_{\lambda_N}(X) d\Gamma = 0 ~~~~ \forall \delta_{\lambda_N}, \forall \delta_{u^1}, \forall \delta_{u^2},
+  & \cdots +  \int_{\Gamma_c} \lambda_N(X) (\delta_{u^1}(X)-\delta_{u^2}(\Pi(X)))\cdot n d\Gamma \\
+  & -   \int_{\Gamma_c} \left(\lambda_N(X) + \left(\lambda_N(X) + \dfrac{1}{h_T\gamma_0}((X + u^1(X))\cdot n - (\Pi(X) - u^2(\Pi(X)))\cdot n\right)_-\right)\delta_{\lambda_N}(X) d\Gamma = 0 ~~~~ \forall \delta_{\lambda_N}, \forall \delta_{u^1}, \forall \delta_{u^2},
 
 where :math:`\Gamma_c` is the slave contact boundary, :math:`\lambda_N` is the contact multiplier (contact pressure), :math:`h_T` is the radius of the element, :math:`\Pi` is the transformation, `n` is the outward normal vector to the master contact boundary (here :math:`n = (0,1)`), :math:`\gamma_0` is an augmentation parameter, :math:`(\cdot)_-:I\hspace{-0.2em}R\rightarrow I\hspace{-0.2em}R_+` is the negative part and :math:`\delta_{\lambda_N}, \delta_{u^1}, \delta_{u^2}` are the test  functions corresponding to :math:`\lambda_N, u^1, u^2`, respectively.
 
-Using the weak form language, the contact condition can be added by:
+Using GWFL, the contact condition can be added by:
 
 .. code-block:: python
 
@@ -195,7 +195,7 @@ We need a multiplier to prescribe the displacement on the rim boundary:
 
   md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
 
-This multiplier represents the boundary stress that is necessary to prescribe the vertical displacement to be :math`(0, -\alpha_D)`. The constraint we want to apply on this multiplier is that its integral over the rim boundary is the vertical force we want to apply. The corresponding weak formulation term to be added to the rest of the weak formulation reads
+This multiplier represents the boundary stress that is necessary to prescribe the vertical displacement to be :math:`(0, -\alpha_D)`. The constraint we want to apply on this multiplier is that its integral over the rim boundary is the vertical force we want to apply. The corresponding weak formulation term to be added to the rest of the weak formulation reads
 
 .. math::
 
@@ -203,11 +203,10 @@ This multiplier represents the boundary stress that is necessary to prescribe th
 
 where :math:`\Gamma_D` is the rim boundary, :math:`F` is the applied density of force.
 
-This could be added to the model with the weak form language:
+This could be added to the model with GWFL:
 
 .. code-block:: python
 
-  md.add_filtered_fem_variable('lambda_D', mflambda, HOLE_BOUND)
   md.add_initialized_data('F', [applied_force/(8*2*np.pi)])
   md.add_linear_term(mim1, '-lambda_D.Test_u1 + (alpha_D*[0;1]-u1).Test_lambda_D'
         ' + (lambda_D.[0;1]+F)*Test_alpha_D', HOLE_BOUND)
@@ -240,7 +239,7 @@ Note that in some configuration, it is preferable to use a more basic line searc
 Export the solution
 *******************
 
-Now the code to export the solution with the VonMiss stress:
+Now the code to export the solution with the VonMises stress:
 
 .. code-block:: python
 

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2013-2017 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -108,7 +108,7 @@ namespace getfem {
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;
     virtual void finalize() const = 0;
-    virtual std::string expression(void) const { return std::string(); }
+    virtual std::string expression() const { return std::string(); }
 
     virtual ~virtual_interpolate_transformation() {}
   };
@@ -124,8 +124,8 @@ namespace getfem {
 
   public:
     
-    virtual void give_transformation(const mesh_fem &mf, size_type cv,
-                                     base_matrix &M) const = 0;
+    virtual void give_transformation(const mesh_fem &mf1, const mesh_fem &mf2,
+                                     size_type cv, base_matrix &M) const = 0;
     virtual ~virtual_elementary_transformation() {}
   };
 
@@ -143,9 +143,9 @@ namespace getfem {
 
   public:
 
-    const mesh_im &mim(void) const { return mim_; }
+    const mesh_im &mim() const { return mim_; }
     virtual const mesh_region &give_region(const mesh &m,
-				     size_type cv, short_type f) const = 0;
+                                     size_type cv, short_type f) const = 0;
     // virtual void init(const ga_workspace &workspace) const = 0;
     // virtual void finalize() const = 0;
 
@@ -183,10 +183,10 @@ namespace getfem {
   };
 
 
-  class ga_macro_dictionnary {
+  class ga_macro_dictionary {
 
   protected:
-    const ga_macro_dictionnary *parent;
+    const ga_macro_dictionary *parent;
     std::map<std::string, ga_macro> macros;
 
   public:
@@ -197,8 +197,8 @@ namespace getfem {
     void add_macro(const std::string &name, const std::string &expr);
     void del_macro(const std::string &name);
     
-    ga_macro_dictionnary() : parent(0) {}
-    ga_macro_dictionnary(bool, const ga_macro_dictionnary& gamd)
+    ga_macro_dictionary() : parent(0) {}
+    ga_macro_dictionary(bool, const ga_macro_dictionary& gamd)
       : parent(&gamd) {}
     
   };
@@ -264,21 +264,23 @@ namespace getfem {
 
     const model *md;
     const ga_workspace *parent_workspace;
-    bool enable_all_md_variables;
+    bool with_parent_variables;
+    size_type nb_prim_dof, nb_intern_dof, first_intern_dof, nb_tmp_dof;
 
     void init();
 
     struct var_description {
 
-      bool is_variable;
-      bool is_fem_dofs;
+      const bool is_variable;
+      const bool is_fem_dofs;
       const mesh_fem *mf;
+      const im_data *imd;
       gmm::sub_interval I;
       const model_real_plain_vector *V;
-      const im_data *imd;
-      bgeot::multi_index qdims;  // For data having a qdim != of the fem
-                                 // (dim per dof for dof data)
-                                 // and for constant variables.
+      bgeot::multi_index qdims;  // For data having a qdim different than the
+                                 // qdim of the fem or im_data (dim per dof for
+                                 // dof data) and for constant variables.
+      const bool is_internal;
 
       size_type qdim() const {
         size_type q = 1;
@@ -286,28 +288,29 @@ namespace getfem {
         return q;
       }
 
-      var_description(bool is_var, bool is_fem,
-                      const mesh_fem *mmf, gmm::sub_interval I_,
-                      const model_real_plain_vector *v, const im_data *imd_,
-                      size_type Q)
-        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v),
-          imd(imd_), qdims(1) {
+      var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
+                      gmm::sub_interval I_, const model_real_plain_vector *V_,
+                      size_type Q, bool is_intern_=false)
+        : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
+          I(I_), V(V_), qdims(1), is_internal(is_intern_)
+      {
         GMM_ASSERT1(Q > 0, "Bad dimension");
         qdims[0] = Q;
       }
-      var_description() : is_variable(false), is_fem_dofs(false),
-                          mf(0), V(0), imd(0), qdims(1) { qdims[0] = 1; }
     };
 
   public:
 
+    enum operation_type {ASSEMBLY,
+                         PRE_ASSIGNMENT,
+                         POST_ASSIGNMENT};
+
     struct tree_description { // CAUTION: Specific copy constructor
-      size_type order; // 0: potential, 1: weak form, 2: tangent operator
-      // -1 : interpolation/ assignment all order,
-      // -2 : assignment on potential, -3 : assignment on weak form
-      // -3 : assignment on tangent operator
-      size_type interpolation; // O : assembly, 1 : interpolate before assembly
-                               // 2 : interpolate after assembly. 
+      size_type order; //  0 : potential
+                       //  1 : residual
+                       //  2 : tangent operator
+                       // -1 : any
+      operation_type operation;
       std::string varname_interpolation; // Where to interpolate
       std::string name_test1, name_test2;
       std::string interpolate_name_test1, interpolate_name_test2;
@@ -317,7 +320,7 @@ namespace getfem {
       const mesh_region *rg;
       ga_tree *ptree;
       tree_description()
-        : interpolation(0), varname_interpolation(""),
+        : operation(ASSEMBLY), varname_interpolation(""),
           name_test1(""), name_test2(""),
           interpolate_name_test1(""), interpolate_name_test2(""),
           mim(0), m(0), rg(0), ptree(0) {}
@@ -335,14 +338,15 @@ namespace getfem {
     // mesh regions
     std::map<const mesh *, std::list<mesh_region> > registred_mesh_regions;
 
-    const mesh_region &
-    register_region(const mesh &m, const mesh_region &region);
+    const mesh_region &register_region(const mesh &m, const mesh_region &rg);
 
     // variables and variable groups
-    mutable std::map<std::string, gmm::sub_interval> int_disabled_variables;
-
     typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
+
+    std::map<std::string, gmm::sub_interval> reenabled_var_intervals,
+                                             tmp_var_intervals;
+
     std::map<std::string, pinterpolate_transformation> transformations;
     std::map<std::string, pelementary_transformation> elem_transformations;
     std::map<std::string, psecondary_domain> secondary_domains;
@@ -351,56 +355,71 @@ namespace getfem {
 
     std::map<std::string, std::vector<std::string> > variable_groups;
 
-    ga_macro_dictionnary macro_dict;
+    ga_macro_dictionary macro_dict;
 
-    struct m_tree {
-      ga_tree *ptree;
-      size_type meshdim;
-      bool ignore_X;
-      m_tree() : ptree(0), meshdim(-1), ignore_X(false) {}
-      m_tree(const m_tree& o);
-      m_tree &operator =(const m_tree& o);
-      ~m_tree();
-    };
-
+    // Adds a tree to the workspace. The argument tree is consumed by the
+    // function and cannot be reused afterwards.
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
                   const std::string &expr, size_type add_derivative_order,
-                  bool scalar_expr, size_type for_interpolation,
-		  const std::string varname_interpolation);
+                  bool scalar_expr, operation_type op_type=ASSEMBLY,
+                  const std::string varname_interpolation="");
 
-
-    std::shared_ptr<model_real_sparse_matrix> K;
-    model_real_sparse_matrix unreduced_K;
-    std::shared_ptr<base_vector> V;
-    base_vector unreduced_V;
+    std::shared_ptr<model_real_sparse_matrix> K, KQJpr;
+    std::shared_ptr<base_vector> V; // reduced residual vector (primary vars + internal vars)
+                                    // after condensation it partially holds the condensed residual
+                                    // and the internal solution
+    model_real_sparse_matrix col_unreduced_K,
+                             row_unreduced_K,
+                             row_col_unreduced_K;
+    base_vector unreduced_V, cached_V;
     base_tensor assemb_t;
     bool include_empty_int_pts = false;
 
   public:
-
-    const model_real_sparse_matrix &assembled_matrix() const { return *K;}
-    model_real_sparse_matrix &assembled_matrix() { return *K; }
-    scalar_type &assembled_potential()
-    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
-    const scalar_type &assembled_potential() const
-    { GMM_ASSERT1(assemb_t.size() == 1, "Bad result size"); return assemb_t[0]; }
-    const base_vector &assembled_vector() const { return *V; }
-    base_vector &assembled_vector() { return *V; }
+    // setter functions
     void set_assembled_matrix(model_real_sparse_matrix &K_) {
       K = std::shared_ptr<model_real_sparse_matrix>
-          (std::shared_ptr<model_real_sparse_matrix>(), &K_);
+          (std::shared_ptr<model_real_sparse_matrix>(), &K_); // alias
     }
     void set_assembled_vector(base_vector &V_) {
       V = std::shared_ptr<base_vector>
-          (std::shared_ptr<base_vector>(), &V_);
+          (std::shared_ptr<base_vector>(), &V_); // alias
     }
-    base_tensor &assembled_tensor() { return assemb_t; }
+    // getter functions
+    const model_real_sparse_matrix &assembled_matrix() const { return *K; }
+    model_real_sparse_matrix &assembled_matrix() { return *K; }
+    const base_vector &assembled_vector() const { return *V; }
+    base_vector &assembled_vector() { return *V; }
+    const base_vector &cached_vector() const { return cached_V; }
     const base_tensor &assembled_tensor() const { return assemb_t; }
-
-    model_real_sparse_matrix &unreduced_matrix()
-    { return unreduced_K; }
+    base_tensor &assembled_tensor() { return assemb_t; }
+    const scalar_type &assembled_potential() const {
+      GMM_ASSERT1(assemb_t.size() == 1, "Bad result size");
+      return assemb_t[0];
+    }
+    scalar_type &assembled_potential() {
+      GMM_ASSERT1(assemb_t.size() == 1, "Bad result size");
+      return assemb_t[0];
+    }
+    model_real_sparse_matrix &row_unreduced_matrix()
+    { return row_unreduced_K; }
+    model_real_sparse_matrix &col_unreduced_matrix()
+    { return col_unreduced_K; }
+    model_real_sparse_matrix &row_col_unreduced_matrix()
+    { return row_col_unreduced_K; }
     base_vector &unreduced_vector() { return unreduced_V; }
+    // setter function for condensation matrix
+    void set_internal_coupling_matrix(model_real_sparse_matrix &KQJpr_) {
+      KQJpr = std::shared_ptr<model_real_sparse_matrix>
+              (std::shared_ptr<model_real_sparse_matrix>(), &KQJpr_); // alias
+    }
+    /** getter function for condensation matrix
+        Its size is (nb_primary_dof()+nb_internal_dof()) x nb_primary_dof()
+        but its first nb_primary_dof() rows are empty */
+    const model_real_sparse_matrix &internal_coupling_matrix() const
+    { return *KQJpr; }
+    model_real_sparse_matrix &internal_coupling_matrix() { return *KQJpr; }
 
     /** Add an expression, perform the semantic analysis, split into
      *  terms in separated test functions, derive if necessary to obtain
@@ -409,7 +428,7 @@ namespace getfem {
     size_type add_expression(const std::string &expr, const mesh_im &mim,
                              const mesh_region &rg=mesh_region::all_convexes(),
                              size_type add_derivative_order = 2,
-			     const std::string &secondary_dom = "");
+                             const std::string &secondary_dom = "");
     /* Internal use */
     void add_function_expression(const std::string &expr);
     /* Internal use */
@@ -437,6 +456,12 @@ namespace getfem {
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV);
+    void add_im_variable(const std::string &name, const im_data &imd,
+                         const gmm::sub_interval &I,
+                         const model_real_plain_vector &VV);
+    void add_internal_im_variable(const std::string &name, const im_data &imd,
+                                  const gmm::sub_interval &I,
+                                  const model_real_plain_vector &VV);
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV);
@@ -448,12 +473,15 @@ namespace getfem {
                      const model_real_plain_vector &VV);
 
     bool used_variables(std::vector<std::string> &vl,
-			std::vector<std::string> &vl_test1,
+                        std::vector<std::string> &vl_test1,
                         std::vector<std::string> &vl_test2,
-			std::vector<std::string> &dl,
+                        std::vector<std::string> &dl,
                         size_type order);
+    bool is_linear(size_type order);
 
     bool variable_exists(const std::string &name) const;
+
+    bool is_internal_variable(const std::string &name) const;
 
     const std::string &variable_in_group(const std::string &group_name,
                                          const mesh &m) const;
@@ -476,9 +504,6 @@ namespace getfem {
     bool is_disabled_variable(const std::string &name) const;
 
     const scalar_type &factor_of_variable(const std::string &name) const;
-
-    const gmm::sub_interval &
-    interval_of_disabled_variable(const std::string &name) const;
 
     const gmm::sub_interval &
     interval_of_variable(const std::string &name) const;
@@ -505,7 +530,7 @@ namespace getfem {
 
     const std::string& get_macro(const std::string &name) const;
 
-    const ga_macro_dictionnary &macro_dictionnary() const { return macro_dict; }
+    const ga_macro_dictionary &macro_dictionary() const { return macro_dict; }
 
 
     // interpolate and elementary transformations
@@ -533,22 +558,42 @@ namespace getfem {
 
     psecondary_domain secondary_domain(const std::string &name) const;
 
-
-    
     // extract terms
     std::string extract_constant_term(const mesh &m);
     std::string extract_order1_term(const std::string &varname);
     std::string extract_order0_term();
     std::string extract_Neumann_term(const std::string &varname);
 
-
-    void assembly(size_type order);
+    void assembly(size_type order, bool condensation=false);
 
     void set_include_empty_int_points(bool include);
     bool include_empty_int_points() const;
 
-    ga_workspace(const getfem::model &md_, bool enable_all_variables = false);
-    ga_workspace(bool, const ga_workspace &gaw);
+    size_type nb_primary_dof() const { return nb_prim_dof; }
+    size_type nb_internal_dof() const { return nb_intern_dof; }
+    size_type first_internal_dof() const { return first_intern_dof; }
+    size_type nb_temporary_dof() const { return nb_tmp_dof; }
+
+    void add_temporary_interval_for_unreduced_variable(const std::string &name);
+
+    void clear_temporary_variable_intervals() {
+      tmp_var_intervals.clear();
+      nb_tmp_dof = 0;
+    }
+
+    const gmm::sub_interval &
+    temporary_interval_of_variable(const std::string &name) const {
+      static const gmm::sub_interval empty_interval;
+      const auto it = tmp_var_intervals.find(name);
+      return (it != tmp_var_intervals.end()) ? it->second : empty_interval;
+    }
+
+    enum class inherit { NONE, ENABLED, ALL };
+
+    explicit ga_workspace(const getfem::model &md_,
+                          const inherit var_inherit=inherit::ENABLED);
+    explicit ga_workspace(const ga_workspace &gaw,    // compulsory 2nd arg to avoid
+                          const inherit var_inherit); // conflict with copy constructor
     ga_workspace();
     ~ga_workspace();
 
@@ -742,11 +787,11 @@ namespace getfem {
    const std::string &target_displacements, const mesh_region &target_region);
 
   /** Create a new instance of a transformation corresponding to the
-      interpolation on the neighbour element. Can only be applied to the
+      interpolation on the neighbor element. Can only be applied to the
       computation on some internal faces of a mesh.
       (mainly for internal use in the constructor of getfem::model)
   */
-  pinterpolate_transformation interpolate_transformation_neighbour_instance();
+  pinterpolate_transformation interpolate_transformation_neighbor_instance();
 
   /* Add a special interpolation transformation which represents the identity
      transformation but allows to evaluate the expression on another element
@@ -765,14 +810,14 @@ namespace getfem {
   (ga_workspace &workspace, const std::string &name, const mesh &sm,
    std::map<size_type, size_type> &elt_corr);
   
-  /* Change the correspondance map of an element extrapolation interpolate
+  /* Change the correspondence map of an element extrapolation interpolate
      transformation.
   */
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (model &md, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
   
-  void set_element_extrapolation_correspondance
+  void set_element_extrapolation_correspondence
   (ga_workspace &workspace, const std::string &name,
    std::map<size_type, size_type> &elt_corr);
     

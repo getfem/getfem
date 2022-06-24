@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-libdesc_fem:
 
@@ -33,10 +33,10 @@ Files
    :file:`getfem_fem.h` and :file:`getfem_fem.cc` and :file:`getfem_fem_composite.cc`, "Descriptors for finite element and a degree of freedom. Polynomial finite elements are defined in :file:`getfem_fem.cc` and piecewise polynomial finite elements in :file:`getfem_fem_composite.cc`"
    :file:`getfem_fem_global_function.h` and :file:`getfem_fem_global_function.cc`, "Defines a fem with base functions defined as global functions given by the user. Useful for enrichment with singular functions and for implementation of meshless methods."
    :file:`getfem_projected_fem.h` and :file:`getfem_projected_fem.cc`, "Defines a fem which is the projection of a finite element space (represented by a mesh_fem) on a different mesh. Note that the high-generic assembly language offers also this functionality by means of the interpolated transformations."
-   :file:`getfem_interpolated_fem.h` and :file:`getfem_interpolated_fem.cc`, "Dsfines a fem which is the interpolation of a finite element space (represented by a mesh_fem) on a different mesh. Note that the high-generic assembly language offers also this functionality by means of the interpolated transformations."
+   :file:`getfem_interpolated_fem.h` and :file:`getfem_interpolated_fem.cc`, "Dfines a fem which is the interpolation of a finite element space (represented by a mesh_fem) on a different mesh. Note that the high-generic assembly language offers also this functionality by means of the interpolated transformations."
 
 
-   
+
 
 State
 ^^^^^

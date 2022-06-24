@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -43,6 +43,7 @@
 
 #include "bgeot_poly.h"
 #include "bgeot_mesh.h"
+#include "bgeot_rtree.h"
 
 // TODO : Use of rtree instead of dal::dynamic_tree_sorted<base_node,
 //        imbricated_box_less>
@@ -52,15 +53,14 @@ namespace bgeot {
 
   /// A comparison function for bgeot::base_node
   struct imbricated_box_less
-    : public std::binary_function<base_node, base_node, int>
-  { 
+  {
     mutable int exp_max, exp_min;
     mutable scalar_type c_max;
     unsigned base;
 
     /// comparaison function
     int operator()(const base_node &x, const base_node &y) const;
-    
+
     imbricated_box_less(unsigned ba = 10, int emi = -15, int ema = -2) {
       base = ba; exp_max = ema; exp_min = emi;
       c_max = pow(double(base), double(-exp_max));
@@ -74,8 +74,10 @@ namespace bgeot {
     typedef dal::dynamic_tree_sorted<base_node, imbricated_box_less> PTAB;
 
     const basic_mesh *msh;
-    PTAB vertexes;
-    std::vector<base_matrix> gtrans;
+    PTAB vertices;
+    rtree box_tree;
+    std::map<size_type, std::vector<size_type>> box_to_convexes_map;
+    std::vector<base_matrix> gtrans, gtransinv;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
     
@@ -84,33 +86,45 @@ namespace bgeot {
     dim_type dim(void) const { return msh->dim(); }
     pgeometric_trans trans_of_convex(size_type ic) const
     { return msh->trans_of_convex(ic); }
+    void initialise(const basic_mesh &m);
     
     mesh_precomposite(const basic_mesh &m);
-    mesh_precomposite(void) : msh(0) {}
+    mesh_precomposite(void) : msh(0), box_tree(1e-13) {}
   };
 
   typedef const mesh_precomposite *pmesh_precomposite;
 
+  struct stored_base_poly : base_poly, public dal::static_stored_object {
+    stored_base_poly(const base_poly &p) : base_poly(p) {}
+  };
+  typedef std::shared_ptr<const stored_base_poly> pstored_base_poly;
+
+  
   class polynomial_composite {
 
   protected :
     const mesh_precomposite *mp;
-    std::map<size_type, dal::pstatic_stored_object_key> polytab;
-    bool local_coordinate;  // are the polynomials described on the local
-                            // coordinates of each sub-element or on global coordinates.
-    base_poly default_poly;
+    std::map<size_type, pstored_base_poly> polytab;
+    bool local_coordinate;  // Local coordinates on each sub-element for
+                            // polynomials or global coordinates ?
+    bool faces_first; // If true try to evaluate on faces before on the
+                      // interior, usefull for HHO elements.
+    std::vector<base_poly> default_polys;
 
   public :
-    
-    template <class ITER> scalar_type eval(const ITER &it) const;
-    scalar_type eval(const base_node &pt) const;
+    scalar_type eval(const base_node &p, size_type l) const;
+
+    template <class ITER> scalar_type eval(const ITER &it,
+                                           size_type l = -1) const;
     void derivative(short_type k);
     void set_poly_of_subelt(size_type l, const base_poly &poly);
     const base_poly &poly_of_subelt(size_type l) const;
     size_type nb_subelt() const { return polytab.size(); }
 
-    polynomial_composite(bool lc = true) : local_coordinate(lc) {}
-    polynomial_composite(const mesh_precomposite &m, bool lc = true);
+    polynomial_composite(bool lc = true, bool ff = false)
+      : local_coordinate(lc), faces_first(ff) {}
+    polynomial_composite(const mesh_precomposite &m, bool lc = true,
+                         bool ff = false);
 
   };
 
@@ -125,10 +139,10 @@ namespace bgeot {
   }
 
   template <class ITER>
-  scalar_type polynomial_composite::eval(const ITER &it) const {
-    base_node pt(mp->dim());
-    std::copy(it, it + mp->dim(), pt.begin());
-    return eval(pt);
+  scalar_type polynomial_composite::eval(const ITER &it, size_type l) const {
+    base_node p(mp->dim());
+    std::copy(it, it+mp->dim(), p.begin());
+    return eval(p,l);
   }
 
   void structured_mesh_for_convex(pconvex_ref cvr, short_type k,

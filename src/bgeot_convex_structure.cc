@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -107,6 +107,32 @@ namespace bgeot {
                          short_type nnf = 0)
       : type(t), N(NN), K(KK), nf(nnf)  {}
   };
+
+  bool operator==(const pconvex_structure &p1, const pconvex_structure &p2){
+    if (!p1 || !p2) return p1.get() == p2.get();
+    if (p1.get() == p2.get()) return true;
+    else return *dal::key_of_stored_object(p1) == *dal::key_of_stored_object(p2);
+  }
+
+  bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2){
+    return !(p1 == p2);
+  }
+
+  bool operator==(const pconvex_structure &p1, std::nullptr_t){
+    return p1.get() == nullptr;
+  }
+
+  bool operator==(std::nullptr_t, const pconvex_structure &p2){
+    return p2 == nullptr;
+  }
+
+  bool operator!=(const pconvex_structure &p1, std::nullptr_t){
+    return !(p1 == nullptr);
+  }
+
+  bool operator!=(std::nullptr_t, const pconvex_structure &p2){
+    return !(p2 == nullptr);
+  }
 
   /* ******************************************************************** */
   /* simplex structures                                                   */

@@ -1,10 +1,11 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Konstantinos Poulios, Amandine Cottaz, Yves Renard
+ Copyright (C) 2002-2020 Amandine Cottaz, Yves Renard
+ Copyright (C) 2014-2020 Konstantinos Poulios
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -331,8 +332,11 @@ namespace getfem {
   struct Ball_projection_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 2 || args[0]->sizes().size() > 2
-          || args[0]->sizes().size() < 1 || args[1]->size() != 1) return false;
-      if (args[0]->sizes().size() == 1)
+          || (args[0]->sizes().size() < 1 && args[0]->size() != 1)
+          || args[1]->size() != 1) return false;
+      if (args[0]->sizes().size() < 1)
+        ga_init_scalar(sizes);
+      else if (args[0]->sizes().size() == 1)
         ga_init_vector(sizes, args[0]->sizes()[0]);
       else
         ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);

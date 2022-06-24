@@ -1,15 +1,16 @@
+
 .. $Id$
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-appendixb:
 
 Appendix B. Cubature method list
 ================================
 
-The integration methods are of two kinds. Exact integrations of polynomials and
+For more information on cubature formulas, the reader is referred to [EncyclopCubature]_ for instance. The integration methods are of two kinds. Exact integrations of polynomials and
 approximated integrations (cubature formulas) of any function. The exact
 integration can only be used if all the elements are polynomial and if the
 geometric transformation is linear.
@@ -27,7 +28,7 @@ the degree of each integration method.
 Exact Integration methods
 -------------------------
 
-|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly. 
+|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly.
 
 The list of available exact integration methods is the following
 
@@ -208,9 +209,9 @@ Gauss Integration methods on dimension 2
 
          7 points, order 5
 
-         :math:`a = \Frac{6+\sqrt{15}}{21}`
+         :math:`a = \dfrac{6+\sqrt{15}}{21}`
          :math:`b = 4/7 - a`
-         :math:`c = \Frac{155+\sqrt{15}}{2400}`
+         :math:`c = \dfrac{155+\sqrt{15}}{2400}`
          :math:`d = 31/240 - c`
 
      * - .. image:: images/getfemlistintmethodtriangle6.png
@@ -497,11 +498,11 @@ Gauss Integration methods on dimension 3
          1/24
        - ``"IM_TETRAHEDRON(2)"``
 
-         4 points, order 2} \hspace{7em}
+         4 points, order 2
 
-         :math:`a = \Frac{5 - \sqrt{5}}{20}`
+         :math:`a = \dfrac{5 - \sqrt{5}}{20}`
 
-         :math:`b = \Frac{5 + 3\sqrt{5}}{20}`
+         :math:`b = \dfrac{5 + 3\sqrt{5}}{20}`
 
   .. list-table:: Integration methods on dimension 3
      :widths: 40 20 10 20
@@ -600,21 +601,21 @@ Gauss Integration methods on dimension 3
 
          15 points, order 5
 
-         :math:`a = \Frac{7 + \sqrt{15}}{34}`
+         :math:`a = \dfrac{7 + \sqrt{15}}{34}`
 
-         :math:`b = \Frac{7 - \sqrt{15}}{34}`
+         :math:`b = \dfrac{7 - \sqrt{15}}{34}`
 
-         :math:`c = \Frac{13 + 3\sqrt{15}}{34}`
+         :math:`c = \dfrac{13 + 3\sqrt{15}}{34}`
 
-         :math:`d = \Frac{13 - 3\sqrt{15}}{34}`
+         :math:`d = \dfrac{13 - 3\sqrt{15}}{34}`
 
-         :math:`e = \Frac{5 - \sqrt{15}}{20}`
+         :math:`e = \dfrac{5 - \sqrt{15}}{20}`
 
-         :math:`f = \Frac{5 + \sqrt{15}}{20}`
+         :math:`f = \dfrac{5 + \sqrt{15}}{20}`
 
-         :math:`h = \Frac{2665 - 14\sqrt{15}}{226800}`
+         :math:`h = \dfrac{2665 - 14\sqrt{15}}{226800}`
 
-         :math:`i = \Frac{2665 + 14\sqrt{15}}{226800}`
+         :math:`i = \dfrac{2665 + 14\sqrt{15}}{226800}`
 
 Others methods are:
 
@@ -651,11 +652,11 @@ Others methods are:
        - 90
 
      * - ``"IM_CUBE4D(5)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 24
 
      * - ``"IM_CUBE4D(9)"``
-       - 4D parallelepipeded
+       - 4D parallelepiped
        - 145
 
 

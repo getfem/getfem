@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -154,6 +154,20 @@ namespace bgeot {
     friend pconvex_structure basic_structure(pconvex_structure cv);
   };
 
+  /**
+  *   Stored objects must be compared by keys, because there is a possibility that
+  *   they are duplicated in storages of multiple threads and pointers to them are
+  *   never equal
+  */
+  bool operator==(const pconvex_structure &p1, const pconvex_structure &p2);
+  bool operator!=(const pconvex_structure &p1, const pconvex_structure &p2);
+
+  //!these operators still use comparison by addresses against nullptr
+  bool operator==(const pconvex_structure &p1, std::nullptr_t);
+  bool operator==(std::nullptr_t, const pconvex_structure &p2);
+  bool operator!=(const pconvex_structure &p1, std::nullptr_t);
+  bool operator!=(std::nullptr_t, const pconvex_structure &p2);
+
   /// Original structure (if concerned)
   inline pconvex_structure basic_structure(pconvex_structure cv)
   { if (cv->auto_basic) return cv; else return cv->basic_pcvs; }
@@ -204,7 +218,7 @@ namespace bgeot {
   prism_structure(dim_type nc) { return prism_P1_structure(nc); }
   IS_DEPRECATED inline pconvex_structure
   pyramid_structure(short_type k) { return pyramid_QK_structure(k); }
-  
+
 
   /** Simplex structure with the Lagrange grid of degree k.
       @param n the simplex dimension.

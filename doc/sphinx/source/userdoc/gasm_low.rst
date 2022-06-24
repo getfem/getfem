@@ -2,16 +2,16 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: asm, generic assembly
 
 .. _ud-gasm-low:
 
-Compute arbitrary terms - low-level generic assembly procedures
-===============================================================
+Compute arbitrary terms - low-level generic assembly procedures (deprecated)
+============================================================================
 
-This section present the first version of generic assembly procedure which has been implemented in |gf|. It allows to easily make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The high-level generic assembly has been developped to circumvent these difficulties (see :ref:`ud-gasm-high`).
+This section present the first version of generic assembly procedure which has been implemented in |gf| and is now considered as deprecated. It allows to make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The generic weak form language (GWFL) has been developed to circumvent these difficulties (see :ref:`ud-gasm-high`).
 
 As it can be seen in the file :file:`getfem/getfem_assembling.h`, all the
 previous assembly procedures use a |gf_gasm| object and provide it an adequate
@@ -40,7 +40,7 @@ and ``mfdata``).  The instruction ``Z=data(#2);`` means that for each convex, th
 "tensor" ``Z`` will receive the values of the first data argument provided with
 ``push_data``, at indexes corresponding to the degrees of freedom attached to the
 convex of the second (``#2``) |mf| (here, ``Z =
-F[mfdata.ind_dof_of_element(cv)]``.
+F[mfdata.ind_dof_of_element(cv)]``).
 
 The part ``V(#1)+=...`` means that the result of the next expression will be
 accumulated into the output vector (provided with ``push_vec``). Here again,
@@ -208,4 +208,4 @@ The ``print`` command can be used to see the tensor: ``"print comp(Base(#1));"``
 will print the integrals of the base functions for each convex.
 
 If there is more than one data array, output array or output sparse
-matrix, one can use ``data$2``, ``data$3, ``V$2``, ``M$2``,...
+matrix, one can use ``data$2``, ``data$3``, ``V$2``, ``M$2``,...

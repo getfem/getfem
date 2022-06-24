@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _gmm-denseqr:
 
@@ -19,10 +19,10 @@ The following procedures are available in the file ``gmm/gmm\_dense\_qr.h`` for 
   implicit_qr_algorithm(M, eigval, double tol = 1E-16) // compute the
      // eigenvalues of M using the implicit QR factorisation (Householder and
      // Francis QR step version). eigval should be a vector of appropriate size
-     // in which the eigenvalues will be computed. If the matrix have 
+     // in which the eigenvalues will be computed. If the matrix have
      // complex eigenvalues, please use a complex vector.
 
-  implicit_qr_algorithm(M, eigval, shvect, double tol = 1E-16) // idem, 
+  implicit_qr_algorithm(M, eigval, shvect, double tol = 1E-16) // idem,
      // compute additionally the schur vectors in the matrix shvect.
 
   symmetric_qr_algorithm(M, eigval, double tol = 1E-16) // idem for symmetric
@@ -33,8 +33,8 @@ The following procedures are available in the file ``gmm/gmm\_dense\_qr.h`` for 
 
 
 
-`Remark`: The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions ``geev_interface_left`` and ``geev_interface_right`` from the LAPACK interface (see ``gmm/gmm_lapack_interface.h``. These LAPACK functions compute right and left eigen vectors. 
-                   
+`Remark`: The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions ``geev_interface_left`` and ``geev_interface_right`` from the LAPACK interface (see ``gmm/gmm_lapack_interface.h``). These LAPACK functions compute right and left eigenvectors.
+
 
 The following function defined in the file ``gmm/gmm\_condition\_number.h``::
 

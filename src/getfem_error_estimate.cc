@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2017 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -65,9 +65,8 @@ namespace getfem {
     //vertical force
     
     base_small_vector F(N);
-    for (unsigned ii=0; ii < N-1; ++ii)
-      F[ii]=0;
-      F[N-1]=-vertical_force; 
+    for (unsigned ii=0; ii < N-1; ++ii) F[ii]=0;
+    F[N-1]=-vertical_force; 
 
     GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
      
@@ -94,18 +93,18 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j)+F[i];
 	
-	  ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
-	  eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
+        ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
+        eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
       }    
         //if (ERR[cv] > 100)
         //cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
         
         
-       // jump of the stress between the element ant its neighbours.
+       // jump of the stress between the element ant its neighbors.
 	
 	for (short_type f1=0; f1 < m.structure_of_convex(cv)->nb_faces(); ++f1) {
             
-        size_type cvn = m.neighbour_of_convex(cv, f1);
+        size_type cvn = m.neighbor_of_convex(cv, f1);
         if (cvn == size_type(-1)) continue;
 	
         bgeot::pgeometric_trans pgt2 = m.trans_of_convex(cvn);

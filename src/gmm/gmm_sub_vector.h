@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -79,8 +79,13 @@ namespace gmm {
     sparse_sub_vector_iterator(void) {}
     sparse_sub_vector_iterator(const IT &it, const IT &ite, const SUBI &s)
       : itb(it), itbe(ite), si(s) { forward(); }
-    sparse_sub_vector_iterator(const sparse_sub_vector_iterator<MIT, MIT,
-	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
+    sparse_sub_vector_iterator
+    (const sparse_sub_vector_iterator<MIT, MIT, SUBI> &it)
+      : itb(it.itb), itbe(it.itbe), si(it.si) {}
+    sparse_sub_vector_iterator &operator =
+    (const sparse_sub_vector_iterator<MIT, MIT, SUBI> &it)
+    { itb = it.itb; itbe = it.itbe;  si = it.si; return *this; }
+
   };
 
   template <typename IT, typename MIT, typename SUBI>

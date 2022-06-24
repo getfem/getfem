@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -23,14 +23,14 @@
   with optional graphical vizualisation (requires tvtk).
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   $Id$
 """
 
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 with_graphics=False
 try:
@@ -65,8 +65,8 @@ Mu=80769
 sigma_y=4000
 
 P=m.pts()
-pidleft=np.compress((abs(P[0,:])<1e-6), range(0, m.nbpts()))
-pidright=np.compress((abs(P[0,:] - L)<1e-6), range(0, m.nbpts()))
+pidleft=np.compress((abs(P[0,:])<1e-6), list(range(0, m.nbpts())))
+pidright=np.compress((abs(P[0,:] - L)<1e-6), list(range(0, m.nbpts())))
 
 fleft  = m.faces_from_pid(pidleft)
 fright = m.faces_from_pid(pidright)

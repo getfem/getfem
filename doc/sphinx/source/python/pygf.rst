@@ -126,7 +126,7 @@ The general organization of the python-interface is the following:
 .. class:: MeshFem(self, *args)
 
   Descriptor for object linked to a mesh, where each convex has been assigned
-  a FEM.
+  an FEM.
 
 .. class:: MeshIm(self, *args)
 

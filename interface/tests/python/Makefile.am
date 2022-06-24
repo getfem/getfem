@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2018 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -24,6 +24,7 @@ endif
 
 EXTRA_DIST= 						\
 	check_export.py 				\
+	check_export_vtu.py 				\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
@@ -32,6 +33,8 @@ EXTRA_DIST= 						\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
 	demo_laplacian.py 				\
+	demo_parallel_laplacian.py 			\
+	demo_laplacian_HHO.py 				\
 	demo_laplacian_pyramid.py			\
 	demo_laplacian_DG.py 				\
 	demo_laplacian_aposteriori.py			\
@@ -39,6 +42,8 @@ EXTRA_DIST= 						\
 	demo_phase_field.py              		\
 	demo_plasticity.py              		\
 	demo_plate.py 					\
+	demo_unit_disk.py 				\
+        demo_truss.py                                   \
 	demo_static_contact.py 				\
 	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
@@ -50,6 +55,8 @@ EXTRA_DIST= 						\
 	demo_thermo_elasticity_electrical_coupling.py 	\
 	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
+	demo_elasticity_HHO.py                          \
+	demo_elastic_ring_contact.py                    \
 	demo_wheel_contact.py                           \
 	demo_tripod.py 					\
 	demo_tripod_alt.py 				\
@@ -60,12 +67,18 @@ EXTRA_DIST= 						\
 if BUILDPYTHON
 TESTS = 						\
 	check_export.py					\
+	check_export_vtu.py				\
 	check_global_functions.py			\
 	check_asm.py	  				\
 	check_secondary_domain.py 			\
 	check_mixed_mesh.py  				\
+	demo_truss.py                                   \
 	demo_wave.py					\
+	demo_wave_equation.py				\
 	demo_laplacian.py				\
+	demo_laplacian_HHO.py				\
+	demo_elasticity_HHO.py                          \
+	demo_thermo_elasticity_electrical_coupling.py 	\
 	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \
@@ -74,4 +87,4 @@ AM_TESTS_ENVIRONMENT = \
 LOG_COMPILER = $(PYTHON)
 endif
 
-CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx
+CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx results/* __pycache__/*

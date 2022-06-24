@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2001-2017 Yves Renard
+ Copyright (C) 2001-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -44,7 +44,7 @@ namespace getfem {
 
   size_type mesh_trans_inv::point_on_convex(size_type cv, size_type i) const {
     set_iterator it = pts_cvx[cv].begin();
-    for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j);
+    for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j) {}
     GMM_ASSERT1(it != pts_cvx[cv].end(), "internal error");    
     return *it;
   }
@@ -78,10 +78,10 @@ namespace getfem {
         if (extrapolation == 2) {
           if (mult == scalar_type(1))
             for (short_type f = 0; f < msh.nb_faces_of_convex(j); ++f) {
-              size_type neighbour_cv = msh.neighbour_of_convex(j, f);
-              if (!all_convexes && neighbour_cv != size_type(-1)) {
-                // check if the neighbour is also contained in rg_source ...
-                if (!rg_source.is_in(neighbour_cv)) 
+              size_type neighbor_cv = msh.neighbor_of_convex(j, f);
+              if (!all_convexes && neighbor_cv != size_type(-1)) {
+                // check if the neighbor is also contained in rg_source ...
+                if (!rg_source.is_in(neighbor_cv)) 
                   cv_on_bound.add(j); // ... if not, treat the element as a boundary one
               }
               else // boundary element of the overall mesh

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2012-2017 Yves Renard.
+# Copyright (C) 2012-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -21,21 +21,24 @@
 #
 ############################################################################
 
-import getfem as gf
 import numpy as np
 from numpy import linalg as npla
+
+import getfem as gf
 
 gf.util_trace_level(1)
 
 dirichlet_version = 2          # 1 = simplification, 2 = penalisation
 test_tangent_matrix = False    # Test or not tangent system validity
-incompressible = False;        # Incompressibility option
-explicit_potential = False;    # Elasticity law with explicit potential
+incompressible = False         # Incompressibility option
+explicit_potential = False     # Elasticity law with explicit potential
 
 # lawname = 'Ciarlet Geymonat'
 # params = [1.,1.,0.25]
-lawname = 'SaintVenant Kirchhoff'
-params = [1.,1.]
+# lawname = 'SaintVenant Kirchhoff'
+# params = [1.,1.]
+lawname = 'Compressible Mooney Rivlin'
+params = [1.,1.,2.]
 if (incompressible):
     lawname = 'Incompressible Mooney Rivlin'
     params = [1.,1.]
@@ -83,18 +86,16 @@ if (not(explicit_potential)):
 else:
     print("Explicit elastic potential")
     K = 1.2; mu = 3.0;
-    _F_ = "(Id(3)+Grad_u)"
-    _J_= "Det{F}".format(F=_F_)
-    _be_ = "(Left_Cauchy_Green{F})".format(F=_F_)
-
-    _expr_1 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(Matrix_j1{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-    _expr_2 = "{K_over_2}*sqr(log({J}))+{mu_over_2}*(pow(Det{be},-1./3.)*Trace{be}-3)"\
-              .format(K_over_2=K/2., J=_J_, mu_over_2=mu/2., be=_be_)
-
-    md.add_nonlinear_term(mim, _expr_2);
-
+    md.add_macro('F_',  '(Id(meshdim)+Grad_u)')
+    md.add_macro('J_',  'Det(F_)')
+    md.add_macro('be_', 'Left_Cauchy_Green(F_)')
+    md.add_initialized_data('K',  [K])
+    md.add_initialized_data('mu', [mu])
+    md.add_initialized_data('paramsIMR', [1,1,2])
+    _expr_1 = "(K/2)*sqr(log(J_))+(mu/2)*(Matrix_j1(be_)-3)";
+    _expr_2 = "(K/2)*sqr(log(J_))+(mu/2)*(pow(Det(be_),-1./3.)*Trace(be_)-3)"
+    _expr_3 = "paramsIMR(1)*(Matrix_j1(Right_Cauchy_Green(F_))-3)+ paramsIMR(2)*(Matrix_j2(Right_Cauchy_Green(F_)) - 3)+paramsIMR(3)*sqr(J_-1)"
+    md.add_nonlinear_term(mim, _expr_3);
 
 # md.add_nonlinear_term(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
 # md.add_nonlinear_term(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')
@@ -211,7 +212,7 @@ for step in range(1,nbstep+1):
     VM0 = md.compute_Von_Mises_or_Tresca('u', lawname, 'params', mfdu)
 
     # Direct interpolation of the Von Mises stress
-    # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+    # VM = md.interpolation('(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_PK2(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_PK2(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
 
     VM = md.compute_finite_strain_elasticity_Von_Mises(lawname, 'u', 'params', mfdu)
     print(npla.norm(VM-VM0))
@@ -224,19 +225,3 @@ for step in range(1,nbstep+1):
 
 print('You can vizualize the loading steps by launching for instance')
 print('mayavi2 -d demo_nonlinear_elasticity_iter_1.vtk -f WarpVector -m Surface')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

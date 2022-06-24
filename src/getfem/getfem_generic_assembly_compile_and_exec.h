@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -45,17 +45,14 @@ namespace getfem {
     
   public:
     void increment() { (back())++; }
-    void child_of(const ga_if_hierarchy &gih)
-    { *this = gih; push_back(0); }
+    void child_of(const ga_if_hierarchy &gih) { *this = gih; push_back(0); }
     bool is_compatible(const std::list<ga_if_hierarchy> &gihl) {
-
-      std::list<ga_if_hierarchy>::const_iterator it = gihl.begin();
-      for (; it != gihl.end(); ++it) {
-        if (it->size() <= size()) {
+      for (const auto &gih : gihl) {
+        if (gih.size() <= size()) {
           bool ok = true;
-          for (size_type i = 0; i+1 < it->size(); ++i)
-            if ((*it)[i] != (*this)[i]) { ok = false; break; }
-          if (it->back() > (*this)[it->size()-1]) { ok = false; break; }
+          for (size_type i = 0; i+1 < gih.size(); ++i)
+            if (gih[i] != (*this)[i]) { ok = false; break; }
+          if (gih.back() > (*this)[gih.size()-1]) { ok = false; break; }
           if (ok) return true;
         }
       }
@@ -72,10 +69,8 @@ namespace getfem {
   };
 
   typedef std::shared_ptr<ga_instruction> pga_instruction;
-  typedef std::vector<pga_instruction> ga_instruction_list;
 
-  
-  struct gauss_pt_corresp { // For neighbour interpolation transformation
+  struct gauss_pt_corresp { // For neighbor interpolation transformation
     bgeot::pgeometric_trans pgt1, pgt2;
     papprox_integration pai;
     std::vector<size_type> nodes;
@@ -97,7 +92,10 @@ namespace getfem {
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
-    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbour_corresp;
+    std::map<gauss_pt_corresp, bgeot::pstored_point_tab> neighbor_corresp;
+    std::set<std::pair<std::string,std::string>> unreduced_terms;
+
+    scalar_type ONE=1;
 
     using region_mim_tuple = std::tuple<const mesh_im *, const mesh_region *, psecondary_domain>;
     struct region_mim : public region_mim_tuple {
@@ -111,16 +109,18 @@ namespace getfem {
 
     std::map<std::string, const base_vector *> extended_vars;
     std::map<std::string, base_vector> really_extended_vars;
-    std::map<std::string, gmm::sub_interval> var_intervals;
-    size_type nb_dof, max_dof;
 
     struct variable_group_info {
-      const mesh_fem *mf;
-      gmm::sub_interval Ir, In;
-      scalar_type alpha;
-      const base_vector *U;
+      const mesh *cached_mesh;
       const std::string *varname;
-      variable_group_info() : mf(0), U(0), varname(0) {}
+      const mesh_fem *mf;
+      bool reduced_mf;
+      const gmm::sub_interval *I; // sub_interval in the assembled vector/matrix
+                                  // or in the unreduced vars indexing
+      scalar_type alpha;
+      const base_vector *U;       // Vector to read values from
+      variable_group_info()
+        : cached_mesh(0), varname(0), mf(0), reduced_mf(false), I(0) {}
     };
 
     struct interpolate_info {
@@ -153,7 +153,6 @@ namespace getfem {
 
     struct elementary_trans_info {
       base_matrix M;
-      const mesh_fem *mf;
       size_type icv;
     };
 
@@ -166,6 +165,7 @@ namespace getfem {
       ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
       std::map<const mesh_fem *, pfem_precomp> pfps;
+      std::map<const mesh_fem *, std::list<ga_if_hierarchy>> pfp_hierarchy;
       std::map<const mesh_fem *, base_tensor> base;
       std::map<const mesh_fem *, std::list<ga_if_hierarchy>> base_hierarchy;
       std::map<const mesh_fem *, base_tensor> grad;
@@ -184,48 +184,45 @@ namespace getfem {
       std::map<std::string, std::set<std::string>> transformations;
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
-      std::map<std::string, elementary_trans_info> elementary_trans_infos;
+      std::map<std::tuple<std::string, const mesh_fem *, const mesh_fem *>,
+        elementary_trans_info> elementary_trans_infos;
       secondary_domain_info secondary_domain_infos;
 
-      // Instructions being executed at the first Gauss point after
-      // a change of integration method only.
-      ga_instruction_list begin_instructions;
-      // Instructions executed once per element
-      ga_instruction_list elt_instructions;
-      // Instructions executed on each integration/interpolation point
-      ga_instruction_list instructions;
+      std::vector<pga_instruction>
+        begin_instructions,  // Instructions being executed at the first Gauss
+                             // point after a change of integration method only.
+        elt_instructions,    // Instructions executed once per element
+        instructions;        // Instructions executed on each
+                             // integration/interpolation point
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
-    region_mim_instructions(): m(0), im(0) {}
+      region_mim_instructions(): m(0), im(0) {}
     };
 
     std::list<ga_tree> trees; // The trees are stored mainly because they
                               // contain the intermediary tensors.
     std::list<ga_tree> interpolation_trees;
 
-    typedef std::map<region_mim, region_mim_instructions> instructions_set;
+    std::map<region_mim, region_mim_instructions> all_instructions;
 
-    instructions_set  whole_instructions;
+    // storage of intermediary tensors for condensation of variables
+    std::list<std::shared_ptr<base_tensor>> condensation_tensors;
 
-    ga_instruction_set() { max_dof = nb_dof = 0; need_elt_size = false; ipt=0; }
+    ga_instruction_set() : need_elt_size(false), nbpt(0), ipt(0) {}
   };
 
   
   void ga_exec(ga_instruction_set &gis, ga_workspace &workspace);
   void ga_function_exec(ga_instruction_set &gis);
   void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
-                         size_type order);
+                  size_type order, bool condensation=false);
   void ga_compile_function(ga_workspace &workspace,
-                                  ga_instruction_set &gis, bool scalar);
+                           ga_instruction_set &gis, bool scalar);
   void ga_compile_interpolation(ga_workspace &workspace,
-				ga_instruction_set &gis);
+                                ga_instruction_set &gis);
   void ga_interpolation_exec(ga_instruction_set &gis,
-			     ga_workspace &workspace,
-			     ga_interpolation_context &gic);
-  void ga_interpolation_single_point_exec
-    (ga_instruction_set &gis, ga_workspace &workspace,
-     const fem_interpolation_context &ctx_x, const base_small_vector &Normal,
-     const mesh &interp_mesh);
+                             ga_workspace &workspace,
+                             ga_interpolation_context &gic);
   
 } /* end of namespace */
 

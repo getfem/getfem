@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2005-2017 Julien Pommier.
+ Copyright (C) 2005-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -460,7 +460,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
-      Mesh a n-dimensionnal parallelepipeded with simplices (triangles,
+      Mesh a n-dimensional parallelepiped with simplices (triangles,
       tetrahedrons etc) .
 
       The optional degree may be used to build meshes with non linear
@@ -528,7 +528,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('load', @str filename)
-      Load a mesh from a getfem++ ascii mesh file.
+      Load a mesh from a GetFEM ascii mesh file.
 
       See also ``MESH:GET('save', @str filename)``.@*/
     sub_command
@@ -555,6 +555,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       `format` may be:
 
       - 'gmsh' for a mesh created with `Gmsh`
+      - 'gmsh_with_lower_dim_elt' for a mesh created with `Gmsh` and including elements of lower dimension than the mesh
       - 'gid' for a mesh created with `GiD`
       - 'cdb' for a mesh created with `ANSYS`
       - 'am_fmt' for a mesh created with `EMC2`@*/
@@ -587,9 +588,9 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       procedure used, it can be run again since it will not give necessarily
       the same result due to random procedures used.
       The messages send to the console by the mesh generation can be
-      desactivated using `gf_util('trace level', 2)`. More information
+      deactivated using `gf_util('trace level', 2)`. More information
       can be obtained by `gf_util('trace level', 4)`. See ``MESHER_OBJECT:INIT``
-      to manipulate geometric primitives in order to desribe the geometry.
+      to manipulate geometric primitives in order to describe the geometry.
       @*/
     sub_command
       ("generate", 2, 4, 0, 1,

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Julien Pommier.
+ Copyright (C) 2006-2020 Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -121,7 +121,7 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
 
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
-      if (!m.is_convex_having_neighbour(ic, f)) {
+      if (!m.is_convex_having_neighbor(ic, f)) {
         q = 2;
       } else {
         q = 1;
@@ -136,7 +136,7 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
   iarray w = out.pop().create_iarray_h(
     unsigned(std::count_if(dcnt.begin(),
                            dcnt.end(),
-                           std::bind2nd(std::equal_to<bgeot::short_type>(),1))));
+                           [](const auto &x) {return x == 1;})));
   size_type i,j=0;
   /*
   std::copy_if(dcnt.begin(), dcnt.end(),
@@ -434,7 +434,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVs = ('convex_index')
-    Return the list of convexes who have a FEM.@*/
+    Return the list of convexes who have an FEM.@*/
     sub_command
       ("convex_index", 0, 0, 0, 1,
        out.pop().from_bit_vector(mf->convex_index());
@@ -576,7 +576,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     For a reduced mesh_fem
     a dof is lying on a region if its potential corresponding shape
     function is nonzero on this region. The extension matrix is used
-    to make the correspondance between basic and reduced dofs.@*/
+    to make the correspondence between basic and reduced dofs.@*/
     sub_command
       ("dof on region", 1, 1, 0, 1,
        iarray bnums = in.pop().to_iarray(-1);
@@ -641,7 +641,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     Return the array which associates an integer (the partition number)
     to each convex of the @tmf. By default, it is an all-zero array.
     The degrees of freedom of each convex of the @tmf are connected
-    only to the dof of neighbouring convexes which have the same
+    only to the dof of neighboring convexes which have the same
     partition number, hence it is possible to create partially
     discontinuous @tmf very easily.@*/
     sub_command
@@ -654,7 +654,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('save',@str filename[, @str opt])
-    Save a @tmf in a text file (and optionaly its linked mesh object
+    Save a @tmf in a text file (and optionally its linked mesh object
     if `opt` is the string 'with_mesh').@*/
     sub_command
       ("save", 1, 2, 0, 0,
@@ -749,6 +749,39 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 	 else THROW_BADARG("expecting 'ascii', got " << cmd2);
        }
        getfem::vtk_export exp(fname, ascii);
+       exp.exporting(*mf);
+       exp.write_mesh();
+       int count = 1;
+       while (in.remaining()) {
+	 const getfem::mesh_fem *mf2 = mf;
+	 if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+	   mf2 = to_meshfem_object(in.pop());
+	 darray U = in.pop().to_darray();
+	 in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+	 exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
+	 count+=1;
+       }
+       );
+
+    /*@GET ('export to vtu',@str filename, ... ['ascii'], U, 'name'...)
+    Export a @tmf and some fields to a vtu file.
+
+    The FEM and geometric transformations will be mapped to order 1
+    or 2 isoparametric Pk (or Qk) FEMs (as VTK(XML) does not handle higher
+    order elements). If you need to represent high-order FEMs or
+    high-order geometric transformations, you should consider
+    SLICE:GET('export to vtu').@*/
+    sub_command
+      ("export to vtu", 0, -1, 0, 0,
+       std::string fname = in.pop().to_string();
+       bool ascii = false;
+       while (in.remaining() && in.front().is_string()) {
+	 std::string cmd2 = in.pop().to_string();
+	 if (cmd_strmatch(cmd2, "ascii"))
+	   ascii = true;
+	 else THROW_BADARG("expecting 'ascii', got " << cmd2);
+       }
+       getfem::vtu_export exp(fname, ascii);
        exp.exporting(*mf);
        exp.write_mesh();
        int count = 1;
@@ -868,7 +901,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     Interpolate data given on each convex of the mesh to the @tmf dof.
     The @tmf has to be lagrangian, and should be discontinuous (typically
-    a FEM_PK(N,0) or FEM_QK(N,0) should be used).
+    an FEM_PK(N,0) or FEM_QK(N,0) should be used).
 
     The last dimension of the input vector Ucv should have
     MESH:GET('max cvid') elements.
@@ -1008,7 +1041,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
   @*/
 /*@MATLABEXT
-  if (nargin>=2 & strcmpi(varargin{2},'eval')),
+  if (nargin>=2 && strcmpi(varargin{2},'eval')),
     [varargout{1:nargout}]=gf_mesh_fem_get_eval(varargin{[1 3:nargin]}); return;
   end;
   @*/

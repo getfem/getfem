@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2005-2017 Yves Renard
+ Copyright (C) 2005-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -617,6 +617,7 @@ namespace getfem {
 	    
 	  }
 	}
+        break;
       case 3:
 	{
 	  for (short_type k1 = 1; k1 < n; ++k1) {
@@ -666,6 +667,7 @@ namespace getfem {
 		    size_type is = global_intersection.add_segment(i1, i2);
 
 		    rtree_seg.add_box(min, max, is);
+                    rtree_seg.build_tree(); // Not efficient !
 
 		    
 		    const base_node &PE1

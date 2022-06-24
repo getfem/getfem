@@ -1,12 +1,12 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
- Copyright (C) 2016      Konstantinos Poulios
+ Copyright (C) 2004-2020 Yves Renard
+ Copyright (C) 2016-2020 Konstantinos Poulios
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -239,7 +239,7 @@ namespace getfem {
     enum { NOCUTOFF = -1,
            EXPONENTIAL_CUTOFF = 0,
            POLYNOMIAL_CUTOFF = 1,
-           POLYNOMIAL2_CUTOFF=2 };
+           POLYNOMIAL2_CUTOFF= 2 };
     int fun;
     scalar_type a4, r1, r0;
     virtual scalar_type val(scalar_type x, scalar_type y) const;

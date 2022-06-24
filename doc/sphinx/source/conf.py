@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# GetFEM++ documentation build configuration file.
+# GetFEM documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its containing
 # dir.
@@ -12,7 +12,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, time
+import os
+import sys
+import time
+
+###########################################################################
+from getfem import getfem_env
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -20,22 +25,13 @@ import sys, os, time
 sys.path.append(os.path.abspath('../tools/sphinxext')) # sphinx
 sys.path.append('../../../interface/src/python/')      # getfem
 
-###########################################################################
-from getfem import getfem_env
-user_preamble = """\n% begin user_preamble:
+user_preamble = '''
+\n% begin user_preamble:
 \\usepackage{mathrsfs}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
-\\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
-\\newcommand\\R{\\rm I\\hspace{-0.15em}R}
-\\newcommand{\\ds}{\\displaystyle}
-\\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
 % end user_preamble
-"""
-
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '110', '-bg', 'Transparent']
-pngmath_latex_preamble = user_preamble
+'''
 
 autoclass_content = "both"
 
@@ -47,7 +43,7 @@ _stdauthor = getfem_env('authors')
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
+extensions = ['sphinx.ext.mathjax','sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.doctest']
 
@@ -55,10 +51,10 @@ extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
 #source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8'
+source_encoding = 'utf-8'
 
 # The master toctree document.
-#master_doc = 'contents'
+master_doc = 'contents'
 
 # List of documents that shouldn't be included in the build.
 #unused_docs = []
@@ -74,6 +70,9 @@ extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
 # Directories in which to search for additional Sphinx message catalogs
 # relative to the source directory
 #locale_dirs = []
+
+gettext_compact = False
+locale_dirs = ['locale/']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -176,7 +175,7 @@ html_logo = '.static/logo_getfem_small.png'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'favicon.ico'
+html_favicon = '.static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -249,10 +248,12 @@ htmlhelp_basename = 'getfem' + release.replace('.', '')
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
+    ('tutorial/index', 'getfem_tutorial.tex',
+     'Tutorial', _stdauthor, 'manual', False),
     ('python/index', 'python_interface.tex',
      'Python Interface', 'Luis Saavedra', 'manual', False),
-    ('matlab/index', 'matlab_interface.tex',
-     'Matlab Interface', _stdauthor, 'manual', False),
+    ('matlab_octave/index', 'matlab_octave_interface.tex',
+     'Matlab-Octave Interface', _stdauthor, 'manual', False),
     ('scilab/index', 'scilab_interface.tex',
      'Scilab Interface', 'Yann Colette, ' + _stdauthor, 'manual', False),
     ('userdoc/index', 'getfem_userdoc.tex',
@@ -289,9 +290,16 @@ latex_logo = '.static/logogetfem.png'
 #  'fncychap'  : Inclusion of the "fncychap" package, default '\\usepackage[Bjarne]{fncychap}' 
 #  'preamble'  : Additional preamble content, default empty.
 #  'footer'    : Additional footer content (before the indices), default empty.
-latex_elements = [
-    ('preamble',user_preamble),
-]
+latex_elements = {
+# The paper size ('letterpaper' or 'a4paper').
+'papersize': 'a4paper',
+
+# The font size ('10pt', '11pt' or '12pt').
+'pointsize': '11pt',
+
+# Additional stuff for the LaTeX preamble.
+    'preamble': user_preamble
+}
 
 # A list of file names, relative to the configuration directory, to copy to
 # the build directory when building LaTeX output.

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2018-2018 Yves Renard.
+# Copyright (C) 2018-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -28,9 +28,8 @@
   $Id$
 """
 import numpy as np
-import getfem as gf
-import os
 
+import getfem as gf
 
 NX = 4
 m = gf.Mesh('triangles grid', np.arange(0,1+1./NX,1./NX),
@@ -239,3 +238,7 @@ if (res != "(Grad_w(2, 2))"):
 str = "Grad(u*Test_u)"; print('\nAssembly string "%s" gives:' % str)
 res = gf.asm('expression analysis', str,  mim, 1, md)
 
+str = "Hess(u)"; print('\nAssembly string "%s" gives:' % str)
+res = gf.asm('expression analysis', str,  mim, 1, md)
+if (res != "(Hess_u)"):
+  print("Should be Hess_u"); exit(1)

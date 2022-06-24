@@ -2,11 +2,11 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: bash
+.. highlight:: bash
 
 .. _sci-install:
 
-Installation 
+Installation
 ============
 
 The installation of the |sci| |gf| toolbox can be somewhat tricky, since it combines a C++ compiler, libraries and |sci| interaction. In case of troubles with a

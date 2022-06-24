@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2014-2017 Konstantinos Poulios.
+ Copyright (C) 2014-2020 Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -92,6 +92,8 @@ template <class T> void test_logm(T) {
 
 int main(void)
 {
+
+#if defined(GMM_USES_LAPACK)
   srand(1459);
 
   test_sqrtm(float());
@@ -103,6 +105,8 @@ int main(void)
   test_logm(double());
   test_logm(std::complex<float>());
   test_logm(std::complex<double>());
+
+#endif
  
   return 0;
 }

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-computel2h1:
 
@@ -20,7 +20,7 @@ the different norms::
 where ``mim`` is a |gf_mim| used for the integration, ``mf`` is a |gf_mf| and
 describes the finite element method on which the solution is defined, ``U`` is the
 vector of values of the solution on each degree of freedom of ``mf`` and ``region`` is an optional parameter which specify the mesh region on which the norm is computed. The size of
-``U`` should be ``mf.nb_dof()``. 
+``U`` should be ``mf.nb_dof()``.
 
 In order to compare two solutions, it is often simpler and faster to use the
 following function than to interpolate one |mf| on another::

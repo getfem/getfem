@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -294,17 +294,15 @@ namespace getfem
     std::string GT = PARAM.string_value("GT");
     GMM_ASSERT1(!GT.empty(), "regular mesh : you have at least to "
                 "specify the geometric transformation");
-    bgeot::pgeometric_trans pgt =
-      bgeot::geometric_trans_descriptor(GT);
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
 
     size_type N = pgt->dim();
     base_small_vector org(N); gmm::clear(org);
 
-    const std::vector<bgeot::md_param::param_value> &o
-      = PARAM.array_value("ORG");
+    const auto &o = PARAM.array_value("ORG");
     if (o.size() > 0) {
-      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
-                  << N);
+      GMM_ASSERT1(o.size() == N,
+                  "ORG parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
                     "ORG should be a real array.");
@@ -316,14 +314,13 @@ namespace getfem
 
     std::vector<size_type> nsubdiv(N);
     gmm::fill(nsubdiv, 2);
-    const std::vector<bgeot::md_param::param_value> &ns
-      = PARAM.array_value("NSUBDIV");
+    const auto &ns = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
       GMM_ASSERT1(ns.size() == N,
                   "NSUBDIV parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "NSUBDIV should be an integer array.");
+                    "NSUBDIV should be an integer array");
         nsubdiv[i] = size_type(ns[i].real()+0.5);
       }
     }
@@ -331,14 +328,13 @@ namespace getfem
     base_small_vector sizes(N);
     gmm::fill(sizes, 1.0);
 
-    const std::vector<bgeot::md_param::param_value> &si
-      = PARAM.array_value("SIZES");
+    const auto &si = PARAM.array_value("SIZES");
     if (si.size() > 0) {
       GMM_ASSERT1(si.size() == N,
                   "SIZES parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(si[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "SIZES should be a real array.");
+                    "SIZES should be a real array");
         sizes[i] = si[i].real();
       }
     }
@@ -361,20 +357,18 @@ namespace getfem
     std::string GT = PARAM.string_value("GT");
     GMM_ASSERT1(!GT.empty(), "regular ball mesh : you have at least to "
                 "specify the geometric transformation");
-    bgeot::pgeometric_trans pgt =
-      bgeot::geometric_trans_descriptor(GT);
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
 
     size_type N = pgt->dim();
     base_small_vector org(N);
 
-    const std::vector<bgeot::md_param::param_value> &o
-      = PARAM.array_value("ORG");
+    const auto &o = PARAM.array_value("ORG");
     if (o.size() > 0) {
-      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
-                  << N);
+      GMM_ASSERT1(o.size() == N,
+                  "ORG parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "ORG should be a real array.");
+                    "ORG should be a real array");
         org[i] = o[i].real();
       }
     }
@@ -383,29 +377,26 @@ namespace getfem
     bool noised = (PARAM.int_value("NOISED") != 0);
 
     size_type nsubdiv0(2), nsubdiv1(2);
-    const std::vector<bgeot::md_param::param_value> &ns
-      = PARAM.array_value("NSUBDIV");
+    const auto &ns = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
       GMM_ASSERT1(ns.size() == 2,
-                  "NSUBDIV parameter should be an array of size " << 2);
+                  "NSUBDIV parameter should be an array of size 2");
       for (size_type i = 0; i < 2; ++i)
         GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
-                    "NSUBDIV should be an integer array.");
+                    "NSUBDIV should be an integer array");
       nsubdiv0 = size_type(ns[0].real()+0.5);
       nsubdiv1 = size_type(ns[1].real()+0.5);
     }
 
     scalar_type radius(1), core_ratio(M_SQRT1_2);
-    const std::vector<bgeot::md_param::param_value> &si
-      = PARAM.array_value("SIZES");
+    const auto &si = PARAM.array_value("SIZES");
     if (si.size() > 0) {
       GMM_ASSERT1(si.size() == 1,
-                  "SIZES parameter should be an array of size " << 1);
+                  "SIZES parameter should be an array of size 1");
       GMM_ASSERT1(si[0].type_of_param() == bgeot::md_param::REAL_VALUE,
-                  "SIZES should be a real array.");
+                  "SIZES should be a real array");
       radius = si[0].real();
     }
-
     
     std::vector<size_type> nsubdiv(N);
     gmm::fill(nsubdiv, nsubdiv0);
@@ -442,7 +433,8 @@ namespace getfem
       trsl[i] = core_ratio;
       mm[i].translation(trsl);
       for (dal::bv_visitor cv(mm[i].convex_index()); !cv.finished(); ++cv)
-	     m.add_convex_by_points(mm[i].trans_of_convex(cv), mm[i].points_of_convex(cv).begin());
+        m.add_convex_by_points(mm[i].trans_of_convex(cv),
+                               mm[i].points_of_convex(cv).begin());
     }
 
     std::vector<base_node> pts(m.points().card(), base_node(N));
@@ -503,11 +495,127 @@ namespace getfem
       m0.copy_from(m);
       m0.transformation(M);
       for (dal::bv_visitor cv(m0.convex_index()); !cv.finished(); ++cv)
-	     m.add_convex_by_points(m0.trans_of_convex(cv), m0.points_of_convex(cv).begin());
+        m.add_convex_by_points(m0.trans_of_convex(cv),
+                               m0.points_of_convex(cv).begin());
     }
 
     m.translation(org);
 
   }
+  void regular_ball_shell_mesh(mesh &m, const std::string &st) {
+    std::stringstream s(st);
+    bgeot::md_param PARAM;
+    PARAM.read_param_file(s);
+
+    std::string GT = PARAM.string_value("GT");
+    GMM_ASSERT1(!GT.empty(), "regular ball mesh : you have at least to "
+                "specify the geometric transformation");
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
+
+    size_type N = pgt->dim();
+    base_small_vector org(N);
+    const auto &o = PARAM.array_value("ORG");
+    if (o.size() > 0) {
+      GMM_ASSERT1(o.size() == N,
+                  "ORG parameter should be an array of size " << N);
+      for (size_type i = 0; i < N; ++i) {
+        GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+                    "ORG should be a real array");
+        org[i] = o[i].real();
+      }
+    }
+
+    // "NOISED" applies only to the interior of all merged sub-meshes
+    bool noised = (PARAM.int_value("NOISED") != 0);
+
+    size_type nsubdiv0(3), nsubdiv1(2);
+    const auto &ns = PARAM.array_value("NSUBDIV");
+    if (ns.size() > 0) {
+      GMM_ASSERT1(ns.size() == 2,
+                  "NSUBDIV parameter should be an array of size 2");
+      for (size_type i = 0; i < 2; ++i)
+        GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+                    "NSUBDIV should be an integer array");
+      nsubdiv0 = size_type(ns[0].real()+0.5);
+      nsubdiv1 = size_type(ns[1].real()+0.5);
+    }
+
+    scalar_type radius(1), thickness(0.5);
+    const auto &si = PARAM.array_value("SIZES");
+    if (si.size() > 0) {
+      GMM_ASSERT1(si.size() == 2,
+                  "SIZES parameter should be an array of size 2");
+      GMM_ASSERT1(si[0].type_of_param() == bgeot::md_param::REAL_VALUE &&
+                  si[1].type_of_param() == bgeot::md_param::REAL_VALUE ,
+                  "SIZES should be a real array");
+      radius = si[0].real();
+      thickness = si[1].real();
+    }
+
+    std::vector<size_type> nsubdiv(N, nsubdiv0);
+    nsubdiv[N-1] = nsubdiv1;
+
+    mesh m0;
+    regular_unit_mesh(m0, nsubdiv, pgt, noised);
+
+    std::vector<base_node> pts(m0.points().card(), base_node(N));
+    size_type j(0);
+    for (dal::bv_visitor pt(m0.points().index()); !pt.finished(); ++pt, ++j) {
+      pts[j] = m0.points()[pt];
+      scalar_type l(1);
+      for (size_type k=0; k < N-1; ++k) {
+        pts[j][k] = tan(pts[j][k]*M_PI_4);
+        l += pts[j][k]*pts[j][k];
+      }
+      l = sqrt(l);
+      scalar_type r(radius-thickness+thickness*pts[j][N-1]);
+      for (size_type k=0; k < N-1; ++k)
+        pts[j][k] *= r/l;
+      pts[j][N-1] = r/l;
+    }
+
+    j = size_type(0);
+    for (dal::bv_visitor pt(m0.points().index()); !pt.finished(); ++pt, ++j)
+      m0.points()[pt] = pts[j];
+    m0.points().resort();
+
+    base_matrix M(N,N);
+    for (size_type i=0; i < N-1; ++i)
+      M(i,i+1) = scalar_type(1);
+    M(N-1,0) = scalar_type(1);
+
+    for (size_type i = 0; i < N; ++i) {
+      m0.transformation(M);
+      for (dal::bv_visitor cv(m0.convex_index()); !cv.finished(); ++cv)
+	     m.add_convex_by_points(m0.trans_of_convex(cv),
+                               m0.points_of_convex(cv).begin());
+    }
+
+    size_type symmetries(PARAM.int_value("SYMMETRIES"));
+    symmetries = std::min(symmetries,N);
+
+    for (size_type sym=0; sym < N-symmetries; ++sym) {
+      size_type sym0 = (sym+1) % N;
+      if (sym0 != 0) {
+        gmm::clear(M);
+        M(sym,sym0) = scalar_type(-1);
+        M(sym0,sym) = scalar_type(1);
+        for (size_type i=0; i < N; ++i)
+          if (i != sym && i != sym0) M(i,i) = scalar_type(1);
+      } else {
+        base_matrix M1(M), M2(M);
+        gmm::mult(M1,M2,M);
+      }
+      m0.copy_from(m);
+      m0.transformation(M);
+      for (dal::bv_visitor cv(m0.convex_index()); !cv.finished(); ++cv)
+	     m.add_convex_by_points(m0.trans_of_convex(cv),
+                               m0.points_of_convex(cv).begin());
+    }
+
+    m.translation(org);
+
+  }
+
 
 }  /* end of namespace getfem.                                             */

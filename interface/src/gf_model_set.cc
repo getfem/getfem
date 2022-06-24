@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yves Renard.
+ Copyright (C) 2009-2020 Yves Renard.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -29,6 +29,7 @@
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
+#include <getfem/getfem_HHO.h>
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_linearized_plates.h>
 #include <getfemint_misc.h>
@@ -116,6 +117,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mf);
        );
 
+
+    /*@SET ('add im variable', @str name, @tmimd mimd)
+      Add a variable to the model linked to a @tmimd. `name` is the variable
+      name. @*/
+    sub_command
+      ("add im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
+
+    /*@SET ('add internal im variable', @str name, @tmimd mimd)
+      Add a variable to the model, which is linked to a @tmimd and will be
+      condensed out during the assemblage of the tangent matrix. `name` is
+      the variable name. @*/
+    sub_command
+      ("add internal im variable", 2, 2, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::im_data *mimd = to_meshimdata_object(in.pop());
+       md->add_internal_im_variable(name, *mimd);
+       workspace().set_dependence(md, mimd);
+       );
 
     /*@SET ('add variable', @str name, sizes)
       Add a variable to the model of constant sizes. `sizes` is either a
@@ -298,7 +322,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Define a new macro for the high generic assembly language.
       The name include the parameters. For instance name='sp(a,b)', expr='a.b'
       is a valid definition. Macro without parameter can also be defined.
-      For instance name='x1', expr='X[1]' is valid. Teh form name='grad(u)',
+      For instance name='x1', expr='X[1]' is valid. The form name='grad(u)',
       expr='Grad_u' is also allowed but in that case, the parameter 'u' will
       only be allowed to be a variable name when using the macro. Note that
       macros can be directly defined inside the assembly strings with the
@@ -424,12 +448,86 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ('add elementary rotated RT0 projection', @str transname)
-      Experimental method ... @*/
+      Add the elementary transformation corresponding to the projection
+      on rotated RT0 element for two-dimensional elements to the model.
+      The name is the name given to the elementary transformation. @*/
     sub_command
       ("add elementary rotated RT0 projection", 1, 1, 0, 0,
        std::string transname = in.pop().to_string();
        add_2D_rotated_RT0_projection(*md, transname);
        );
+
+    /*@SET ('add elementary P0 projection', @str transname)
+      Add the elementary transformation corresponding to the projection
+      P0 element.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add P0 projection", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_P0_projection(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed gradient', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of a gradient for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed gradient", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_gradient(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed symmetrized gradient', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of a symmetrized gradient for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed symmetrized gradient", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_symmetrized_gradient(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed value', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of the variable for HHO methods.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed value", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_value(*md, transname);
+       );
+
+    /*@SET ('add HHO reconstructed symmetrized value', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      reconstruction of the variable for HHO methods using a symmetrized
+      gradient.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO reconstructed symmetrized value", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_reconstructed_symmetrized_value(*md, transname);
+       );
+
+    /*@SET ('add HHO stabilization', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      HHO stabilization operator.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO stabilization", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_stabilization(*md, transname);
+       );
+
+    /*@SET ('add HHO symmetrized stabilization', @str transname)
+      Add to the model the elementary transformation corresponding to the
+      HHO stabilization operator using a symmetrized gradient.
+      The name is the name given to the elementary transformation. @*/
+    sub_command
+      ("add HHO symmetrized stabilization", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_HHO_symmetrized_stabilization(*md, transname);
+       );
+
 
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
       Add a transformation to the model from mesh `source_mesh` to mesh
@@ -466,7 +564,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::mesh *sm = extract_mesh_object(in.pop());
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       	 THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
 	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
@@ -488,19 +586,19 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('set element extrapolation correspondance', @str transname, @mat elt_corr)
-      Change the correspondance map of an element extrapolation interpolate
+    /*@SET ('set element extrapolation correspondence', @str transname, @mat elt_corr)
+      Change the correspondence map of an element extrapolation interpolate
      transformation. @*/
     sub_command
-      ("set element extrapolation correspondance", 2, 2, 0, 0,
+      ("set element extrapolation correspondence", 2, 2, 0, 0,
        std::string transname = in.pop().to_string();
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondance list");
+       	 THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
 	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
-       getfem::set_element_extrapolation_correspondance(*md, transname,
+       getfem::set_element_extrapolation_correspondence(*md, transname,
 							elt_corr);
        );
     
@@ -627,7 +725,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add linear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -701,7 +799,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       If you are not sure, the better is to declare the term not symmetric
       and not coercive. But some solvers (conjugate gradient for instance)
       are not allowed for non-coercive problems.
-      `brickname` is an otpional name for the brick.@*/
+      `brickname` is an optional name for the brick.@*/
     sub_command
       ("add nonlinear term", 2, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
@@ -993,7 +1091,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The symmetry of the linear system is kept if all other bricks are
       symmetric.
       This brick is to be reserved for simple Dirichlet conditions (only dof
-      declared on the correspodning boundary are prescribed). The application
+      declared on the corresponding boundary are prescribed). The application
       of this brick on reduced dof may be problematic. Intrinsic vectorial
       finite element method are not supported. 
       `dataname` is the optional right hand side of  the Dirichlet condition.
@@ -1084,9 +1182,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       right hand side of the Dirichlet condition. `datagamma0` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` (default) is the simplest method
+      inconditionally coercive. `theta = 0` (default) is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. Return the brick index in the model.
     @*/
@@ -1253,9 +1351,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       described on a fem. `gamma0name` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. 
       Returns the brick index in the model.
@@ -1402,9 +1500,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       described on a fem. `gamma0name` is the
       Nitsche's method parameter. `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. `Hname` is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
@@ -1669,7 +1767,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add constraint with penalization', @str varname, @scalar coeff, @tspmat B, {@vec L | @str dataname})
     Add an additional explicit penalized constraint on the variable `varname`.
     The constraint is :math`BU=L` with `B` being a rectangular sparse matrix.
-    Be aware that `B` should not contain a palin row, otherwise the whole
+    Be aware that `B` should not contain a plain row, otherwise the whole
     tangent matrix will be plain. It is possible to change the constraint
     at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). The method
@@ -1880,7 +1978,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add isotropic linearized elasticity brick pstrain', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
+    /*@SET ind = ('add isotropic linearized elasticity pstrain brick', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
       Add an isotropic linearized elasticity term to the model relatively to
       the variable `varname`. `data_E` and `data_nu` should
       contain the Young modulus and Poisson ratio, respectively.
@@ -1892,7 +1990,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       standard model. 
       Return the brick index in the model.@*/
     sub_command
-      ("add isotropic linearized elasticity brick pstrain", 4, 5, 0, 1,
+      ("add isotropic linearized elasticity pstrain brick", 4, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
@@ -1900,14 +1998,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_isotropic_linearized_elasticity_brick_pstrain
+       = getfem::add_isotropic_linearized_elasticity_pstrain_brick
        (*md, *mim, varname, data_E, data_nu, region)
        + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add isotropic linearized elasticity brick pstress', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
+    /*@SET ind = ('add isotropic linearized elasticity pstress brick', @tmim mim, @str varname, @str data_E, @str data_nu[, @int region])
       Add an isotropic linearized elasticity term to the model relatively to
       the variable `varname`. `data_E` and `data_nu` should
       contain the Young modulus and Poisson ratio, respectively.
@@ -1919,7 +2017,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       standard model. 
       Return the brick index in the model.@*/
     sub_command
-      ("add isotropic linearized elasticity brick pstress", 4, 5, 0, 1,
+      ("add isotropic linearized elasticity pstress brick", 4, 5, 0, 1,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        std::string varname = in.pop().to_string();
        std::string data_E = in.pop().to_string();
@@ -1927,7 +2025,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_isotropic_linearized_elasticity_brick_pstress
+       = getfem::add_isotropic_linearized_elasticity_pstress_brick
        (*md, *mim, varname, data_E, data_nu, region)
        + config::base_index();
        workspace().set_dependence(md, mim);
@@ -2057,7 +2155,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add small strain elastoplasticity brick', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
       Adds a small strain plasticity term to the model `M`. This is the
-      main GetFEM++ brick for small strain plasticity. `lawname` is the name
+      main GetFEM brick for small strain plasticity. `lawname` is the name
       of an implemented plastic law, `unknowns_type` indicates the choice
       between a discretization where the plastic multiplier is an unknown of
       the problem or (return mapping approach) just a data of the model
@@ -2122,9 +2220,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         The same law as the previous one but adapted to the plane strain
         approximation. Can only be used in 2D.
 
-      See GetFEM++ user documentation for further explanations on the
+      See GetFEM user documentation for further explanations on the
       discretization of the plastic flow and on the implemented plastic laws.
-      See also GetFEM++ user documentation on time integration strategy
+      See also GetFEM user documentation on time integration strategy
       (integration of transient problems).
 
       IMPORTANT : remember that `small_strain_elastoplasticity_next_iter` has
@@ -2486,7 +2584,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2554,7 +2652,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary.
+      `varname` and on the mesh region `region` (which should be a boundary).
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -2634,8 +2732,66 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          workspace().set_dependence(md, mim);
          out.pop().from_integer(int(ind));
          );
-        
-
+  
+  
+    /*@SET ind = ('add enriched Mindlin Reissner plate brick', @tmim mim, @tmim mim_reduced1, @tmim mim_reduced2, @str varname_ua, @str varname_theta,@str varname_u3, @str varname_theta3 , @str param_E, @str param_nu, @str param_epsilon [,@int variant [, @int region]])
+    Add a term corresponding to the enriched Reissner-Mindlin plate
+    model for which `varname_ua` is the membrane displacements,
+    `varname_u3` is the transverse displacement,
+    `varname_theta` the rotation of
+    fibers normal to the midplane, 
+    `varname_theta3` the pinching,     
+    'param_E' the Young Modulus,
+    `param_nu` the poisson ratio,
+    `param_epsilon` the plate thickness. Note that since this brick
+    uses the high level generic assembly language, the parameter can
+    be regular expression of this language.
+    There are four variants.
+    `variant = 0` corresponds to the an
+    unreduced formulation and in that case only the integration
+    method `mim` is used. Practically this variant is not usable since
+    it is subject to a strong locking phenomenon.
+    `variant = 1` corresponds to a reduced integration where `mim` is
+    used for the rotation term and `mim_reduced1` for the transverse
+    shear term and `mim_reduced2` for the pinching term.
+    `variant = 2` (default) corresponds to the projection onto
+    a rotated RT0 element of the transverse shear term and a reduced integration for the pinching term.
+    For the moment, this is adapted to quadrilateral only (because it is not sufficient to
+    remove the locking phenomenon on triangle elements). Note also that if
+    you use high order elements, the projection on RT0 will reduce the order
+    of the approximation.
+    `variant = 3` corresponds to the projection onto
+    a rotated RT0 element of the transverse shear term and the projection onto P0 element of the pinching term.
+    For the moment, this is adapted to quadrilateral only (because it is not sufficient to
+    remove the locking phenomenon on triangle elements). Note also that if
+    you use high order elements, the projection on RT0 will reduce the order
+    of the approximation.   
+    Returns the brick index in the model.
+      @*/
+     sub_command
+        ("add enriched Mindlin Reissner plate brick", 10, 12, 0, 1,
+         getfem::mesh_im *mim = to_meshim_object(in.pop());
+         getfem::mesh_im *mim_reduced1 = to_meshim_object(in.pop());
+         getfem::mesh_im *mim_reduced2 = to_meshim_object(in.pop());
+         std::string varname_Ua = in.pop().to_string();
+         std::string varname_theta = in.pop().to_string();
+         std::string varname_U3 = in.pop().to_string();
+         std::string varname_theta3 = in.pop().to_string();
+         std::string param_E = in.pop().to_string();
+         std::string param_nu = in.pop().to_string();
+         std::string param_epsilon = in.pop().to_string();
+         size_type variant = size_type(3);//2
+         if (in.remaining()) variant = in.pop().to_integer();
+         size_type region = size_type(-1);
+         if (in.remaining()) region = in.pop().to_integer();
+         size_type ind = add_enriched_Mindlin_Reissner_plate_brick
+         (*md, *mim, *mim_reduced1,*mim_reduced2,
+          varname_Ua, varname_theta, varname_U3, varname_theta3,
+          param_E, param_nu, param_epsilon, variant, region);
+         workspace().set_dependence(md, mim);
+         out.pop().from_integer(int(ind));
+         );
+      
 
     /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
       Add mass term to the model relatively to the variable `varname`.
@@ -2653,6 +2809,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_mass_brick
+       (*md, *mim, varname, dataname_rho, region)
+       + config::base_index();
+       workspace().set_dependence(md, mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add lumped mass for first order brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
+      Add lumped mass for first order term to the model relatively to the variable `varname`.
+      If specified, the data `dataexpr_rho` is the
+      density (1 if omitted). `region` is an optional mesh region on
+      which the term is added. If it is not specified, it
+      is added on the whole mesh. Return the brick index in the model.@*/
+    sub_command
+      ("add lumped mass for first order brick", 2, 4, 0, 1,
+       getfem::mesh_im *mim = to_meshim_object(in.pop());
+       std::string varname = in.pop().to_string();
+       std::string dataname_rho;
+       if (in.remaining()) dataname_rho = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_lumped_mass_for_first_order_brick
        (*md, *mim, varname, dataname_rho, region)
        + config::base_index();
        workspace().set_dependence(md, mim);
@@ -2686,7 +2865,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('set time step', @scalar dt)
       Set the value of the time step to `dt`. This value can be change
-      from a step to another for all one-step schemes (i.e for the moment
+      from a step to another for all one-step schemes (i.e. for the moment
       to all proposed time integration schemes). @*/
     sub_command
       ("set time step", 1, 1, 0, 0,
@@ -2738,6 +2917,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::add_Newmark_scheme(*md, varname, beta, gamma);
        );
 
+    /*@SET ('add_Houbolt_scheme', @str varname)
+      Attach a Houbolt method for the time discretization of the variable
+      `varname`. Valid only if there is at most second order time derivative
+      of the variable  @*/
+    sub_command
+      ("add Houbolt scheme", 1, 1, 0, 0,
+       std::string varname = in.pop().to_string();
+       getfem::add_Houbolt_scheme(*md, varname);
+       );
 
      /*@SET ('disable bricks', @ivec bricks_indices)
        Disable a brick (the brick will no longer participate to the
@@ -3249,9 +3437,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `gamma0name` is the Nitsche's method parameter.
       `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary.
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -3306,9 +3494,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `gamma0name` is the Nitsche's method parameter.
       `theta` is a scalar value which can be
       positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
+      method which is conditionally coercive for  `gamma0` small.
       `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
+      inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary.
       The optional parameter `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -3363,8 +3551,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      `gamma0name` is the Nitsche's method parameter. 
      `theta` is a scalar value which can be positive or negative. 
      `theta = 1` corresponds to the standard symmetric method which is
-     conditionnaly coercive for  `gamma0` small.
-     `theta = -1` corresponds to the skew-symmetric method which is inconditionnaly coercive.
+     conditionally coercive for  `gamma0` small.
+     `theta = -1` corresponds to the skew-symmetric method which is inconditionally coercive.
      `theta = 0` is the simplest method for which the second derivative of
      the Neumann term is not necessary. The optional parameter `dataname_friction_coeff`
      is the friction coefficient which could be constant or defined on a finite element method. 

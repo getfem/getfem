@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Julien Pommier
+ Copyright (C) 2000-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -907,10 +907,10 @@ namespace bgeot {
   }
 
   static bool do_reduction2v(bgeot::multi_tensor_iterator &mti) {
-    long n = mti.vectorized_size();
+    BLAS_INT n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0) {
-      long incx = s[1], incy = s[0];
+      BLAS_INT incx = s[1], incy = s[0];
       /*mti.print();
         scalar_type *b[3]; 
         for (int i=0; i < 3; ++i)       b[i] = &mti.p(i);*/
@@ -945,10 +945,10 @@ namespace bgeot {
   }
 
   static bool do_reduction3v(bgeot::multi_tensor_iterator &mti) {
-    long n = mti.vectorized_size();
+    BLAS_INT n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0 && s[3] == 0) {
-      long incx = s[1], incy = s[0];
+      BLAS_INT incx = s[1], incy = s[0];
       do {
         double v = mti.p(2)*mti.p(3);
 	gmm::daxpy_(&n, &v, &mti.p(1), &incx, &mti.p(0), &incy);

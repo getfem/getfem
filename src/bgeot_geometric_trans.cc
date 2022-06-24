@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -29,22 +29,22 @@
 namespace bgeot {
 
   std::vector<scalar_type>& __aux1(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<scalar_type>& __aux2(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<scalar_type>& __aux3(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>, v);
+    THREAD_SAFE_STATIC std::vector<scalar_type> v;
     return v;
   }
 
   std::vector<long>& __ipvt_aux(){
-    DEFINE_STATIC_THREAD_LOCAL(std::vector<long>, vi);
+    THREAD_SAFE_STATIC std::vector<long> vi;
     return vi;
   }
 
@@ -242,7 +242,7 @@ namespace bgeot {
         scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
         scalar_type a2 = A[3]*A[7] - A[4]*A[6];
         scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-	GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
         scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
         scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
         scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
@@ -279,7 +279,7 @@ namespace bgeot {
         auto itpc_j = pc.begin() + j*P, itG_b = G.begin();
         for (size_type i = 0; i < N; ++i, ++itG_b) {
           auto itG = itG_b, itpc = itpc_j;
-          register scalar_type a = *(itG) * (*itpc);
+          scalar_type a = *(itG) * (*itpc);
           for (size_type k = 1; k < P; ++k)
             { itG += N; a += *(itG) * (*++itpc); }
           *itK++ = a;
@@ -343,9 +343,9 @@ namespace bgeot {
           J__ = it[0] * a0 + it[1] * a1 + it[2] * a2;
         } break;
       default:
-	B_factors.base_resize(P, P); // store factorization for B computation
-	gmm::copy(gmm::transposed(KK), B_factors);
-	ipvt.resize(P);
+        B_factors.base_resize(P, P); // store factorization for B computation
+        gmm::copy(gmm::transposed(KK), B_factors);
+        ipvt.resize(P);
         bgeot::lu_factor(&(*(B_factors.begin())), ipvt, P);
         J__ = bgeot::lu_det(&(*(B_factors.begin())), ipvt, P);
         break;
@@ -387,8 +387,10 @@ namespace bgeot {
         case 2:
           {
             auto it = &(*(KK.begin())); auto itB = &(*(B_.begin()));
-            *itB++ = it[3] / J__; *itB++ = -it[2] / J__;
-            *itB++ = -it[1] / J__; *itB = (*it) / J__;
+            *itB++ = it[3] / J__;
+            *itB++ = -it[2] / J__;
+            *itB++ = -it[1] / J__;
+            *itB = (*it) / J__;
           } break;
         case 3:
           {
@@ -504,7 +506,8 @@ namespace bgeot {
     mutable bool hess_computed_ = false;
 
     void compute_grad_() const {
-      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
+      GLOBAL_OMP_GUARD
       if (grad_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();
@@ -519,7 +522,8 @@ namespace bgeot {
     }
 
     void compute_hess_() const {
-      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
+      GLOBAL_OMP_GUARD
       if (hess_computed_) return;
       size_type R = trans.size();
       dim_type n = dim();
@@ -1073,11 +1077,9 @@ namespace bgeot {
   /* norm of returned vector is the ratio between the face surface on
      the reference element and the face surface on the real element.
      IT IS NOT UNITARY
-
-     pt is the position of the evaluation point on the reference element
   */
-  base_small_vector compute_normal(const geotrans_interpolation_context& c,
-                                   size_type face) {
+  base_small_vector
+  compute_normal(const geotrans_interpolation_context& c, size_type face) {
     GMM_ASSERT1(c.G().ncols() == c.pgt()->nb_points(), "dimensions mismatch");
     base_small_vector un(c.N());
     gmm::mult(c.B(), c.pgt()->normals()[face], un);
@@ -1159,8 +1161,13 @@ namespace bgeot {
   }
 
   pgeometric_trans geometric_trans_descriptor(std::string name) {
-    size_type i=0;
-    return dal::singleton<geometric_trans_naming_system>::instance().method(name, i);
+    size_type i = 0;
+    auto &name_system = dal::singleton<geometric_trans_naming_system>::instance();
+    auto ptrans = name_system.method(name, i);
+    auto &trans = const_cast<bgeot::geometric_trans&>(*ptrans);
+    auto short_name = name_system.shorter_name_of_method(ptrans);
+    trans.set_name(short_name);
+    return ptrans;
   }
 
   std::string name_of_geometric_trans(pgeometric_trans p) {
@@ -1266,6 +1273,61 @@ namespace bgeot {
     return pgt;
   }
 
+
+  // To be completed
+  pgeometric_trans default_trans_of_cvs(pconvex_structure cvs) {
+
+    dim_type n = cvs->dim();
+    short_type nbf  = cvs->nb_faces();
+    short_type nbpt  = cvs->nb_points();
+
+    // Basic cases
+    if (cvs == simplex_structure(n)) return simplex_geotrans(n, 1);
+    if (cvs == parallelepiped_structure(n))
+      return parallelepiped_geotrans(n, 1);
+    if (cvs == prism_P1_structure(n)) return prism_geotrans(n, 1);
+    
+    // more elaborated ones
+    switch (n) {
+    case 1 : return simplex_geotrans(1, short_type(nbpt-1));
+    case 2 :
+      if (nbf == 3) {
+        short_type k = short_type(round((sqrt(1.+8.*nbpt) - 3. ) / 2.));
+        if (cvs == simplex_structure(2,k)) return simplex_geotrans(2, k);
+      } else if (nbf == 4) {
+        short_type k = short_type(round(sqrt(1.*nbpt)) - 1.);
+        if (cvs == parallelepiped_structure(2, k))
+          return parallelepiped_geotrans(2, k);
+      }
+      break;
+    case 3 :
+      if (nbf == 4) {
+        if (cvs == simplex_structure(3, 2)) return simplex_geotrans(3, 2);
+        if (cvs == simplex_structure(3, 3)) return simplex_geotrans(3, 3);
+        if (cvs == simplex_structure(3, 4)) return simplex_geotrans(3, 4);
+        if (cvs == simplex_structure(3, 5)) return simplex_geotrans(3, 5);
+        if (cvs == simplex_structure(3, 6)) return simplex_geotrans(3, 6);
+      } else if (nbf == 6) {
+        short_type k = short_type(round(pow(1.*nbpt, 1./3.)) - 1.);
+        if (cvs == parallelepiped_structure(3, k))
+          return parallelepiped_geotrans(3, k);
+      } else if (nbf == 5) {
+        if (cvs == pyramid_QK_structure(1)) return pyramid_QK_geotrans(1);
+        if (cvs == pyramid_QK_structure(2)) return pyramid_QK_geotrans(2);
+        if (cvs == pyramid_QK_structure(3)) return pyramid_QK_geotrans(3);
+        if (cvs == pyramid_QK_structure(4)) return pyramid_QK_geotrans(4);
+        if (cvs == pyramid_QK_structure(5)) return pyramid_QK_geotrans(5);
+        if (cvs == pyramid_QK_structure(6)) return pyramid_QK_geotrans(6);
+        if (cvs == pyramid_Q2_incomplete_structure())
+          return pyramid_Q2_incomplete_geotrans();
+      }
+      break;
+    }
+    GMM_ASSERT1(false, "Unrecognized structure");
+  }
+
+  
+
   /* ********************************************************************* */
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
@@ -1328,7 +1390,7 @@ namespace bgeot {
   }
 
   void delete_geotrans_precomp(pgeotrans_precomp pgp)
-  { dal::del_stored_object(pgp); }
+  { dal::del_stored_object(pgp, true); }
 
 }  /* end of namespace bgeot.                                            */
 

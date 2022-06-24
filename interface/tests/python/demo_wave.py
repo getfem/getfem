@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -22,13 +22,15 @@
 """  2D scalar wave equation (Helmholtz) demonstration.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   $Id$
 """
-from numpy import *
-from getfem import *
 import os
+
+from numpy import *
+
+from getfem import *
 
 make_check=('srcdir' in os.environ);
 
@@ -52,8 +54,8 @@ P=m.pts(); # get list of mesh points coordinates
 Psqr=sum(P*P, 0);
 cobj=(Psqr < 1*1+1e-6);
 cout=(Psqr > 10*10-1e-2);
-pidobj=compress(cobj, range(0, m.nbpts()))
-pidout=compress(cout, range(0, m.nbpts()))
+pidobj=compress(cobj, list(range(0, m.nbpts())))
+pidout=compress(cout, list(range(0, m.nbpts())))
 fobj=m.faces_from_pid(pidobj)
 fout=m.faces_from_pid(pidout)
 ROBIN_BOUNDARY = 1

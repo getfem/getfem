@@ -1,8 +1,8 @@
 .. _reporting-bugs:
 
-**************************
-Reporting Bugs in GetFEM++
-**************************
+************************
+Reporting Bugs in GetFEM
+************************
 
 Bug reports should be submitted via the Savannah Bug Tracker (in
 https://savannah.nongnu.org/projects/getfem).  The bug tracker offers a Web form
@@ -25,12 +25,12 @@ registration procedure. Otherwise, if you're not logged in, select
 report anonymously.
 
 Being now logged in, you can submit a bug.  Go to
-https://savannah.nongnu.org/projects/getfem and select the "Submit a new item" link 
+https://savannah.nongnu.org/projects/getfem and select the "Submit a new item" link
 (in the "Bug Tracker" table) to open the bug reporting form.
 
-The submission form has a number of fields.  For the "Summary" field, 
-enter a *very* short description of the problem; less than ten words is 
-good.  In the "Severity" field, select the severity of your problem; 
+The submission form has a number of fields.  For the "Summary" field,
+enter a *very* short description of the problem; less than ten words is
+good.  In the "Severity" field, select the severity of your problem;
 also select the "Privacy" and "Category" to which the bug relates.
 
 In the "Original Submission" field, describe the problem in detail,
@@ -45,7 +45,7 @@ each time action is taken on the bug.
 
 
 .. seealso::
-   
+
    * `How to Report Bugs Effectively
      <http://www.chiark.greenend.org.uk/~sgtatham/bugs.html>`_
      Article which goes into some detail about how to create a useful
@@ -54,6 +54,6 @@ each time action is taken on the bug.
 
    * `Bug Writing Guidelines
      <https://developer.mozilla.org/en/Bug_writing_guidelines>`_
-     Information about writing a good bug report.  Some of this is 
+     Information about writing a good bug report.  Some of this is
      specific to the Mozilla project, but describes general good
      practices.

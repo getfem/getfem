@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Julien Pommier
+ Copyright (C) 2000-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -213,24 +213,24 @@ namespace getfem {
      Lower dimensions elements in the regions of lower_dim_convex_rg will
      be imported as independant convexes.
 
-     If add_all_element_type is set to true, convexes with less dimension
-     than highest dimension pgt and are not part of other element's face will
-     be imported as independent convexes.
+     If add_all_element_type is set to true, elements with lower dimension
+     than highest dimension and that are not part of other element's face will
+     be imported as independent elements.
 
      for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
      if remove_last_dimension == true the z-component of nodes will be removed
   */
-  static void import_gmsh_mesh_file(std::istream& f, mesh& m, int deprecate=0,
-                                    std::map<std::string, size_type> *region_map=NULL,
-                                    std::set<size_type> *lower_dim_convex_rg=NULL,
-                                    bool add_all_element_type = false,
-                                    bool remove_last_dimension = true,
-                                    std::map<size_type, std::set<size_type>> *nodal_map = NULL,
-                                    bool remove_duplicated_nodes = true)
-  {
+  static void import_gmsh_mesh_file
+  (std::istream& f, mesh& m, int deprecate=0,
+   std::map<std::string, size_type> *region_map=NULL,
+   std::set<size_type> *lower_dim_convex_rg=NULL,
+   bool add_all_element_type = false,
+   bool remove_last_dimension = true,
+   std::map<size_type, std::set<size_type>> *nodal_map = NULL,
+   bool remove_duplicated_nodes = true) {
     gmm::stream_standard_locale sl(f);
-    /* print general warning */
-    GMM_WARNING3("  All regions must have different number!");
+    // /* print general warning */
+    // GMM_WARNING3("  All regions must have different number!");
 
     /* print deprecate warning */
     if (deprecate!=0){
@@ -246,7 +246,7 @@ namespace getfem {
     }
 
     /* read the version */
-    int version;
+    double version;
     std::string header;
     f >> header;
     if (bgeot::casecmp(header,"$MeshFormat")==0)
@@ -258,254 +258,299 @@ namespace getfem {
 
     /* read the region names */
     if (region_map != NULL) {
-      if (version == 2) {
+      if (version >= 2.) {
         *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
     /* read the node list */
-    if (version == 2)
-      bgeot::read_until(f, "$Nodes"); /* Format version 2 */
+    if (version >= 2.)
+      bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
-    size_type nb_node;
-    f >> nb_node;
-    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
-    std::map<size_type, size_type> msh_node_2_getfem_node;
-    for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
-      size_type node_id;
-      base_node n(3); n[0]=n[1]=n[2]=0.0;
-      f >> node_id >> n[0] >> n[1] >> n[2];
-      msh_node_2_getfem_node[node_id] = m.add_point(n, 0.0, remove_duplicated_nodes);
+    size_type nb_block, nb_node, dummy;
+    std::string dummy2;
+    // cout << "version = " << version << endl;
+    if (version >= 4.05) {
+      f >> nb_block >> nb_node; bgeot::read_until(f, "\n");
+    } else if (version >= 4.) {
+      f >> nb_block >> nb_node;
+    } else {
+      nb_block = 1;
+      f >> nb_node;
     }
 
-    if (version == 2)
-      bgeot::read_until(f, "$Endnodes"); /* Format version 2 */
+    // cerr << "reading nodes..[nb=" << nb_node << "]\n";
+    std::map<size_type, size_type> msh_node_2_getfem_node;
+     std::vector<size_type> inds(nb_node);
+    for (size_type block=0; block < nb_block; ++block) {
+      if (version >= 4.)
+        f >> dummy >> dummy >> dummy >> nb_node;
+      // cout << "nb_nodes = " << nb_node << endl;
+
+      inds.resize(nb_node);
+      if (version >= 4.05) {
+	for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt)
+	  f >> inds[node_cnt];
+      }
+      
+      for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
+        size_type node_id;
+        base_node n{0,0,0};
+	if (version < 4.05) f >> node_id; else node_id = inds[node_cnt];
+
+	f >> n[0] >> n[1] >> n[2];
+        msh_node_2_getfem_node[node_id]
+          = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
+      }
+    }
+
+    if (version >= 2.)
+      bgeot::read_until(f, "$Endnodes"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ENDNOD");
 
-    /* read the convexes */
-    if (version == 2)
-      bgeot::read_until(f, "$Elements"); /* Format version 2 */
+    /* read the elements */
+    if (version >= 2.)
+      bgeot::read_until(f, "$Elements"); /* Format versions 2 and 4 */
     else
       bgeot::read_until(f, "$ELM");
 
     size_type nb_cv;
-    f >> nb_cv;
+    if (version >= 4.05) {
+      f >> nb_block >> nb_cv; bgeot::read_until(f, "\n");
+    } else if (version >= 4.) { /* Format version 4 */
+      f >> nb_block >> nb_cv;
+    } else {
+      nb_block = 1;
+      f >> nb_cv;
+    }
+    // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
+     
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
-    for (size_type cv=0; cv < nb_cv; ++cv) {
-      unsigned id, type, region;
-      unsigned dummy, cv_nb_nodes;
-
-      if (version == 2) { /* Format version 2 */
-        unsigned nbtags, mesh_part;
-        f >> id >> type >> nbtags;
-        if (nbtags == 0 || nbtags > 3)
-          GMM_ASSERT1(false, "Number of tags " << nbtags
-                      << " is not managed.");
-
-        f >> region;
-        if (nbtags > 1) f >> dummy;
-        if (nbtags > 2) f >> mesh_part;
+    dal::bit_vector reg;
+    for (size_type block=0; block < nb_block; ++block) {
+      unsigned dimr, type, region;
+      if (version >= 4.) { /* Format version 4 */
+        f >> dimr >> region >> type >> nb_cv;
+        if (reg.is_in(region)) {
+          GMM_WARNING2("Two regions share the same number, "
+                       "the region numbering is modified");
+          while (reg.is_in(region)) region += 5;
+        }
+        reg.add(region);
       }
-      else
-        f >> id >> type >> region >> dummy >> cv_nb_nodes;
+      for (size_type cv=0; cv < nb_cv; ++cv) {
 
-      id--; /* gmsh numbering starts at 1 */
+        cvlst.push_back(gmsh_cv_info());
+        gmsh_cv_info &ci = cvlst.back();
+        f >> ci.id;
+        ci.id--; /* gmsh numbering starts at 1 */
 
-      cvlst.push_back(gmsh_cv_info());
-      gmsh_cv_info &ci = cvlst.back();
-      ci.id = id; ci.type = type; ci.region = region;
+        unsigned cv_nb_nodes;
+        if (version >= 2.) { /* For versions 2 and 4 */
+          if (int(version) == 2) { /* Format version 2 */
+            unsigned nbtags;
+            f >> type >> nbtags;
+            GMM_ASSERT1(nbtags > 0 && nbtags <= 3,
+                        "Number of tags " << nbtags << " is not managed.");
+            f >> region;
+            if (nbtags > 1) f >> dummy;
+            if (nbtags > 2) f >> dummy;
+          }
+          ci.type = type;
+          ci.set_nb_nodes();
+          cv_nb_nodes = unsigned(ci.nodes.size());
+        } else if (int(version) == 1) {
+          f >> type >> region >> dummy >> cv_nb_nodes;
+          ci.type = type;
+          ci.nodes.resize(cv_nb_nodes);
+        }
+        ci.region = region;
 
+        // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
 
-      if (version == 2) { /* For version 2 */
-        ci.set_nb_nodes();
-        cv_nb_nodes = unsigned(ci.nodes.size());
-      }
-      else
-        ci.nodes.resize(cv_nb_nodes);
-
-      // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
-
-      for (size_type i=0; i < cv_nb_nodes; ++i) {
-        size_type j;
-        f >> j;
-        std::map<size_type, size_type>::iterator
-          it = msh_node_2_getfem_node.find(j);
-        GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-                    "Invalid node ID " << j << " in gmsh element "
-                    << (ci.id + 1));
-        ci.nodes[i] = it->second;
-      }
-      if(ci.type != 15) ci.set_pgt();
-      // Reordering nodes for certain elements (should be completed ?)
-      // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
-      std::vector<size_type> tmp_nodes(ci.nodes);
-      switch(ci.type) {
-      case 3 : {
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[2];
-      } break;
-      case 5 : { /* First order hexaedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        //ci.nodes[1] = tmp_nodes[1];
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[2];
-        //ci.nodes[4] = tmp_nodes[4];
-        //ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[7];
-        ci.nodes[7] = tmp_nodes[6];
-      } break;
-      case 7 : { /* first order pyramid */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[1];
-        // ci.nodes[3] = tmp_nodes[3];
-        // ci.nodes[4] = tmp_nodes[4];
-      } break;
-      case 8 : { /* Second order line */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[1];
-      } break;
-      case 9 : { /* Second order triangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[3];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[5];
-        //ci.nodes[4] = tmp_nodes[4];
-        ci.nodes[5] = tmp_nodes[2];
-      } break;
-      case 10 : { /* Second order quadrangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[7];
-        ci.nodes[4] = tmp_nodes[8];
-        //ci.nodes[5] = tmp_nodes[5];
-        ci.nodes[6] = tmp_nodes[3];
-        ci.nodes[7] = tmp_nodes[6];
-        ci.nodes[8] = tmp_nodes[2];
-      } break;
-      case 11: { /* Second order tetrahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[6];
-        ci.nodes[4] = tmp_nodes[5];
-        ci.nodes[5] = tmp_nodes[2];
-        ci.nodes[6] = tmp_nodes[7];
-        ci.nodes[7] = tmp_nodes[9];
-        //ci.nodes[8] = tmp_nodes[8];
-        ci.nodes[9] = tmp_nodes[3];
-      } break;
-      case 12: { /* Second order hexahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[8];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[9];
-        ci.nodes[4] = tmp_nodes[20];
-        ci.nodes[5] = tmp_nodes[11];
-        ci.nodes[6] = tmp_nodes[3];
-        ci.nodes[7] = tmp_nodes[13];
-        ci.nodes[8] = tmp_nodes[2];
-        ci.nodes[9] = tmp_nodes[10];
-        ci.nodes[10] = tmp_nodes[21];
-        ci.nodes[11] = tmp_nodes[12];
-        ci.nodes[12] = tmp_nodes[22];
-        ci.nodes[13] = tmp_nodes[26];
-        ci.nodes[14] = tmp_nodes[23];
-        //ci.nodes[15] = tmp_nodes[15];
-        ci.nodes[16] = tmp_nodes[24];
-        ci.nodes[17] = tmp_nodes[14];
-        ci.nodes[18] = tmp_nodes[4];
-        ci.nodes[19] = tmp_nodes[16];
-        ci.nodes[20] = tmp_nodes[5];
-        ci.nodes[21] = tmp_nodes[17];
-        ci.nodes[22] = tmp_nodes[25];
-        ci.nodes[23] = tmp_nodes[18];
-        ci.nodes[24] = tmp_nodes[7];
-        ci.nodes[25] = tmp_nodes[19];
-        ci.nodes[26] = tmp_nodes[6];
-      } break;
-      case 16 : { /* Incomplete second order quadrangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[4];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[7];
-        ci.nodes[4] = tmp_nodes[5];
-        ci.nodes[5] = tmp_nodes[3];
-        ci.nodes[6] = tmp_nodes[6];
-        ci.nodes[7] = tmp_nodes[2];
-      } break;
-      case 17: { /* Incomplete second order hexahedron */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[8];
-        ci.nodes[2] = tmp_nodes[1];
-        ci.nodes[3] = tmp_nodes[9];
-        ci.nodes[4] = tmp_nodes[11];
-        ci.nodes[5] = tmp_nodes[3];
-        ci.nodes[6] = tmp_nodes[13];
-        ci.nodes[7] = tmp_nodes[2];
-        ci.nodes[8] = tmp_nodes[10];
-        ci.nodes[9] = tmp_nodes[12];
-        ci.nodes[10] = tmp_nodes[15];
-        ci.nodes[11] = tmp_nodes[14];
-        ci.nodes[12] = tmp_nodes[4];
-        ci.nodes[13] = tmp_nodes[16];
-        ci.nodes[14] = tmp_nodes[5];
-        ci.nodes[15] = tmp_nodes[17];
-        ci.nodes[16] = tmp_nodes[18];
-        ci.nodes[17] = tmp_nodes[7];
-        ci.nodes[18] = tmp_nodes[19];
-        ci.nodes[19] = tmp_nodes[6];
-      } break;
-      case 26 : { /* Third order line */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[2];
-        ci.nodes[2] = tmp_nodes[3];
-        ci.nodes[3] = tmp_nodes[1];
-      } break;
-      case 21 : { /* Third order triangle */
-        //ci.nodes[0] = tmp_nodes[0];
-        ci.nodes[1] = tmp_nodes[3];
-        ci.nodes[2] = tmp_nodes[4];
-        ci.nodes[3] = tmp_nodes[1];
-        ci.nodes[4] = tmp_nodes[8];
-        ci.nodes[5] = tmp_nodes[9];
-        ci.nodes[6] = tmp_nodes[5];
-        //ci.nodes[7] = tmp_nodes[7];
-        ci.nodes[8] = tmp_nodes[6];
-        ci.nodes[9] = tmp_nodes[2];
-      } break;
-      case 23: { /* Fourth order triangle */
-      //ci.nodes[0]  = tmp_nodes[0];
-        ci.nodes[1]  = tmp_nodes[3];
-        ci.nodes[2]  = tmp_nodes[4];
-        ci.nodes[3]  = tmp_nodes[5];
-        ci.nodes[4]  = tmp_nodes[1];
-        ci.nodes[5]  = tmp_nodes[11];
-        ci.nodes[6]  = tmp_nodes[12];
-        ci.nodes[7]  = tmp_nodes[13];
-        ci.nodes[8]  = tmp_nodes[6];
-        ci.nodes[9]  = tmp_nodes[10];
-        ci.nodes[10] = tmp_nodes[14];
-        ci.nodes[11] = tmp_nodes[7];
-        ci.nodes[12] = tmp_nodes[9];
-        ci.nodes[13] = tmp_nodes[8];
-        ci.nodes[14] = tmp_nodes[2];
-      } break;
-      case 27: { /* Fourth order line */
-      //ci.nodes[0]  = tmp_nodes[0];
-        ci.nodes[1]  = tmp_nodes[2];
-        ci.nodes[2]  = tmp_nodes[3];
-        ci.nodes[3]  = tmp_nodes[4];
-        ci.nodes[4]  = tmp_nodes[1];
-      } break;
+        for (size_type i=0; i < cv_nb_nodes; ++i) {
+          size_type j;
+          f >> j;
+          const auto it = msh_node_2_getfem_node.find(j);
+          GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
+                      "Invalid node ID " << j << " in gmsh element "
+                      << (ci.id + 1));
+          ci.nodes[i] = it->second;
+        }
+        if (ci.type != 15)
+          ci.set_pgt();
+        // Reordering nodes for certain elements (should be completed ?)
+        // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
+        std::vector<size_type> tmp_nodes(ci.nodes);
+        switch(ci.type) {
+        case 3 : {
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[2];
+        } break;
+        case 5 : { /* First order hexaedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          //ci.nodes[1] = tmp_nodes[1];
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[2];
+          //ci.nodes[4] = tmp_nodes[4];
+          //ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[7];
+          ci.nodes[7] = tmp_nodes[6];
+        } break;
+        case 7 : { /* first order pyramid */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[1];
+          // ci.nodes[3] = tmp_nodes[3];
+          // ci.nodes[4] = tmp_nodes[4];
+        } break;
+        case 8 : { /* Second order line */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[1];
+        } break;
+        case 9 : { /* Second order triangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[3];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[5];
+          //ci.nodes[4] = tmp_nodes[4];
+          ci.nodes[5] = tmp_nodes[2];
+        } break;
+        case 10 : { /* Second order quadrangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[8];
+          //ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[3];
+          ci.nodes[7] = tmp_nodes[6];
+          ci.nodes[8] = tmp_nodes[2];
+        } break;
+        case 11: { /* Second order tetrahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[6];
+          ci.nodes[4] = tmp_nodes[5];
+          ci.nodes[5] = tmp_nodes[2];
+          ci.nodes[6] = tmp_nodes[7];
+          ci.nodes[7] = tmp_nodes[9];
+          //ci.nodes[8] = tmp_nodes[8];
+          ci.nodes[9] = tmp_nodes[3];
+        } break;
+        case 12: { /* Second order hexahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[8];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[9];
+          ci.nodes[4] = tmp_nodes[20];
+          ci.nodes[5] = tmp_nodes[11];
+          ci.nodes[6] = tmp_nodes[3];
+          ci.nodes[7] = tmp_nodes[13];
+          ci.nodes[8] = tmp_nodes[2];
+          ci.nodes[9] = tmp_nodes[10];
+          ci.nodes[10] = tmp_nodes[21];
+          ci.nodes[11] = tmp_nodes[12];
+          ci.nodes[12] = tmp_nodes[22];
+          ci.nodes[13] = tmp_nodes[26];
+          ci.nodes[14] = tmp_nodes[23];
+          //ci.nodes[15] = tmp_nodes[15];
+          ci.nodes[16] = tmp_nodes[24];
+          ci.nodes[17] = tmp_nodes[14];
+          ci.nodes[18] = tmp_nodes[4];
+          ci.nodes[19] = tmp_nodes[16];
+          ci.nodes[20] = tmp_nodes[5];
+          ci.nodes[21] = tmp_nodes[17];
+          ci.nodes[22] = tmp_nodes[25];
+          ci.nodes[23] = tmp_nodes[18];
+          ci.nodes[24] = tmp_nodes[7];
+          ci.nodes[25] = tmp_nodes[19];
+          ci.nodes[26] = tmp_nodes[6];
+        } break;
+        case 16 : { /* Incomplete second order quadrangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[4];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[5];
+          ci.nodes[5] = tmp_nodes[3];
+          ci.nodes[6] = tmp_nodes[6];
+          ci.nodes[7] = tmp_nodes[2];
+        } break;
+        case 17: { /* Incomplete second order hexahedron */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[8];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[9];
+          ci.nodes[4] = tmp_nodes[11];
+          ci.nodes[5] = tmp_nodes[3];
+          ci.nodes[6] = tmp_nodes[13];
+          ci.nodes[7] = tmp_nodes[2];
+          ci.nodes[8] = tmp_nodes[10];
+          ci.nodes[9] = tmp_nodes[12];
+          ci.nodes[10] = tmp_nodes[15];
+          ci.nodes[11] = tmp_nodes[14];
+          ci.nodes[12] = tmp_nodes[4];
+          ci.nodes[13] = tmp_nodes[16];
+          ci.nodes[14] = tmp_nodes[5];
+          ci.nodes[15] = tmp_nodes[17];
+          ci.nodes[16] = tmp_nodes[18];
+          ci.nodes[17] = tmp_nodes[7];
+          ci.nodes[18] = tmp_nodes[19];
+          ci.nodes[19] = tmp_nodes[6];
+        } break;
+        case 26 : { /* Third order line */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[2];
+          ci.nodes[2] = tmp_nodes[3];
+          ci.nodes[3] = tmp_nodes[1];
+        } break;
+        case 21 : { /* Third order triangle */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[3];
+          ci.nodes[2] = tmp_nodes[4];
+          ci.nodes[3] = tmp_nodes[1];
+          ci.nodes[4] = tmp_nodes[8];
+          ci.nodes[5] = tmp_nodes[9];
+          ci.nodes[6] = tmp_nodes[5];
+          //ci.nodes[7] = tmp_nodes[7];
+          ci.nodes[8] = tmp_nodes[6];
+          ci.nodes[9] = tmp_nodes[2];
+        } break;
+        case 23: { /* Fourth order triangle */
+        //ci.nodes[0]  = tmp_nodes[0];
+          ci.nodes[1]  = tmp_nodes[3];
+          ci.nodes[2]  = tmp_nodes[4];
+          ci.nodes[3]  = tmp_nodes[5];
+          ci.nodes[4]  = tmp_nodes[1];
+          ci.nodes[5]  = tmp_nodes[11];
+          ci.nodes[6]  = tmp_nodes[12];
+          ci.nodes[7]  = tmp_nodes[13];
+          ci.nodes[8]  = tmp_nodes[6];
+          ci.nodes[9]  = tmp_nodes[10];
+          ci.nodes[10] = tmp_nodes[14];
+          ci.nodes[11] = tmp_nodes[7];
+          ci.nodes[12] = tmp_nodes[9];
+          ci.nodes[13] = tmp_nodes[8];
+          ci.nodes[14] = tmp_nodes[2];
+        } break;
+        case 27: { /* Fourth order line */
+        //ci.nodes[0]  = tmp_nodes[0];
+          ci.nodes[1]  = tmp_nodes[2];
+          ci.nodes[2]  = tmp_nodes[3];
+          ci.nodes[3]  = tmp_nodes[4];
+          ci.nodes[4]  = tmp_nodes[1];
+        } break;
+        }
       }
     }
+
     nb_cv = cvlst.size();
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
-      if (cvlst.front().type == 15){
+      if (cvlst.front().type == 15) {
         GMM_WARNING2("Only nodes defined in the mesh! No elements are added.");
         return;
       }
@@ -516,8 +561,8 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst[cv];
         bool is_node = (ci.type == 15);
         unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
-        //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
-        //     << " region: " << ci.region << "\n";
+        //  cout << "importing cv dim=" << ci_dim << " N=" << N
+        //       << " region: " << ci.region << " type: " << ci.type << "\n";
 
         //main convex import
         if (ci_dim == N) {
@@ -531,50 +576,48 @@ namespace getfem {
           //convex that lies within the regions of lower_dim_convex_rg
           //is imported explicitly as a convex.
           if (lower_dim_convex_rg != NULL &&
-              lower_dim_convex_rg->find(ci.region) != lower_dim_convex_rg->end() &&
-              !is_node){
-              size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
-              m.region(ci.region).add(ic);
+              lower_dim_convex_rg->find(ci.region) != lower_dim_convex_rg->end()
+              && !is_node) {
+              size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
+              cvok = true; m.region(ci.region).add(ic);
           }
           //find if the convex is part of a face of higher dimension convex
           else{
-            bgeot::mesh_structure::ind_cv_ct ct = m.convex_to_point(ci.nodes[0]);
+            bgeot::mesh_structure::ind_cv_ct ct=m.convex_to_point(ci.nodes[0]);
             for (bgeot::mesh_structure::ind_cv_ct::const_iterator
                    it = ct.begin(); it != ct.end(); ++it) {
-              for (short_type face=0;
-                   face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-                if (m.is_convex_face_having_points(*it,face,
-                                                   short_type(ci.nodes.size()),
-                                                   ci.nodes.begin())) {
-                  m.region(ci.region).add(*it,face);
-                  cvok = true;
+              if (m.structure_of_convex(*it)->dim() == ci_dim + 1) {
+                for (short_type face=0;
+                     face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+                  if (m.is_convex_face_having_points(*it, face,
+                                                    short_type(ci.nodes.size()),
+                                                    ci.nodes.begin())) {
+                    m.region(ci.region).add(*it,face);
+                    cvok = true;
+                  }
                 }
               }
             }
-            if (is_node && (nodal_map != NULL))
-            {
+            if (is_node && (nodal_map != NULL)) {
               for (auto i : ci.nodes) (*nodal_map)[ci.region].insert(i);
             }
-            //if the convex is not part of the face of others
-            if (!cvok)
-            {
-              if (is_node)
-              {
+            // if the convex is not part of the face of others
+            if (!cvok) {
+              if (is_node) {
                 if (nodal_map == NULL){
                   GMM_WARNING2("gmsh import ignored a node id: "
                                << ci.id << " region :" << ci.region <<
                                " point is not added explicitly as an element.");
                 }
               }
-              else if (add_all_element_type){
+              else if (add_all_element_type) {
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
                 m.region(ci.region).add(ic);
                 cvok = true;
-              }
-              else{
+              } else {
                 GMM_WARNING2("gmsh import ignored an element of type "
-                  << bgeot::name_of_geometric_trans(ci.pgt) <<
-                  " as it does not belong to the face of another element");
+                             << bgeot::name_of_geometric_trans(ci.pgt) <<
+                    " as it does not belong to the face of another element");
               }
             }
           }
@@ -769,8 +812,7 @@ namespace getfem {
         type_name = line.substr(pos, pos2-pos);
         bool only_digits
           = (type_name.find_first_not_of("0123456789") == std::string::npos);
-        const std::locale loc;
-        for (auto&& c : type_name) c = std::toupper(c, loc);
+        for (auto&& c : type_name) c = char(std::toupper(c));
 
         if (elt_types.size() < itype+1)
           elt_types.resize(itype+1);
@@ -798,13 +840,13 @@ namespace getfem {
         itype = std::stol(line.substr(pos, pos2-pos));
         pos = pos2+1;
         pos2 = line.find_first_of(",", pos);
-        knum = std::stol(line.substr(pos+1, pos2-pos));
+        knum = std::stol(line.substr(pos, pos2-pos));
         keyval = std::stol(line.substr(pos2+1));
         if (knum == 1 && itype < elt_types.size() &&
             elt_types[itype].size() == 7 &&
             bgeot::casecmp(elt_types[itype].substr(0,7),"MESH200") == 0) {
-          std::stringstream ss("MESH200");
-          ss << "_" << keyval;
+          std::stringstream ss;
+          ss << "MESH200_" << keyval;
           elt_types[itype] = ss.str();
         }
       }
@@ -841,15 +883,18 @@ namespace getfem {
     for (size_type i=0; i < size_type(-1); ++i) {
       size_type nodeid;
       std::getline(f,line);
-      if (line.compare(0,1,"N") == 0)
+      if (line.compare(0,1,"N") == 0 || line.compare(0,1,"!") == 0)
         break;
       //       1       0       0-3.0000000000000E+00 2.0000000000000E+00 1.0000000000000E+00
       nodeid = std::stol(line.substr(0, fieldwidth1));
       pos = fields1*fieldwidth1;
       for (size_type j=0; j < 3; ++j, pos += fieldwidth2)
-        pt[j] = std::stod(line.substr(pos, fieldwidth2));
+        if (pos < line.length())
+          pt[j] = std::stod(line.substr(pos, fieldwidth2));
+        else
+          pt[j] = 0;
 
-      cdb_node_2_getfem_node[nodeid] = m.add_point(pt, 0., false);
+      cdb_node_2_getfem_node[nodeid] = m.add_point(pt, -1.);
     }
 
     while (bgeot::casecmp(line.substr(0,6),"EBLOCK") != 0) {
@@ -925,7 +970,25 @@ namespace getfem {
         regions.resize(imat+1);
 
       if (nodesno == 3) {
-        // TODO MESH200_2, MESH200_3, MESH200_4
+        // assume MESH200_4 (3-node triangular)
+        std::string eltname("MESH200_4");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_4") == 0) {
+          getfem_cv_nodes.resize(3);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,1),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        } else {
+          // TODO MESH200_2, MESH200_3, MESH200_4
+          GMM_WARNING2("Ignoring ANSYS element " << eltname
+                       << ". Import not supported yet.");
+        }
       }
       else if (nodesno == 4) {
 
@@ -961,7 +1024,24 @@ namespace getfem {
         }
       }
       else if (nodesno == 6) {
-        // TODO MESH200_5
+        // assume MESH200_5 (6-node triangular)
+        std::string eltname("MESH200_5");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+        if (eltname.compare("MESH200_5") == 0 ||
+            eltname.compare("PLANE183") == 0) {
+          getfem_cv_nodes.resize(6);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[LL];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[NN];
+          getfem_cv_nodes[4] = cdb_node_2_getfem_node[MM];
+          getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,2),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
       }
       else if (nodesno == 8) {
 
@@ -973,17 +1053,29 @@ namespace getfem {
         if (eltname.compare("MESH200_7") == 0 ||
             eltname.compare("PLANE82") == 0 ||
             eltname.compare("PLANE183") == 0) {
-          getfem_cv_nodes.resize(8);
-          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-          getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
-          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-          getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
-          getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
-          getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
-          getfem_cv_nodes[6] = cdb_node_2_getfem_node[OO];
-          getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
-          regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(2),
-                                         getfem_cv_nodes.begin()));
+          if (KK == LL && KK == OO) { // 6-node triangular
+            getfem_cv_nodes.resize(6);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+            regions[imat].add(m.add_convex(bgeot::simplex_geotrans(2,2),
+                                           getfem_cv_nodes.begin()));
+          } else {
+            getfem_cv_nodes.resize(8);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[OO];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
+            regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(2),
+                                           getfem_cv_nodes.begin()));
+          }
           if (itype < elt_cnt.size())
             elt_cnt[itype] += 1;
         }
@@ -1356,12 +1448,14 @@ namespace getfem {
         { regular_mesh(m, filename); return; }
       else if (bgeot::casecmp(format,"structured_ball")==0)
         { regular_ball_mesh(m, filename); return; }
+      else if (bgeot::casecmp(format,"structured_ball_shell")==0)
+        { regular_ball_shell_mesh(m, filename); return; }
 
       std::ifstream f(filename.c_str());
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_mesh(f, format,m);
+      import_mesh(f, format, m);
       f.close();
     }
     catch (std::logic_error& exc) {
@@ -1447,6 +1541,8 @@ namespace getfem {
                    mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_mesh_file(f,m);
+    else if (bgeot::casecmp(format,"gmsh_with_lower_dim_elt")==0)
+      import_gmsh_mesh_file(f,m,0,NULL,NULL,true);
     else if (bgeot::casecmp(format,"gmshv2")==0)/* deprecate */
       import_gmsh_mesh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)

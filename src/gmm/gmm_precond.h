@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -42,7 +42,7 @@
 /* Preconditioner concept :                                                */
 /*                                                                         */
 /* A the matrix, P the preconditioner PA well conditioned.                 */
-/* PRECOND precontioner type.                                              */
+/* PRECOND preconditioner type.                                            */
 /* mult(P, v, w) :  w <- P v                                               */
 /* transposed_mult(P, v, w)       : w <- transposed(P) v                   */
 /* left_mult(P, v, w)             : see qmr solver                         */

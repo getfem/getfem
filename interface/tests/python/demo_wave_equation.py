@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: UTF8 -*-
-# Python GetFEM++ interface
+# -*- coding: utf-8 -*-
+# Python GetFEM interface
 #
-# Copyright (C) 2015-2017 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
-#                         Yves Renard.
+# Copyright (C) 2015-2020 FABRE Mathieu, SECK Mamadou, DALLERIT Valentin,
+#                         Yves Renard, Tetsuo Koyama.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -24,14 +24,16 @@
      Getfem tool for time integration schemes
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
 """
-import numpy as np
-import getfem as gf
 import os
 
-NX = 20
+import numpy as np
+
+import getfem as gf
+
+NX = 10
 m = gf.Mesh('cartesian', np.arange(0., 1.+1./NX,1./NX),
             np.arange(0., 1.+1./NX,1./NX));
 
@@ -54,24 +56,41 @@ V0 = 0.*U0
 
 md=gf.Model('real');
 md.add_fem_variable('u', mf);
+md.add_fem_variable('u1', mf);
+md.add_fem_variable('u2', mf);
 md.add_Laplacian_brick(mim, 'u');
+md.add_Laplacian_brick(mim, 'u1');
+md.add_Laplacian_brick(mim, 'u2');
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 1);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u1', mf, 1);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u2', mf, 1);
 # md.add_Dirichlet_condition_with_penalization(mim, 'u', 1E9, 1);
 # md.add_Dirichlet_condition_with_simplification('u', 1);
 
 ## Transient part.
 T = 5.0;
+# Set dt smaller to fix Newmark and Houbolt method.
+# dt = 0.001;
 dt = 0.025;
 beta = 0.25;
 gamma = 0.5;
 
 md.add_Newmark_scheme('u', beta, gamma)
+md.add_Houbolt_scheme('u1')
+md.add_Newmark_scheme('u2', beta, gamma)
 md.add_mass_brick(mim, 'Dot2_u')
+md.add_mass_brick(mim, 'Dot2_u1')
+md.add_lumped_mass_for_first_order_brick(mim, 'Dot2_u2')
 md.set_time_step(dt)
 
 ## Initial data.
 md.set_variable('Previous_u',  U0)
 md.set_variable('Previous_Dot_u',  V0)
+md.set_variable('Previous_u1', U0)
+md.set_variable('Previous2_u1', U0)
+md.set_variable('Previous3_u1', U0)
+md.set_variable('Previous_u2',  U0)
+md.set_variable('Previous_Dot_u2',  V0)
 
 ## Initialisation of the acceleration 'Previous_Dot2_u'
 md.perform_init_time_derivative(dt/2.)
@@ -85,6 +104,8 @@ mf.export_to_vtk('results/displacement_0.vtk', U0)
 mf.export_to_vtk('results/velocity_0.vtk', V0)
 mf.export_to_vtk('results/acceleration_0.vtk', A0)
 
+A0 = 0.*U0
+
 ## Iterations
 n = 1;
 for t in np.arange(0.,T,dt):
@@ -97,6 +118,14 @@ for t in np.arange(0.,T,dt):
   mf.export_to_vtk('results/displacement_%d.vtk' % n, U)
   mf.export_to_vtk('results/velocity_%d.vtk' % n, V)
   mf.export_to_vtk('results/acceleration_%d.vtk' % n, A)
+
+  U = md.variable('u1')
+  V = md.variable('Dot_u1')
+  A = md.variable('Dot2_u1')
+
+  U = md.variable('u2')
+  V = md.variable('Dot_u2')
+  A = md.variable('Dot2_u2')
 
   n += 1
   md.shift_variables_for_time_integration()

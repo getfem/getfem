@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -31,7 +31,7 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
 /*@GFDOC
   This object represents an integration method defined on a whole mesh (an 
-  potentialy on its boundaries).
+  potentially on its boundaries).
 @*/
 
 
@@ -132,7 +132,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@INIT MIM = ('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
       Build an integration method conformal to a partition defined
-      implicitely by a levelset.
+      implicitly by a levelset.
 
       The `where` argument define the domain of integration with respect to
       the levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and

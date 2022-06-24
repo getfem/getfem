@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2009-2017 Yann Collette
+ Copyright (C) 2009-2020 Yann Collette
 
  This file is a part of GetFEM++
 
@@ -20,9 +20,7 @@
 ===========================================================================*/
 #include <stdio.h>
 
-#include <api_scilab.h>
-#include <MALLOC.h>
-#include <stack-c.h>
+#include <gfm_common.h>
 #include <Scierror.h>
 #include <sciprint.h>
 

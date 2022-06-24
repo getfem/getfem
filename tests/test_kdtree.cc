@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -115,7 +115,9 @@ void speed_test(unsigned N, unsigned NPT, unsigned nrepeat) {
     for (dim_type k = 0; k < N; ++k) 
       pt[k] = gmm::random(double())*2.;
     tree.add_point(pt);
+#ifndef GETFEM_HAS_OPENMP
     assert(pt.refcnt()>1);
+#endif
   }
   t = gmm::uclock_sec();
   cout << "point list built in " << gmm::uclock_sec() - t << " seconds.\n";

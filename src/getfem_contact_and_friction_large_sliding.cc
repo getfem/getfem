@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2017 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2013-2020 Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -1479,6 +1479,7 @@ namespace getfem {
         face_of_elements.push_back(v.f());
       }
     }
+    element_boxes.build_tree();
   }
 
 
@@ -1802,7 +1803,7 @@ namespace getfem {
 
     if (state) {
 
-      // zeta = lamda + d0 * r * n
+      // zeta = lambda + d0 * r * n
       base_small_vector zeta(N);
       gmm::add(lambda, gmm::scaled(n, r*d0), zeta);
 
@@ -2270,7 +2271,7 @@ namespace getfem {
   }
 
   void add_rigid_obstacle_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionaly represented by a rigid motion only ... the velocity should be modifiable ...
+  (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionally represented by a rigid motion only ... the velocity should be modifiable ...
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
     integral_large_sliding_contact_brick_field_extension *p

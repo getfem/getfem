@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2011-2017 Yves Renard, Tomas Ligursky.
+ Copyright (C) 2011-2020 Yves Renard, Tomas Ligursky.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -27,7 +27,7 @@
    -u'' +  u = lambda * exp(u) in (0, 1), u'(0) = u'(1) = 0.
 
    This program is used to check that getfem++ is working. This is also 
-   a good example of use of GetFEM++.
+   a good example of use of GetFEM.
 */
 
 #include "getfem/getfem_regular_meshes.h"
@@ -38,7 +38,7 @@
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 
@@ -229,6 +229,7 @@ int main(int argc, char *argv[]) {
 
   srand(7689);
   
+  GETFEM_MPI_INIT(argc, argv);
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -240,6 +241,7 @@ int main(int argc, char *argv[]) {
     p.cont(U); 
   }
   GMM_STANDARD_CATCH_ERROR;
+  GETFEM_MPI_FINALIZE;
 
   return 0; 
 }

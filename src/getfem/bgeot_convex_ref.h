@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2001-2017 Yves Renard
+ Copyright (C) 2001-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -108,6 +108,13 @@ namespace bgeot {
      *  positive in the other side.
      */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
+    /** will project any given point lying outside the convex onto the convex
+        outer surface */
+    virtual void project_into(base_node &pt) const {
+     GMM_ASSERT1(!auto_basic, "This method has to be overloaded in every "
+                              "basic convex");
+     basic_convex_ref_->project_into(pt);
+    }
     bool is_basic() const { return auto_basic; }
     /// return the normal vector for each face.
     const std::vector<base_small_vector> &normals() const

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2012-2017 Andriy Andreykiv
+ Copyright (C) 2012-2020 Andriy Andreykiv
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -100,7 +100,7 @@ namespace getfem {
       size_type cv;
       for (cv << conv_indices; cv != bgeot::size_type(-1); cv << conv_indices)
       {
-        getfem::mesh::ind_cv_ct pt_index = m_.ind_points_of_convex(cv);
+        getfem::mesh::ind_set pt_index = m_.ind_points_of_convex(cv);
         getfem::mesh_fem::ind_dof_ct dof = mf_.ind_basic_dof_of_element(cv);
         bgeot::size_type num_points = m_.structure_of_convex(cv)->nb_points();
 

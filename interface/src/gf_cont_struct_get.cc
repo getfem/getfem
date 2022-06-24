@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2012-2017 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2012-2020 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -209,7 +209,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET t = ('bifurcation test function')
-      Return the last value of the bifurcation test function and eventaully
+      Return the last value of the bifurcation test function and eventually
       the whole calculated graph when passing between different sub-domains
       of differentiability.@*/
     sub_command

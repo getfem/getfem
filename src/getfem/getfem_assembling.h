@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2000-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -825,6 +825,50 @@ namespace getfem {
       (M, mim, mf_u, 0, F, rg, "(A*Test_u):Test2_u");
   }
 
+  /**
+     lumped mass matrix assembly from consistent mass matrix
+   */
+  template<typename MAT>
+  inline void asm_lumped_mass_matrix_for_first_order_from_consistent
+  (const MAT &M) {
+    size_type nbd = gmm::mat_ncols(M), nbr = gmm::mat_nrows(M);
+    GMM_ASSERT1(nbd == nbr, "mass matrix is not square");
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    std::vector<T> V(nbd), W(nbr);
+    gmm::fill(V, T(1));
+    gmm::mult(M, V, W);
+    gmm::clear(const_cast<MAT &>(M));
+    for (size_type i =0; i < nbd; ++i) {
+      (const_cast<MAT &>(M))(i, i) = W[i];
+    }
+  }
+
+  /**
+     lumped mass matrix assembly (on the whole mesh or on the specified
+     boundary)
+     @ingroup asm
+   */
+  template<typename MAT>
+  inline void asm_lumped_mass_matrix_for_first_order
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf1,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_mass_matrix(M, mim, mf1, rg);
+    asm_lumped_mass_matrix_for_first_order_from_consistent(M);
+  }
+
+  /**
+     lumped mass matrix assembly with an additional parameter
+     (on the whole mesh or on the specified boundary)
+     @ingroup asm
+   */
+  template<typename MAT, typename VECT>
+  inline void asm_lumped_mass_matrix_for_first_order_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &F, const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_mass_matrix_param(M, mim, mf_u, mf_data, F, rg);
+    asm_lumped_mass_matrix_for_first_order_from_consistent(M);
+  }
+
   /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm
@@ -922,7 +966,7 @@ namespace getfem {
   }
   
   /** 
-      Stiffness matrix for linear elasticity, with Lamé coefficients
+      Stiffness matrix for linear elasticity, with LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -964,7 +1008,7 @@ namespace getfem {
 
 
   /** 
-      Stiffness matrix for linear elasticity, with constant Lamé coefficients
+      Stiffness matrix for linear elasticity, with constant LamÃ© coefficients
       @ingroup asm
   */
   template<class MAT, class VECT>
@@ -1567,7 +1611,7 @@ namespace getfem {
 	      -> the constraint is simplified:
 	      we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 	      with             H_j*phi_i = R_j     
-	      --> Le principe peut être faux : non identique à la projection
+	      --> Le principe peut Ãªtre faux : non identique Ã  la projection
 	      L^2 et peut entrer en conccurence avec les autres ddl -> a revoir
 	    */
 	    if (tdof_u == tdof_rh &&
@@ -1662,7 +1706,7 @@ namespace getfem {
 	gmm::mult(H, e, aux);
 	for (size_type j = 0; j < nb_bimg; ++j) { 
 	  T c = gmm::vect_sp(aux, base_img[j]);
-	  // if (gmm::abs(c > 1.0E-6) { // à scaler sur l'ensemble de H ...
+	  // if (gmm::abs(c > 1.0E-6) { // Ã  scaler sur l'ensemble de H ...
 	  if (c != T(0)) {
 	    gmm::add(gmm::scaled(base_img[j], -c), aux);
 	    gmm::add(gmm::scaled(base_img_inv[j], -c), f);

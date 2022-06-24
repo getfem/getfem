@@ -1,8 +1,8 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
-#  This file is a part of GetFEM++
+#  This file is a part of GetFEM
 #
-#  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 #  under  the  terms  of the  GNU  Lesser General Public License as published
 #  by  the  Free Software Foundation;  either version 3 of the License,  or
 #  (at your option) any later version along with the GCC Runtime Library
@@ -17,4 +17,5 @@
 
 SUBDIRS = icare delaminated_crack aposteriori xfem_stab_unilat_contact      \
 	  bimaterial_crack_test mixed_elastostatic xfem_contact crack_plate \
-	  static_contact_gears level_set_contact test_plasticity opt_assembly
+	  static_contact_gears level_set_contact test_plasticity opt_assembly \
+	  continuum_mechanics

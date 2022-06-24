@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -73,7 +73,7 @@ namespace getfem {
     base_node ptref;      // coords on reference element of mf1 element
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
-    std::vector<size_type> local_dof; // correspondance between dof of the
+    std::vector<size_type> local_dof; // correspondence between dof of the
     // mf1 element and dof of the interpolated element.
     gausspt_interpolation_data() : elt(size_type(-1)), iflags(size_type(-1)) {}
   };
@@ -107,6 +107,7 @@ namespace getfem {
     mutable std::vector<elt_interpolation_data> elements;
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
+    mutable std::map<size_type, std::vector<size_type>> box_to_convexes_map;
     mutable std::vector<size_type> ind_dof; /* all functions using this work
                                                array should keep it full of
                                                size_type(-1) */

@@ -1,6 +1,6 @@
 .. include:: replaces.txt
 
-.. highlightlang:: none
+.. highlight:: none
 
 .. _links:
 
@@ -53,8 +53,8 @@ SuperLu: Sparse Gaussian Elimination on High Performance Computers
 |link5|_ or |link6|_
 
 
-Some project using GetFEM++ and/or Gmm++
-----------------------------------------
+Some project using GetFEM and/or Gmm++
+--------------------------------------
 
 .. |link7| replace:: an open source model for glaciers
 .. _link7: http://icetools.sourceforge.net
@@ -74,8 +74,8 @@ Some project using GetFEM++ and/or Gmm++
 * SimNIBS: |link7c|_.
 
 
-Examples of publications based on GetFEM++
-------------------------------------------
+Examples of publications based on GetFEM
+----------------------------------------
 
 .. |link8| replace:: www3.interscience.wiley.com
 .. _link8: http://www3.interscience.wiley.com/journal/122440964/abstract
@@ -89,14 +89,14 @@ Examples of publications based on GetFEM++
 
 .. |link8_2| replace:: hal.archives-ouvertes.fr
 .. _link8_2: https://hal.archives-ouvertes.fr/hal-00960996/
-      
+
 * Fabre M., Pousin J. and Renard Y. A fictitious domain method for frictionless contact problems in elasticity using Nitsche's method. SMAI J. of Comput. Math., 2:19--50, 2016. |link8_2|_.
 
 .. |link8_3| replace:: hal.archives-ouvertes.fr
 .. _link8_3: https://hal.archives-ouvertes.fr/hal-00937569/
-  
+
 * Poulios K., Renard Y. An unconstrained integral approximation of large sliding frictional contact between deformable solids. Computers and Structures, 153:75--90, 2015. |link8_3|_.
-      
+
 .. |link8_5| replace:: orbit.dtu.dk
 .. _link8_5: http://orbit.dtu.dk/ws/files/125153379/Postprint_Homogenization_of_long_fiber_reinforced_composites_including_fiber_bending_effects.pdf
 
@@ -104,7 +104,7 @@ Examples of publications based on GetFEM++
 
 .. |link10| replace:: sciencedirect.com
 .. _link10: https://www.sciencedirect.com/science/article/pii/S0950061818311292
-      
+
 * Lozinguez E., Barthélémy J.-F., Bouteiller V. and Desbois T., Contribution of Sacrificial Anode in reinforced concrete patch repair: Results of numerical simulations. Construction and Building Materials, 178 (2018) 405–417. |link10|_.
 
 .. |link11| replace:: link.springer.com
@@ -114,7 +114,7 @@ Examples of publications based on GetFEM++
 
 .. |link12| replace:: onlinelibrary.wiley.com
 .. _link12: https://onlinelibrary.wiley.com/doi/abs/10.1002/hbm.21479
-      
+
 * Windhoff M., Opitz A., and Thielscher A., Electric Field Calculations in Brain Stimulation Based on Finite Elements: An Optimized Processing Pipeline for the Generation and Usage of Accurate Individual Head Models. Human Brain Mapping, 34(4), 923-35, 2013. DOI: 10.1002/hbm.21479. |link12|_.
 
 

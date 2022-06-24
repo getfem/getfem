@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -34,9 +34,10 @@
 
 #include <deque>
 #include <map>
-#include "dal_static_stored_objects.h"
-#include "getfem_omp.h"
 
+#include "dal_static_stored_objects.h"
+#include "getfem/getfem_locale.h"
+#include "getfem_omp.h"
 
 namespace dal {
 
@@ -116,7 +117,7 @@ namespace dal {
     std::string shorter_name_of_method(pmethod pm) const;
     pmethod method(const std::string &name, size_type &i,
 		   bool throw_if_not_found = true)
-    { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
+    { getfem::standard_locale sl; return method_(name, i, throw_if_not_found); }
     naming_system(std::string pr) : prefix(pr) {}
     bool delete_method(std::string name);
   };
@@ -240,7 +241,7 @@ namespace dal {
 	  state = 3; break;
 	case 3  : {
 	  char *p;
-	  gmm::standard_locale sl;
+	  getfem::standard_locale sl;
 	  params.push_back(parameter(strtod(&(name[i]), &p)));
 	  i += l; if (p < &(name[i])) error = true;
 	  state = 3; break;
@@ -262,7 +263,7 @@ namespace dal {
 		  << " of the string : " << name);
       if (isend) {
 	std::stringstream norm_name(suff); //norm_name.imbue(std::locale("C"));
-	gmm::standard_locale loc;
+	getfem::standard_locale loc;
 	norm_name << suff;
 	if (params.size() > 0) {
 	  norm_name << '(';

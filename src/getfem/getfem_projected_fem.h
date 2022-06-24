@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2012-2017 Yves Renard, Konstantinos Poulios
+ Copyright (C) 2012-2020 Yves Renard, Konstantinos Poulios
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -57,7 +57,7 @@ namespace getfem {
     scalar_type gap;      // gap distance from the gauss point to the projected point
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
-    std::map<size_type,size_type> local_dof; // correspondance between dof of the
+    std::map<size_type,size_type> local_dof; // correspondence between dof of the
                                              // mf_source element and dof of the projected element.
     gausspt_projection_data() :
       cv(size_type(-1)), f(short_type(-1)), iflags(size_type(-1)) {}
@@ -95,8 +95,8 @@ namespace getfem {
     mutable bgeot::kdtree tree; // Tree containing the nodes of the
                                 // projected mf_source dofs
     mutable std::vector<size_type> ind_dof; /* all functions using this work
-                                               array should keep it full of
-                                               size_type(-1) */
+                                               array should keep it filled
+                                               with size_type(-1) */
     mutable bgeot::geotrans_inv_convex gic;
     mutable base_tensor taux;
     mutable fem_interpolation_context fictx;
@@ -106,9 +106,9 @@ namespace getfem {
     mutable bgeot::multi_index mi2, mi3;
     mutable base_node ptref;
 
-    void build_kdtree(void) const;
+    void build_kdtree() const;
 
-    bool find_a_projected_point(base_node pt, base_node &ptr_proj,
+    bool find_a_projected_point(const base_node &pt, base_node &ptr_proj,
                                 size_type &cv_proj, short_type &fc_proj) const;
 
     virtual void update_from_context(void) const;
@@ -141,6 +141,10 @@ namespace getfem {
     /** return the list of convexes of the projected mesh_fem which
      *  contain at least one gauss point (should be all convexes)! */
     dal::bit_vector projected_convexes() const;
+    
+    /** faces and convexes from the target region
+     *  that contain at least one Gauss point that is projected by the source */
+    mesh_region projected_target_region() const;    
 
     /** return the min/max/mean number of gauss points in the convexes
      *  of the projected mesh_fem */

@@ -3,7 +3,7 @@ About these documents
 =====================
 
 These documents are generated from `reStructuredText
-<http://docutils.sourceforge.net/rst.html>`_ sources by *Sphinx*, a 
+<http://docutils.sourceforge.net/rst.html>`_ sources by *Sphinx*, a
 document processor specifically written for the Python documentation.
 
 In the online version of these documents, you can submit comments and
@@ -20,14 +20,14 @@ Many thanks go to:
 * The `Docutils <http://docutils.sourceforge.net/>`_ project for creating
   reStructuredText and the Docutils suite;
 * Fredrik Lundh for his `Alternative Python Reference
-  <http://effbot.org/zone/pyref.htm>`_ project from which Sphinx got many 
+  <http://effbot.org/zone/pyref.htm>`_ project from which Sphinx got many
   good ideas.
 
-See :ref:`reporting-bugs` for information how to report bugs in GetFEM++
+See :ref:`reporting-bugs` for information how to report bugs in GetFEM
 itself.
 
 .. including the ACKS file here so that it can be maintained separately
 .. include:: ACKS.txt
 
-It is only with the input and contributions of the GetFEM++ community
-that GetFEM++ has such wonderful documentation -- Thank You!
+It is only with the input and contributions of the GetFEM community
+that GetFEM has such wonderful documentation -- Thank You!

@@ -1,6 +1,6 @@
 // ====================================================================
 // Yann COLLETTE
-// Copyright 2009-2010
+// Copyright 2009-2020
 // This file is released into the public domain
 // ====================================================================
 demopath = get_absolute_file_path("sci_getfem.dem.gateway.sce");

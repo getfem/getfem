@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -16,7 +16,7 @@ This brick implements the classical Mindlin-Reissner bending model for isotropic
 The Mindlin-Reissner plate model
 ++++++++++++++++++++++++++++++++
 
-Let :math:`\Omega \subset \R^2` be the reference configuration of the mid-plane of a plate of thickness :math:`\epsilon`.
+Let :math:`\Omega \subset \rm I\hspace{-0.15em}R^2` be the reference configuration of the mid-plane of a plate of thickness :math:`\epsilon`.
 
 The weak formulation of the Mindlin-Reissner model for isotropic material can be written as follows for :math:`u_3` the transverse displacement and :math:`\theta` the rotation of fibers normal to the mid-plane:
 
@@ -25,10 +25,10 @@ The weak formulation of the Mindlin-Reissner model for isotropic material can be
   & \int_{\Omega} D \epsilon^3\left((1-v)\gamma(\theta):\gamma(\psi) + \nu \mbox{div}(\theta)\mbox{div}(\psi)\right) dx \\
   & ~~~~~~~~~~~~~~ + \int_{\Omega}G\epsilon (\nabla u_3 - \theta)\cdot(\nabla v_3 - \psi)dx = \int_{\Omega} F_3v_3 + M.\psi dx,
 
-for all admissible test functions :math:`v_3 : \Omega \rightarrow \R,$ $\psi : \Omega \rightarrow \R^2` and where:
+for all admissible test functions :math:`v_3 : \Omega \rightarrow \rm I\hspace{-0.15em}R,$ $\psi : \Omega \rightarrow \rm I\hspace{-0.15em}R^2` and where:
 
 .. math::
-  & D = \Frac{E}{12(1-\nu^2)}, ~~ G = \Frac{E\kappa}{2(1+\nu)}, \\
+  & D = \dfrac{E}{12(1-\nu^2)}, ~~ G = \dfrac{E\kappa}{2(1+\nu)}, \\
   & \gamma(\theta) = (\nabla \theta + \nabla \theta^T)/2, \\
   & F_3 = \int_{-\epsilon/2}^{\epsilon/2} f_3dx_3 + g_3^+ + g_3^-, \\
   & M_{\alpha} = \epsilon(g^+_{\alpha} - g^-_{\alpha})/2 +  \int_{-\epsilon/2}^{\epsilon/2} x_3 f_{\alpha}dx_3, \alpha \in \{1, 2\},
@@ -75,7 +75,7 @@ where :math:`P^h(T)` is the elementwize :math:`L^2`-projection onto the rotated 
 
   \int_{\Omega}G\epsilon (\nabla u_3 - P^h(\theta))\cdot(\nabla v_3 - P^h(\psi))dx
 
-The principle of the definition of an elementary projection is explained if the description of the weak form language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plates.cc`.
+The principle of the definition of an elementary projection is explained if the description of GWFL, the generic weak form language (see :ref:`ud-gasm-high-elem-trans`) and an example can be found in the file :file:`src/getfem_linearized_plates.cc`.
 
 
 
@@ -88,8 +88,8 @@ The following function defined in :file:`src/getfem/getfem_linearized_plates.h` 
   (model, mim, mim_reduced, name_u3, name_theta, param_E,
    param_nu, param_epsilon, param_kappa, variant = 2, region)
 
-where `name_u3` is name of the variable which represents the transverse displacmenent, `name_theta` the variable which represents the rotation, 'param_E' the Young Modulus, `param_nu` the poisson ratio, `param_epsilon` the plate thickness, `param_kappa` the shear correction factor. Note that since this brick
-uses the weak form language, the parameter can be regular expression of this language.
+where `name_u3` is name of the variable which represents the transverse displacmenent, `name_theta` the variable which represents the rotation, `param_E` the Young Modulus, `param_nu` the poisson ratio, `param_epsilon` the plate thickness, `param_kappa` the shear correction factor. Note that since this brick
+uses GWFL, the parameter can be regular expression of this language.
 There are three variants.
 `variant = 0` corresponds to the an
 unreduced formulation and in that case only the integration

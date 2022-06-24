@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-export:
 
@@ -11,8 +11,8 @@ Export and view a solution
 
 There are essentially four ways to view the result of getfem computations:
 
-* Matlab, with the matlab-interface.
-* The open-source Mayavi or any other VTK files viewer.
+* Scilab, Octave or Matlab, with the interface.
+* The open-source Paraview, Mayavi2, PyVista or any other VTK/VTU file viewer.
 * The open-source OpenDX program.
 * The open-source Gmsh program.
 
@@ -21,9 +21,9 @@ The objects that can be exported are, |m|, |mf| objects, and |smsl|.
 Saving mesh and mesh_fem objects for the Matlab interface
 ---------------------------------------------------------
 
-If you have installed the Matlab interface, you can simply use
+If you have installed the Scilab, Octave or Matlab interface, you can simply use
 ``mesh_fem::write_to_file`` and save the solution as a plain text file, and then,
-load them into Matlab. For example, supposing you have a solution ``U`` on a |mf|
+load them with the interface. For example, supposing you have a solution ``U`` on a |mf|
 ``mf``,::
 
   std::fstream f("solution.U",std::ios::out);
@@ -33,7 +33,7 @@ load them into Matlab. For example, supposing you have a solution ``U`` on a |mf
   // when the 2nd arg is true, the mesh is saved with the |mf|
   mf.write_to_file("solution.mf", true);
 
-and then, under matlab:
+and then, under Scilab, Octave or Matlab:
 
 .. code-block:: matlab
 
@@ -43,9 +43,13 @@ and then, under matlab:
 
 See the getfem-matlab interface documentation for more details.
 
-Two other file formats are supported for export: the `VTK`_ file format, the
-`OpenDX`_ file format and the `Gmsh`_ post-processing file format. Both can export
-either a |gf_m| or |gf_mf| , but also the more versatile |gf_smsl|.
+Four file formats are supported for export: the `VTK`_ and `VTU`_ file
+formats, the`OpenDX`_ file format and the `Gmsh`_ post-processing file
+format. All four can be used for exporting either a |gf_m| or |gf_mf|, and
+all except `VTU`_ can be used for exporting the more versatile |gf_smsl|.
+The corresponding four classes: |gf_vtk_export|, |gf_vtu_export|,
+|gf_dx_export| and |gf_pos_export| are contained in the file
+:file:`getfem/getfem_export.h`.
 
 Examples of use can be found in the examples of the tests directory.
 
@@ -70,74 +74,74 @@ All slicer operation inherit from |gf_sl_a|, it is very easy to create a new
 slicer. Example of slicers are (some of them use a |gf_sl_ddb| which is just a
 reference to a |mf| ``mf`` and a field ``U`` on this |mf|).
 
-.. c:function:: getfem::slicer_none()
+.. cpp:function:: getfem::slicer_none()
 
    empty slicer.
 
-.. c:function:: getfem::slicer_boundary(const mesh &m, \ldots)
+.. cpp:function:: getfem::slicer_boundary(const mesh &m, ldots)
 
    extract the boundary of a mesh.
 
-.. c:function:: getfem::slicer_apply_deformation(mesh_slice_cv_dof_data_base &)
+.. cpp:function:: getfem::slicer_apply_deformation(mesh_slice_cv_dof_data_base &)
 
    apply a deformation to the mesh , the deformation field is defined on a |mf|.
 
-.. c:function:: getfem::slicer_half_space(base_node x0, base_node n, int orient)
+.. cpp:function:: getfem::slicer_half_space(base_node x0, base_node n, int orient)
 
    cut the mesh with a half space (if ``orient`` = -1 or +1), or a plane (if
    ``orient`` = 0), ``x0`` being a node of the plane, and ``n`` being a normal
    of the plane.
 
-.. c:function::  getfem::slicer_sphere(base_node x0, scalar_type R, int orient)
+.. cpp:function::  getfem::slicer_sphere(base_node x0, scalar_type R, int orient)
 
    cut with the interior (``orient``=-1), boundary (``orient``=0) or exterior
    (``orient``=+1) or a sphere of center ``x0`` and radius ``R``.
 
-.. c:function:: getfem::slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)
+.. cpp:function:: getfem::slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)
 
    slice with the interior/boundary/exterior of a cylinder of axis ``(x0,x1)``
    and radius ``R``.
 
-.. c:function:: getfem::slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU, scalar_type val, int orient)
+.. cpp:function:: getfem::slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU, scalar_type val, int orient)
 
    cut with the isosurface defined by the scalar field ``mfU`` and ``val``.
    Keep only simplices where ::math:`u(x)<val` (``orient``=-1), :math:`u(x)=val`
    (``orient=0`` or :math:`u(x)>val`.
 
-.. c:function:: getfem::slicer_mesh_with_mesh(const mesh& m2)
+.. cpp:function:: getfem::slicer_mesh_with_mesh(const mesh& m2)
 
    cut the convexes with the convexes of the mesh ``m2``.
 
-.. c:function:: getfem::slicer_union(const slicer_action &sA, const slicer_action &sB)
+.. cpp:function:: getfem::slicer_union(const slicer_action &sA, const slicer_action &sB)
 
    merges the output of two slicer operations.
 
-.. c:function:: getfem::slicer_intersect(slicer_action &sA, slicer_action &sB)
+.. cpp:function:: getfem::slicer_intersect(slicer_action &sA, slicer_action &sB)
 
    intersect the output of two slicer operations.
 
-.. c:function:: getfem::slicer_complementary(slicer_action &s)
+.. cpp:function:: getfem::slicer_complementary(slicer_action &s)
 
    return the complementary of a slicer operation.
 
-.. c:function:: getfem::slicer_build_edges_mesh(mesh& edges_m)
+.. cpp:function:: getfem::slicer_build_edges_mesh(mesh& edges_m)
 
    slicer whose side-effect is to build the mesh ``edges_m`` with the edges of
    the sliced mesh.
 
-.. c:function:: getfem::slicer_build_mesh(mesh &m)
+.. cpp:function:: getfem::slicer_build_mesh(mesh &m)
 
    in some (rare) occasions , it might be useful to build a mesh from a slice.
    Note however that there is absolutely no guaranty that the mesh will be
    conformal (although it is often the case).
 
-.. c:function:: getfem::slicer_build_stored_mesh_slice(stored_mesh_slice& sl)
+.. cpp:function:: getfem::slicer_build_stored_mesh_slice(stored_mesh_slice& sl)
 
    record the output of the slicing operation into a |smsl| object. Note that it
    is often more convenient to use the ``stored_mesh_slice::build(...)`` method to
    achieve the same result.
 
-.. c:function:: getfem::slicer_explode(c)
+.. cpp:function:: getfem::slicer_explode(c)
 
    shrink or expand each convex with respect to its gravity center.
 
@@ -156,7 +160,7 @@ right choice, but for P2, P3, non linear transformation etc, it is better to ref
 each convex of the original mesh during the slicing operation. This allows an
 accurate representation of any finite element field onto a very simple structure
 (linear segment/triangles/tetrahedrons with P1 discontinuous data on them) which is
-what most visualization programs (gmsh, mayavi, opendx, matlab, etc.) expect.
+what most visualization programs (gmsh, mayavi, opendx, scilab, octave, matlab, etc.) expect.
 
 Example of use (cut the boundary of a mesh ``m`` with a half-space, and save the
 result into a |smsl|)::
@@ -178,22 +182,15 @@ In order to build a |gf_smsl| object during the slicing operation, the ``stored_
            getfem::slicer_half_space(base_node(0,0), base_node(1, 0), -1),
            nrefine);
 
-The simplest way to use these slices is to export them to |vtk|, |opendx|, or
-|gmsh|. The file :file:`getfem/getfem_export.h` contains three classes:
-|gf_vtk_export|, |gf_dx_export| and |gf_pos_export|.
+The simplest way to use these slices is to export them to |vtk|,
+|opendx|, or |gmsh|.
 
 
-Exporting |m|, |mf| or slices to VTK
-------------------------------------
+Exporting |m|, |mf| or slices to VTK/VTU
+-----------------------------------------
 
-First, it is important to know the limitation of VTK data files: each file can
-contain only one mesh, with at most one scalar field and one vector field and one
-tensor field on this mesh (in that order). VTK files can handle data on segment,
-triangles, quadrangles, tetrahedrons and hexahedrons. Although quadratic
-triangles, segments etc are said to be supported, it is just equivalent to using
-``nrefine=2`` when building a slice. VTK data file do support meshes with more
-than one type of element (i.e. meshes with triangles and quadrangles, for
-example).
+VTK/VTU files can handle data on segment, triangles, quadrangles,
+tetrahedrons and hexahedrons of first or second degree.
 
 For example, supposing that a |smsl| ``sl`` has already been built::
 
@@ -204,11 +201,10 @@ For example, supposing that a |smsl| ``sl`` has already been built::
   exp.write_point_data(mfp, P, "pressure"); // write a scalar field
   exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
-In this example, the fields ``P`` and ``U`` are interpolated on the slice nodes,
-and then written into the VTK field. The vector fields should always be written
-after the scalar fields (and the tensor fields should be written last).
+In this example, the fields ``P`` and ``U`` are interpolated on the slice
+nodes and then written into the VTK field.
 
-It is also possible to export a |mf| without having to build a slice::
+It is also possible to export a |mf| ``mfu`` without having to build a slice::
 
   // an optional the 2nd argument can be set to true to produce
   // a text file instead of a binary file
@@ -217,9 +213,17 @@ It is also possible to export a |mf| without having to build a slice::
   exp.write_point_data(mfp, P, "pressure"); // write a scalar field
   exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
-Note however that with this approach, the ``vtk_export`` will map each convex/fem
-of ``mfu`` to a VTK element type. As VTK does not handle elements of degree
-greater than 2, there will be a loss of precision for higher degree FEMs.
+An |mf| ``mfu`` can also be exported in the VTU format with::
+
+  vtu_export exp("output.vtu);
+  exp.exporting(mfu); // will save the geometrical structure of the mesh_fem
+  exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+  exp.write_point_data(mfu, U, "displacement"); // write a vector field
+
+Note however that when exporing a |mf| with ``vtk_export`` or ``vtu_export``
+each convex/fem of ``mfu`` will be mapped to a VTK/VTU element type. As
+VTK/VTU does not handle elements of degree greater than 2, there will be a
+loss of precision for higher degree FEMs.
 
 Exporting |m|, |mf| or slices to OpenDX
 ---------------------------------------

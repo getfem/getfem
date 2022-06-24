@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -110,6 +110,7 @@ namespace bgeot {
     std::vector<size_type> vertices_;
     size_type complexity_; /* either the degree or the refinement of the
                             *  transformation */
+    std::string name_;
 
     void fill_standard_vertices();
   public :
@@ -159,6 +160,10 @@ namespace bgeot {
     template<class CONT> base_node transform(const base_node &pt,
                                              const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
+    void set_name(const std::string &name){name_ = name;}
+    const std::string& debug_name() const {return name_;}
+    virtual void project_into_reference_convex(base_node &pt) const
+      { cvr->project_into(pt); }
     size_type complexity() const { return complexity_; }
     virtual ~geometric_trans()
       { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Geometric transformation"); }
@@ -224,6 +229,8 @@ namespace bgeot {
   IS_DEPRECATED inline pgeometric_trans APIDECL
   pyramid_geotrans(short_type k) { return pyramid_QK_geotrans(k); }
   pgeometric_trans APIDECL pyramid_Q2_incomplete_geotrans();
+
+  pgeometric_trans APIDECL default_trans_of_cvs(pconvex_structure);
 
   /**
      Get the geometric transformation from its string name.
@@ -399,7 +406,7 @@ namespace bgeot {
      the xreal will be computed if needed as long as pgp+ii is known).
      See also fem_interpolation_context in getfem_fem.h.
      The name of member data, and the computations done by this structure
-     are heavily described in the GetFEM++ Kernel Documentation.
+     are heavily described in the GetFEM Kernel Documentation.
   */
   class APIDECL geotrans_interpolation_context {
   protected:

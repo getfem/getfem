@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 1999-2017 Yves Renard
+ Copyright (C) 1999-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -125,6 +125,11 @@
    quadratic 3D pyramid (serendipity, 13-node element). Can be connected to
    a standard P2 Lagrange element on its triangular faces and a Q2_INCOMPLETE
    Lagrange element on its quadrangular face.
+
+   - "HHO(fem_interior, fem_face_1, ..., fem_face_n)" : Build a hybrid method
+     with "fem_interior" on the element itself and "fem_face_1", ...,
+     "fem_face_n" on each face. If only one method is given for the faces, it
+     is duplicated on each face.
 
 */
 
@@ -501,42 +506,44 @@ namespace getfem {
   protected :
     std::vector<FUNC> base_;
     mutable std::vector<std::vector<FUNC>> grad_, hess_;
-    mutable bool grad_computed_;
-    mutable bool hess_computed_;
+    mutable bool grad_computed_ = false;
+    mutable bool hess_computed_ = false;
 
     void compute_grad_() const {
-      auto guard = getfem::omp_guard{};
+      if (grad_computed_) return;
+      GLOBAL_OMP_GUARD
       if (grad_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       grad_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	grad_[i].resize(n);
-	for (dim_type j = 0; j < n; ++j) {
-	  grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
-	}
+        grad_[i].resize(n);
+        for (dim_type j = 0; j < n; ++j) {
+          grad_[i][j] = base_[i]; grad_[i][j].derivative(j);
+        }
       }
       grad_computed_ = true;
     }
 
     void compute_hess_() const {
-      auto guard = getfem::omp_guard{};
+      if (hess_computed_) return;
+      GLOBAL_OMP_GUARD
       if (hess_computed_) return;
       size_type R = nb_base_components(0);
       dim_type n = dim();
       hess_.resize(R);
       for (size_type i = 0; i < R; ++i) {
-	hess_[i].resize(n*n);
-	for (dim_type j = 0; j < n; ++j) {
-	  for (dim_type k = 0; k < n; ++k) {
-	    hess_[i][j+k*n] = base_[i];
-	    hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
-	  }
-	}
+        hess_[i].resize(n*n);
+        for (dim_type j = 0; j < n; ++j) {
+          for (dim_type k = 0; k < n; ++k) {
+            hess_[i][j+k*n] = base_[i];
+            hess_[i][j+k*n].derivative(j); hess_[i][j+k*n].derivative(k);
+          }
+        }
       }
       hess_computed_ = true;
     }
-    
+
   public :
 
     /// Gives the array of basic functions (components).
@@ -586,8 +593,6 @@ namespace getfem {
 	    *it = bgeot::to_scalar(hess_[i][j+k*n].eval(x.begin()));
     }
 
-    fem() : grad_computed_(false), hess_computed_(false){}
-
   };
 
   /** Classical polynomial FEM. */
@@ -619,7 +624,8 @@ namespace getfem {
 
       @param alpha the "inset" factor for the dof nodes: with alpha =
       0, the nodes are located as usual (i.e. with node on the convex border),
-      and for 0 < alpha < 1, they converge to the center of gravity of the convex.
+      and for 0 < alpha < 1, they converge to the center of gravity of the
+      convex.
 
       @param complete a flag which requests complete Langrange polynomial
       elements even if the provided pgt is an incomplete one (e.g. 8-node
@@ -717,7 +723,9 @@ namespace getfem {
         pfem_precomp is computed, and added to the pool.
 
         @param pf a pointer to the fem object.
-        @param pspt a pointer to a list of points in the reference convex.CAUTION:
+        @param pspt a pointer to a list of points in the reference convex.
+        
+        CAUTION:
         this array must not be destroyed as long as the fem_precomp is used!!
 
         Moreover pspt is supposed to identify uniquely the set of
@@ -858,7 +866,7 @@ namespace getfem {
 
     gmm::clear(val);
     base_tensor Z; real_base_value(c, Z);
-    
+
     for (size_type j = 0; j < nbdof; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
         typename gmm::linalg_traits<CVEC>::value_type co = coeff[j*Qmult+q];
@@ -980,6 +988,11 @@ namespace getfem {
       }
   }
 
+  /**
+     Specific function for a HHO method to obtain the method in the interior.
+     If the method is not of composite type, return the argument.
+  */
+  pfem interior_fem_of_hho_method(pfem hho_method);
 
 
   /* Functions allowing the add of a finite element method outside
@@ -993,7 +1006,7 @@ namespace getfem {
   void add_fem_name(std::string name,
                     dal::naming_system<virtual_fem>::pfunction f);
 
-
+  
   /* @} */
 
 }  /* end of namespace getfem.                                            */

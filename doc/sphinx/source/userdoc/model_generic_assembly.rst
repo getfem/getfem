@@ -1,8 +1,8 @@
-.. $Id: model_generic_assembly.rst 3655 2010-07-17 20:42:08Z renard $
+.. $Id: model_generic_assembly.rst 3655 2010-07-19 20:42:08Z renard $
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -13,12 +13,12 @@ Generic assembly bricks
 -----------------------
 
 
-A mean to add a term either on one variable or on several ones is to directly use the weak form language described in Section :ref:`ud-gasm-high`. The more general way is to use::
+A mean to add a term either on one variable or on several ones is to directly use GWFL, the generic weak form language described in Section :ref:`ud-gasm-high`. The more general way is to use::
 
    size_type getfem::add_nonlinear_term(md, mim, expr,
                          region = -1, is_sym = false, is_coercive = false);
 
-This adds a brick to the model ``md``, using the integration method ``mim``, the assembly string ``expr`` on the mesh region ``region``. If the result is symmetric, you can specify it on the 5th argument and if it is coercive on the 6th argument. The latter indications of symmetry and coercivness are used to determine the right linear solver. If you are not so sure, it is preferable not to indicate anything. 
+This adds a brick to the model ``md``, using the integration method ``mim``, the assembly string ``expr`` on the mesh region ``region``. If the result is symmetric, you can specify it on the 5th argument and if it is coercive on the 6th argument. The latter indications of symmetry and coercivness are used to determine the right linear solver. If you are not so sure, it is preferable not to indicate anything.
 
 However, this brick consider that the expression is nonlinear. This brick is especially indicated to obtain nonlinear coupled terms between several variables. This means in particular that the assembly of the term is performed at each call of the assembly of the model and that a Newton algorithm will be used to solve the problem. If the term is indeed linear, you should use instead::
 
@@ -40,10 +40,10 @@ where ``F`` is a pre-defined constant of the model representing the right hand s
 
   getfem::add_linear_term(md, mim, "Grad_u.Grad_Test_u", -1, true, true);
   getfem::add_source_term(md, mim, "F*Test_u");
- 
-
- 
 
 
 
-Note that for the moment, the use of the weak form language is not possible for complex valued problems.
+
+
+
+Note that for the moment, the use of GWFL is not possible for complex valued problems.

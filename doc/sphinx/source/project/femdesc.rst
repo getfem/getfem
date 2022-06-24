@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-femdesc:
 
@@ -34,21 +34,21 @@ be declared with the type |bg_pcs|
 The following functions give a pointer onto the descriptor of the usual type of
 elements:
 
-.. c:function:: bgeot::simplex_structure(dim_type d)
+.. cpp:function:: bgeot::simplex_structure(dim_type d)
 
    description of a simplex of dimension ``d``.
 
-.. c:function:: bgeot::parallelepiped_structure(dim_type d)
+.. cpp:function:: bgeot::parallelepiped_structure(dim_type d)
 
    description of a parallelepiped of dimension ``d``.
 
-.. c:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, bgeot::pconv$
+.. cpp:function:: bgeot::convex_product_structure(bgeot::pconvex_structure p1, pconvex_structure p2)
 
    description of the direct product of ``p1`` and ``p2``.
 
-.. c:function:: bgeot::prism_P1_structure(dim_type d)
+.. cpp:function:: bgeot::prism_P1_structure(dim_type d)
 
-   description of a prism of dimension ``d``
+   description of a prism of dimension ``d``.
 
 For instance if one needs the description of a square, one can call
 equivalently::
@@ -86,26 +86,26 @@ descriptor.
 
 The following functions build the descriptions:
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d)
+.. cpp:function:: bgeot::simplex_of_reference(dim_type d)
 
    description of the simplex of reference of dimension ``d``.
 
-.. c:function:: bgeot::simplex_of_reference(dim_type d, short_type k)
+.. cpp:function:: bgeot::simplex_of_reference(dim_type d, short_type k)
 
    description of the simplex of reference of dimension ``d`` with degree ``k``
    Lagrange grid.
 
-.. c:function:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
+.. cpp:function:: bgeot::convex_ref_product(pconvex_ref a, pconvex_ref b)
 
    description of the direct product of two convexes of reference.
 
-.. c:function:: bgeot::parallelepiped_of_reference(dim_type d)
+.. cpp:function:: bgeot::parallelepiped_of_reference(dim_type d)
 
    description of the parallelepiped of reference of dimension ``d``.
 
-The vertices correspond to the classical vertices for such reference element. For 
-instance the vertices for the triangle are :math:`(0, 0)`, :math:`(1, 0)` and 
-:math:`(0, 1)`. It corresponds to the configuration shown in Figure 
+The vertices correspond to the classical vertices for such reference element. For
+instance the vertices for the triangle are :math:`(0, 0)`, :math:`(1, 0)` and
+:math:`(0, 1)`. It corresponds to the configuration shown in Figure
 :ref:`dp-fig-elem`
 
 If ``p`` is of type |bg_pcr| then ``p->structure()`` is the corresponding convex
@@ -129,7 +129,7 @@ piecewise polynomials, interpolant wavelets, etc.
 
 To be used by the finite element description, a shape function type must be able
 to be evaluated on a point (``a = F.eval(pt)``, where ``pt`` is a ``base_node``)
-and must have a method to compute the derivtive with respect to the ith variable
+and must have a method to compute the derivative with respect to the ith variable
 (``F.derivative(i)``).
 
 For the moment, only polynomials and piecewise polynomials are defined in the
@@ -151,7 +151,7 @@ A geometric transformation is a polynomial application:
 
 .. math::
 
-   \tau : \widehat{T} \subset \Reel^P \longrightarrow T \subset \Reel^N,
+   \tau : \widehat{T} \subset \rm I\hspace{-0.15em}R^P \longrightarrow T \subset \rm I\hspace{-0.15em}R^N,
 
 which maps the reference element :math:`\widehat{T}` to the real element :math:`T`. The
 geometric nodes are denoted:
@@ -160,8 +160,8 @@ geometric nodes are denoted:
 
    g^i, i = 0, \ldots, n_g - 1.
 
-The geometric transformation is described thanks to a :math:`n_g` components 
-polynomial vector (In fact, as an extention, non polynomial geometric 
+The geometric transformation is described thanks to a :math:`n_g` components
+polynomial vector (In fact, as an extention, non polynomial geometric
 transformation can also be supported by |gf|, but this is very rarely used)
 
 .. math::
@@ -192,9 +192,9 @@ The derivative of :math:`\tau` is then
 
    \fbox{$K(\widehat{x}) := \nabla\tau(\widehat{x}) = G\cdot\nabla {\cal N}(\widehat{x})$,}
 
-where :math:`K(\widehat{x}) = \nabla\tau(\widehat{x})` is a :math:`N\times P` matrix and 
-:math:`\nabla {\cal N}(\widehat{x})` a :math:`n_g\times P` matrix. The (transposed) 
-pseudo-inverse of :math:`\nabla\tau(\widehat{x})` is a :math:`N\times P` matrix denoted 
+where :math:`K(\widehat{x}) = \nabla\tau(\widehat{x})` is a :math:`N\times P` matrix and
+:math:`\nabla {\cal N}(\widehat{x})` a :math:`n_g\times P` matrix. The (transposed)
+pseudo-inverse of :math:`\nabla\tau(\widehat{x})` is a :math:`N\times P` matrix denoted
 :math:`B(\widehat{x})`:
 
 .. math::
@@ -212,12 +212,12 @@ where ``"name of trans"`` can be chosen among the following list.
 
 * ``"GT_PK(n,k)"``
 
-  Description of the simplex transformation of dimension ``n`` and degree ``k`` 
+  Description of the simplex transformation of dimension ``n`` and degree ``k``
   (Most of the time, the degree 1 is used).
 
 * ``"GT_QK(n,k)"``
 
-  Description of the parallelepiped transformation of dimension ``n`` and degree 
+  Description of the parallelepiped transformation of dimension ``n`` and degree
   ``k``.
 
 * ``"GT_PRISM(n,k)"``
@@ -230,9 +230,9 @@ where ``"name of trans"`` can be chosen among the following list.
 
 * ``"GT_LINEAR_PRODUCT(a,b)"``
 
-  Description of the direct product of the two transformations ``a`` and ``b`` 
-  keeping a linear transformation (this is a restriction of he previous 
-  function). This allows, for instance, to use exact integrations on regular 
+  Description of the direct product of the two transformations ``a`` and ``b``
+  keeping a linear transformation (this is a restriction of the previous
+  function). This allows, for instance, to use exact integrations on regular
   meshes with parallelograms.
 
 
@@ -240,12 +240,12 @@ Finite element methods description
 ----------------------------------
 
 A finite element method is defined on a reference element
-:math:`\widehat{T}\subset\Reel^P` by a set of :math:`n_d` nodes :math:`a^i` and
+:math:`\widehat{T}\subset\rm I\hspace{-0.15em}R^P` by a set of :math:`n_d` nodes :math:`a^i` and
 corresponding base functions
 
 .. math::
 
-   (\widehat{\varphi})^i : \widehat{T}\subset\Reel^P \longrightarrow \Reel^Q
+   (\widehat{\varphi})^i : \widehat{T}\subset\rm I\hspace{-0.15em}R^P \longrightarrow \rm I\hspace{-0.15em}R^Q
 
 Denoting
 
@@ -282,8 +282,8 @@ one has
 
 where :math:`\alpha` is the vector whose ith component is :math:`\alpha_i`.
 
-A certain number of description of classical finite element method are defined in 
-the file :file:`getfem_fem.h`. See :ref:`ud-appendixa` for an exhaustive list of 
+A certain number of description of classical finite element method are defined in
+the file :file:`getfem_fem.h`. See :ref:`ud-appendixa` for an exhaustive list of
 available finite element methods.
 
 A pointer to the finite element descriptor of a method is obtained using the
@@ -291,5 +291,5 @@ function::
 
   getfem::pfem pfe = getfem::fem_descriptor("name of method");
 
-We refer to the file :file:`getfem_fem.cc` for how to define a new finite element 
+We refer to the file :file:`getfem_fem.cc` for how to define a new finite element
 method.

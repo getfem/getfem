@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2015-2017 Yves Renard
+# Copyright (C) 2015-2020 Yves Renard
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -26,9 +26,10 @@
 
   $Id: demo_laplacian_aposteriori.py 4429 2013-10-01 13:15:15Z renard $
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 h = 4.                             # Mesh parameter.
@@ -121,10 +122,10 @@ for refiter in range(5):
     
     # Residual a posteriori estimator
     
-    grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbour_elt)).Normal )'
+    grad_jump = '( (Grad_u-Interpolate(Grad_u,neighbor_element)).Normal )'
 
     bulkresidual = 'sqr(element_size*Trace(Hess_u))*Test_psi'
-    edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbour_elt))'%grad_jump
+    edgeresidual = '0.25*element_size*sqr(%s)*(Test_psi + Interpolate(Test_psi,neighbor_element))'%grad_jump
 
     ETA1tmp = gf.asm('generic',mim,1,bulkresidual,-1,md,'psi',1,mfP0,np.zeros(mfP0.nbdof()))
     ETA1 = ETA1tmp [ ETA1tmp.size - mfP0.nbdof() : ETA1tmp.size ]
@@ -157,10 +158,3 @@ for refiter in range(5):
     
     mesh.refine(np.where( ETAElt > 0.6*np.max(ETA) ))
     mesh.optimize_structure()
-
-
-
-
-
-
-

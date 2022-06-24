@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard
+ Copyright (C) 2004-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -41,13 +41,7 @@
 #include "getfem_omp.h"
 #include <list>
 
-#ifdef GETFEM_HAVE_OPENMP
-  #include <boost/atomic.hpp>
-  typedef boost::atomic_bool atomic_bool;
-#else
-  typedef bool  atomic_bool;
-#endif
-
+#include <atomic>
 
 namespace getfem {
   /**Deal with interdependencies of objects.
@@ -89,7 +83,7 @@ namespace getfem {
   protected :
     enum context_state { CONTEXT_NORMAL, CONTEXT_CHANGED, CONTEXT_INVALID };
     mutable context_state state;
-    mutable atomic_bool touched;
+    mutable std::atomic_bool touched;
     mutable std::vector<const context_dependencies *> dependencies;
     mutable std::vector<const context_dependencies *> dependent;
     typedef std::vector<const context_dependencies *>::iterator iterator_list;

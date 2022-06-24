@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2017 Julien Pommier
+ Copyright (C) 2004-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -60,7 +60,6 @@ namespace bgeot {
     size_type i;
     base_node n;
     index_node_pair() {}
-    index_node_pair(const index_node_pair& o) : i(o.i), n(o.n) {}
     index_node_pair(size_type i_, base_node n_) : i(i_), n(n_) {}
     void swap(index_node_pair& other) { std::swap(i,other.i); n.swap(other.n);}
   };
@@ -100,12 +99,16 @@ namespace bgeot {
   }
   @endcode
   */
-  class kdtree : public boost::noncopyable {
+  class kdtree {
     dim_type N; /* dimension of points */
     std::unique_ptr<kdtree_elt_base> tree;
     kdtree_tab_type pts;
   public:
     kdtree() : N(0) {}
+
+    kdtree(const kdtree&) = delete;
+    kdtree &operator = (const kdtree&) = delete;
+
     /// reset the tree, remove all points
     void clear() { clear_tree(); pts = kdtree_tab_type(); N = 0; }
     void reserve(size_type n) { pts.reserve(n); }

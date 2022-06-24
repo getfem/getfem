@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2001-2017 Y. Renard, J. Pommier.
+ Copyright (C) 2001-2020 Y. Renard, J. Pommier.
 
  This file is a part of GetFEM++
 
@@ -41,6 +41,7 @@
 #include <getfem/dal_static_stored_objects.h>
 #include <getfem/dal_bit_vector.h>
 #include <getfem/getfem_config.h>
+#include <getfem/getfem_mesh.h>
 #include <gfi_array.h>
 
 namespace getfemint {

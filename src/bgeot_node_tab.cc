@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard
+ Copyright (C) 2007-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -55,7 +55,8 @@ namespace bgeot {
 
   size_type node_tab::search_node(const base_node &pt,
                                   const scalar_type radius) const {
-    if (card() == 0) return size_type(-1);
+    if (card() == 0 || radius < 0.)
+      return size_type(-1);
 
     scalar_type eps_radius = std::max(eps, radius);
     for (size_type is = 0; is < 5; ++is) {
@@ -99,21 +100,18 @@ namespace bgeot {
     max_radius = std::max(max_radius, npt);
     eps = max_radius * prec_factor;
 
-    size_type id;
-    if (this->card() == 0) {
+    if (this->card() == 0)
       dim_ = pt.size();
-      id = dal::dynamic_tas<base_node>::add(pt);
-      for (size_type i = 0; i < sorters.size(); ++i) sorters[i].insert(id);
-    }
-    else {
+    else
       GMM_ASSERT1(dim_ == pt.size(), "Nodes should have the same dimension");
-      id = remove_duplicated_nodes ? search_node(pt, radius) : size_type(-1);
-      if (id == size_type(-1)) {
-        id = dal::dynamic_tas<base_node>::add(pt);
-        for (size_type i = 0; i < sorters.size(); ++i) {
-          sorters[i].insert(id);
-          GMM_ASSERT3(sorters[i].size() == card(), "internal error");
-        }
+    size_type id(-1);
+    if (remove_duplicated_nodes && radius >= 0.)
+      id = search_node(pt, radius);
+    if (id == size_type(-1)) {
+      id = dal::dynamic_tas<base_node>::add(pt);
+      for (size_type i = 0; i < sorters.size(); ++i) {
+        sorters[i].insert(id);
+        GMM_ASSERT3(sorters[i].size() == card(), "internal error");
       }
     }
     return id;

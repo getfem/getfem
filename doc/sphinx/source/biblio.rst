@@ -5,6 +5,14 @@
 References
 ----------
 
+.. [AB-ER-PI2018] M. Abbas, A. Ern, N. Pignet.
+   *Hybrid High-Order methods for finite deformations of hyperelastic materials*.
+   Computational Mechanics, 62(4), 909-928, 2018.
+
+.. [AB-ER-PI2019] M. Abbas, A. Ern, N. Pignet.
+   *A Hybrid High-Order method for incremental associative plasticity with small deformations*.
+   Computer Methods in Applied Mechanics and Engineering, 346, 891-912, 2019.
+
 .. [AL-CU1991] P. Alart, A. Curnier.
    *A mixed formulation for frictional contact problems prone to newton like solution methods*. Comput. Methods Appl. Mech. Engrg. 92, 353--375, 1991.
 
@@ -30,21 +38,25 @@ References
 .. [BE-CO-DU2010] M. Bergot, G. Cohen, M. |durufle|.
    *Higher-order finite elements for hybrid meshes using new nodal pyramidal elements*
    J. Sci. Comput., 42, 345-381, 2010.
-   
+
 .. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin.
    *Mixed-interpolated element for Reissner-Mindlin plates*. Internat. J. Numer. Methods Engrg., 28, 1787-1801, 1989.
 
 .. [bu-ha2010] E. Burman, P. Hansbo.
-   *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*. Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010. 
+   *Fictitious domain finite element methods using cut elements: I. A stabilized Lagrange multiplier method*. Computer Methods in Applied Mechanics, 199:41-44, 2680-2686, 2010.
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
-   *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+   *An implicitly restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
 
+.. [ca-ch-er2019] K. Cascavita, F. Chouly and A. Ern
+   *Hybrid High-Order discretizations combined with Nitsche's method for Dirichlet and Signorini boundary conditions*.
+   hal-02016378v2, 2019
+   
 .. [CH-LA-RE2008] E. Chahine, P. Laborde, Y. Renard.
    *Crack-tip enrichment in the Xfem method using a cut-off function*. Int. J. Numer. Meth. Engng., 75(6):629-646, 2008.
 
 .. [CH-LA-RE2011] E. Chahine, P. Laborde, Y. Renard.
-   *A non-conformal eXtended Finite Element approach: Integral matching Xfem*. Applied Numerical Mathematics, 61:322-343, 2011. 
+   *A non-conformal eXtended Finite Element approach: Integral matching Xfem*. Applied Numerical Mathematics, 61:322-343, 2011.
 
 .. [ciarlet1978] P.G. Ciarlet.
    *The finite element method for elliptic problems*. Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
@@ -56,12 +68,18 @@ References
    R. Cools, `An Encyclopedia of Cubature Formulas
    <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
 
-.. [dh-to1984] G. Dhatt, G. Touzot.
-   *The Finite Element Method Displayed*. J. Wiley & Sons, New York, 1984.
-
 .. [Dh-Go-Ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov.
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*.
    ACM Trans. Math. Software 31, 141-164, 2003.
+
+
+.. [Di-Er2015] D.A. Di Pietro, A. Ern.
+   *A hybrid high-order locking free method for linear elasticity on general meshes*.
+   Comput. Methods Appl. Mech. Engrg., 283:1-21, 2015
+
+.. [Di-Er2017] D.A. Di Pietro, A. Ern.
+   *Arbitrary-order mixed methods for heterogeneous anisotropic diffusion on general meshes*.
+   IMA Journal of Numerical Analysis, 37(1), 40-63. 2017
 
 .. [Duan2014] H. Duan.
    *A finite element method for Reissner-Mindlin plates*.
@@ -85,7 +103,7 @@ References
 .. [GR-GH1999] R.D. Graglia, I.-L. Gheorma.
    *Higher order interpolatory vector bases on pyramidal elements*
    IEEE transactions on antennas and propagation, 47:5, 775-782, 1999.
-   
+
 .. [GR-ST2015] D. Grandi, U. Stefanelli.
    *The Souza-Auricchio model for shape-memory alloys*
    Discrete and Continuous Dynamical Systems, Series S, 8(4):723-747, 2015.
@@ -118,10 +136,10 @@ References
    *An unconstrained integral approximation of large sliding frictional contact between deformable solids*. Computers and Structures, 153:75-90, 2015.
 
 .. [LA-RE2006] P. Laborde, Y. Renard.
-   *Fixed point strategies for elastostatic frictional contact problems*. Math. Meth. Appl. Sci., 31:415-441, 2008. 
+   *Fixed point strategies for elastostatic frictional contact problems*. Math. Meth. Appl. Sci., 31:415-441, 2008.
 
 .. [Li-Re2014] T. |ligursky| and Y. Renard.
-   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction*. Comput. Methods Appl. Mech. Engrg. 280, 222-262, 2014. 
+   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction*. Comput. Methods Appl. Mech. Engrg. 280, 222-262, 2014.
 
 .. [Li-Re2014hal] T. |ligursky| and Y. Renard.
    *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction*. Computational Mechanics, 56:1:39-62, 2015.
@@ -141,9 +159,6 @@ References
    and finite element approach*.
    Comput. Methods Appl. Mech. Engrg., 193:4299-4322, 2004.
 
-.. [nedelec1991] J.-C. Nedelec.
-   *Notions sur les techniques d'elements finis*. Ellipses, SMAI, Mathematiques & Applications no 7, 1991.
-
 .. [NI-RE-CH2011] S. Nicaise, Y. Renard, E. Chahine,
    *Optimal convergence analysis for the eXtended Finite Element Method*. Int. J. Numer. Meth. Engng., 86:528-548, 2011.
 
@@ -154,19 +169,19 @@ References
    *Domain decomposition algorithms for the p-version finite element method for elliptic problems*. Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 
 .. [PO-NI2016] K. Poulios, C.F. Niordson,
-   *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics od Solids, 94, pp 433-452, 2016.
+   *Homogenization of long fiber reinforced composites including fiber bending effects*. Journal of the Mechanics and Physics of Solids, 94, pp 433-452, 2016.
 
-.. [remacle2002] J-F. Remacle, M. Shephard,
-   *An algorithm oriented database*.  Internat. J. Numer. Methods Engrg., 58, 349-374, 2003.
-
+.. [GetFEM2020] Y. Renard, K. Poulios
+                *GetFEM: Automated FE modeling of multiphysics problems based on a generic weak form language*. Preprint, https://hal.archives-ouvertes.fr/hal-02532422/document
+   
+.. [remacle2003] J.-F. Remacle, M.S. Shephard;
+   *An algorithm oriented mesh database*. International Journal for Numerical Methods in Engineering, 58:2, pp 349-374, 2003.
+   
 .. [SE-PO-WO2015] A. Seitz, A. Popp, W.A. Wall,
    *A semi-smooth Newton method for orthotropic plasticity and frictional contact at finite strains*. Comput. Methods Appl. Mech. Engrg. 285:228-254, 2015.
 
 .. [SI-HU1998] J.C. Simo, T.J.R. Hughes.
    *Computational Inelasticity*. Interdisciplinary Applied Mathematics, vol 7, Springer, New York 1998.
-
-.. [so-se-do2004] P. |solin|, K. Segeth, I. |dolezel| ,
-   *Higher-Order Finite Element Methods*. Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
 .. [SO-PE-OW2008] E.A. de Souza Neto, D |peric|, D.R.J. Owen.
    *Computational methods for plasticity*. J. Wiley & Sons, New York, 2008.
@@ -183,11 +198,11 @@ References
 
 .. |moes| unicode:: Mo U+00EB s
 .. |peric| unicode:: Peri U+0107
-.. |dolezel| unicode:: Dole U+017E el 
+.. |dolezel| unicode:: Dole U+017E el
    :rtrim:
 .. |ligursky| unicode:: Ligursk U+00FD
 .. |durufle| unicode:: Durufl U+00E9
-.. |solin| unicode:: U+0160 ol U+00ED n 
+.. |solin| unicode:: U+0160 ol U+00ED n
    :rtrim:
 
 

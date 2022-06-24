@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2017 Yves Renard
+#  Copyright (C) 1999-2020 Yves Renard
 #
 #  This file is a part of GetFEM++
 #
@@ -17,7 +17,11 @@
 
 
 if BUILDMEX
-subdirMATLAB=matlab
+subdirMATLAB=matlab-octave
+else
+if BUILDOCTAVE
+subdirMATLAB=matlab-octave
+endif
 endif
 
 if BUILDPYTHON

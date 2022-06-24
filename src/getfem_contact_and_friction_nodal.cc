@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2004-2017 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2004-2020 Yves Renard, Konstantinos Poulios.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -184,7 +184,7 @@ namespace getfem {
 
       size_type nb_vertices = gmm::mat_nrows(simplexes);
       std::vector<size_type> facet_vertices(nb_vertices);
-      std::vector< std::vector<size_type> > pt1_neighbours(size1);
+      std::vector< std::vector<size_type> > pt1_neighbors(size1);
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
         gmm::copy(gmm::mat_col(simplexes, i), facet_vertices);
         for (size_type iv1 = 0; iv1 < nb_vertices-1; ++iv1) {
@@ -197,20 +197,20 @@ namespace getfem {
               bool already_in = false;
               size_type vv1 = (v1_on_surface1 ? v1 : v2);
               size_type vv2 = (v2_on_surface1 ? v1 : v2);
-              for (size_type j = 0; j < pt1_neighbours[vv1].size(); ++j)
-                if (pt1_neighbours[vv1][j] == vv2) {
+              for (size_type j = 0; j < pt1_neighbors[vv1].size(); ++j)
+                if (pt1_neighbors[vv1][j] == vv2) {
                   already_in = true;
                   break;
                 }
-              if (!already_in) pt1_neighbours[vv1].push_back(vv2);
+              if (!already_in) pt1_neighbors[vv1].push_back(vv2);
             }
           }
         }
       }
 
       for (size_type i1 = 0; i1 < size1; ++i1)
-        for (size_type j = 0; j < pt1_neighbours[i1].size(); ++j) {
-          size_type i2 = pt1_neighbours[i1][j] - size1;
+        for (size_type j = 0; j < pt1_neighbors[i1].size(); ++j) {
+          size_type i2 = pt1_neighbors[i1][j] - size1;
           size_type ii1 = size0 + i1;
           size_type ii2 = size0 + size1 + i2;
           contact_node *cn1 = &cnl1[i1];
@@ -1528,10 +1528,7 @@ namespace getfem {
         for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i)
           if ((i % (d+1)) == 0) alpha[j++] = MM(id, id) / l;
 
-
         getfem::ga_workspace gw;
-        getfem::ga_function f(gw, obstacle);
-
         size_type N = d+1;
         getfem::model_real_plain_vector pt(N);
         gw.add_fixed_size_constant("X", pt);
@@ -1540,6 +1537,7 @@ namespace getfem {
         if (N >= 3) gw.add_macro("z", "X(3)");
         if (N >= 4) gw.add_macro("w", "X(4)");
 
+        getfem::ga_function f(gw, obstacle);
         f.compile();
 
         gmm::resize(gap, nbc);

@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2005-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2005-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -35,78 +35,67 @@
 @brief  region objects (set of convexes and/or convex faces)
 */
 
-#ifndef GETFEM_MESH_REGION
-#define GETFEM_MESH_REGION
+#pragma once
 
+#include <atomic>
 #include <bitset>
 #include <iostream>
+#include <map>
+
 #include "dal_bit_vector.h"
 #include "bgeot_convex_structure.h"
 #include "getfem_config.h"
-
-// #if __cplusplus > 199711L
-// #include <unordered_map>
-// #elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
-// #include <boost/unordered_map.hpp>
-// #else
-#include <map>
-// #endif
-
-// #ifdef GETFEM_HAVE_BOOST
-// #include <boost/shared_ptr.hpp>
-// #endif
-
 
 namespace getfem {
   class mesh;
 
   /** structure used to hold a set of convexes and/or convex faces.
-  @see mesh::region
+     @see mesh::region
   */
   class APIDECL mesh_region {
   public:
-    typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
-
-    // #if __cplusplus > 199711L
-    //    typedef std::unordered_map<size_type,face_bitset> map_t;
-    // #elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
-    // typedef boost::unordered_map<size_type,face_bitset> map_t;
-    // #else
-    typedef std::map<size_type,face_bitset> map_t;
-    // #endif
+    using face_bitset = std::bitset<MAX_FACES_PER_CV+1>;
+    using map_t = std::map<size_type, face_bitset>;
 
   private:
 
-    typedef map_t::const_iterator const_iterator;
+    using const_iterator = map_t::const_iterator;
 
     struct impl {
       mutable map_t m;
       mutable omp_distribute<dal::bit_vector> index_;
+      mutable dal::bit_vector serial_index_;
     };
-
-    // #ifdef GETFEM_HAVE_BOOST
-    //need to use boost smart pointer, cause it's reference
-    //counting is thread safe
-    // boost::shared_ptr<impl> p;  /* the real region data */
-    // #else
     std::shared_ptr<impl> p;  /* the real region data */
-    // #endif
 
-    size_type id_;     /* used temporarily when the
-                          mesh_region(size_type) constructor is used */
+    size_type id_;            /* used temporarily when the
+                                 mesh_region(size_type)
+                                 constructor is used */
 
-    omp_distribute<bool> partitioning_allowed; /** specifies that in
-                          multithreaded code only a partition of the
-                          region is visible in index() and size() methods,
-                          as well as during iteration with mr_visitor */
+    size_type type_; //optional type of the region
+
+    std::atomic_bool partitioning_allowed; /* specifies that in multithreaded code only a
+                                           partition of the region is visible in index()
+                                           and size() methods, as well as during iteration
+                                           with mr_visitor */
+
     mesh *parent_mesh; /* used for mesh_region "extracted" from
                           a mesh (to provide feedback) */
 
 
-    //cashing iterators for paritions
+    //cashing iterators for partitions
     mutable omp_distribute<const_iterator> itbegin;
     mutable omp_distribute<const_iterator> itend;
+
+    //flags for all the cashes
     mutable omp_distribute<bool> index_updated;
+    mutable omp_distribute<bool> partitions_updated;
+    mutable bool serial_index_updated;
+
+    void mark_region_changed() const;
+
+    void update_index() const;
+
     void update_partition_iterators() const;
 
     impl &wp() { return *p.get(); }
@@ -117,62 +106,66 @@ namespace getfem {
 
     /**when running while multithreaded, gives the iterator
     for the beginning of the region partition for the current thread*/
-    const_iterator partition_begin( ) const;
+    const_iterator partition_begin() const;
 
     /**when running while multithreaded, gives the iterator
     for the end of the region partition for the current thread*/
-    const_iterator partition_end  ( ) const;
+    const_iterator partition_end() const;
 
     /**begin iterator of the region depending if its partitioned or not*/
-    const_iterator begin( ) const;
+    const_iterator begin() const;
 
-    /**end iteratorof the region depending if its partitioned or not*/
-    const_iterator end  ( ) const;
+    /**end iterator of the region depending if its partitioned or not*/
+    const_iterator end() const;
 
-    /**number of region entries before partitining*/
-    size_type unpartitioned_size() const; 
+    /**number of region entries before partitioning*/
+    size_type unpartitioned_size() const;
 
   public:
     mesh_region(const mesh_region &other);
     mesh_region();
-    /** a mesh_region can be built from a integer parameter 
+    /** a mesh_region can be built from a integer parameter
     (a region number in a mesh),
-    but it won't be usable until 'from_mesh(m)' has been called 
+    but it won't be usable until 'from_mesh(m)' has been called
     Note that these regions are read-only, this constructor is
     mostly used for backward-compatibility.
     */
     mesh_region(size_type id__);
 
     /** internal constructor. You should used m.region(id) instead. */
-    mesh_region(mesh& m, size_type id__);
+    mesh_region(mesh& m, size_type id__, size_type type = size_type(-1));
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv);
 
     /** provide a default value for the mesh_region parameters of assembly
     procedures etc. */
     static mesh_region all_convexes() {
-      return mesh_region(size_type(-1)); 
+      return mesh_region(size_type(-1));
     }
     /** return the intersection of two mesh regions */
-    static mesh_region intersection(const mesh_region& a, 
-                                    const mesh_region& b); 
+    static mesh_region intersection(const mesh_region& a,
+                                    const mesh_region& b);
     /** return the union of two mesh_regions */
-    static mesh_region merge(const mesh_region &a, 
+    static mesh_region merge(const mesh_region &a,
                              const mesh_region &b);
     /** subtract the second region from the first one */
-    static mesh_region subtract(const mesh_region &a, 
+    static mesh_region subtract(const mesh_region &a,
                                 const mesh_region &b);
     /** Test if the region is a boundary of a list of faces of elements of
         region `rg`. Return 0 if not, -1 if only partially, 1 if the region
         contains only some faces which are all faces of elements of `rg`. */
     int region_is_faces_of(const getfem::mesh& m1,
-			   const mesh_region &rg2,
-			   const getfem::mesh& m2) const;
+                           const mesh_region &rg2,
+                           const getfem::mesh& m2) const;
 
     size_type id() const { return id_; }
 
-    /** In multithreaded part of the program makes only a partition of the 
-    region visible in the index() and size() operations, as well as during 
+    size_type get_type() const { return type_; }
+
+    void  set_type(size_type type)  { type_ = type; }
+
+    /** In multithreaded part of the program makes only a partition of the
+    region visible in the index() and size() operations, as well as during
     iterations with mr_visitor. This is a default behaviour*/
     void  allow_partitioning();
 
@@ -180,20 +173,19 @@ namespace getfem {
     void bounding_box(base_node& Pmin, base_node& Pmax) const;
 
     /** Disregard partitioning, which means being able to see the whole region
-    in multirheaded code. Can be used, for instance, for contact problems
+    in multithreaded code. Can be used, for instance, for contact problems
     where master region is partitioned, while the slave region is not*/
     void  prohibit_partitioning();
 
     bool is_partitioning_allowed() const;
 
-    /** Extract the next region number 
+    /** Extract the next region number
     that does not yet exists in the mesh*/
     static size_type free_region_id(const getfem::mesh& m);
 
-
     /** For regions which have been built with just a number 'id',
-    from_mesh(m) sets the current region to 'm.region(id)'.  
-    (works only once) 
+    from_mesh(m) sets the current region to 'm.region(id)'.
+    (works only once)
     */
     const mesh_region& from_mesh(const mesh &m) const;
 
@@ -203,7 +195,7 @@ namespace getfem {
 
     face_bitset operator[](size_t cv) const;
 
-    /** Index of the region convexes, or the convexes from the partition on the 
+    /** Index of the region convexes, or the convexes from the partition on the
     current thread. */
     const dal::bit_vector& index() const;
     void add(const dal::bit_vector &bv);
@@ -221,7 +213,7 @@ namespace getfem {
 
     /** Number of convexes in the region, or on the partition on the current
     thread*/
-    size_type nb_convex() const { return  index().card();}  
+    size_type nb_convex() const { return  index().card();}
     bool is_empty() const;
     /** Return true if the region do contain only convex faces */
     bool is_only_faces() const;
@@ -236,8 +228,6 @@ namespace getfem {
     void error_if_not_homogeneous() const;
     const mesh *get_parent_mesh(void) const { return parent_mesh; }
     void set_parent_mesh(mesh *pm) { parent_mesh = pm; }
-
-
 
     /** "iterator" class for regions. Usage similar to bv_visitor:
     for (mr_visitor i(region); !i.finished(); ++i) {
@@ -260,10 +250,10 @@ namespace getfem {
       void init(const mesh_region &s);
       void init(const dal::bit_vector &s);
 
-    public: 
+    public:
       visitor(const mesh_region &s);
       visitor(const mesh_region &s, const mesh &m,
-	      bool intersect_with_mpi = false);
+        bool intersect_with_mpi = false);
       size_type cv() const { return cv_; }
       size_type is_face() const { return f_ != 0; }
       short_type f() const { return short_type(f_-1); }
@@ -273,10 +263,9 @@ namespace getfem {
 
       bool finished() const { return finished_; }
 
-      bool next_face() 
-      {
-	if (whole_mesh) return false;
-	if (c.none()) return false;
+      bool next_face(){
+        if (whole_mesh) return false;
+        if (c.none()) return false;
         do { ++f_; } while (!c.test(f_));
         c.set(f_,0);
         return true;
@@ -286,12 +275,9 @@ namespace getfem {
     friend std::ostream & operator <<(std::ostream &os, const mesh_region &w);
   };
 
-  typedef mesh_region::visitor mr_visitor;
+  using mr_visitor = mesh_region::visitor;
 
-  /* Dummy mesh_region for default parameter of functions. */
+  /** Dummy mesh_region for default parameter of functions. */
   const mesh_region &dummy_mesh_region();
 
-}
-
-
-#endif
+}  /* end of namespace getfem.                                             */

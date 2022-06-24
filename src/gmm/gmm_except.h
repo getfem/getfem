@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -49,7 +49,7 @@
 namespace gmm {
 
 /* *********************************************************************** */
-/*        GetFEM++ generic errors.                                         */
+/*        GetFEM generic errors.                                         */
 /* *********************************************************************** */
 
   // std logic_error with error level information
@@ -57,7 +57,7 @@ namespace gmm {
   public:
     gmm_error(const std::string& what_arg, int errorLevel = 1):
       std::logic_error (what_arg), errorLevel_(errorLevel) {}
-    int errLevel() {return errorLevel_;}
+    int errLevel() const { return errorLevel_; }
 
   private:
     int errorLevel_;
@@ -175,7 +175,7 @@ inline void GMM_THROW() {}
 #endif
 
 /* *********************************************************************** */
-/*        GetFEM++ warnings.                                               */
+/*        GetFEM warnings.                                               */
 /* *********************************************************************** */
 
   // This allows not to compile some Warnings
@@ -228,7 +228,7 @@ inline void GMM_THROW() {}
 #endif
 
 /* *********************************************************************** */
-/*        GetFEM++ traces.                                                 */
+/*        GetFEM traces.                                                 */
 /* *********************************************************************** */
 
   // This allow not too compile some Warnings
@@ -304,7 +304,7 @@ inline void GMM_THROW() {}
 #endif
 
 #define GMM_STANDARD_CATCH_ERROR                                           \
-  catch(gmm::gmm_error e)                                                  \
+  catch(const gmm::gmm_error &e)                                           \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -315,7 +315,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, e.errLevel());   \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::logic_error e)                                                \
+  catch(const std::logic_error &e)                                         \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -326,7 +326,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, 0);              \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::runtime_error e)                                              \
+  catch(const std::runtime_error &e)                                       \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -337,7 +337,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, 0);              \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::bad_alloc)                                                    \
+  catch(const std::bad_alloc &)                                            \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -347,7 +347,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, 0);              \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::bad_typeid)                                                   \
+  catch(const std::bad_typeid &)                                           \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -357,7 +357,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, 0);              \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::bad_exception)                                                \
+  catch(const std::bad_exception &)                                        \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \
@@ -367,7 +367,7 @@ inline void GMM_THROW() {}
                                gmm::FeedbackType::ASSERT, 0);              \
     gmm::feedback_manager::terminating_action();                           \
   }                                                                        \
-  catch(std::bad_cast)                                                     \
+  catch(const std::bad_cast &)                                             \
   {                                                                        \
     std::stringstream strStream;                                           \
     strStream << "============================================\n";         \

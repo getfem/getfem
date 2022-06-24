@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard
+ Copyright (C) 2002-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -57,8 +57,8 @@ namespace getfem {
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
-	  w.resize(gmm::mat_nrows(mp.gtrans[cv]));
-	  gmm::mult(mp.gtrans[cv], pgt->normals()[f], w);
+	  w.resize(gmm::mat_nrows(mp.gtransinv[cv]));
+	  gmm::mult(mp.gtransinv[cv], pgt->normals()[f], w);
 	  scalar_type coeff_mul = gmm::abs(gmm::vect_norm2(w) * mp.det[cv]);
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
@@ -130,7 +130,7 @@ namespace getfem {
     jfs.m.add_triangle(i0, i2, i3);
     jfs.m.add_triangle(i0, i3, i1);
     jfs.m.add_triangle(i0, i1, i2);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
@@ -169,7 +169,7 @@ namespace getfem {
     jfs.m.add_triangle(i2, i0, i4);
     jfs.m.add_triangle(i3, i2, i4);
     jfs.m.add_triangle(i0, i1, i4);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);
@@ -205,7 +205,7 @@ namespace getfem {
     size_type i4 = jfs.m.add_point(base_node( 0.0,  0.0, 1.0));
     jfs.m.add_tetrahedron(i0, i1, i2, i4);
     jfs.m.add_tetrahedron(i1, i3, i2, i4);
-    jfs.mp = bgeot::mesh_precomposite(jfs.m);
+    jfs.mp.initialise(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);

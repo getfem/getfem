@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _dp-libdesc_cont:
 
@@ -24,15 +24,15 @@ Files
    :widths: 8, 15
 
    :file:`getfem_continuation.h` and :file:`getfem_continuation.cc`, "The generic continuation and branching method"
-   
+
 
 State
 ^^^^^
 
-Have already generic and advanced fonctionalities. 
+Have already generic and advanced functionalities.
 
 Perspectives
 ^^^^^^^^^^^^
 
-Still in developpement.
+Still in developement.
 

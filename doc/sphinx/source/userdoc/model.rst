@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. index:: models, model bricks
 
@@ -37,7 +37,7 @@ The kernel of the model description is contained in the file
 
 .. toctree::
    :maxdepth: 2
-  
+
    model_object
    model_generic_assembly
    model_generic_elliptic
@@ -57,4 +57,4 @@ The kernel of the model description is contained in the file
    model_time_integration
    model_contact_friction
    model_contact_friction_large_sliding
-  
+

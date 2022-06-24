@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2018-2018 Yves Renard.
+# Copyright (C) 2018-2020 Yves Renard.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -28,9 +28,8 @@
   $Id$
 """
 import numpy as np
-import getfem as gf
-import os
 
+import getfem as gf
 
 NX = 4
 
@@ -88,4 +87,3 @@ for i in range(0, V1.size):
   for j in range(0, V2.size):
     if (abs(M[i,j] - V1[i]*V2[j]) > 1E-8):
       print("Bad value for matrix assembly"); exit(1)
-    

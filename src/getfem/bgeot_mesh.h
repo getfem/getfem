@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard
+ Copyright (C) 2006-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -88,12 +88,12 @@ namespace bgeot {
 
     /// Return a (pseudo)container of the points of a given convex
     ref_mesh_pt_ct points_of_convex(size_type ic) const {
-      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      const ind_set &rct = ind_points_of_convex(ic);
       return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
     }
 
     inline void points_of_convex(size_type ic, base_matrix &G) const {
-      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      const ind_set &rct = ind_points_of_convex(ic);
       size_type N = dim(), Np = rct.size();
       G.base_resize(N, Np);
       auto it = G.begin();
@@ -106,15 +106,19 @@ namespace bgeot {
     /** Add the point pt to the mesh and return the index of the
         point.
 
-        If the point is too close to an existing point and remove_duplicated_nodes = true,
-        the function does not create a new point, and returns the index of the
-        already existing point.
-        @param pt the point coordinates.
+        If the point is within a radius tol from an existing point the
+        function does not create a new point, and returns the index of
+         the already existing point.
+        If tol is negative the check for nearby points is deactivated.
+        The same effect can be achieved by setting the deprecated
+        argument remove_duplicated_nodes to false.
+
+        @param pt holds the point coordinates.
     */
     size_type add_point(const base_node &pt,
                         const scalar_type tol=scalar_type(0),
                         bool remove_duplicated_nodes = true) {
-      return pts.add_node(pt, tol, remove_duplicated_nodes);
+      return pts.add_node(pt, remove_duplicated_nodes ? tol : -1.);
     }
 
     template<class ITER>

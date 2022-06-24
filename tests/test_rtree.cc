@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2007-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -124,6 +124,8 @@ static void verify(const std::vector<base_node>& rmin, const std::vector<base_no
       extent[k] = std::max(extent[k], rmax[i][k]-rmin[i][k]);
     }
 
+  tree.build_tree();
+
   for (size_type i=0; i < 100; ++i) {
     base_node min(N), max(N);
     for (size_type k=0; k < N; ++k) { min[k] = gmm::random(double()*1.3); max[k] = min[k]+gmm::random()*0.1; }
@@ -184,7 +186,9 @@ static void check_tree() {
   tree.add_box(base_node(1.0,0.),base_node(1.5,0.));
   tree.add_box(base_node(2.0,0.),base_node(3.0,0.),2);
   tree.add_box(base_node(1.5,0.),base_node(2.2,0.),1);
-  std::vector<size_type> pi; tree.find_boxes_at_point(base_node(2.8,0.),pi);
+  std::vector<size_type> pi;
+  tree.build_tree();
+  tree.find_boxes_at_point(base_node(2.8,0.),pi);
   tree.dump();
   assert(pi.size()==1 && pi[0] == 2);  
   tree.clear();
@@ -195,7 +199,7 @@ static void check_tree() {
     for (size_type d=0; d < sizeof(dec)/sizeof(dec[0]); ++d) {
       //cout << "C=" << C << ",  DEC=" << dec[d] << "\n";
       for (int i=-C; i < C-1; ++i) {
-	base_node a(1),b(1); a[0] = i/double(C); b[0]=(i+dec[d])/double(C);
+	base_node a(2),b(2); a[0] = i/double(C); b[0]=(i+dec[d])/double(C);
 	rmin.push_back(a); rmax.push_back(b);
 	tree.add_box(rmin.back(),rmax.back());
       }

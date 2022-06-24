@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _gmm-matrix:
 
@@ -78,7 +78,7 @@ Those two type of matrices store an array of ``VECT`` so the memory is not conti
   gmm::row_matrix< std::vector<double> > M1(10, 10);  // dense row matrix
   gmm::col_matrix< gmm::wsvector<double> > M2(5, 20); // sparse column matrix
 
-Of course ``gmm::row_matrix<VECT>`` is a row matrix and it is impossible to access to a particular column of this matrix. 
+Of course ``gmm::row_matrix<VECT>`` is a row matrix and it is impossible to access to a particular column of this matrix.
 
 
 ``gmm::mat_nrows(M)`` gives the number of rows of a matrix and ``gmm::mat_ncols(M)`` the number of columns.
@@ -98,7 +98,7 @@ sparse matrices
 ---------------
 
 Similarly, ``gmm::row_matrix< gmm::wsvector<double> >`` or ``gmm::col_matrix< gmm::rsvector<double> >`` represents some sparse matrices, but |gmm| provides also two types of classical sparse matrix types::
- 
+
   gmm::csr_matrix<T>
   gmm::csc_matrix<T>
 
@@ -114,7 +114,7 @@ The type ``gmm::csr_matrix<T>`` represents a compressed sparse row matrix and ``
   gmm::clean(M1, 1E-12);
   gmm::copy(M1, M2);
 
-Matrices ``gmm::csr_matrix<T>`` and ``gmm::csc_matrix<T>`` have the advantage to have a standard format (interfacable with Fortran code) and to have a compact format (contiguous in memory). To be able to be compatible with Fortran programs a second template parameter exists on these type, you can declare::
+Matrices ``gmm::csr_matrix<T>`` and ``gmm::csc_matrix<T>`` have the advantage to have a standard format (interfaceable with Fortran code) and to have a compact format (contiguous in memory). To be able to be compatible with Fortran programs a second template parameter exists on these type, you can declare::
 
   gmm::csc_matrix<double, 1> M1;
   gmm::csr_matrix<double, 1> M2;

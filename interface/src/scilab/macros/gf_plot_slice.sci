@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Yann Colette
+// Copyright (C) 2009-2020 Yann Colette
 // 
 //  This file is a part of GetFEM++
 // 
@@ -263,7 +263,7 @@ while (1)
   // search for consecutive edge points
   it1 = it0;
   //while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
-  while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
+  while (it1 < nT & T(1,it1+1) == T(2,it1)), it1 = it1+1; end;
   //disp(sprintf('sequence: %d - %d -- [%d-%d] - [%d-%d]',it0,it1,T(1,it0),T(2,it0),T(1,it1),T(2,it1)))
   // extract the sequence of points
   ip = [T(1,it0) T(2,it0:it1)];

@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -56,7 +56,7 @@ extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, in
 
 using std::endl; using std::cout; using std::cerr;
 
-/* some GetFEM++ types that we will be using */
+/* some GetFEM types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -490,7 +490,7 @@ h
     vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
     xadj[j] = k;
     bgeot::mesh_structure::ind_set s;
-    mesh.neighbours_of_convex(ic, s);
+    mesh.neighbors_of_convex(ic, s);
     for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }
@@ -529,7 +529,7 @@ h
   //cout<<"size_of_mesh="<<h<<endl;
   cout<<"size_of_crack="<< size_of_crack <<endl;
   cout<<"nb_partition="<<nparts<<endl;
-  cout<<"partition="<<part<<endl;
+  cout<<"partition="<<gmm::vref(part)<<endl;
   cout<<"edgecut="<<edgecut<<endl;
 #else
   GMM_ASSERT1(false, "METIS not linked");
@@ -1582,7 +1582,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 
 int main(int argc, char *argv[]) {
   
-  
+  GETFEM_MPI_INIT(argc, argv);
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   //getfem::getfem_mesh_level_set_noisy();
@@ -2027,9 +2027,8 @@ int main(int argc, char *argv[]) {
     }
   }
   
+  GETFEM_MPI_FINALIZE;
   return 0; 
-  
-  
 }
 
 

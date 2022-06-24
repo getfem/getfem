@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. _ud-install-linux:
 
@@ -101,14 +101,9 @@ Configure Options
 
     $ ./configure --prefix=my_dest_dir
 
-* By default, the python interface is built and for python 2 version. You can disable the built of the python interface with::
+* By default, the python interface is built and for python 3 version. You can disable the built of the python interface with::
 
     $ ./configure --disable-python
-
-  or either build the interface for python 3 version with
-
-    $ ./configure --enable-python3
-
 
 Note that there are other options to the configure script. A
 ``./configure --help`` will list them.
@@ -126,7 +121,7 @@ Scilab interface
 ^^^^^^^^^^^^^^^^
 
 The installation of the |sci| |gf| toolbox can be somewhat tricky, since it combines a C++ compiler, libraries and |sci| interaction. In case of troubles with a
-non-GNU compiler, gcc/g++ (>= 4.8) should be a safe solution.
+non-GNU compiler, gcc/g++ (>= 8.0) should be a safe solution.
 
 
 .. caution::
@@ -156,24 +151,47 @@ If you want to use a different compiler than the one chosen automatically by the
 
 Once getfem is compiled:
 
-  - Go to the scilab getfem++ interface install directory (interface/src/scilab if the installation is not done)
- 
-  - launch scilab
+  - Go to the Scilab GetFEM interface install directory (interface/src/scilab if the installation is not done)
 
-  - load the getfem++ toolbox with:
+  - launch Scilab
+
+  - load the GetFEM toolbox with:
     ``exec loader.sce;``
 
   - You can try to launch a demo with:
     ``cd demos;``
     ``exec demo_static_contact.sce;``
 
+Octave interface
+^^^^^^^^^^^^^^^^
+
+You have first to install |octv| with the developpement package
+
+.. caution::
+
+   * You have first to install |octv|, minimal release 4.1.1 with the developpement package such
+     that the command ``mkoctfile`` is available (liboctave-dev package on Debian, for instance)
+
+   * you should have built the |gf| static library (i.e. do not use ``./configure
+     --disable-static`` when building |gf|). On linux/x86_64 platforms, a
+     mandatory option when building |gf| and |gfi| toolbox (and any static library linked
+     to them) is the ``--with-pic`` option of their ``./configure`` script.
+
+   * you should have use the ``--enable-octave`` option to configure the |gf| sources (i.e. ``./configure --enable-octave`` ...)
+
+
+
+The last step is to add the path to the toolbox in the octave path:
+
+* you can put ``addpath('toolbox_dir', '-begin')`` to your ``$HOME/.octaverc`` file
+* you can simply use the ``addpath`` command in the octave command line. 
 
 Matlab interface
 ^^^^^^^^^^^^^^^^
 
 The installation of the |gfi| toolbox can be somewhat tricky, since it combines a
 C++ compiler, libraries and |Mlab| interaction... In case of troubles with a
-non-GNU compiler, gcc/g++ (>= 4.8) should be a safe solution.
+non-GNU compiler, gcc/g++ (>= 8.0) should be a safe solution.
 
 
 .. caution::
@@ -238,4 +256,29 @@ A second problem arising with recent distribution of Matlab (2016a), is the inco
 
   LD_PRELOAD=/usr/lib/libblas.so:/usr/lib/liblapack.so matlab
 
+
+How to use docker images of python interface
+============================================
+
+Docker images for GetFEM are published on the `Docker Hub <https://hub.docker.com/>`_. There is a images:
+
+- `getfemdoc/getfem <https://hub.docker.com/repository/docker/getfemdoc/getfem>`_
+
+.. hint::
+
+   When running python script in developing version::
+
+      $ docker run --rm -v `pwd`:/work getfemdoc/getfem:latest /venv/bin/python3 script.py
+
+   When running python interpreter in developing version::
+
+      $ docker run --rm -v `pwd`:/work -t -i getfemdoc/getfem:latest /venv/bin/python3
+
+   When running python script in v5.4 version::
+
+      $ docker run --rm -v `pwd`:/work getfemdoc/getfem:v5.4 /venv/bin/python3 script.py
+
+   When running python interpreter in v5.4 version::
+
+      $ docker run --rm -v `pwd`:/work -t -i getfemdoc/getfem:v5.4 /venv/bin/python3
 

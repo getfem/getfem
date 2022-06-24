@@ -1,8 +1,8 @@
-dnl  Copyright (C) 1999-2017 Yves Renard
+dnl  Copyright (C) 1999-2020 Yves Renard
 dnl
-dnl  This file is a part of GetFEM++
+dnl  This file is a part of GetFEM
 dnl
-dnl  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+dnl  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 dnl  under  the  terms  of the  GNU  Lesser General Public License as published
 dnl  by  the  Free Software Foundation;  either version 3 of the License,  or
 dnl  (at your option) any later version along with the GCC Runtime Library
@@ -27,10 +27,13 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 5.3)
+AC_INIT(getfem, 5.4.2)
 MAJOR_VERSION="5"
-MINOR_VERSION="3"
-PATCH_VERSION=""
+MINOR_VERSION="4"
+PATCH_VERSION="2"
+AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[Major version number])
+AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[Minor version number])
+AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[Patch version number])
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
@@ -39,16 +42,6 @@ AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM)
 AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM) 
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
-
-dnl PACKAGE="getfem"
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
-dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
-dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION
-dnl AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
-dnl AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
-dnl AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
-dnl echo "configuring $PACKAGE $VERSION (patch level $PATCH_VERSION)..."
-
 
 dnl ------------------------------------------------------------------------
 dnl   init automake
@@ -73,7 +66,7 @@ AC_ARG_WITH(optimization,
 dnl ---------------------------PARA LEVEL--------------------------
 paralevel=0
 AC_ARG_ENABLE(paralevel,
-   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version of GetFEM++ (use MPI and METIS)])],
+   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version of GetFEM (use MPI and METIS)])],
    [ case $enableval in
         yes | "") paralevel=2;;
         no) ;;
@@ -137,7 +130,7 @@ fi
 
 AC_CANONICAL_HOST
 
-echo "you are compiling GetFEM++ on a $host"
+echo "you are compiling GetFEM on a $host"
 
 case $CXX in
 	
@@ -145,16 +138,16 @@ case $CXX in
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
 	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fvisibility-inlines-hidden],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
+	AC_CHECK_CXX_FLAG([-std=c++14], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++14. Update g++ to at least release 4.9])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wall -W -Wextra],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-Wno-terminate],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-Wno-implicit-fallthrough],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-variadic-macros],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unused-but-set-variable],CXXFLAGS)
@@ -174,13 +167,13 @@ dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
-	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++11"
+	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++14"
         dnl CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
         CFLAGS="$CFLAGS $with_optimization -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	CXXFLAGS="$CXXFLAGS $with_optimization -std=c++11"
+ 	CXXFLAGS="$CXXFLAGS $with_optimization -std=c++14"
         dnl CXXFLAGS="$CXXFLAGS $with_optimization"
         CFLAGS="$CFLAGS $with_optimization"
 	;;
@@ -195,6 +188,334 @@ dnl ------------------------------------------------------------------------
 dnl option pic-only is not working: a libtool bug ...
 LT_INIT([pic-only disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
+
+
+dnl -----------------------------------------------
+dnl MATLAB Interface
+dnl -----------------------------------------------
+
+# list of pseudo functions
+PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
+echo $PSEUDO_FUNCTIONS_LOC
+PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
+MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
+AC_SUBST(PSEUDO_FUNCTIONS)
+AC_SUBST(PSEUDO_FUNCTIONS_LOC)
+AC_SUBST(MATLAB_OBJ_DIRS)
+
+AC_ARG_ENABLE(matlab,
+ [AS_HELP_STRING([--enable-matlab],[turn on/off matlab support])],
+ [case "${enableval}" in
+   yes) usematlab=YES ;;
+   no)  usematlab=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
+ esac],[usematlab=NO])
+
+AC_ARG_WITH(matlab-toolbox-dir,
+            [AS_HELP_STRING([--with-matlab-toolbox-dir],[directory in which the matlab interface will be installed])],
+            TOOLBOXDIR="$withval",TOOLBOXDIR="$GFPREFIX/getfem_toolbox")
+AC_SUBST(TOOLBOXDIR)
+
+if test "$usematlab" != NO; then
+  AC_CHECK_PROGS(MEX, mex)
+  if test x"$MEX" = x""; then
+    AC_CHECK_PROGS(MEX, mex.bat)
+    if test x"$MEX" = x""; then
+      if test x$usematlab = xYES; then
+        AC_MSG_ERROR([Impossible to build the matlab interface without mex -- specify its full path with the MEX=/path/to/mex option, or use --enable-matlab=no])
+        exit 1
+      fi
+    else
+      MEX=gnumex;
+      MATLAB_COM_EXT=".dll";
+      echo "You are using Matlab on a windows platform (assuming MingW compiler)";
+      if test -f gnumex.opts; then
+         echo "sourcing gnumex.opts.."
+         source gnumex.opts;         
+         echo "MATLAB_ROOT=$MATLAB_ROOT"
+         echo "Matlab release is : R$MATLAB_RELEASE"
+      elif test x$usematlab = xYES; then
+        echo "You need to fill the gnumex.opts file, for example (use MSys-style paths, not DOS-style paths)"
+        echo '#!/bin/sh'
+        echo 'MATLAB_ROOT="c:\\MATLAB6p5"'
+        echo 'MATLAB_RELEASE=13'
+        echo 'MATLAB_INC_DIR="$MATLAB_ROOT\\extern\\include"'
+        echo 'MEXOPTS=c:\\gnumex\\mexopts.bat'
+        echo "when this is done, check that the gnumex script works correctly"
+        echo " (i.e. gnumex gnumex.opts -v prints the rights options to use the MinGW gcc)"
+        exit 1
+      fi
+    fi
+  else
+     dnl thanks to paolo for pointing the 'twin mex' problem
+     if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
+	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
+     fi;
+    
+     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     MEX_EXE=`which $MEX`
+     MEX_EXE=`readlink -e $MEX_EXE`
+     MATLAB_ROOT=`echo $MEX_EXE | sed -e 's/bin.*$//'`
+     MEXEXT=$MATLAB_ROOT/bin/mexext
+     Matlab_INC_DIR=$MATLAB_ROOT/extern/include
+     echo "checking for matlab path... " $MATLAB_ROOT
+     MATLAB_COM_EXT=.`$MEXEXT`
+     echo "checking for mex extension... " $MATLAB_COM_EXT
+#    MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
+#    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
+     MATLAB_RELEASE=`matlab -nosplash -nojvm -r "a=version;display(a);exit" | grep "(R2" | sed -n '1p' | sed 's/^.*R//g' | sed 's/).*$//'`
+     echo "Matlab release is : R$MATLAB_RELEASE"
+  fi
+fi
+AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
+
+AC_SUBST(MATLAB_ROOT)
+AC_SUBST(MATLAB_INC_DIR)
+AC_SUBST(MATLAB_RELEASE)
+AC_SUBST(MATLAB_COM_EXT)
+AC_SUBST(MEX)
+
+AM_CONDITIONAL(USE_MINGW_MEX, test x"$MATLAB_COM_EXT" = x".dll")
+
+
+
+dnl ----------------------------
+dnl RPCs -- matlab interface communication with a separated getfem process
+dnl useful for debugging..
+GETFEM_SERVER="";
+use_rpc="no";
+AC_ARG_ENABLE(matlab-rpc,
+ [AS_HELP_STRING([--enable-matlab-rpc],[enable use of RPCs for matlab interface])],
+ [ matlab_rpc="yes"; use_rpc="yes";
+   echo "Matlab mex-file will use sun RPCs in order to communicate with the getfem server"],
+ [matlab_rpc="no"])
+
+if test x$use_rpc = xyes; then
+  GETFEM_SERVER="getfem_server";
+  AC_ARG_WITH(rpc-include,
+              [AS_HELP_STRING([--with-rpc-include],[directory in which the rpc/rpc.h header can be found])],
+              RPC_INC_DIR="-I$withval",RPC_INC_DIR="")
+  case $host in
+        *alpha*)
+                RPC_LIB="-lrpc";
+                ;;
+	*darwin*)
+	        RPC_LIB="";
+		;;
+        *)
+                RPC_LIB="-lnsl";
+                ;;
+  esac
+  AC_ARG_WITH(rpc-lib,
+              [AS_HELP_STRING([--with-rpc-lib],[linker flags for the RPC library])],
+              RPC_LIB="$withval")
+  AC_SUBST(RPC_INC_DIR)
+  AC_SUBST(RPC_LIB)
+  AC_DEFINE_UNQUOTED(USE_RPC, 1, [Use rpc for getfem communication with matlab])
+fi;
+AC_SUBST(GETFEM_SERVER)
+AM_CONDITIONAL(BUILDMEXRPC, test x$matlab_rpc = xyes)
+
+
+dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
+dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
+dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
+STDCPP_STATICLIBS=""
+
+if test $usematlab = xYES; then
+  dnl ------------------------------------
+  dnl COMPILER SETTINGS
+  compiler_type=dontcare
+  case $CXX in
+   *g++* | c++)
+	case $host in
+	x86_64-*)
+	       echo "Compiling on an x86_64 architecture..."
+	       ;;
+        *-darwin*)
+               echo "Compiling on Darwin (MacOS)"
+		;;
+	*)
+		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
+		;;
+	esac
+	;;
+   *icc | *icpc)
+	dnl a small remark: with icpc 8.0, the getfem_server will crash 
+	dnl at the first exception throwed (except with -g)
+	dnl the fix is to pass the -static flag at the linker
+	dnl unfortunately, the lovely libtool assumes that icpc won't
+	dnl understand it, and removes it. I hate libtool.
+	dnl so I added the -Wl,-static -- it works for now.
+	GFSERVERFLAGS="-Wl,-static -static"
+	;;
+   *)
+	;;
+  esac
+fi
+AC_SUBST(GFSERVERFLAGS)
+AC_SUBST(STDCPP_STATICLIBS)
+
+
+
+
+
+
+dnl -----------------------------------------------
+dnl Octave Interface
+dnl -----------------------------------------------
+
+# list of pseudo functions
+# PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
+# echo $PSEUDO_FUNCTIONS_LOC
+# PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
+# MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
+# AC_SUBST(PSEUDO_FUNCTIONS)
+# AC_SUBST(PSEUDO_FUNCTIONS_LOC)
+# AC_SUBST(MATLAB_OBJ_DIRS)
+
+AC_ARG_ENABLE(octave,
+ [AS_HELP_STRING([--enable-octave],[turn on/off octave support])],
+ [case "${enableval}" in
+   yes) useoctave=YES ;;
+   no)  useoctave=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-octave]) ;;
+ esac],[useoctave=NO])
+
+AC_ARG_WITH(octave-toolbox-dir,
+            [AS_HELP_STRING([--with-octave-toolbox-dir],[directory in which the octave interface will be installed])],
+            OCTAVETOOLBOXDIR="$withval",OCTAVETOOLBOXDIR="$GFPREFIX/getfem_octavetoolbox")
+AC_SUBST(OCTAVETOOLBOXDIR)
+
+if test "$useoctave" != NO; then
+  AC_CHECK_PROGS(MKOCTFILE, mkoctfile)
+  if test x"$MKOCTFILE" = x""; then
+    if test x$useoctave = xYES; then
+      AC_MSG_ERROR([Impossible to build the octave interface without mkoctfile -- specify its full path with the MKOCTFILE=/path/to/mkoctfile option, or use --enable-octave=no])
+        exit 1
+    fi
+  else
+     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
+     MKOCTFILE_EXE=`which $MKOCTFILE`
+     MKOCTFILE_EXE=`readlink -e $MKOCTFILE_EXE`
+     OCTAVE_ROOT=`echo $MKOCTFILE_EXE | sed -e 's/bin.*$//'`
+     OCTAVE_COM_EXT=".mex"
+     OCTAVE_RELEASE=`octave --version | grep "GNU Octave" | sed -n '1p' | sed 's/^.*version //g'`
+     echo "Octave release is $OCTAVE_RELEASE"
+  fi
+fi
+AM_CONDITIONAL(BUILDOCTAVE, test x$useoctave = xYES)
+
+AC_SUBST(OCTAVE_RELEASE)
+AC_SUBST(OCTAVE_COM_EXT)
+AC_SUBST(MKOCTFILE)
+
+AM_CONDITIONAL(USE_MINGW_OCTAVE, test x"$OCTAVE_COM_EXT" = x".dll")
+
+dnl ----------------------------------------------
+dnl python 
+dnl ----------------------------------------------
+
+AC_ARG_ENABLE(python,
+ [AS_HELP_STRING([--enable-python],[turn on/off python support])],
+ [case "${enableval}" in
+   yes) usepython=YES ;;
+   no)  usepython=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
+ esac],[usepython=YES])
+
+if test x$usepython = xYES; then
+  AM_PATH_PYTHON(3.6, usepython=YES, usepython=NO)
+  if test x$usepython = xNO; then
+    AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
+  fi
+fi
+
+case $host in
+    *mingw*)
+        PYTHON_CC_ARG="--compiler=mingw32"
+	PYTHON_EXTRA_EXT_PARAM="extra_compile_args=[['-D MS_WIN64']]"
+        ;;
+    *)
+        PYTHON_CC_ARG=""
+	PYTHON_EXTRA_EXT_PARAM=""
+        ;;
+esac
+
+AC_SUBST(PYTHON_CC_ARG)
+AC_SUBST(PYTHON_EXTRA_EXT_PARAM)
+
+if test "x$usepython" = "xYES"; then
+  echo "Building with python ($PYTHON) support (use --enable-python=no to disable it) "
+  echo "You will need the python-numpy and python-scipy packages."
+dnl  AM_PATH_PYTHON(2.2)
+  AC_PYTHON_DEVEL
+  ac_python_numpy=`$PYTHON -c 'import numpy; print("YES")' 2>/dev/null`
+  if  test "x$ac_python_numpy" != "xYES"; then
+    usepython=NO
+    MSG="PYTHON DISABLED: numpy not found. You need to install the python-numpy package."
+    echo $MSG
+    WARNING_MSG="$WARNING_MSG\n$MSG"
+  fi
+  ac_python_scipy=`$PYTHON -c 'import scipy; print("YES")' 2>/dev/null`
+  if  test "x$ac_python_scipy" != "xYES"; then
+    usepython=NO
+    MSG="PYTHON DISABLED: scipy not found. You need to install the python-scipy package."
+    echo $MSG
+    WARNING_MSG="$WARNING_MSG\n$MSG"
+  fi
+  if  test $paralevel -ge 1; then
+    ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print("YES")' 2>/dev/null`
+    if test "x$ac_python_mpi4py" != "xYES"; then
+      usepython=NO
+      MSG="PARALLEL PYTHON DISABLED: mpi4py not found. You need to install the python-mpi4py package."
+      echo $MSG
+      WARNING_MSG="$WARNING_MSG\n$MSG"
+    fi
+  fi
+  PYTHON_SO=`$PYTHON -c "import distutils.sysconfig, sys; get = distutils.sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
+  AC_SUBST(PYTHON_SO)
+fi
+
+AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
+AM_CONDITIONAL(BUILDPYTHONPAR, test x$ac_python_mpi4py = xYES)
+
+dnl -----------------------------------------------
+dnl SCILAB Interface
+dnl -----------------------------------------------
+
+m4_include([m4/scilab.m4])
+
+REQUIRED_SCILAB_MAJOR=6
+REQUIRED_SCILAB_MINOR=0
+REQUIRED_SCILAB_MICRO=0
+
+AC_CHECK_SCILAB
+
+GETFEM_INTERFACE_PATH="`readlink -f $srcdir`"
+GETFEM_BUILD_INTERFACE_PATH="`readlink -f $PWD`"
+AC_SUBST(GETFEM_INTERFACE_PATH)
+AC_SUBST(GETFEM_BUILD_INTERFACE_PATH)
+
+dnl if the scilab directory doesn't exists, we copy the 
+dnl scilab sources into the build directory
+
+if test "x$usescilab" == "xYES"
+then
+  currentdir=`pwd`
+  if test ! -f $currentdir/interface/src/scilab/builder.sce
+  then
+    echo "Copying Scilab toolbox src in the build directory"
+    mkdir -p $currentdir/interface/src/scilab/
+    cp -r $srcdir/interface/src/scilab/* $currentdir/interface/src/scilab
+  fi
+fi
+
+AC_ARG_WITH(scilab-toolbox-dir,
+            [AS_HELP_STRING([--with-scilab-toolbox-dir],[directory in which the scilab interface will be installed])],
+            SCILAB_TOOLBOX_DIR="$withval",SCILAB_TOOLBOX_DIR="$GFPREFIX/getfem_toolbox")
+AC_SUBST(SCILAB_TOOLBOX_DIR)
 
 
 dnl -------------------------------BLAS----------------------------------
@@ -246,6 +567,11 @@ if test $acx_blas_ok = no; then
         save_LIBS="$LIBS"; LIBS="$LIBS"
         AC_CHECK_FUNC($sgemm, [acx_blas_ok=yes])
         LIBS="$save_LIBS"
+fi
+
+# Generic BLAS library?
+if test $acx_blas_ok = no; then
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
 fi
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
@@ -308,11 +634,7 @@ if test $acx_blas_ok = no; then
                         [], [-lblas $FLIBS])])
 fi
 
-# Generic BLAS library?
-if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
-fi
-
+# Generic BLAS library with fortran dependency?
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas $FCLIBS"])
 fi
@@ -348,16 +670,52 @@ if test x$useblasinterface = xYES; then
   CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS_INTERFACE"
 fi
 
+useblas64support=NO
+AC_ARG_ENABLE(blas64-support,
+        [AS_HELP_STRING([--enable-blas64-support],[enable the 64 bits integer blas and lapack support])],
+        [ case $enableval in
+          yes | "") useblas64support=YES;;
+          no) useblas64support=NO;;
+          esac], [useblas64support=NO])
+
+if test x$useblas64support = xNO && test x$usematlab = xYES; then
+  # 32 or 64 bits blas interface
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+  #include <stdlib.h>
+  int main() {
+    int a; long b;
+    int *pa; long *pb; void *pc;
+
+    if (sizeof(long) > sizeof(int)) {
+      a = 0x3E0024; b = 0;
+      pb = &b; pc = (void *)(pb); pa = (int *)(pc); *pa = a;
+      if (int(b) != a) exit(1);
+      *pa = 0x3E0024;
+      if (int(b) != a) exit(1);
+      if (b != long(a)) exit(1);
+    } 
+  } ]])],[useblas64support=YES],[],[])
+fi
+
+if test x$useblas64support = xYES; then
+  AC_DEFINE_UNQUOTED(USE_BLAS64_INTERFACE, 1, [Use blas with 64 bits integers])
+fi
+
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then
-  if test x"$FC" = "x"; then
-    dgetrf=dgetrf_
-  else
-    AC_FC_FUNC(dgetrf)
-  fi;
+#This name mangling detection is currently not in use
+#  if test x"$FC" = "x"; then
+#    dgetrf=dgetrf_
+#  else
+#    AC_FC_FUNC(dgetrf)
+#  fi;
 
-  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
+  # LAPACK linked to by default?  (is sometimes included in BLAS lib)
+  AC_CHECK_FUNC(dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS=""])
+  if test "x$acx_lapack_ok" != xyes; then
+    AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack"])
+  fi
 
   if test x"$acx_lapack_ok" = xyes; then
      CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
@@ -368,10 +726,36 @@ fi
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
+dnl ---------------------------multithread-blas--------------------------
+
+multithread_blas=NO
+AC_ARG_ENABLE(multithread-blas,
+   [AS_HELP_STRING([--enable-multithread-blas],[enable openblas to be multithreaded])],
+   [ case $enableval in
+        yes | "") multithread_blas=YES;;
+        no) multithread_blas=NO;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-multithread-blas], [multithread_blas=NO]) ;;
+     esac
+])
+
+if test x$multithread_blas = xNO; then
+  AC_CHECK_LIB(dl, dlsym, [acx_dl_ok=yes; DL_LIBS="-ldl"])
+  if test x"$acx_dl_ok" = xyes; then
+     AC_DEFINE_UNQUOTED([FORCE_SINGLE_THREAD_BLAS],1,[enable openblas to be multithreaded])
+     LIBS="$DL_LIBS $LIBS"
+  fi
+fi;
+dnl --------------------------end of multithread-blas--------------------
+
+
+
+
+
+
 dnl ---------------------------OPENMP------------------------------
 useopenmp=0
 AC_ARG_ENABLE(openmp,
-   [AS_HELP_STRING([--enable-openmp],[enable the multihreaded version of GetFEM++])],
+   [AS_HELP_STRING([--enable-openmp],[enable the multihreaded version of GetFEM])],
    [ case $enableval in
         yes | "") useopenmp=YES ;;
         no) useopenmp=NO ;;
@@ -384,9 +768,9 @@ if test x$useopenmp = xYES; then
   AC_OPENMP
   if test "x$ac_cv_prog_cxx_openmp" != "xunsupported" && test "x$ac_cv_prog_cxx_openmp" != "x"; then
     AC_SUBST(AM_CXXFLAGS,"$OPENMP_CXXFLAGS")
-    CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_OPENMP"
+    CPPFLAGS="$CPPFLAGS -DGETFEM_HAS_OPENMP"
   else
-    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM++ without OpenMP]);
+    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM without OpenMP]);
   fi
 fi;
 dnl ---------------------------END OF OPENMP-----------------------
@@ -578,7 +962,7 @@ case $host in
         MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
         ;;
     *apple*)
-        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord"
+        MUMPS_SEQ_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps -lmumps_common -lmpiseq -lpord -lgomp"
         ;;
     *)
         MUMPS_SEQ_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
@@ -778,318 +1162,6 @@ fi;
 AC_SUBST(DISTCLEANMESH)
 
 
-dnl -----------------------------------------------
-dnl switch for using the getfem_boost supplied files, or the real boost
-dnl -----------------------------------------------
-
-AC_ARG_ENABLE(boost,
- [AS_HELP_STRING([--enable-boost],[check if boost is installed and use it])],
- [case "${enableval}" in
-  yes) useboost=YES ;;
-  no)  useboost=NO ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-boost]) ;;
- esac],[useboost=NO])
-
-if test "x$useboost" = "xNO" -a "x$useopenmp" = "xYES"; then
-  echo "OpenMP version of GetFEM++ requires the boost library, --enable-boost=no will be ignored";
-  useboost=YES
-fi;
-
-if test "x$useboost" = "xYES"; then
-  if test "x$useopenmp" = "xYES"; then
-    AX_BOOST_BASE([1.53.0], [], [AC_MSG_ERROR(
-    [Please install boost >= 1.53.0 in order to build GetFEM++ with OpenMP support])])
-    AX_BOOST_SYSTEM
-    AX_BOOST_THREAD
-  else
-    AX_BOOST_BASE([1.20.0], [], [AC_MSG_ERROR(
-    [Please install boost >= 1.20.0 (system) or use --enable-boost=no to disable it])])
-    AX_BOOST_SYSTEM
-  fi;
-  BOOST_LIBS="$BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
-  AC_SUBST(BOOST_LIBS)
-fi;
-
-
-dnl -----------------------------------------------
-dnl MATLAB Interface
-dnl -----------------------------------------------
-
-# list of pseudo functions
-PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
-echo $PSEUDO_FUNCTIONS_LOC
-PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
-MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
-AC_SUBST(PSEUDO_FUNCTIONS)
-AC_SUBST(PSEUDO_FUNCTIONS_LOC)
-AC_SUBST(MATLAB_OBJ_DIRS)
-
-AC_ARG_ENABLE(matlab,
- [AS_HELP_STRING([--enable-matlab],[turn on/off matlab support])],
- [case "${enableval}" in
-   yes) usematlab=YES ;;
-   no)  usematlab=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
- esac],[usematlab=NO])
-
-AC_ARG_WITH(matlab-toolbox-dir,
-            [AS_HELP_STRING([--with-matlab-toolbox-dir],[directory in which the matlab interface will be installed])],
-            TOOLBOXDIR="$withval",TOOLBOXDIR="$GFPREFIX/getfem_toolbox")
-AC_SUBST(TOOLBOXDIR)
-
-if test "$usematlab" != NO; then
-  AC_CHECK_PROGS(MEX, mex)
-  if test x"$MEX" = x""; then
-    AC_CHECK_PROGS(MEX, mex.bat)
-    if test x"$MEX" = x""; then
-      if test x$usematlab = xYES; then
-        AC_MSG_ERROR([Impossible to build the matlab interface without mex -- specify its full path with the MEX=/path/to/mex option, or use --enable-matlab-interface=no])
-        exit 1
-      fi
-    else
-      MEX=gnumex;
-      MATLAB_COM_EXT=".dll";
-      echo "You are using Matlab on a windows platform (assuming MingW compiler)";
-      if test -f gnumex.opts; then
-         echo "sourcing gnumex.opts.."
-         source gnumex.opts;         
-         echo "MATLAB_ROOT=$MATLAB_ROOT"
-         echo "Matlab release is : R$MATLAB_RELEASE"
-      elif test x$usematlab = xYES; then
-        echo "You need to fill the gnumex.opts file, for example (use MSys-style paths, not DOS-style paths)"
-        echo '#!/bin/sh'
-        echo 'MATLAB_ROOT="c:\\MATLAB6p5"'
-        echo 'MATLAB_RELEASE=13'
-        echo 'MATLAB_INC_DIR="$MATLAB_ROOT\\extern\\include"'
-        echo 'MEXOPTS=c:\\gnumex\\mexopts.bat'
-        echo "when this is done, check that the gnumex script works correctly"
-        echo " (i.e. gnumex gnumex.opts -v prints the rights options to use the MinGW gcc)"
-        exit 1
-      fi
-    fi
-  else
-     dnl thanks to paolo for pointing the 'twin mex' problem
-     if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
-	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
-     fi;
-    
-     # MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB  " | awk '{print $4}'|sed -e '2,$d'`
-     MEX_EXE=`which $MEX`
-     MEX_EXE=`readlink -e $MEX_EXE`
-     MATLAB_ROOT=`echo $MEX_EXE | sed -e 's/bin.*$//'`
-     MEXEXT=$MATLAB_ROOT/bin/mexext
-     Matlab_INC_DIR=$MATLAB_ROOT/extern/include
-     echo "checking for matlab path... " $MATLAB_ROOT
-     MATLAB_COM_EXT=.`$MEXEXT`
-     echo "checking for mex extension... " $MATLAB_COM_EXT
-#    MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
-#    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
-     MATLAB_RELEASE=`matlab -nosplash -nojvm -r "a=version;display(a);exit" | grep "(R2" | sed -n '1p' | sed 's/^.*R//g' | sed 's/).*$//'`
-     echo "Matlab release is : R$MATLAB_RELEASE"
-  fi
-fi
-AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
-
-AC_SUBST(MATLAB_ROOT)
-AC_SUBST(MATLAB_INC_DIR)
-AC_SUBST(MATLAB_RELEASE)
-AC_SUBST(MATLAB_COM_EXT)
-AC_SUBST(MEX)
-
-AM_CONDITIONAL(USE_MINGW_MEX, test x"$MATLAB_COM_EXT" = x".dll")
-
-
-
-dnl ----------------------------
-dnl RPCs -- matlab interface communication with a separated getfem process
-dnl useful for debugging..
-GETFEM_SERVER="";
-use_rpc="no";
-AC_ARG_ENABLE(matlab-rpc,
- [AS_HELP_STRING([--enable-matlab-rpc],[enable use of RPCs for matlab interface])],
- [ matlab_rpc="yes"; use_rpc="yes";
-   echo "Matlab mex-file will use sun RPCs in order to communicate with the getfem server"],
- [matlab_rpc="no"])
-
-if test x$use_rpc = xyes; then
-  GETFEM_SERVER="getfem_server";
-  AC_ARG_WITH(rpc-include,
-              [AS_HELP_STRING([--with-rpc-include],[directory in which the rpc/rpc.h header can be found])],
-              RPC_INC_DIR="-I$withval",RPC_INC_DIR="")
-  case $host in
-        *alpha*)
-                RPC_LIB="-lrpc";
-                ;;
-	*darwin*)
-	        RPC_LIB="";
-		;;
-        *)
-                RPC_LIB="-lnsl";
-                ;;
-  esac
-  AC_ARG_WITH(rpc-lib,
-              [AS_HELP_STRING([--with-rpc-lib],[linker flags for the RPC library])],
-              RPC_LIB="$withval")
-  AC_SUBST(RPC_INC_DIR)
-  AC_SUBST(RPC_LIB)
-  AC_DEFINE_UNQUOTED(USE_RPC, 1, [Use rpc for getfem communication with matlab])
-fi;
-AC_SUBST(GETFEM_SERVER)
-AM_CONDITIONAL(BUILDMEXRPC, test x$matlab_rpc = xyes)
-
-
-dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
-dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
-dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
-STDCPP_STATICLIBS=""
-
-if test $usematlab = xYES; then
-  dnl ------------------------------------
-  dnl COMPILER SETTINGS
-  compiler_type=dontcare
-  case $CXX in
-   *g++* | c++)
-	case $host in
-	x86_64-*)
-	       echo "Compiling on an x86_64 architecture..."
-	       ;;
-        *-darwin*)
-               echo "Compiling on Darwin (MacOS)"
-		;;
-	*)
-		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
-		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
-		;;
-	esac
-	;;
-   *icc | *icpc)
-	dnl a small remark: with icpc 8.0, the getfem_server will crash 
-	dnl at the first exception throwed (except with -g)
-	dnl the fix is to pass the -static flag at the linker
-	dnl unfortunately, the lovely libtool assumes that icpc won't
-	dnl understand it, and removes it. I hate libtool.
-	dnl so I added the -Wl,-static -- it works for now.
-	GFSERVERFLAGS="-Wl,-static -static"
-	;;
-   *)
-	;;
-  esac
-fi
-AC_SUBST(GFSERVERFLAGS)
-AC_SUBST(STDCPP_STATICLIBS)
-
-
-
-dnl ----------------------------------------------
-dnl python 
-dnl ----------------------------------------------
-
-AC_ARG_ENABLE(python,
- [AS_HELP_STRING([--enable-python],[turn on/off python support])],
- [case "${enableval}" in
-   yes) usepython=YES ;;
-   no)  usepython=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
- esac],[usepython=YES])
-
-AC_ARG_ENABLE(python3,
- [AS_HELP_STRING([--enable-python3],[turn on/off python3 (instead of python2) support])],
- [case "${enableval}" in
-   yes) usepython3=YES ;;
-   no)  usepython3=NO ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python3]) ;;
- esac],[usepython3=NO])
-
-if test x$usepython3 = xYES; then
-  AM_PATH_PYTHON(3.4, usepython=YES, usepython=NO)
-elif test x$usepython = xYES; then
-  AM_PATH_PYTHON(2.7, usepython=YES, usepython=NO)
-fi
-
-case $host in
-    *mingw*)
-        PYTHON_CC_ARG="--compiler=mingw32"
-	PYTHON_EXTRA_EXT_PARAM="extra_compile_args=[['-D MS_WIN64']]"
-        ;;
-    *)
-        PYTHON_CC_ARG=""
-	PYTHON_EXTRA_EXT_PARAM=""
-        ;;
-esac
-
-AC_SUBST(PYTHON_CC_ARG)
-AC_SUBST(PYTHON_EXTRA_EXT_PARAM)
-
-if test "x$usepython" = "xYES"; then
-  echo "Building with python ($PYTHON) support (use --enable-python=no to disable it) "
-  echo "You will need the python-numpy and python-scipy packages."
-dnl  AM_PATH_PYTHON(2.2)
-  AC_PYTHON_DEVEL
-  ac_python_numpy=`$PYTHON -c 'import numpy; print("YES")' 2>/dev/null`
-  if  test "x$ac_python_numpy" != "xYES"; then
-    usepython=NO
-    MSG="PYTHON DISABLED: numpy not found. You need to install the python-numpy package."
-    echo $MSG
-    WARNING_MSG="$WARNING_MSG\n$MSG"
-  fi
-  ac_python_scipy=`$PYTHON -c 'import scipy; print("YES")' 2>/dev/null`
-  if  test "x$ac_python_scipy" != "xYES"; then
-    usepython=NO
-    MSG="PYTHON DISABLED: scipy not found. You need to install the python-scipy package."
-    echo $MSG
-    WARNING_MSG="$WARNING_MSG\n$MSG"
-  fi
-  if  test $paralevel -ge 1; then
-    ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print("YES")' 2>/dev/null`
-    if test "x$ac_python_mpi4py" != "xYES"; then
-      usepython=NO
-      MSG="PARALLEL PYTHON DISABLED: mpi4py not found. You need to install the python-mpi4py package."
-      echo $MSG
-      WARNING_MSG="$WARNING_MSG\n$MSG"
-    fi
-  fi
-fi
-
-AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
-AM_CONDITIONAL(BUILDPYTHONPAR, test x$ac_python_mpi4py = xYES)
-
-dnl -----------------------------------------------
-dnl SCILAB Interface
-dnl -----------------------------------------------
-
-m4_include([m4/scilab.m4])
-
-REQUIRED_SCILAB_MAJOR=5
-REQUIRED_SCILAB_MINOR=2
-REQUIRED_SCILAB_MICRO=0
-
-AC_CHECK_SCILAB
-
-GETFEM_INTERFACE_PATH="`readlink -f $srcdir`"
-GETFEM_BUILD_INTERFACE_PATH="`readlink -f $PWD`"
-AC_SUBST(GETFEM_INTERFACE_PATH)
-AC_SUBST(GETFEM_BUILD_INTERFACE_PATH)
-
-dnl if the scilab directory doesn't exists, we copy the 
-dnl scilab sources into the build directory
-
-if test "x$usescilab" == "xYES"
-then
-  currentdir=`pwd`
-  if test ! -f $currentdir/interface/src/scilab/builder.sce
-  then
-    echo "Copying Scilab toolbox src in the build directory"
-    mkdir -p $currentdir/interface/src/scilab/
-    cp -r $srcdir/interface/src/scilab/* $currentdir/interface/src/scilab
-  fi
-fi
-
-AC_ARG_WITH(scilab-toolbox-dir,
-            [AS_HELP_STRING([--with-scilab-toolbox-dir],[directory in which the scilab interface will be installed])],
-            SCILAB_TOOLBOX_DIR="$withval",SCILAB_TOOLBOX_DIR="$GFPREFIX/getfem_toolbox")
-AC_SUBST(SCILAB_TOOLBOX_DIR)
-
-
 
 dnl -----------------------------------------------
 dnl Outputs
@@ -1123,19 +1195,22 @@ contrib/level_set_contact/Makefile                                      \
 contrib/static_contact_gears/Makefile                                   \
 contrib/test_plasticity/Makefile                                        \
 contrib/opt_assembly/Makefile                                           \
+contrib/continuum_mechanics/Makefile                                    \
 bin/Makefile                                                            \
 interface/Makefile                                                      \
 interface/src/Makefile                                                  \
 interface/src/matlab/Makefile                                           \
 interface/src/matlab/private/Makefile                                   \
+interface/src/octave/Makefile                                           \
+interface/src/octave/private/Makefile                                   \
 interface/src/python/Makefile                                           \
 interface/src/python/setup.py                                           \
 interface/src/scilab/Makefile                                           \
 interface/src/scilab/sci_gateway/c/builder_gateway_c.sce                \
 interface/tests/Makefile                                                \
 interface/tests/meshes/Makefile                                         \
-interface/tests/matlab/Makefile                                         \
-interface/tests/matlab/private/Makefile                                 \
+interface/tests/matlab-octave/Makefile                                  \
+interface/tests/matlab-octave/private/Makefile                          \
 interface/tests/python/Makefile                                         \
 getfem-config                                                           \
 getfem-config-notinstalled                                              \
@@ -1206,15 +1281,20 @@ fi;
 echo "  You can give the location of your prefered blas library with either"
 echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo '  for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'
+if test x$useblas64support = xYES; then
+  echo "  Use blas with 64 bits integers or 32/64 bits compatibility mode"
+else
+  echo "  Use blas with 32 bits integers"
+fi
 echo -e "\n\n"
-
 
 echo "-----------------------------------------------------------------------"
 echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
+echo "  building OCTAVE interface: $useoctave"
 echo "  building PYTHON interface: $usepython (requires numpy, scipy and also mpi4py for the parallel version)"
 echo "  building SCILAB interface: $usescilab"
-echo "  If you want to build the shared library of getfem++, use --enable-shared"
+echo "  If you want to build the shared library of GetFEM, use --enable-shared"
 echo "  (by default, only the static one will be built)"
 echo "-----------------------------------------------------------------------"
 

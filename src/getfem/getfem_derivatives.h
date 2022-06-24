@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2002-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2002-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -231,7 +231,7 @@ namespace getfem
     
     GMM_ASSERT1(!mf_vm.is_reduced(), "Sorry, to be done");
 
-    scalar_type vm_min, vm_max;
+    scalar_type vm_min = 0., vm_max = 0.;
     for (dal::bv_visitor i(mf_vm_dofs); !i.finished(); ++i) {
       VM[i] = 0;
       scalar_type sdiag = 0.;

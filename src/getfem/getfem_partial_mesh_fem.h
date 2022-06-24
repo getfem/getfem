@@ -1,11 +1,11 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2006-2017 Yves Renard, Julien Pommier
+ Copyright (C) 2006-2020 Yves Renard, Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -52,7 +52,7 @@ namespace getfem {
      a subclass of mesh_fem which allows to eliminate a number of dof
      of the original mesh_fem.
   */
-  class partial_mesh_fem : public mesh_fem, public boost::noncopyable {
+  class partial_mesh_fem : public mesh_fem {
   protected :
     const mesh_fem &mf;
     mutable bool is_adapted;
@@ -101,7 +101,7 @@ namespace getfem {
     ind_dof_ct ind_basic_dof_of_element(size_type cv) const
     { return  mf.ind_basic_dof_of_element(cv); }
 
-    const bgeot::mesh_structure::ind_cv_ct &
+    const std::vector<size_type> &
     ind_scalar_basic_dof_of_element(size_type cv) const
     { return mf.ind_scalar_basic_dof_of_element(cv); }
 
@@ -151,6 +151,9 @@ namespace getfem {
 
     partial_mesh_fem(const mesh_fem &mef);
     partial_mesh_fem(const mesh_fem *mef);
+
+    partial_mesh_fem(const partial_mesh_fem&) = delete;
+    partial_mesh_fem& operator = (const partial_mesh_fem&) = delete;
 
   };
 

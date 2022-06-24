@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -27,15 +27,6 @@
 
 namespace bgeot
 {
-
-  bool point_in_convex(const geometric_trans &geoTrans,
-                       const base_node &x,
-                       scalar_type res,
-                       scalar_type IN_EPS) {
-    // Test un peu sevère peut-être en ce qui concerne res.
-    return (geoTrans.convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
-  }
-
   void project_into_convex(base_node &x, const pgeometric_trans pgt) {
 
     for (auto &coord : x) {
@@ -82,7 +73,7 @@ namespace bgeot
     n_ref.resize(pgt->structure()->dim());
     converged = true;
     if (pgt->is_linear())
-      return invert_lin(n, n_ref, IN_EPS, project_into_element);
+      return invert_lin(n, n_ref, IN_EPS);
     else
       return invert_nonlin(n, n_ref, IN_EPS, converged, false,
                            project_into_element);
@@ -90,16 +81,14 @@ namespace bgeot
 
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref,
-                                       scalar_type IN_EPS,
-                                       bool project_into_element) {
+                                       scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
     mult(transposed(B), y, n_ref);
     y = pgt->transform(n_ref, G);
     add(gmm::scaled(n, -1.0), y);
 
-    if (project_into_element) project_into_convex(n_ref, pgt);
-
-    return point_in_convex(*pgt, n_ref, gmm::vect_norm2(y), IN_EPS);
+    return (pgt->convex_ref()->is_in(n_ref) < IN_EPS) &&
+           (gmm::vect_norm2(y) < IN_EPS);
   }
 
   void geotrans_inv_convex::update_B() {
@@ -194,7 +183,6 @@ namespace bgeot
                                           bool /* throw_except */,
                                           bool project_into_element) {
     converged = true;
-
     base_node x0_ref(P), diff(N);
 
     { // find initial guess
@@ -223,17 +211,17 @@ namespace bgeot
       if (res < IN_EPS)
         x *= 0.999888783; // For pyramid element to avoid the singularity
     }
-
+    
     add(pgt->transform(x, G), gmm::scaled(xreal, -1.0), diff);
-    auto res = gmm::vect_norm2(diff);
-    auto res0 = std::numeric_limits<scalar_type>::max();
-    double factor = 1.0;
+    scalar_type res = gmm::vect_norm2(diff);
+    scalar_type res0 = std::numeric_limits<scalar_type>::max();
+    scalar_type factor = 1.0;
 
     base_node x0_real(N);
-    while (res > IN_EPS) {
-      if ((gmm::abs(res - res0) < IN_EPS) || (factor < IN_EPS)) {
+    while (res > IN_EPS/100.) {
+      if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) {
         converged = false;
-        return point_in_convex(*pgt, x, res, IN_EPS);
+        return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
       }
       if (res > res0) {
         add(gmm::scaled(x0_ref, factor), x);
@@ -242,20 +230,19 @@ namespace bgeot
         factor *= 0.5;
       }
       else {
-        if (factor < 1.0-IN_EPS) factor = 2.0;
+        if (factor < 1.0-IN_EPS) factor *= 2.0;
         res0 = res;
       }
       pgt->poly_vector_grad(x, pc);
       update_B();
       mult(transposed(B), diff, x0_ref);
-      add(gmm::scaled(x0_ref, -1.0 * factor), x);
+      add(gmm::scaled(x0_ref, -factor), x);
       if (project_into_element) project_into_convex(x, pgt);
       x0_real = pgt->transform(x, G);
       add(x0_real, gmm::scaled(xreal, -1.0), diff);
       res = gmm::vect_norm2(diff);
     }
-
-    return point_in_convex(*pgt, x, res, IN_EPS);
+    return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
   }
 
 }  /* end of namespace bgeot.                                             */

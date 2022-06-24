@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
-# Copyright (C) 2004-2017 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -22,13 +22,14 @@
 """  2D Poisson problem test.
 
   This program is used to check that python-getfem is working. This is
-  also a good example of use of GetFEM++.
+  also a good example of use of GetFEM.
 
   $Id$
 """
+import numpy as np
+
 # Import basic modules
 import getfem as gf
-import numpy as np
 
 ## Parameters
 NX = 100                           # Mesh parameter.
@@ -43,7 +44,7 @@ m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX),
 # Create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
 mfrhs = gf.MeshFem(m, 1)
-# assign the P2 fem to all convexes of the both MeshFem
+# assign the P2 fem to all elements of the both MeshFem
 mfu.set_fem(gf.Fem('FEM_PK(2,2)'))
 mfrhs.set_fem(gf.Fem('FEM_PK(2,2)'))
 
@@ -57,7 +58,7 @@ tleft = abs(fnor[1,:]+1) < 1e-14
 ttop  = abs(fnor[0,:]-1) < 1e-14
 fleft = np.compress(tleft, flst, axis=1)
 ftop  = np.compress(ttop, flst, axis=1)
-fneum = np.compress(True - ttop - tleft, flst, axis=1)
+fneum = np.compress(np.logical_not(ttop + tleft), flst, axis=1)
 
 # Mark it as boundary
 DIRICHLET_BOUNDARY_NUM1 = 1

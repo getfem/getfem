@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2000-2017 Yves Renard
+ Copyright (C) 2000-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -24,6 +24,7 @@
 #include "getfem/bgeot_poly.h"
 #include "getfem/bgeot_small_vector.h"
 #include "getfem/bgeot_ftool.h"
+#include "getfem/getfem_locale.h"
 
 namespace bgeot {
 
@@ -66,7 +67,7 @@ namespace bgeot {
     }
     return *this;
   }
-  
+
   const power_index &power_index::operator --() {
     short_type n = short_type(size()), l;
     if (n > 0) {
@@ -78,17 +79,17 @@ namespace bgeot {
       if (l != short_type(-1)) {
         short_type a = (*this)[l];
         (*this)[l] = 0; (*this)[n-1] = short_type(a - 1);
-        if (l > 0) ((*this)[l-1])++; 
+        if (l > 0) ((*this)[l-1])++;
         else if (short_type(deg+1)) degree_ = short_type(deg-1);
       }
       if (g_idx+1) global_index_ = g_idx-1;
     }
     return *this;
   }
-  
+
   short_type power_index::degree() const {
     if (degree_ != short_type(-1)) return degree_;
-    degree_ = short_type(std::accumulate(begin(), end(), 0)); 
+    degree_ = short_type(std::accumulate(begin(), end(), 0));
     return degree_;
   }
 
@@ -101,7 +102,7 @@ namespace bgeot {
       { global_index_ += alpha_(n,short_type(d-1)); d=short_type(d-*it); --n; }
     return global_index_;
   }
- 
+
   power_index::power_index(short_type nn) : v(nn), degree_(0), global_index_(0)
   { std::fill(begin(), end(), short_type(0)); alpha_init_(); }
 
@@ -127,7 +128,7 @@ namespace bgeot {
 
   static base_poly read_expression(short_type n, std::istream &f) {
     gmm::stream_standard_locale sl(f);
-    gmm::standard_locale sll;
+    getfem::standard_locale sll;
     base_poly result(n,0);
     std::string s;
     int i = get_next_token(s, f), j;
@@ -183,13 +184,13 @@ namespace bgeot {
     base_poly &p2 = *(value_list.rbegin());
     if (op_list.back() != 6) {
       assert(value_list.size()>1);
-      base_poly &p1 = *(value_list.rbegin()+1);    
+      base_poly &p1 = *(value_list.rbegin()+1);
       switch (op_list.back()) {
         case 1  : p1 *= p2; break;
         case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
         case 3  : p1 += p2; break;
         case 4  : p1 -= p2; break;
-        case 5  : 
+        case 5  :
           {
             if (p2.degree() > 0) parse_error(7);
             int pow = int(to_scalar(p2[0]));
@@ -200,7 +201,7 @@ namespace bgeot {
           break;
         default: assert(0);
       }
-      value_list.pop_back(); 
+      value_list.pop_back();
     } else {
       p2 *= opt_long_scalar_type(-1);
     }
@@ -228,11 +229,11 @@ namespace bgeot {
       value_list.push_back(read_expression(n, f));
       op_list.push_back(op);
       prior_list.push_back(prior);
-      
+
       i = get_next_token(s, f);
       operator_priority_(i, i ? s[0] : '0', prior, op);
     }
-    
+
     if (i == 5 && s[0] == ')') { f.putback(')'); }
     else if (i != 0 && (i != 5 || s[0] != ';')) {
       cout << "s = " << s << endl;

@@ -2,7 +2,7 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: none
 
 .. _dp-contribute:
 
@@ -20,6 +20,21 @@ How to contribute / Git repository on Savannah
 			
 .. |sawebgsrc| replace:: Getfem sources on Savannah
 .. _sawebgsrc: http://git.savannah.nongnu.org/gitweb/?p=getfem.git;a=tree
+
+.. |tfweb| replace:: transifex
+.. _tfweb: https://www.transifex.com
+
+.. |tfwebteam| replace:: Getfem translation team on Transifex
+.. _tfwebteam: https://www.transifex.com/tkoyama010/getfem-doc/dashboard
+
+.. |cfvlang| replace:: Currently supported languages by Sphinx are
+.. _cfvlang: https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language
+
+.. |sphintl| replace:: Sphinx Internationalization
+.. _sphintl: http://www.sphinx-doc.org/en/master/intl.html
+
+.. |readthedocs| replace:: Read the Docs
+.. _readthedocs: https://getfem.readthedocs.io
 
 |gf| is an  open source finite element library based on a collaborative development. If you intend to make some contributions, you can ask for membership of the project there. Contributions of all kinds are welcome: documentation, bug reports, constructive comments, changes suggestions, bug fix, new models, etc ...
 
@@ -56,7 +71,8 @@ Before modifying any file, you have to create a *development branch* because it 
 The first command create the branch and the second one position you on your branch. After that you are nearly ready to makes some modifications. You can specify your contact name and e-mail with the following commands in order to label your changes ::
 
   git config --global user.name "Your Name Comes Here"
-git config --global user.email you@yourdomain.example.com
+  git config --global user.email you@yourdomain.example.com
+
 
 Specific branch for doc improvements and typo-fixes
 ---------------------------------------------------
@@ -83,7 +99,7 @@ You can now transfer your modifications to the Savannah repository with ::
 
   git push origin devel-me-rewrite-fem-kernel
 
-where of course *devel-me-rewrite-fem-kernel* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me-rewrite-fem-kernel* of Savannah repository. 
+where of course *devel-me-rewrite-fem-kernel* is still the name of your branch. At this stage your modifications are registered in the branch *devel-me-rewrite-fem-kernel* of Savannah repository.
 Your role stops here, since you are not allowed to modify the master branch of |gf|.
 
 
@@ -113,3 +129,38 @@ Some useful git commands
   git log --follow "filepath"   : Show all the commits modifying the specified file (and follow the eventual change of name of the file).
 
   gitk --follow filename : same as previous but with a graphical interface
+
+
+Contributing to document translation
+------------------------------------
+
+The recommended way for new contributors to translate document is to join |tfwebteam|_ . For contribution, please make account in |tfweb|_ and click request language and fill form . After translation, pull translated po file from site by using transifex-client. You need api token which you can get in transifex site. ::
+
+  cd doc/sphinx
+  tx pull -l <lang>
+
+Set code for your native language to <lang> (see |cfvlang|_ ).
+
+.. warning::
+
+  **DO NOT** tx push to transifex. It will have some trouble. You can upload file one by one in team page.
+
+After pulling translated po files, set <lang> to LANGUAGE in `doc/sphinx/Makefile.am` . ::
+
+  LANGUAGE      = <lang>
+  SPHINXOPTS    = -D language=$(LANGUAGE)
+
+Then, you can run a following commands in order to make html localization document. ::
+
+  cd doc/sphinx
+  make html
+
+If you want to make pdf file in your language, you can run a ::
+
+  make latex
+  cd build/latex
+  make all-pdf-<lang>
+
+See details in |sphintl|_ .
+
+You can see translated document at |readthedocs|_ by switch language.

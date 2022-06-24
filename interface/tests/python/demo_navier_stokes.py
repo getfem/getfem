@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Python GetFEM++ interface
+# Python GetFEM interface
 #
 # Copyright (C) 2015 Konstantinos Poulios.
 #
-# This file is a part of GetFEM++
+# This file is a part of GetFEM
 #
-# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 3 of the License,  or
 # (at your option) any later version along with the GCC Runtime Library
@@ -24,15 +24,15 @@
 """ Incompressible Navier-Stokes equation solved in an L-shaped domain.
 
   This program is used to check that python-getfem is working. This is also
-  a good example of use of GetFEM++.
+  a good example of use of GetFEM.
 """
 
 # This example is ported from:
 # http://fenicsproject.org/documentation/dolfin/1.0.1/python/demo/pde/navier-stokes/python/documentation.html
 
-import getfem as gf
 import numpy as np
 
+import getfem as gf
 
 W1 = 0.5         #       _____
 H1 = 0.5         #      |  W1 |
@@ -134,4 +134,3 @@ while t < T+1e-8:
                      mfp, md.variable("p"), "Pressure")
    t += dt
    step += 1
-

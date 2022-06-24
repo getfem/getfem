@@ -1,10 +1,10 @@
 /*===========================================================================
 
- Copyright (C) 2013-2018 Yves Renard
+ Copyright (C) 2013-2020 Yves Renard
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
  (at your option) any later version along with the GCC Runtime Library
@@ -50,33 +50,33 @@ namespace getfem {
      option = 0 : strict analysis,
               1 : do not complain about incompatible test functions but
                   store them,
-	      2 : cut incompatible test function branches with respect to the
+              2 : cut incompatible test function branches with respect to the
                   one in workspace.selected_pair
               3 : do not complain about incompatible test functions neither
                   store them.
   */
   void ga_semantic_analysis(ga_tree &tree,
-			    const ga_workspace &workspace,
-			    const mesh &m,
-			    size_type ref_elt_dim,
-			    bool eval_fixed_size,
-			    bool ignore_X, int option = 0);
+                            const ga_workspace &workspace,
+                            const mesh &m,
+                            size_type ref_elt_dim,
+                            bool eval_fixed_size,
+                            bool ignore_X, int option = 0);
 
   /* Extract the variables used in a sub-tree, ignoring or not the data.
      Variable groups are taken into account. Return if at least one variable
      as been detected or not */
   bool ga_extract_variables(const pga_tree_node pnode,
-			    const ga_workspace &workspace,
-			    const mesh &m,
-			    std::set<var_trans_pair> &vars,
-			    bool ignore_data);
+                            const ga_workspace &workspace,
+                            const mesh &m,
+                            std::set<var_trans_pair> &vars,
+                            bool ignore_data);
   
   /* Extract a sub tree which consists of the corresponding node and of
      the terms multiplying this term, but not the term in addition.
      The aim is to expand an expression is a sum of elementary factors.
      Complains if a nonlinear term is encountered. */
   void ga_extract_factor(ga_tree &result_tree, pga_tree_node pnode,
-			 pga_tree_node &new_pnode);
+                         pga_tree_node &new_pnode);
 
   /* Extract the constant term of degree 1 expressions. */
   bool ga_node_extract_constant_term
@@ -93,21 +93,21 @@ namespace getfem {
      The tree is modified and should be copied first and passed to
      ga_semantic_analysis after for enrichment. */
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
-		     const mesh &m, const std::string &varname,
-		     const std::string &interpolatename,
-		     size_type order);
+                     const mesh &m, const std::string &varname,
+                     const std::string &interpolatename,
+                     size_type order);
 
   std::string ga_derivative_scalar_function(const std::string &expr,
-					    const std::string &var);
+                                            const std::string &var);
 
   bool ga_is_affine(const ga_tree &tree, const ga_workspace &workspace,
-		    const std::string &varname,
-		    const std::string &interpolatename);
+                    const std::string &varname,
+                    const std::string &interpolatename);
   
   // Function of internal use
-  inline size_type ref_elt_dim_of_mesh(const mesh &m) {
-    return m.convex_index().card() ?
-      m.trans_of_convex(m.convex_index().first())->dim() : size_type(0);
+  inline size_type ref_elt_dim_of_mesh(const mesh &m, const mesh_region &rg) {
+    auto v = getfem::mr_visitor(rg, m, true);
+    return v.finished() ? size_type(0) : m.trans_of_convex(v.cv())->dim();
   }
   
 

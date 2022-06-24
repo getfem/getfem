@@ -2,23 +2,23 @@
 
 .. include:: ../replaces.txt
 
-.. highlightlang:: c++
+.. highlight:: c++
 
 .. _ud-rmesh:
 
 Mesh refinement
 ===============
 
-Mesh refinement with the Bank et all method (see [bank1983]_) is available in 
-dimension 1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons). 
+Mesh refinement with the Bank et all method (see [bank1983]_) is available in
+dimension 1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons).
 For a given object ``mymesh`` of type |gf_m|, the method::
 
   mymesh.Bank_refine(bv);
 
-refines the elements whose indices are stored in ``bv`` (a |dal_bv| object). The 
-conformity of the mesh is kept thanks to additional refinement (the so called 
-green triangles). Information about green triangles (in Figure 
-:ref:`ud-fig-refine`) is stored on the mesh object to gather them for further 
+refines the elements whose indices are stored in ``bv`` (a |dal_bv| object). The
+conformity of the mesh is kept thanks to additional refinement (the so called
+green triangles). Information about green triangles (in Figure
+:ref:`ud-fig-refine`) is stored on the mesh object to gather them for further
 refinements (see [bank1983]_).
 
 .. _ud-fig-refine:
@@ -51,4 +51,4 @@ computed:
    \int_e |\hspace{0.01em}[\hspace{-0.12em}[
    \partial_n u ]\hspace{-0.12em}]\hspace{0.01em}|^2 d \Gamma,
 
-where :math:`[\hspace{-0.12em}[\partial_n u]\hspace{-0.12em}]` is the jump of the normal derivative. Then, the error estimate for a given element is the sum of the computed quantities on each internal face multiplied by the element diameter. This basic error estimate can be taken as a model for more elaborated ones. It uses the high-level generic assembly and the ``neighbour_elt`` interpolate transformation (see :ref:`ud-gasm-high-inter-elt-disc`).
+where :math:`[\hspace{-0.12em}[\partial_n u]\hspace{-0.12em}]` is the jump of the normal derivative. Then, the error estimate for a given element is the sum of the computed quantities on each internal face multiplied by the element diameter. This basic error estimate can be taken as a model for more elaborated ones. It uses the high-level generic assembly and the ``neighbor_element`` interpolate transformation (see :ref:`ud-gasm-high-inter-elt-disc`).

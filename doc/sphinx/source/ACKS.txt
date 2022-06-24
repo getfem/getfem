@@ -1,7 +1,7 @@
-Contributors to the GetFEM++ Documentation
-------------------------------------------
+Contributors to the GetFEM Documentation
+----------------------------------------
 
-This section lists people who have contributed in some way to the GetFEM++
+This section lists people who have contributed in some way to the GetFEM
 documentation.  It is probably not complete -- if you feel that you or
 anyone else should be on this list, please let us know (send email to
 getfem-users@nongnu.org), and we'll be glad to correct the problem.
