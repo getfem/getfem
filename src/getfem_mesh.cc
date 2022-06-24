@@ -1150,7 +1150,7 @@ namespace getfem {
       pgp = bgeot::geotrans_precomp(pgt, pspt, 0);
     }
 
-    base_node pt(n);
+    base_node pt(dim());
     ipt.resize(pspt->size());
     for (size_type ip = 0; ip < pspt->size(); ++ip) {
       pgp->transform(points_of_convex(i), ip, pt);
@@ -1229,6 +1229,7 @@ namespace getfem {
       else return icc;
     }
     else if (ref) Bank_refine_normal_convex(i);
+
     return size_type(-1);
   }
 
@@ -1283,7 +1284,7 @@ namespace getfem {
     bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt1, pspt1, 0);
 
     std::vector<size_type> ipt1(pspt1->size());
-    base_node pt(n);
+    base_node pt(dim());
     for (size_type i = 0; i < pspt1->size(); ++i) {
       pgp->transform(mesh2.points_of_convex(ic1), i, pt);
       ipt1[i] = mesh2.add_point(pt);
