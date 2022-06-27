@@ -1,4 +1,4 @@
-#  Copyright (C) 1999-2020 Yves Renard, Julien Pommier
+#  Copyright (C) 1999-2022 Yves Renard, Julien Pommier
 #
 #  This file is a part of GetFEM++
 #
@@ -60,6 +60,7 @@ gmake install
 Basic Installation
 ==================
 
+   See also https://getfem.org/install/install_linux.html
 
    These are generic installation instructions.
 
@@ -260,22 +261,5 @@ In principle, if they are present on your machine, you will get
 If this is not the case you have to install these via Xcode:
 http://developer.apple.com/technologies/xcode.html
 
-Once you are sure that gcc and g++ are present, you need gmm++: see the site
-http://download.gna.org/getfem/html/homepage/gmm.html
-However in order to install gmm++ on your machine, once the corresponding directory has been created by unzipping the source files, you have to go to that unzipped directory and then issue the command ./configure with the following options:
-./configure CC="gcc -arch i386" CXX="g++ -arch i386" CPP="gcc -E" CXXCPP="g++ -E"
-
- Here we are assuming that you are on an Intel i386 machine: for ppc machines change the
--arch i386
-option to
--arch ppc
-
-After this, in order to compile getfem++ you need a current version where in the source files "uint" has ben changed to "unsigned int" (in principle this is done in the most recent stable version). For instance you can download such a version at
-http://math.univ-lyon1.fr/~renard/temp/getfem-4.0.tar.gz
-
-Then you have to to go to that unzipped directory and say in your Terminal window (for architectures other than Intel i386 see above):
-./configure CC="gcc -arch i386" CXX="g++ -arch i386" CPP="gcc -E" CXXCPP="g++ -E"
-
-Once this step is done without getting an error message, then you issue successively the commands
-make
-make install
+See the remain part of the installation guide on
+https://getfem.org/install/install_mac.html

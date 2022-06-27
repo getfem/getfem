@@ -16,7 +16,8 @@
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 if QHULL
-optpy = check_levelset.py
+optpy = check_levelset.py                               \
+        demo_thermo_elasticity_electrical_coupling.py
 else
 optpy =
 endif
@@ -47,12 +48,12 @@ EXTRA_DIST= 						\
 	demo_static_contact.py 				\
 	demo_dynamic_contact_1D.py			\
 	demo_Mindlin_Reissner_plate.py 			\
+        demo_thermo_elasticity_electrical_coupling.py	\
 	demo_step_by_step.py				\
 	demo_stokes_3D_tank.py          		\
 	demo_stokes_3D_tank_draw.py			\
 	demo_finite_strain_plasticity.py                \
 	demo_finite_strain_plasticity_3D.py             \
-	demo_thermo_elasticity_electrical_coupling.py 	\
 	demo_cracked_thermo_elastic_body.py             \
 	demo_nonlinear_elasticity.py		 	\
 	demo_elasticity_HHO.py                          \
@@ -78,7 +79,6 @@ TESTS = 						\
 	demo_laplacian.py				\
 	demo_laplacian_HHO.py				\
 	demo_elasticity_HHO.py                          \
-	demo_thermo_elasticity_electrical_coupling.py 	\
 	$(optpy)
 
 AM_TESTS_ENVIRONMENT = \
