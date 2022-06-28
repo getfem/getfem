@@ -22,7 +22,7 @@
 ############################################################################
 
 """ Incompressible Navier-Stokes fluid in interaction with a ball in a cavity.
-  Middle point scheme for the fluid, Verlet scheme for the ball (not the
+  Middle point scheme for the fluid, Verlet's scheme for the ball (not the
   best but can of course be changed)
 
   This program is used to check that python-getfem is working. This is also
@@ -34,12 +34,15 @@ import numpy as np
 import getfem as gf
 gf.util('trace level', 0)
 
+version = 1   # 1-without cut-fem and Nitsche's method,
+              # 2-with cut-fem
+
 # Phisical parameters (à ajuster pour être physique ...)
 nu = 0.002        # cinematic viscosity
 rho = 1.          # fluid density      
 mu = rho * nu     # dynamic viscosity
 g = 9.81          # gravity
-in_velocity = 1.  # inward velocity at the center bottom
+in_velocity = 4.  # inward velocity at the center bottom
 ball_radius = 0.1
 ball_mass = 0.032
 ball_init_pos = np.array([0., 0.2])
@@ -47,11 +50,11 @@ ball_init_pos = np.array([0., 0.2])
 # Discretization parameters
 dt = 0.01       # Time step
 T = 40.         # Final time
-gamma0 = 1E3    # Nitsche's method parameter
+gamma0 = 1.     # Nitsche's method parameter
 
 # Geometry and Mesh of the cavity
-W1 = 0.1          #       ____________
-W2 = 0.45         #   H2 |_          _|
+W1 = 0.05         #       ____________
+W2 = 0.475        #   H2 |_          _|
 W = W1+2.*W2      #      |            |
 H1 = 0.8          #      |            |
 H2 = 0.2          #   H1 |            |
@@ -148,23 +151,30 @@ md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, OUT_RG2, "v_out2")
 md.add_Dirichlet_condition_with_multipliers(mim, "v", mfv, WALL_RG)
 
 # Diffusive terms
-md.add_nonlinear_term(mim_out, "(1/dt)*rho*(v-v0).Test_v + mu*Grad_v:Grad_Test_v")
+if (version == 2):
+   mim_t = mim_out;
+else:
+   mim_t = mim
+md.add_nonlinear_term(mim_t, "(1/dt)*rho*(v-v0).Test_v + mu*Grad_v:Grad_Test_v")
 # Nonlinear convective term
-md.add_nonlinear_term(mim_out, "0.25*rho*((Grad_v+Grad_v0)*(v+v0)).Test_v")
+md.add_nonlinear_term(mim_t, "0.25*rho*((Grad_v+Grad_v0)*(v+v0)).Test_v")
 # Pressure terms
-md.add_nonlinear_term(mim_out, "-p*Div_Test_v - 0.5*Test_p*(Div_v+Div_v0)")
+md.add_nonlinear_term(mim_t, "-p*Div_Test_v - 0.5*Test_p*(Div_v+Div_v0)")
 # Gravity term
-md.add_nonlinear_term(mim_out, "-f.Test_v")
+md.add_nonlinear_term(mim_t, "-f.Test_v")
 # Small ghost penalty term
-md.add_linear_term(mim, "1E-4*(Grad_v-Interpolate(Grad_v, neighbor_element)):(Grad_Test_v-Interpolate(Grad_Test_v, neighbor_element))", INTERNAL_EDGES)
-# md.add_linear_term(mim, "1E-7*(p-Interpolate(p, neighbor_element))*(Test_p-Interpolate(Test_p, neighbor_element))", INTERNAL_EDGES)
-# Penalty term on internal dofs
-Bv = gf.Spmat('empty',nbdofv)
-ibv = md.add_explicit_matrix("v", "v", Bv)
-Bp = gf.Spmat('empty',nbdofp)
-ibp = md.add_explicit_matrix("p", "p", Bp)
+if (version == 2):
+  md.add_linear_term(mim, "1E-6*(Grad_v-Interpolate(Grad_v, neighbor_element)):(Grad_Test_v-Interpolate(Grad_Test_v, neighbor_element))", INTERNAL_EDGES)
+  # md.add_linear_term(mim, "1E-7*(p-Interpolate(p, neighbor_element))*(Test_p-Interpolate(Test_p, neighbor_element))", INTERNAL_EDGES)
+  # Penalty term on internal dofs
+  Bv = gf.Spmat('empty',nbdofv)
+  ibv = md.add_explicit_matrix("v", "v", Bv)
+  Bp = gf.Spmat('empty',nbdofp)
+  ibp = md.add_explicit_matrix("p", "p", Bp)
+  # md.add_linear_term(mim_in, "1E-4*(v - ball_v).Test_v")
 # Nitsche's term on the FS interface
-md.add_nonlinear_term(mim_bound, "-(mu*Grad_v-p*Id(meshdim))*Normalized(Grad_ls).Test_v + gamma * (v-ball_v).Test_v - (mu*Grad_Test_v)*Normalized(Grad_ls).(v-ball_v)")
+if ((version == 1) or (version == 2)):
+  md.add_nonlinear_term(mim_bound, "-(mu*Grad_v-p*Id(meshdim))*Normalized(Grad_ls).Test_v + gamma * (v-ball_v).Test_v - (mu*Grad_Test_v)*Normalized(Grad_ls).(v-ball_v)")
 
 t = 0
 step = 0
@@ -188,14 +198,15 @@ while t < T+1e-8:
    mim_out.adapt()
 
    # Penalization of ball internal dofs with no contribution on the boundary
-   idofv = np.setdiff1d(np.arange(nbdofv), mfv.dof_from_im(mim_out))
-   idofp = np.setdiff1d(np.arange(nbdofp), mfp.dof_from_im(mim_out))
-   Bv = gf.Spmat('empty', nbdofv)
-   for i in idofv: Bv.add(i,i,1.)
-   md.set_private_matrix(ibv, Bv)
-   Bp = gf.Spmat('empty', nbdofp)
-   for i in idofp: Bp.add(i,i,1.)
-   md.set_private_matrix(ibp, Bp)
+   if (version == 2):
+     idofv = np.setdiff1d(np.arange(nbdofv), mfv.dof_from_im(mim_out))
+     idofp = np.setdiff1d(np.arange(nbdofp), mfp.dof_from_im(mim_out))
+     Bv = gf.Spmat('empty', nbdofv)
+     for i in idofv: Bv.add(i,i,1.)
+     md.set_private_matrix(ibv, Bv)
+     Bp = gf.Spmat('empty', nbdofp)
+     for i in idofp: Bp.add(i,i,1.)
+     md.set_private_matrix(ibp, Bp)
    
    # Solve
    # md.solve("noisy", "lsolver", "mumps", "max_res", 1e-8)
