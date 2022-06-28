@@ -2996,7 +2996,7 @@ namespace getfem {
     }
     if (tc2_.sparsity() == 2) {
       size_type q2 = tc2.sizes()[1];
-      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[1] : 1;
+      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[2] : 1;
       if (n2*q2 == n) {
         switch (n2) {
         case 1:
@@ -3067,7 +3067,7 @@ namespace getfem {
     }
     if (tc1_.sparsity() == 2) {
       size_type q1 = tc1.sizes()[1];
-      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[1] : 1;
+      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[2] : 1;
       if (n1*q1 == n) {
         switch (n1) {
         case 1:
@@ -3206,7 +3206,7 @@ namespace getfem {
     }
     if (tc2_.sparsity() == 2) {
       size_type q2 = tc2.sizes()[1];
-      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[1] : 1;
+      size_type n2 = (tc2.sizes().size() > 2) ? tc2.sizes()[2] : 1;
       if (n2*q2 == n) {
         switch (n2) {
         case 1:
@@ -3277,7 +3277,7 @@ namespace getfem {
     }
     if (tc1_.sparsity() == 2) {
       size_type q1 = tc1.sizes()[1];
-      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[1] : 1;
+      size_type n1 = (tc1.sizes().size() > 2) ? tc1.sizes()[2] : 1;
       if (n1*q1 == n) {
         switch (n1) {
         case 1:
