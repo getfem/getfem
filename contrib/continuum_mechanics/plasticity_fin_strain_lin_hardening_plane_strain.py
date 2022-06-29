@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
 # Copyright (C) 2020-2020 Konstantinos Poulios.
@@ -62,9 +62,11 @@ mult_fem_order = 2  # dirichlet multipliers finite element order
 #integration_degree = 3 # 4 gauss points per quad
 integration_degree = 5 # 9 gauss points per quad
 
+export_results = False;
+
 #------------------------------------
 resultspath = "./results"
-if not os.path.exists(resultspath):
+if (export_results and not os.path.exists(resultspath)):
    os.makedirs(resultspath)
 
 tee = subprocess.Popen(["tee", "%s/tension_plane_strain.log" % resultspath],
@@ -117,8 +119,9 @@ if dH > 0:
       pts[0,i] = x
       pts[1,i] -= (y*dH)/(2*H) * (1 + np.cos(2.*np.pi*x/L))
    mesh.set_pts(pts)
-
-mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
+   
+if (export_results):
+   mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
 
 # FEM
 mfN = gf.MeshFem(mesh, N)
@@ -192,9 +195,15 @@ print("Model dofs: %i" % md.nbdof())
 print("Displacement fem dofs: %i" % mfu.nbdof())
 print("Dirichlet mult dofs: %i" % md.mesh_fem_of_variable("dirmult").nbdof())
 
-shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
+if (export_results):
+   shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
+
 starttime_overall = time.process_time()
-with open("%s/tension_plane_strain.dat" % resultspath, "w") as f1:
+
+if (export_results):
+   f1 = open("%s/tension_plane_strain.dat" % resultspath, "w")
+
+try:
    for step in range(steps_t+1):
       md.set_variable("disp", disp*step/float(steps_t))
       print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")))
@@ -211,11 +220,12 @@ with open("%s/tension_plane_strain.dat" % resultspath, "w") as f1:
       V = gf.asm_generic(mim, 0, "1", -1, md)
       sigma11 = gf.asm_generic(mim, 0, "sigma(1,1)", -1, md)/V
       gamma = gf.asm_generic(mim, 0, "gamma", -1, md)/V
-      f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
-               % (md.variable("disp"), F, A, F/A, sigma11, gamma))
-      f1.flush()
+      if (export_results):
+         f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
+                  % (md.variable("disp"), F, A, F/A, sigma11, gamma))
+         f1.flush()
 
-      output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
+         output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
                 mfout1, md.local_projection(mim, "J", mfout1), "J",
                 mfout1, md.local_projection(mim, "sigma(1,1)", mfout1), "Cauchy stress 11",
                 mfout1, md.local_projection(mim, "sigma(2,2)", mfout1), "Cauchy stress 22",
@@ -224,13 +234,17 @@ with open("%s/tension_plane_strain.dat" % resultspath, "w") as f1:
                 mfu, md.variable("u"), "Displacements",
                 mfout2, md.interpolation("dirmult", mfout2, XP_RG), "Nominal reaction traction",
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
-      mfout2.export_to_vtu("%s/tension_plane_strain_%i.vtu" % (resultspath, step), *output)
+         
+         mfout2.export_to_vtu("%s/tension_plane_strain_%i.vtu" % (resultspath, step), *output)
 
       md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
       md.set_variable("invCp0vec",
                       md.interpolation("[[[1,0,0,0]  ,[0,0,0,0.5],[0,0,0,0]],"+\
                                        " [[0,0,0,0.5],[0,1,0,0]  ,[0,0,0,0]],"+\
                                        " [[0,0,0,0]  ,[0,0,0,0]  ,[0,0,1,0]]]:invCp", mimd4, -1))
+finally:
+   if (export_results) :
+      f1.close()
 
 print('OVERALL SOLUTION TIME IS %f SEC' % (time.process_time()-starttime_overall))
 

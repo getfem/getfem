@@ -15,12 +15,17 @@
 #  along  with  this program;  if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
+EXTRA_DIST = \
+	plasticity_fin_strain_lin_hardening_axisymmetric.py	\
+	plasticity_finite_strain_linear_hardening_tension_3D.py \
+	plasticity_fin_strain_lin_hardening_plane_strain.py
+
 check_PROGRAMS = 
 
 CLEANFILES = 
 
 if BUILDPYTHON
-TESTS = plasticity_finite_strain_linear_hardening_tension_plane_strain.py
+TESTS = plasticity_fin_strain_lin_hardening_plane_strain.py
 
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
@@ -28,7 +33,4 @@ AM_TESTS_ENVIRONMENT = \
 LOG_COMPILER = $(PYTHON)
 endif
 
-EXTRA_DIST = \
-	plasticity_finite_strain_linear_hardening_tension_3D.py \
-	plasticity_finite_strain_linear_hardening_tension_axisymmetric.py \
-	plasticity_finite_strain_linear_hardening_tension_plane_strain.py
+CLEANFILES = *.vtk results/* __pycache__/*

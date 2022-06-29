@@ -68,12 +68,12 @@ check_PROGRAMS =                   \
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt 			    \
 	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh       \
-	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh      \
+	helmholtz.vtk helmholtz.vtu plate.mesh plate.vtk 		    \
+	nonlinear_elastostatic.mesh					    \
 	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd                \
 	nonlinear_elastostatic.dx plasticity.mesh plasticity.U              \
         plasticity.sigmabar plasticity.meshfem plasticity.coef              \
-	ii_files/* auto_gmm* dyn*.txt                                       \
-	*.sl time FN0 *.vtk             \
+	ii_files/* auto_gmm* dyn*.txt *.sl time FN0 *.vtk                   \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
 	Q2_incomplete.pos Q2_incomplete.msh
