@@ -34,23 +34,23 @@ import numpy as np
 import getfem as gf
 gf.util('trace level', 0)
 
-version = 1   # 1-without cut-fem and Nitsche's method,
-              # 2-with cut-fem
+version = 1       # 1-without cut-fem and Nitsche's method,
+                  # 2-with cut-fem
 
-# Phisical parameters (à ajuster pour être physique ...)
+# Phisical parameters
 nu = 0.002        # cinematic viscosity
 rho = 1.          # fluid density      
 mu = rho * nu     # dynamic viscosity
 g = 9.81          # gravity
 in_velocity = 4.  # inward velocity at the center bottom
 ball_radius = 0.1
-ball_mass = 0.032
-ball_init_pos = np.array([0., 0.2])
+ball_mass = 0.033
+ball_init_pos = np.array([0., 0.3])
 
 # Discretization parameters
-dt = 0.01       # Time step
-T = 40.         # Final time
-gamma0 = 1.     # Nitsche's method parameter
+dt = 0.01         # Time step
+T = 40.           # Final time
+gamma0 = 1.       # Nitsche's method parameter
 
 # Geometry and Mesh of the cavity
 W1 = 0.05         #       ____________
@@ -176,20 +176,37 @@ if (version == 2):
 if ((version == 1) or (version == 2)):
   md.add_nonlinear_term(mim_bound, "-(mu*Grad_v-p*Id(meshdim))*Normalized(Grad_ls).Test_v + gamma * (v-ball_v).Test_v - (mu*Grad_Test_v)*Normalized(Grad_ls).(v-ball_v)")
 
-t = 0
-step = 0
-ball_pos = ball_init_pos
-ball_pos_prec = ball_init_pos
+t = 0; step = 0; ball_pos = ball_init_pos; ball_pos_prec = ball_init_pos
 ball_v = np.array([0., 0.])
 os.system('mkdir -p FSI_results');
 while t < T+1e-8:
    print("Solving step at t=%f" % t)
    md.set_variable("v0", md.variable("v"))
+
+   # Balance of forces on the ball and Verlet's scheme
+   R = gf.asm('generic', mim_bound, 0,
+              '(2*mu*Sym(Grad_v)-p*Id(meshdim))*Normalized(Grad_ls)', -1, md)
+   # R = gf.asm('generic', mim_bound, 0, 'Normalized(Grad_ls)', -1, md)
+   ball_pos_next = 2*ball_pos - ball_pos_prec + dt*dt*(R/ball_mass - [0, g])
+   ball_v = (ball_pos_next - ball_pos) / dt
    md.set_variable("ball_v", ball_v)
+
+   # Enforce the ball to remain inside the cavity
+   if (ball_pos_next[0] < -W/2+ball_radius) :
+      ball_pos_next[0] = -W/2+ball_radius; ball_v[0] *= 0.
+   if (ball_pos_next[0] >  W/2-ball_radius) :
+      ball_pos_next[0] =  W/2-ball_radius; ball_v[0] *= 0.
+   if (ball_pos_next[1] <  ball_radius)     :
+      ball_pos_next[1] =  ball_radius; ball_v[1] *= 0.
+   if (ball_pos_next[1] >  H-ball_radius)   :
+      ball_pos_next[1] =  H-ball_radius; ball_v[1] *= 0.
+   print ("ball position = ", ball_pos, " ball velocity = ", ball_v)
+
+   ball_pos_mid = (ball_pos + ball_pos_next)/2
    
    # levelset update
    P = mf_ls.basic_dof_nodes(); x = P[0,:]; y = P[1,:]
-   ULS = ((x - ball_pos[0])**2 + (y - ball_pos[1])**2) - ball_radius**2
+   ULS = ((x - ball_pos_mid[0])**2 + (y - ball_pos_mid[1])**2) - ball_radius**2
    ls.set_values(ULS)
    md.set_variable('ls', ULS)
    mls.adapt()
@@ -212,32 +229,12 @@ while t < T+1e-8:
    # md.solve("noisy", "lsolver", "mumps", "max_res", 1e-8)
    md.solve("max_res", 1e-8, "max_iter", 25)
 
-   # Balance of forces on the ball and Verlet's scheme
-   R = gf.asm('generic', mim_bound, 0,
-              '(2*mu*Sym(Grad_v)-p*Id(meshdim))*Normalized(Grad_ls)', -1, md)
-   # R = gf.asm('generic', mim_bound, 0, 'Normalized(Grad_ls)', -1, md)
-   ball_pos_next = 2*ball_pos - ball_pos_prec + dt*dt*(R/ball_mass - [0, g])
-   ball_v = (ball_pos_next - ball_pos_prec) / (2*dt)
-   ball_pos_prec = ball_pos
-   ball_pos = ball_pos_next
-   
-   # Enforce the ball to remain inside the cavity
-   if (ball_pos[0] < -W/2+ball_radius) :
-      ball_pos_prec[0] = ball_pos[0] = -W/2+ball_radius; ball_v[0] *= 0.
-   if (ball_pos[0] >  W/2-ball_radius) :
-      ball_pos_prec[0] = ball_pos[0] =  W/2-ball_radius; ball_v[0] *= 0.
-   if (ball_pos[1] <  ball_radius)     :
-      ball_pos_prec[1] = ball_pos[1] =  ball_radius; ball_v[1] *= 0.
-   if (ball_pos[1] >  H-ball_radius)   :
-      ball_pos_prec[1] = ball_pos[1] =  H-ball_radius; ball_v[1] *= 0.
-   print ("ball position = ", ball_pos, " ball velocity = ", ball_v)
-
    # Post-processing
    cut_m = mls.cut_mesh();
    mfd = gf.MeshFem(cut_m, 1)
    mfd.set_classical_discontinuous_fem(0)
    P = mfd.basic_dof_nodes(); x = P[0,:]; y = P[1,:]
-   UB = (((x - ball_pos_prec[0])**2 + (y - ball_pos_prec[1])**2)
+   UB = (((x - ball_pos_mid[0])**2 + (y - ball_pos_mid[1])**2)
          - ball_radius**2) >= 0.
    mfd.export_to_vtk("FSI_results/FSI_%i.vtk" % step,
                       mfv, md.variable("v"), "Velocity",
@@ -245,6 +242,8 @@ while t < T+1e-8:
                       mfd, UB, "Ball position")
    t += dt
    step += 1
+   ball_pos_prec = ball_pos
+   ball_pos = ball_pos_next
 
 print("See for instance with ")
 print("paraview FSI_results/FSI_..vtk")
