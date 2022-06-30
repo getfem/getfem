@@ -134,6 +134,7 @@ md.add_fem_data("v0", mfv)
 md.add_fem_data("ls", mf_ls)
 md.add_fem_variable("p", mfp)
 md.add_fem_data("p_in", mfp)
+md.add_fem_data("p0", mfp)
 md.add_initialized_data("f", [0., -rho*g])
 md.add_initialized_data("ball_v", [0., 0.])
 md.add_initialized_data("v_in", [0., in_velocity])
@@ -181,11 +182,10 @@ ball_v = np.array([0., 0.])
 os.system('mkdir -p FSI_results');
 while t < T+1e-8:
    print("Solving step at t=%f" % t)
-   md.set_variable("v0", md.variable("v"))
 
    # Balance of forces on the ball and Verlet's scheme
    R = gf.asm('generic', mim_bound, 0,
-              '(2*mu*Sym(Grad_v)-p*Id(meshdim))*Normalized(Grad_ls)', -1, md)
+              '(2*mu*Sym(Grad_v)-0.5*(p+p0)*Id(meshdim))*Normalized(Grad_ls)', -1, md)
    # R = gf.asm('generic', mim_bound, 0, 'Normalized(Grad_ls)', -1, md)
    ball_pos_next = 2*ball_pos - ball_pos_prec + dt*dt*(R/ball_mass - [0, g])
    ball_v = (ball_pos_next - ball_pos) / dt
@@ -227,6 +227,8 @@ while t < T+1e-8:
    
    # Solve
    # md.solve("noisy", "lsolver", "mumps", "max_res", 1e-8)
+   md.set_variable("v0", md.variable("v"))
+   md.set_variable("p0", md.variable("p"))
    md.solve("max_res", 1e-8, "max_iter", 25)
 
    # Post-processing
