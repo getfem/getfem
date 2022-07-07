@@ -31,6 +31,15 @@ import numpy as np
 # Import basic modules
 import getfem as gf
 
+plot_result = False;
+
+if plot_result:
+  import vtk
+  from matplotlib.pyplot import figure
+  import matplotlib.pyplot as plt
+  import meshio
+  from matplotlib import ticker
+
 ## Parameters
 NX = 100                           # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
@@ -131,10 +140,37 @@ print('Error in L2 norm : ', L2error)
 print('Error in H1 norm : ', H1error)
 
 # Export data
-mfu.export_to_pos('laplacian.pos', Ue,'Exact solution',
-                                    U,'Computed solution')
+sl4 = gf.Slice(("none",), mfu, 1)
+sl4.export_to_vtk('laplacian.vtk', "ascii", mfu, Ue,'Exact_solution', mfu, U,'Computed_solution')
 print('You can view the solution with (for example):')
-print('gmsh laplacian.pos')
+print('Paraview laplacian.vtk')
+
+
+if plot_result:
+  reader = meshio.read('laplacian.vtk')
+  points = reader.points
+  cells = reader.cells[0].data
+  point_data = reader.point_data["Computed_solution"]
+  fig = figure(figsize=(7, 7))
+  axes2 = fig.add_subplot(aspect="auto",projection='3d')
+  axes2.triplot(points[:, 0], points[:, 1], cells, color="gray")
+  contour = axes2.plot_trisurf(points[:, 0], points[:, 1],
+                            point_data[:,0], cmap="jet")
+  fig.colorbar(contour)
+  axes2.view_init(30, 100)
+  fig.tight_layout()
+  formatter = ticker.ScalarFormatter(useMathText=True)
+  formatter.set_scientific(True)
+  axes2.yaxis.set_major_formatter(formatter)
+  axes2.set_title("uref")
+  fig.savefig("uref.pdf")
+  plt.show()
+
+
+
+
+
+
 
 
 if (H1error > 1e-3):
