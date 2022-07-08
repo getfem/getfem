@@ -1,7 +1,7 @@
 .. include:: ../replaces.txt
 
 **************************
-  What's New in |gf| 5.4.1
+  What's New in |gf| 5.4.2
 **************************
 
 |gf| 5.4.2 is a patch version.
