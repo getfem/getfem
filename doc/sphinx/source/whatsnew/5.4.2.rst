@@ -6,7 +6,7 @@
 
 |gf| 5.4.2 is a patch version.
 
-Released version, 2022/07/01.
+Released version, 2022/07/08.
 
 The main changes are:
 

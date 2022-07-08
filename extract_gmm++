@@ -22,6 +22,7 @@ eval 'exec perl -S $0 "$@"'
 $getfem_root = ".";
 $MAJOR_VERSION = "5";
 $MINOR_VERSION = "4";
+$PATCH_VERSION = "2";
 # $DATE_VERSION = -`date +%Y%m%d`;
 # $DATE_VERSION = ".0";
 
@@ -136,7 +137,7 @@ dnl ./configure: sh internal 2K buffer overflow on HP-UX 9.xx
 dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl\n
-AC_INIT(gmm, $MAJOR_VERSION.$MINOR_VERSION)
+AC_INIT(gmm, $MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AX_PREFIX_CONFIG_H(src/gmm/gmm_arch_config.h,GMM)
@@ -145,6 +146,10 @@ AC_ARG_PROGRAM\n
 PACKAGE="gmm"
 MAJOR_VERSION="$MAJOR_VERSION"
 MINOR_VERSION="$MINOR_VERSION"
+PATCH_VERSION="$PATCH_VERSION"
+AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[Major version number])
+AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[Minor version number])
+AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[Patch version number])
 dnl VERSION=\$MAJOR_VERSION.\$MINOR_VERSION$DATE_VERSION
 VERSION=\$MAJOR_VERSION.\$MINOR_VERSION
 echo "configuring \$PACKAGE \$VERSION..."\n
