@@ -71,7 +71,7 @@ namespace getfem {
     /** Get the set of convexes where an integration method has been assigned.
      */
     inline const dal::bit_vector &convex_index(void) const
-    { return im_convexes; }
+    { context_check(); return im_convexes; }
 
     bool is_lower_dimensional() const { return is_lower_dim; }
 
@@ -119,9 +119,8 @@ namespace getfem {
     void clear(void);
 
     size_type memsize() const {
-      return
-        sizeof(mesh_im) +
-        ims.memsize() + im_convexes.memsize();
+      context_check(); 
+      return sizeof(mesh_im) + ims.memsize() + im_convexes.memsize();
     }
 
     void init_with_mesh(const mesh &me);
