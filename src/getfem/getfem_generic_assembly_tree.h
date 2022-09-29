@@ -235,7 +235,7 @@ namespace getfem {
     void set_sparsity(int sp, size_type q)
     { sparsity_ = sp; qdim_ = q; }
 
-    size_type qdim() { return is_copied ? tensor_copied->qdim() : qdim_; }
+    size_type qdim() const { return is_copied ? tensor_copied->qdim() : qdim_; }
 
     int sparsity() const
     { return is_copied ? tensor_copied->sparsity() : sparsity_; }
