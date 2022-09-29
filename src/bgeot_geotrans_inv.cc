@@ -220,7 +220,9 @@ namespace bgeot
     base_node x0_real(N);
     while (res > IN_EPS/100.) {
       if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) {
-        converged = false;
+        // relaxed convergence criterion depending on the size and position
+        // of the real element
+        converged = (res < gmm::mat_maxnorm(G) * IN_EPS/100.);
         return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
       }
       if (res > res0) {
