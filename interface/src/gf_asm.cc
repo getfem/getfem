@@ -488,7 +488,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
           nbdof += mf->nb_dof();
           workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
         }  else if (mimd) {
-          THROW_BADARG("Data defined on integration points can not be a variable");
+          gmm::sub_interval I(nbdof, mimd->nb_filtered_index());
+          nbdof += mimd->nb_filtered_index();
+          workspace.add_im_variable(varname, *mimd, I, vectors[varname]);
         }  else {
           gmm::sub_interval I(nbdof, U.size());
           nbdof += U.size();
@@ -604,7 +606,7 @@ static void do_expression_analysis(mexargs_in& in, mexargs_out& out) {
       if (mf)
         workspace.add_fem_variable(varname, *mf, dummy_I, dummy_V);
       else if (mimd) {
-        THROW_BADARG("Data defined on integration points can not be a variable");
+        workspace.add_im_variable(varname, *mimd, dummy_I, dummy_V);
       } else
         workspace.add_fixed_size_variable(varname, dummy_I, dummy_V);
     }
