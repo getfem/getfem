@@ -10,7 +10,7 @@ Build a mesh
 ============
 
 As a preliminary, you may want to read this short introduction to the |gf|
-`vocabulary`_.
+`glossary`_.
 
 |gf| has its own structure to store meshes defined in the files
 :file:`getfem/bgeot_mesh_structure.h` and :file:`getfem/getfem_mesh.h`. The main

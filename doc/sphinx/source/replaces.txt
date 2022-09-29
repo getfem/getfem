@@ -85,7 +85,7 @@
 .. |mlab_ms| replace:: gfMdState
 .. _specific guides: http://getfem.org/index.html
 .. _user documentation: http://getfem.org/userdoc/index.html
-.. _vocabulary: http://getfem.org/getfem_reference/index.html
+.. _glossary: https://getfem.org/glossary.html
 .. _VTK: https://vtk.org/Wiki/VTK_XML_Formats
 .. _VTU: https://vtk.org/Wiki/VTK_XML_Formats
 .. _MayaVi: http://mayavi.sourceforge.net

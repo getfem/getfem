@@ -28,13 +28,13 @@ where ``mymesh`` is an already existing mesh. The structure will be linked to th
 mesh and will react when modifications will be done on it.
 
 It is possible to specify element by element the finite element method, so that
-element of mixed types can be treated, even if the dimensions are different. For
-usual elements, the connection between two elements is done when the two elements
-are compatibles (same degrees of freedom on the common face). A numeration of the
-degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You
-have to keep in mind that there is absolutely no connection between the numeration
-of vertices of the mesh and the numeration of the degrees of freedom. Every
-|gf_mf| object has its own numeration.
+|mf|'s of mixed types can be treated, even if they contain elements with different
+dimensions. For usual elements, the connection between two elements is done when
+the two elements are compatibles (same degrees of freedom on the common face). A
+numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee
+like algorithm. You have to keep in mind that there is absolutely no connection
+between the numeration of vertices of the mesh and the numeration of the degrees
+of freedom. Every |gf_mf| object has its own numeration.
 
 There are three levels in the |gf_mf| object:
 
@@ -42,31 +42,31 @@ There are three levels in the |gf_mf| object:
   the dimensions of the elements and the property to be vectorial or scalar.
 
 * The optional vectorization/tensorization (the qdim in getfem jargon,
-  see `vocabulary`_). For instance to represent a displacement or a
+  see `glossary`_). For instance to represent a displacement or a
   tensor field in continuum mechanics. Scalar
   elements are used componentwise. Note that you can mix some
   intrinsic vectorial elements (Raviart-Thomas element for instance)
   which will not be vectorized and
   scalar elements which will be.
 
-* (|gf| version 4.0) The optional additional linear transformation (reduction) of
-  the degrees of freedom. It will consist in giving two matrices, the reduction
-  matrix and the extension matrix. The reduction matrix should transform the basic
-  dofs into the reduced dofs (the number of reduced dofs should be less or equal
-  than the number of basic dofs). The extension matrix should describe the inverse
-  transformation. The product of the reduction matrix with the extension matrix
-  should be the identity matrix (ensuring in particular that the two matrices are
-  of maximal rank). This optional transformation can be used to reduce the finite
-  element space to a certain region (tipically a boundary) or to prescribe some
-  matching conditions between non naturally compatible fems (for instance fems
-  with different degrees).
+* The optional additional linear transformation (reduction) of the degrees of
+  freedom. It consists in defining two matrices, the reduction matrix and the
+  extension matrix. The reduction matrix should transform the basic dofs into the
+  reduced dofs (the number of reduced dofs should be less or equal than the number
+  of basic dofs). The extension matrix should describe the inverse transformation.
+  The product of the reduction matrix with the extension matrix should be the
+  identity matrix (ensuring in particular that the two matrices are of maximal
+  rank). This optional transformation can be used to reduce the finite element
+  space to a certain region (tipically a boundary) or to prescribe some matching
+  conditions between non naturally compatible fems (for instance fems with
+  different degrees).
 
 One has to keep in mind this construction manipulating the degrees of freedom of a
 |gf_mf| object.
 
 
-First level: manipulating fems on each elements
------------------------------------------------
+First level: manipulating fems on specific elements
+---------------------------------------------------
 
 To select a particular finite element method on a given element, use the method::
 
@@ -173,8 +173,8 @@ particular method directly on a set of element, passing to
 selects the method on all the elements of the mesh.
 
 
-Second level: the optional "vectorization/tensorization"
---------------------------------------------------------
+Second level: optional "vectorization/tensorization"
+----------------------------------------------------
 
 If the finite element represents an unknown which is a vector field, the method ``mf.set_qdim(Q)`` allows set the target dimension for the definition of the
 target dimension :math:`Q`.
@@ -261,8 +261,8 @@ At this level are defined the basic degrees of freedom. Some methods of the
    the correspondence between basic and reduced dofs.
 
 
-Third level: the optional linear transformation (or reduction)
---------------------------------------------------------------
+Third level: optional linear transformation (or reduction)
+----------------------------------------------------------
 
 As described above, it is possible to provide two matrices, a reduction matrix
 :math:`R` and an extension matrix :math:`E` which will describe a linear
