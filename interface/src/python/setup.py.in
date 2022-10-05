@@ -22,7 +22,7 @@
 """This is the getfem-python-interface module.
 
 """
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import os
 
 try:

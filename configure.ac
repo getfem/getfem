@@ -450,7 +450,7 @@ if test "x$usepython" = "xYES"; then
   echo "Building with python ($PYTHON) support (use --enable-python=no to disable it) "
   echo "You will need the python-numpy and python-scipy packages."
 dnl  AM_PATH_PYTHON(2.2)
-  AC_PYTHON_DEVEL
+  AX_PYTHON_DEVEL
   ac_python_numpy=`$PYTHON -c 'import numpy; print("YES")' 2>/dev/null`
   if  test "x$ac_python_numpy" != "xYES"; then
     usepython=NO
@@ -474,7 +474,7 @@ dnl  AM_PATH_PYTHON(2.2)
       WARNING_MSG="$WARNING_MSG\n$MSG"
     fi
   fi
-  PYTHON_SO=`$PYTHON -c "import distutils.sysconfig, sys; get = distutils.sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
+  PYTHON_SO=`$PYTHON -c "import sysconfig, sys; get = sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
   AC_SUBST(PYTHON_SO)
 fi
 
