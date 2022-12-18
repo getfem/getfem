@@ -88,7 +88,7 @@ namespace getfem {
     virtual void hess(const base_node &pt, base_matrix&) const = 0;
 
     global_function_simple(dim_type dim__) : global_function(dim__)
-    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Global function simple");}
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Global function simple"); }
     virtual ~global_function_simple()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function simple"); }
   };

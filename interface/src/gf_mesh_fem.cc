@@ -41,10 +41,10 @@ using namespace getfemint;
 struct sub_gf_mf : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   const getfem::mesh *mm,
-		   std::shared_ptr<getfem::mesh_fem> &mmf,
-		   unsigned q_dim) = 0;
+                   getfemint::mexargs_out& out,
+                   const getfem::mesh *mm,
+                   std::shared_ptr<getfem::mesh_fem> &mmf,
+                   unsigned q_dim) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_mf> psub_command;
@@ -53,19 +53,19 @@ typedef std::shared_ptr<sub_gf_mf> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mf {					\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       const getfem::mesh *mm,				\
-		       std::shared_ptr<getfem::mesh_fem> &mmf,		\
-		       unsigned q_dim)					\
-      { dummy_func(in); dummy_func(out); dummy_func(mm);		\
-	dummy_func(q_dim); code }					\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mf {                                        \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const getfem::mesh *mm,                              \
+                       std::shared_ptr<getfem::mesh_fem> &mmf,              \
+                       unsigned q_dim)                                      \
+      { dummy_func(in); dummy_func(out); dummy_func(mm);                    \
+        dummy_func(q_dim); code }                                           \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin;   psubc->arg_in_max = arginmax;           \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 /*@INIT MF = ('.mesh', @tmesh m[, @int Qdim1=1[, @int Qdim2=1, ...]])
@@ -78,7 +78,7 @@ template <typename T> static inline void dummy_func(T &) {}
   Returns the handle of the created object. @*/
 
 void gf_mesh_fem(getfemint::mexargs_in& m_in,
-		 getfemint::mexargs_out& m_out) {
+                 getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -94,15 +94,15 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
        if (in.remaining())  {
-	 mm = extract_mesh_object(in.pop());
-	 mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+         mm = extract_mesh_object(in.pop());
+         mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
        } else {
-	 auto m = std::make_shared<getfem::mesh>();
-	 m->read_from_file(fname);
-	 store_mesh_object(m);
-	 mm = m.get();
-	 mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
-	 workspace().add_hidden_object(store_meshfem_object(mmf), m);
+         auto m = std::make_shared<getfem::mesh>();
+         m->read_from_file(fname);
+         store_mesh_object(m);
+         mm = m.get();
+         mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+         workspace().add_hidden_object(store_meshfem_object(mmf), m);
        }
        mmf->read_from_file(fname);
        );
@@ -115,16 +115,16 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
        if (in.remaining()) {
-	 mm = extract_mesh_object(in.pop());
-	 mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+         mm = extract_mesh_object(in.pop());
+         mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
 
        } else {
-	 auto m = std::make_shared<getfem::mesh>();
-	 m->read_from_file(ss);
-	 store_mesh_object(m);
-	 mm = m.get();
-	 mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
-	 workspace().add_hidden_object(store_meshfem_object(mmf), m);
+         auto m = std::make_shared<getfem::mesh>();
+         m->read_from_file(ss);
+         store_mesh_object(m);
+         mm = m.get();
+         mmf = std::make_shared<getfem::mesh_fem>(*mm, q_dim);
+         workspace().add_hidden_object(store_meshfem_object(mmf), m);
        }
        mmf->read_from_file(ss);
        );
@@ -152,14 +152,14 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        std::vector<const getfem::mesh_fem*> mftab;
        std::shared_ptr<getfem::mesh_fem_sum> msum;
        while (in.remaining()) {
-	 getfem::mesh_fem *gfimf = to_meshfem_object(in.pop());
-	 if (mmf.get() == 0) {
-	   mm = &gfimf->linked_mesh();
-	   msum = std::make_shared<getfem::mesh_fem_sum>(*mm);
-	   mmf = msum; store_meshfem_object(mmf);
-	 }
-	 workspace().set_dependence(mmf.get(), gfimf);
-	 mftab.push_back(gfimf);
+         getfem::mesh_fem *gfimf = to_meshfem_object(in.pop());
+         if (mmf.get() == 0) {
+           mm = &gfimf->linked_mesh();
+           msum = std::make_shared<getfem::mesh_fem_sum>(*mm);
+           mmf = msum; store_meshfem_object(mmf);
+         }
+         workspace().set_dependence(mmf.get(), gfimf);
+         mftab.push_back(gfimf);
        }
        msum->set_mesh_fems(mftab);
        msum->adapt();
@@ -211,12 +211,12 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        auto pls = to_levelset_object(in.pop());
        mexargs_in in_gf(1, &in.pop().arg, true);
        if (in.remaining() && in.front().is_integer())
-	 q_dim = in.pop().to_integer(1,256);
+         q_dim = in.pop().to_integer(1,256);
 
        std::vector<getfem::pglobal_function> vfunc(size_type(in_gf.narg()));
        for (size_type i = 0; i < vfunc.size(); ++i) {
-	 getfem::pxy_function s = to_global_function_object(in_gf.pop());
-	 vfunc[i] = getfem::global_function_on_level_set(*pls, s);
+         getfem::pxy_function s = to_global_function_object(in_gf.pop());
+         vfunc[i] = getfem::global_function_on_level_set(*pls, s);
        }
 
        auto mfgf = std::make_shared<getfem::mesh_fem_global_function>(*mm);
@@ -262,8 +262,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     SUBC_TAB::iterator it = subc_tab.find(cmd);
     if (it != subc_tab.end()) {
       check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-		it->second->arg_in_max, it->second->arg_out_min,
-		it->second->arg_out_max);
+                it->second->arg_in_max, it->second->arg_out_min,
+                it->second->arg_out_max);
       it->second->run(m_in, m_out, mm, mmf, q_dim);
     }
     else bad_cmd(init_cmd);

@@ -88,7 +88,7 @@ namespace dal {
 // Little tool for debug : detects the deleted static stored objects for
 // which the destructor is not called (i.e. a shared pointer is still stored
 // somewhere. Not thread safe.
-// Rule : Each potential stored object should called
+// Rule : Each potential stored object should call
 // DAL_STORED_OBJECT_DEBUG_CREATED(this, "name") in the constructor and
 // DAL_STORED_OBJECT_DEBUG_DESTROYED(this) in the destructor.
   class static_stored_object;

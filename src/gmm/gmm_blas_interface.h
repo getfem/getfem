@@ -57,7 +57,7 @@ namespace gmm {
 #else // By default BLAS_INT will just be int in C
   #define BLAS_INT int
 #endif
-  
+
   /* ********************************************************************* */
   /* Operations interfaced for T = float, double, std::complex<float>      */
   /*    or std::complex<double> :                                          */
