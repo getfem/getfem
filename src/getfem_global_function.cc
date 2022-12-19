@@ -1,7 +1,7 @@
 /*===========================================================================
 
- Copyright (C) 2004-2020 Yves Renard
- Copyright (C) 2016-2020 Konstantinos Poulios
+ Copyright (C) 2004-2022 Yves Renard
+ Copyright (C) 2016-2022 Konstantinos Poulios
 
  This file is a part of GetFEM
 
@@ -830,6 +830,558 @@ namespace getfem {
                                const pxy_function &fn) {
     return std::make_shared<global_function_on_levelsets_2D_>(ls, fn);
   }
+
+
+
+
+  // Global function for bspline basis
+  const scalar_type eps(1e-12);
+
+  // order k = 3
+  scalar_type bsp3_01(scalar_type t) {
+    return (t >= -eps && t < 1) ? pow(1.-t,2)
+                                : 0;
+  }
+  scalar_type bsp3_01_der(scalar_type t) {
+    return (t >= -eps && t < 1) ? 2.*t-2.
+                                : 0;
+  }
+  scalar_type bsp3_01_der2(scalar_type t) {
+    return (t >= eps && t <= 1.-eps) ? 2.
+                                     : 0;
+  }
+  scalar_type bsp3_01_der2_with_hint(scalar_type t, scalar_type t_hint) {
+    return (t > -eps && t < 1.+eps && t_hint > 0 && t_hint < 1) ? 2.
+                                                                : 0;
+  }
+  scalar_type bsp3_02(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1)
+        return (-1.5*t+2.)*t;
+      else if (t < 2)
+        return 0.5*pow(2.-t,2);
+    }
+    return 0;
+  }
+  scalar_type bsp3_02_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1)
+        return -3.*t+2.;
+      else if (t < 2)
+        return t-2.;
+    }
+    return 0;
+  }
+  scalar_type bsp3_02_der2(scalar_type t) {
+    if (t >= eps) {
+      if (t < 1.-eps)
+        return -3.;
+      else if (t < 1.+eps)
+        return 0;
+      else if (t <= 2.-eps)
+        return 1.;
+    }
+    return 0;
+  }
+  scalar_type bsp3_03(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return 0.5*t*t;
+      } else if (t < 2) {
+        t -= 1.;
+        return t*(1-t)+0.5;
+      } else if (t < 3) {
+        t = 3.-t;
+        return 0.5*t*t;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp3_03_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return t;
+      } else if (t < 2) {
+        t -= 1.;
+        return 1.-2.*t;
+      } else if (t < 3) {
+        return t-3.;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp3_03_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < eps)
+        return 0;
+      else if (t <= 1.-eps)
+        return 1.;
+      else if (t < 1.+eps)
+        return 0;
+      else if (t <= 2.-eps)
+        return -2.;
+      else if (t < 2.+eps)
+        return 0;
+      else if (t <= 3.-eps)
+        return 1.;
+      else if (t < 3.+eps)
+        return 0;
+    }
+    return 0;
+  }
+
+  // order k = 4
+  scalar_type bsp4_01(scalar_type t) {
+    return (t >= -eps && t < 1) ? pow(1.-t,3)
+                                : 0;
+  }
+  scalar_type bsp4_01_der(scalar_type t) {
+    return (t >= -eps && t < 1) ? -3*pow(1.-t,2)
+                                : 0;
+  }
+  scalar_type bsp4_01_der2(scalar_type t) {
+    return (t >= -eps && t < 1) ? 6*(1.-t)
+                                : 0;
+  }
+  scalar_type bsp4_02(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return ((7./4.*t-9./2.)*t+3.)*t;
+      } else if (t < 2) {
+        return 1./4.*pow(2.-t,3);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_02_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (21./4.*t-9.)*t+3.;
+      } else if (t < 2) {
+        return -3./4.*pow(2.-t,2);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_02_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return 21./2.*t-9.;
+      } else if (t < 2) {
+        return 3./2.*(2.-t);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_03(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-11./12.*t+3./2.)*t*t;
+      } else if (t < 2) {
+        t -= 1;
+        return ((7./12.*t-5./4.)*t+1./4.)*t+7./12.;
+      } else if (t < 3) {
+        return 1./6.*pow(3.-t,3);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_03_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-11./4.*t+3.)*t;
+      } else if (t < 2) {
+        t -= 1;
+        return (7./4.*t-5./2.)*t+1./4.;
+      } else if (t < 3) {
+        return -1./2.*pow(3.-t,2);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_03_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return -11./2.*t+3.;
+      } else if (t < 2) {
+        t -= 1;
+        return 7./2.*t-5./2.;
+      } else if (t < 3) {
+        return 3.-t;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_04(scalar_type t) {
+    if (t > 2) {
+      t = 4.-t;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return 1./6.*pow(t,3);
+      } else if (t <= 2) {
+        t = t-1.;
+        return ((-1./2.*t+1./2.)*t+1./2.)*t+1./6.;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_04_der(scalar_type t) {
+    scalar_type sgn(1);
+    if (t > 2) {
+      t = 4.-t;
+      sgn = -1.;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return 1./2.*pow(t,2)*sgn;
+      } else if (t < 2) {
+        t = t-1.;
+        return ((-3./2.*t+1.)*t+1./2.)*sgn;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp4_04_der2(scalar_type t) {
+    if (t > 2) {
+      t = 4.-t;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return t;
+      } else if (t < 2) {
+        t = t-1.;
+        return -3.*t+1.;
+      }
+    }
+    return 0;
+  }
+
+
+  // order k = 5
+  scalar_type bsp5_01(scalar_type t) {
+    return (t >= -eps && t < 1) ? pow(1.-t,4)
+                                : 0;
+  }
+  scalar_type bsp5_01_der(scalar_type t) {
+    return (t >= -eps && t < 1) ? -4.*pow(1.-t,3)
+                                : 0;
+  }
+  scalar_type bsp5_01_der2(scalar_type t) {
+    return (t >= -eps && t < 1) ? 12.*pow(1.-t,2)
+                                : 0;
+  }
+  scalar_type bsp5_02(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (((-15./8.*t+7.)*t-9.)*t+4.)*t;
+      } else if (t < 2) {
+        return 1./8.*pow(2.-t,4);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_02_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return ((-15./2.*t+21.)*t-18.)*t+4.;
+      } else if (t < 2) {
+        return -1./2.*pow(2.-t,3);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_02_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-45./2.*t+42.)*t-18.;
+      } else if (t < 2) {
+        return 3./2.*pow(2.-t,2);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_03(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return ((85./72.*t-11./3.)*t+3.)*t*t;
+      } else if (t < 2) {
+        t = 2.-t;
+        return (((-23./72*t+2./9.)*t+1./3.)*t+2./9.)*t+1./18.;
+      } else if (t < 3) {
+        return 1./18.*pow(3.-t,4);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_03_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return ((85./18.*t-11.)*t+6.)*t;
+      } else if (t < 2) {
+        t = 2.-t;
+        return -(((-23./18*t+2./3.)*t+2./3.)*t+2./9.);
+      } else if (t < 3) {
+        return -2./9.*pow(3.-t,3);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_03_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (85./6.*t-22.)*t+6.;
+      } else if (t < 2) {
+        t = 2.-t;
+        return (-23./6*t+4./3.)*t+2./3.;
+      } else if (t < 3) {
+        return 2./3.*pow(3.-t,2);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_04(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-25./72.*t+2./3.)*t*t*t;
+      } else if (t < 2) {
+        t = 2.-t;
+        return (((23./72.*t-5./9.)*t-1./3.)*t+4./9.)*t+4./9.;
+      } else if (t < 3) {
+        t = t-2.;
+        return (((-13./72.*t+5./9.)*t-1./3.)*t-4./9.)*t+4./9.;
+      } else if (t < 4) {
+        return 1./24.*pow(4.-t,4);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_04_der(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-25./18.*t+2.)*t*t;
+      } else if (t < 2) {
+        t = 2.-t;
+        return -(((23./18.*t-5./3.)*t-2./3.)*t+4./9.);
+      } else if (t < 3) {
+        t = t-2.;
+        return ((-13./18.*t+5./3.)*t-2./3.)*t-4./9.;
+      } else if (t < 4) {
+        return -1./6.*pow(4.-t,3);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_04_der2(scalar_type t) {
+    if (t >= -eps) {
+      if (t < 1) {
+        return (-25./6.*t+4.)*t;
+      } else if (t < 2) {
+        t = 2.-t;
+        return (23./6.*t-10./3.)*t-2./3.;
+      } else if (t < 3) {
+        t = t-2.;
+        return -((-13./6.*t+10./3.)*t-2./3.);
+      } else if (t < 4) {
+        return 1./2.*pow(4.-t,2);
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_05(scalar_type t) {
+    if (t > scalar_type(2.5)) {
+      t = 5.-t;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return 1./24.*pow(t,4);
+      } else if (t < 2) {
+        t = t-1.;
+        return (((-1./6.*t+1./6.)*t+1./4.)*t+1./6.)*t+1./24.;
+      } else if (t < 3) {
+        t = pow(t-2.5,2);
+        return (1./4.*t-5./8.)*t+115./192.;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_05_der(scalar_type t) {
+    scalar_type sgn(1);
+    if (t > scalar_type(2.5)) {
+      t = 5.-t;
+      sgn = -1.;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return 1./6.*pow(t,3)*sgn;
+      } else if (t < 2) {
+        t = t-1.;
+        return (((-2./3.*t+1./2.)*t+1./2)*t+1./6.)*sgn;
+      } else if (t < 3) {
+        t = t-2.5;
+        return (t*t-5./4.)*t*sgn;
+      }
+    }
+    return 0;
+  }
+  scalar_type bsp5_05_der2(scalar_type t) {
+    if (t > scalar_type(2.5)) {
+      t = 5.-t;
+    }
+    if (t >= -eps) {
+      if (t < 1) {
+        return 1./2.*pow(t,2);
+      } else if (t < 2) {
+        t = t-1.;
+        return (-2.*t+1.)*t+1./2;
+      } else if (t < 3) {
+        t = t-2.5;
+        return 3*t*t-5./4.;
+      }
+    }
+    return 0;
+  }
+
+
+
+  class global_function_xy_bspline_
+    : public global_function_simple, public context_dependencies {
+    scalar_type xmin, ymin, xmax, ymax, xscale, yscale;
+    std::function<scalar_type(scalar_type)>
+      fx, fy, fx_der, fy_der, fx_der2, fy_der2;
+  public:
+    void update_from_context() const {}
+
+    virtual scalar_type val(const base_node &pt) const
+    {
+      return fx(xscale*(pt[0]-xmin))
+             * fy(yscale*(pt[1]-ymin));
+    }
+    virtual void grad(const base_node &pt, base_small_vector &g) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin),
+                  dy = yscale*(pt[1]-ymin);
+      g.resize(dim_);
+      g[0] = xscale * fx_der(dx) * fy(dy);
+      g[1] = fx(dx) * yscale * fy_der(dy);
+    }
+    virtual void hess(const base_node &pt, base_matrix &h) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin),
+                  dy = yscale*(pt[1]-ymin);
+      h.resize(dim_, dim_);
+      gmm::clear(h);
+      h(0,0) = xscale*xscale * fx_der2(dx) * fy(dy);
+      h(0,1) = h(1,0) = xscale * fx_der(dx) * yscale * fy_der(dy);
+      h(1,1) = fx(dx) * yscale*yscale * fy_der2(dy);
+    }
+
+    virtual bool is_in_support(const base_node &pt) const {
+      scalar_type dx = pt[0]-(xmin+xmax)/2,
+                  dy = pt[1]-(ymin+ymax)/2;
+      return (gmm::abs(dx)+1e-9 < gmm::abs(xmax-xmin)/2) &&
+             (gmm::abs(dy)+1e-9 < gmm::abs(ymax-ymin)/2);
+    }
+
+    virtual void bounding_box(base_node &bmin, base_node &bmax) const {
+      GMM_ASSERT1(bmin.size() == dim_ && bmax.size() == dim_,
+                  "Wrong dimensions");
+      bmin[0] = std::min(xmin,xmax);
+      bmin[1] = std::min(ymin,ymax);
+      bmax[0] = std::max(xmin,xmax);
+      bmax[1] = std::max(ymin,ymax);
+    }
+
+    global_function_xy_bspline_(const scalar_type &xmin_, const scalar_type &xmax_,
+                                const scalar_type &ymin_, const scalar_type &ymax_,
+                                const size_type &order, 
+                                const size_type &xtype, const size_type &ytype)
+    : global_function_simple(2), xmin(xmin_), ymin(ymin_), xmax(xmax_), ymax(ymax_),
+      xscale(scalar_type(xtype)/(xmax-xmin)), yscale(scalar_type(ytype)/(ymax-ymin))
+    {
+      GMM_ASSERT1(order >= 3 && order <= 5, "Wrong input");
+      GMM_ASSERT1(xtype >= 1 && xtype <= order &&
+                  ytype >= 1 && ytype <= order, "Wrong input");
+      if (order == 3) {
+        if (xtype == 1) {
+          fx = bsp3_01;   fx_der = bsp3_01_der;   fx_der2 = bsp3_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp3_02;   fx_der = bsp3_02_der;   fx_der2 = bsp3_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp3_03;   fx_der = bsp3_03_der;   fx_der2 = bsp3_03_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp3_01;   fy_der = bsp3_01_der;   fy_der2 = bsp3_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp3_02;   fy_der = bsp3_02_der;   fy_der2 = bsp3_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp3_03;   fy_der = bsp3_03_der;   fy_der2 = bsp3_03_der2;
+        }
+      } else if (order == 4) {
+        if (xtype == 1) {
+          fx = bsp4_01;   fx_der = bsp4_01_der;   fx_der2 = bsp4_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp4_02;   fx_der = bsp4_02_der;   fx_der2 = bsp4_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp4_03;   fx_der = bsp4_03_der;   fx_der2 = bsp4_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp4_04;   fx_der = bsp4_04_der;   fx_der2 = bsp4_04_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp4_01;   fy_der = bsp4_01_der;   fy_der2 = bsp4_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp4_02;   fy_der = bsp4_02_der;   fy_der2 = bsp4_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp4_03;   fy_der = bsp4_03_der;   fy_der2 = bsp4_03_der2;
+        } else if (ytype == 4) {
+          fy = bsp4_04;   fy_der = bsp4_04_der;   fy_der2 = bsp4_04_der2;
+        }
+
+      } else if (order == 5) {
+        if (xtype == 1) {
+          fx = bsp5_01;   fx_der = bsp5_01_der;   fx_der2 = bsp5_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp5_02;   fx_der = bsp5_02_der;   fx_der2 = bsp5_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp5_03;   fx_der = bsp5_03_der;   fx_der2 = bsp5_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp5_04;   fx_der = bsp5_04_der;   fx_der2 = bsp5_04_der2;
+        } else if (xtype == 5) {
+          fx = bsp5_05;   fx_der = bsp5_05_der;   fx_der2 = bsp5_05_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp5_01;   fy_der = bsp5_01_der;   fy_der2 = bsp5_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp5_02;   fy_der = bsp5_02_der;   fy_der2 = bsp5_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp5_03;   fy_der = bsp5_03_der;   fy_der2 = bsp5_03_der2;
+        } else if (ytype == 4) {
+          fy = bsp5_04;   fy_der = bsp5_04_der;   fy_der2 = bsp5_04_der2;
+        } else if (ytype == 5) {
+          fy = bsp5_05;   fy_der = bsp5_05_der;   fy_der2 = bsp5_05_der2;
+        }
+      }
+    }
+
+    virtual ~global_function_xy_bspline_()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function xy bspline"); }
+  };
+
+
+  pglobal_function
+  global_function_bspline(scalar_type &xmin, scalar_type &xmax,
+                          scalar_type &ymin, scalar_type &ymax,
+                          size_type &order,
+                          size_type &xtype, size_type &ytype) {
+    return std::make_shared<global_function_xy_bspline_>
+                           (xmin, xmax, ymin, ymax, order, xtype, ytype);
+  }
+
+
+
 
   // interpolator on mesh_fem
 

@@ -320,6 +320,11 @@ namespace getfem {
   global_function_on_level_sets(const std::vector<level_set> &lsets,
                                 const pxy_function &fn);
 
+  pglobal_function
+  global_function_bspline(scalar_type &xmin, scalar_type &xmax,
+                          scalar_type &ymin, scalar_type &ymax,
+                          size_type &order,
+                          size_type &xtype, size_type &ytype);
 
 }  /* end of namespace getfem.                                            */
 

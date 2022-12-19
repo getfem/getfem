@@ -62,6 +62,17 @@ namespace getfem {
     virtual ~mesh_fem_global_function() { clear(); }
   };
 
+  /** This function will generate bspline basis functions in an NX x NY
+      rectilinear grid. The generated basis spans the entire bounding
+      box of the mesh linked by mf. The function will finally set the
+      generated bspline basis functions as the basis of mf.
+      In case mim is provided, this integration method will be used to
+      determine the support of he basis functions.
+  */
+  void define_bspline_basis_functions_for_mesh_fem
+  (mesh_fem_global_function &mf,
+   size_type NX, size_type NY, size_type order,
+   const mesh_im &mim=dummy_mesh_im());
 
 }  /* end of namespace getfem.                                            */
 
