@@ -226,6 +226,24 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@INIT MF = ('bspline', @tmesh m, @int NX, @int NY, @int order)
+      Create a @tmf on mesh `m`, whose basis functions are global functions
+      corresponding to bspline basis of order `order`, in an NX x NY grid
+      that spans the entire bounding box of `m`. @*/
+    sub_command
+      ("bspline", 3, 4, 0, 1,
+       mm = extract_mesh_object(in.pop());
+       size_type NX = in.pop().to_integer(1,1000);
+       size_type NY = in.pop().to_integer(1,1000);
+       size_type order = in.pop().to_integer(3,5);
+
+       auto mfgf = std::make_shared<getfem::mesh_fem_global_function>(*mm);
+       mfgf->set_qdim(1.);
+       define_bspline_basis_functions_for_mesh_fem(*mfgf, NX, NY, order);
+       mmf = mfgf;
+       );
+
+
     /*@INIT MF = ('partial', @tmf mf, @ivec DOFs[, @ivec RCVs])
       Build a restricted @tmf by keeping only a subset of the degrees of
       freedom of `mf`.
