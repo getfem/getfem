@@ -4209,7 +4209,7 @@ namespace getfem {
       pnode->t.adjust_sizes(mi);
       break;
     case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_GRAD_TEST:
-      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
+      if (pnode->node_type == GA_NODE_ELEMENTARY_GRAD)
         pnode->node_type = GA_NODE_ELEMENTARY_HESS;
       else
         pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
