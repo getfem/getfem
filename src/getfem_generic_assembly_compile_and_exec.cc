@@ -3658,7 +3658,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_c_matrix_with_tests
-    (base_tensor &t_, const std::vector<const base_tensor *>  &components_)
+    (base_tensor &t_, const std::vector<const base_tensor *> &components_)
       : t(t_), components(components_) {}
   };
 

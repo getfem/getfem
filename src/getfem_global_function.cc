@@ -1294,7 +1294,7 @@ namespace getfem {
 
     global_function_xy_bspline_(const scalar_type &xmin_, const scalar_type &xmax_,
                                 const scalar_type &ymin_, const scalar_type &ymax_,
-                                const size_type &order, 
+                                const size_type &order,
                                 const size_type &xtype, const size_type &ytype)
     : global_function_simple(2), xmin(xmin_), ymin(ymin_), xmax(xmax_), ymax(ymax_),
       xscale(scalar_type(xtype)/(xmax-xmin)), yscale(scalar_type(ytype)/(ymax-ymin))

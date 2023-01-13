@@ -51,25 +51,25 @@ namespace getfemint {
      Do not forget to modify also 'name_of_getfemint_class_id' just after
   */
   typedef enum { CONT_STRUCT_CLASS_ID,
-		 CVSTRUCT_CLASS_ID,
-		 ELTM_CLASS_ID,
-		 FEM_CLASS_ID,
-		 GEOTRANS_CLASS_ID,
-		 GLOBAL_FUNCTION_CLASS_ID,
-		 INTEG_CLASS_ID,
-		 LEVELSET_CLASS_ID,
-		 MESH_CLASS_ID,
-		 MESHFEM_CLASS_ID,
-		 MESHIM_CLASS_ID,
-		 MESHIMDATA_CLASS_ID,
-		 MESH_LEVELSET_CLASS_ID,
-		 MESHER_OBJECT_CLASS_ID,
-		 MODEL_CLASS_ID,
-		 PRECOND_CLASS_ID,
-		 SLICE_CLASS_ID,
-		 SPMAT_CLASS_ID,
-		 POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
-		 GETFEMINT_NB_CLASS } getfemint_class_id;
+                 CVSTRUCT_CLASS_ID,
+                 ELTM_CLASS_ID,
+                 FEM_CLASS_ID,
+                 GEOTRANS_CLASS_ID,
+                 GLOBAL_FUNCTION_CLASS_ID,
+                 INTEG_CLASS_ID,
+                 LEVELSET_CLASS_ID,
+                 MESH_CLASS_ID,
+                 MESHFEM_CLASS_ID,
+                 MESHIM_CLASS_ID,
+                 MESHIMDATA_CLASS_ID,
+                 MESH_LEVELSET_CLASS_ID,
+                 MESHER_OBJECT_CLASS_ID,
+                 MODEL_CLASS_ID,
+                 PRECOND_CLASS_ID,
+                 SLICE_CLASS_ID,
+                 SPMAT_CLASS_ID,
+                 POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
+                 GETFEMINT_NB_CLASS } getfemint_class_id;
 
   
   /* Associate the class ID found in the matlab structures referencing
@@ -83,17 +83,17 @@ namespace getfemint {
 
   /* exception-throwing version of the allocation functions of gfi_array.h */
   gfi_array* checked_gfi_array_create(int ndim, const int *dims,
-				      gfi_type_id type,
-				      gfi_complex_flag is_complex = GFI_REAL);
+                                      gfi_type_id type,
+                                      gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_create_0(gfi_type_id type,
-					gfi_complex_flag is_complex = GFI_REAL);
+                                        gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_create_1(int M, gfi_type_id type,
-					gfi_complex_flag is_complex = GFI_REAL);
+                                        gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_create_2(int M, int N, gfi_type_id type,
-					gfi_complex_flag is_complex = GFI_REAL);
+                                        gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_from_string(const char*s);
   gfi_array* checked_gfi_create_sparse(int m, int n, int nzmax,
-				       gfi_complex_flag is_complex);
+                                       gfi_complex_flag is_complex);
 
   typedef bgeot::dim_type dim_type;
   typedef bgeot::scalar_type scalar_type;
@@ -114,12 +114,12 @@ namespace getfemint {
   typedef gmm::row_matrix<gmm::wsvector<scalar_type> >  gf_real_sparse_by_row;
   typedef gmm::col_matrix<gmm::wsvector<scalar_type> >  gf_real_sparse_by_col;
   typedef gmm::csc_matrix_ref<const double *, const unsigned int *,
-			      const unsigned int *>
+                              const unsigned int *>
   gf_real_sparse_csc_const_ref;
   typedef gmm::row_matrix<gmm::wsvector<complex_type> >  gf_cplx_sparse_by_row;
   typedef gmm::col_matrix<gmm::wsvector<complex_type> >  gf_cplx_sparse_by_col;
   typedef gmm::csc_matrix_ref<const complex_type *, const unsigned int *,
-			      const unsigned int *>
+                              const unsigned int *>
   gf_cplx_sparse_csc_const_ref;
   class gsparse;
 
@@ -204,7 +204,7 @@ namespace getfemint {
       return (data.get())[unsigned(i+j*getm()+k*getm()*getn())];
     }
     const value_type& operator()(size_type i, size_type j,
-				 size_type k=0) const {
+                                 size_type k=0) const {
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
       return (data.get())[unsigned(i+j*getm()+k*getm()*getn())];
     }
@@ -237,20 +237,20 @@ namespace getfemint {
       if (gfi_array_get_class(mx) == GFI_DOUBLE) {
         /* creation from an array of doubles : just store a ref to the array */
         assign_dimensions(mx);
-	data = std::shared_array_ptr<double>(std::shared_ptr<double>(),
-					     gfi_double_get_data(mx));
+        data = std::shared_array_ptr<double>(std::shared_ptr<double>(),
+                                             gfi_double_get_data(mx));
       } else if (gfi_array_get_class(mx) == GFI_UINT32 ||
-		 gfi_array_get_class(mx) == GFI_INT32) {
+                 gfi_array_get_class(mx) == GFI_INT32) {
         /* creation from an array of int : allocation of new storage,
-	   and copy of the content */
+           and copy of the content */
         assign_dimensions(mx);
         data = std::make_shared_array<double>(size());
         if (gfi_array_get_class(mx) == GFI_INT32)
           std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(),
-		    data.get());
+                    data.get());
         else
           std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(),
-		    data.get());
+                    data.get());
       } else THROW_INTERNAL_ERROR;
     }
     darray(const gfi_array *mx) { assign(mx); }
@@ -279,25 +279,25 @@ namespace getfemint {
       if (gfi_array_get_class(mx) == GFI_DOUBLE && gfi_array_is_complex(mx)) {
         /* creation from an array of complexes: just store a ref to the array */
         assign_dimensions(mx);
-	data = std::shared_array_ptr<complex_type>
-	  (std::shared_ptr<complex_type>(),
-	   reinterpret_cast<complex_type*>(gfi_double_get_data(mx)));
+        data = std::shared_array_ptr<complex_type>
+               (std::shared_ptr<complex_type>(),
+                reinterpret_cast<complex_type*>(gfi_double_get_data(mx)));
       } else if (gfi_array_get_class(mx) == GFI_DOUBLE ||
-		 gfi_array_get_class(mx) == GFI_UINT32 ||
-		 gfi_array_get_class(mx) == GFI_INT32) {
+                 gfi_array_get_class(mx) == GFI_UINT32 ||
+                 gfi_array_get_class(mx) == GFI_INT32) {
         /* creation from an array of int or doubles: allocation of new storage,
-	   and copy of the content */
+           and copy of the content */
         assign_dimensions(mx);
-	data = std::make_shared_array<complex_type>(size());
+        data = std::make_shared_array<complex_type>(size());
         if (gfi_array_get_class(mx) == GFI_DOUBLE)
           std::copy(gfi_double_get_data(mx), gfi_double_get_data(mx)+size(),
-		    data.get());
+                    data.get());
         else if (gfi_array_get_class(mx) == GFI_INT32)
           std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(),
-		    data.get());
+                    data.get());
         else if (gfi_array_get_class(mx) == GFI_UINT32)
           std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(),
-		    data.get());
+                    data.get());
       } else THROW_INTERNAL_ERROR;
     }
     carray(const gfi_array *mx) { assign(mx); }
@@ -325,9 +325,9 @@ namespace getfemint {
     bool is_complex() const { return v == COMPLEX; }
     carray &to_complex() {
       if (v == REAL) {
-	c = std::make_shared<carray>(mx);
-	d = std::shared_ptr<darray>();
-	v = COMPLEX;
+        c = std::make_shared<carray>(mx);
+        d = std::shared_ptr<darray>();
+        v = COMPLEX;
       }
       return cplx();
     }
@@ -355,11 +355,11 @@ namespace getfemint {
     iarray() {}
     void assign(const gfi_array *mx) {
       if (gfi_array_get_class(mx) == GFI_INT32)
-	data = std::shared_array_ptr<int>(std::shared_ptr<int>(),
-					  gfi_int32_get_data(mx));
+        data = std::shared_array_ptr<int>(std::shared_ptr<int>(),
+                                          gfi_int32_get_data(mx));
       else if (gfi_array_get_class(mx) == GFI_UINT32)
-	data = std::shared_array_ptr<int>(std::shared_ptr<int>(),
-					  (int*)gfi_uint32_get_data(mx));
+        data = std::shared_array_ptr<int>(std::shared_ptr<int>(),
+                                          (int*)gfi_uint32_get_data(mx));
       else THROW_INTERNAL_ERROR;
       assign_dimensions(mx);
     }
@@ -439,7 +439,7 @@ namespace getfemint {
     bool is_object_id(id_type *pid=0, id_type *pcid=0) const;
     bool is_sparse();
     bool is_complex(); /* true for complex garrays AND complex sparse matrices
-			  (native or gsparse) */
+                          (native or gsparse) */
     bool is_integer();
     bool is_bool();
 
@@ -456,9 +456,9 @@ namespace getfemint {
     carray               to_carray();
     carray               to_carray(int expected_dim);
     carray               to_carray(int expected_n, int expected_m,
-				   int expected_k=1, int expected_q=1);
+                                   int expected_k=1, int expected_q=1);
     darray               to_darray(); /* do not perform any check on the
-					 number of dimensions of the array */
+                                         number of dimensions of the array */
     /* expect the argument to be a row or column vector of given dimension */
     darray               to_darray(int expected_dim);
     /* expect the argument to be a matrix (or possibly a 3D array)
@@ -466,16 +466,16 @@ namespace getfemint {
        is not checked
      */
     darray               to_darray(int expected_m, int expected_n,
-				   int expected_k=1, int expected_q=1);
+                                   int expected_k=1, int expected_q=1);
     /* convertion to a real or complex array */
     rcarray              to_rcarray();
     rcarray              to_rcarray(int expected_dim);
     rcarray              to_rcarray(int expected_m, int expected_n,
-				    int expected_k=1, int expected_q=1);
+                                    int expected_k=1, int expected_q=1);
     iarray               to_iarray();
     iarray               to_iarray(int expected_dim);
     iarray               to_iarray(int expected_m, int expected_n,
-				   int expected_k=1, int expected_q=1);
+                                   int expected_k=1, int expected_q=1);
 
     /* template friendly version */
     garray<double>            to_garray(double) { return to_darray(); }
@@ -487,10 +487,10 @@ namespace getfemint {
     garray<complex_type>      to_garray(int expected_dim, complex_type)
     { return to_carray(expected_dim); }
     garray<complex_type>      to_garray(int expected_m, int expected_n,
-					complex_type)
+                                        complex_type)
     { return to_carray(expected_m, expected_n); }
     dal::bit_vector           to_bit_vector(const dal::bit_vector *subsetof = 0,
-					    int shiftvs=-config::base_index());
+                                            int shiftvs=-config::base_index());
     sub_index                 to_sub_index();
     getfem::base_node         to_base_node() { return to_base_node(-1); }
     getfem::base_node         to_base_node(int expected_dim);
@@ -500,7 +500,7 @@ namespace getfemint {
     
     mexarg_in &check_trailing_dimension(int expected_dim);
     void check_dimensions(array_dimensions &v, int expected_m,
-			  int expected_n, int expected_p=-1, int expected_q=-1);
+                          int expected_n, int expected_p=-1, int expected_q=-1);
     void check_dimensions(const array_dimensions &v, int expected_dim);
   private:
     friend class mexargs_in;
@@ -522,10 +522,10 @@ namespace getfemint {
     void from_string(const char *s);
     template<class STR_CONT> void from_string_container(const STR_CONT& s);
     void from_bit_vector(const dal::bit_vector& bv,
-			 int shift=config::base_index());
+                         int shift=config::base_index());
     void from_mesh_region(const getfem::mesh_region &region);
     typedef enum { USE_NATIVE_SPARSE, USE_GSPARSE,
-		   USE_DEFAULT_SPARSE } output_sparse_fmt;
+                   USE_DEFAULT_SPARSE } output_sparse_fmt;
 
     /**
        BIG CAUTION:
@@ -533,9 +533,9 @@ namespace getfemint {
        (in order to avoid unnecessary copies of sparse matrices)
     */
     void from_sparse(gf_real_sparse_by_col& M,
-		     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
+                     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
     void from_sparse(gf_cplx_sparse_by_col& M,
-		     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
+                     output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
     void from_sparse(gsparse& M, output_sparse_fmt fmt = USE_DEFAULT_SPARSE);
 
     void from_tensor(const getfem::base_tensor& t);
@@ -610,7 +610,7 @@ namespace getfemint {
   }
 
   gfi_array *create_object_id(int nid, id_type *ids, id_type cid,
-			      bool not_as_a_vector=false);
+                              bool not_as_a_vector=false);
   inline gfi_array *create_object_id(id_type id, id_type cid) {
     return create_object_id(1, &id, cid, true);
   }
@@ -659,7 +659,7 @@ namespace getfemint {
   /* handles the list of output arguments */
   class mexargs_out {
     mutable std::deque<gfi_array *> out; /* deque because mexarg_out hold a
-					    reference to this array content */
+                                            reference to this array content */
     int nb_arg; /* if equal to -1, the number of output arguments is unknown */
     int idx;
     int okay; /* if 0, the destructor will destroy the allacted arrays in 'out'
@@ -682,7 +682,7 @@ namespace getfemint {
     bool remaining() const
     { return !narg_known() || (std::max(nb_arg,1) - idx); }
     void return_packed_obj_ids(const std::vector<id_type>& ids,
-			       id_type class_id);
+                               id_type class_id);
     std::deque<gfi_array *>& args() { return out; }
     void set_okay(bool ok) { okay = ok; }
     void set_scilab(bool _scilab_flag) {scilab_flag = _scilab_flag;}
@@ -710,11 +710,11 @@ namespace getfemint {
   // Gives the class id of an object
   // To be completed when an object class is added.
   id_type class_id_of_object(const dal::pstatic_stored_object &p,
-			     const void **q = 0);
+                             const void **q = 0);
 
-# define getfemint_declare_getfem_class(CLASS)				\
+# define getfemint_declare_getfem_class(CLASS)                          \
   } namespace getfem { class CLASS; } namespace getfemint {
-# define getfemint_delare_bgeot_class(CLASS)				\
+# define getfemint_delare_bgeot_class(CLASS)                            \
   } namespace bgeot { class CLASS; } namespace getfemint {
   
   // Functions for CONT_STRUCT_CLASS_ID
