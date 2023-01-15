@@ -1244,6 +1244,89 @@ namespace getfem {
 
 
 
+  class global_function_x_bspline_
+    : public global_function_simple, public context_dependencies {
+    scalar_type xmin, xmax, xscale;
+    std::function<scalar_type(scalar_type)> fx, fx_der, fx_der2;
+  public:
+    void update_from_context() const {}
+
+    virtual scalar_type val(const base_node &pt) const
+    {
+      return fx(xscale*(pt[0]-xmin));
+    }
+    virtual void grad(const base_node &pt, base_small_vector &g) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin);
+      g.resize(dim_);
+      g[0] = xscale * fx_der(dx);
+    }
+    virtual void hess(const base_node &pt, base_matrix &h) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin);
+      h.resize(dim_, dim_);
+      gmm::clear(h);
+      h(0,0) = xscale*xscale * fx_der2(dx);
+    }
+
+    virtual bool is_in_support(const base_node &pt) const {
+      scalar_type dx = pt[0]-(xmin+xmax)/2;
+      return (gmm::abs(dx)+1e-9 < gmm::abs(xmax-xmin)/2);
+    }
+
+    virtual void bounding_box(base_node &bmin, base_node &bmax) const {
+      GMM_ASSERT1(bmin.size() == dim_ && bmax.size() == dim_,
+                  "Wrong dimensions");
+      bmin[0] = std::min(xmin,xmax);
+      bmax[0] = std::max(xmin,xmax);
+    }
+
+    global_function_x_bspline_(const scalar_type &xmin_, const scalar_type &xmax_,
+                               const size_type &order, const size_type &xtype)
+    : global_function_simple(1), xmin(xmin_), xmax(xmax_),
+      xscale(scalar_type(xtype)/(xmax-xmin))
+    {
+      GMM_ASSERT1(order >= 3 && order <= 5, "Only orders 3 to 5 are supported");
+      GMM_ASSERT1(xtype >= 1 && xtype <= order, "Wrong input");
+      if (order == 3) {
+        if (xtype == 1) {
+          fx = bsp3_01;   fx_der = bsp3_01_der;   fx_der2 = bsp3_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp3_02;   fx_der = bsp3_02_der;   fx_der2 = bsp3_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp3_03;   fx_der = bsp3_03_der;   fx_der2 = bsp3_03_der2;
+        }
+      } else if (order == 4) {
+        if (xtype == 1) {
+          fx = bsp4_01;   fx_der = bsp4_01_der;   fx_der2 = bsp4_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp4_02;   fx_der = bsp4_02_der;   fx_der2 = bsp4_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp4_03;   fx_der = bsp4_03_der;   fx_der2 = bsp4_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp4_04;   fx_der = bsp4_04_der;   fx_der2 = bsp4_04_der2;
+        }
+      } else if (order == 5) {
+        if (xtype == 1) {
+          fx = bsp5_01;   fx_der = bsp5_01_der;   fx_der2 = bsp5_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp5_02;   fx_der = bsp5_02_der;   fx_der2 = bsp5_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp5_03;   fx_der = bsp5_03_der;   fx_der2 = bsp5_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp5_04;   fx_der = bsp5_04_der;   fx_der2 = bsp5_04_der2;
+        } else if (xtype == 5) {
+          fx = bsp5_05;   fx_der = bsp5_05_der;   fx_der2 = bsp5_05_der2;
+        }
+      }
+    }
+
+    virtual ~global_function_x_bspline_()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function x bspline"); }
+  };
+
+
+
   class global_function_xy_bspline_
     : public global_function_simple, public context_dependencies {
     scalar_type xmin, ymin, xmax, ymax, xscale, yscale;
@@ -1372,10 +1455,17 @@ namespace getfem {
 
 
   pglobal_function
-  global_function_bspline(scalar_type &xmin, scalar_type &xmax,
-                          scalar_type &ymin, scalar_type &ymax,
-                          size_type &order,
-                          size_type &xtype, size_type &ytype) {
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const size_type order, const size_type xtype) {
+    return std::make_shared<global_function_x_bspline_>
+                           (xmin, xmax, order, xtype);
+  }
+
+  pglobal_function
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const scalar_type ymin, const scalar_type ymax,
+                          const size_type order,
+                          const size_type xtype, const size_type ytype) {
     return std::make_shared<global_function_xy_bspline_>
                            (xmin, xmax, ymin, ymax, order, xtype, ytype);
   }
