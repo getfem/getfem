@@ -262,46 +262,39 @@ namespace getfem {
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
       case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with interpolate transformations. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with interpolate transformations. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
       case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with elementary transformations. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with elementary transformations. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
       case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
       case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
       case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with secondary domains. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with secondary domains. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
       case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
       case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
       case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with Xfem_plus and Xfem_minus operations. "
-                      "Future work.");
-        }
-      default: break;
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with Xfem_plus and Xfem_minus operations. "
+                    "Future work.");
+        pnode->name = pexpr->name;
+        break;
+      default:
+        break;
       }
     }
   }
@@ -3739,6 +3732,7 @@ namespace getfem {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
                      << ". No derivative provided or not derivable function.");
+            break;
           case 1:
             child0->name = F.derivative1();
             break;
@@ -3805,6 +3799,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative1();
               break;
@@ -3838,6 +3833,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative2();
               break;
@@ -4047,6 +4043,7 @@ namespace getfem {
       break;
     case GA_NODE_HESS: case GA_NODE_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
+      break;
     case GA_NODE_DIVERG: case GA_NODE_DIVERG_TEST: // Hess_u : Id(meshdim)
       if (pnode->node_type == GA_NODE_DIVERG)
         pnode->node_type = GA_NODE_HESS;
@@ -4188,11 +4185,13 @@ namespace getfem {
     case GA_NODE_NORMAL:
     case GA_NODE_INTERPOLATE_NORMAL:
       GMM_ASSERT1(false, "Sorry, Gradient of Normal vector not implemented");
+      break;
 
     case GA_NODE_ELT_K: case GA_NODE_ELT_B:
     case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
       GMM_ASSERT1(false, "Sorry, Gradient of element_K or element_B "
                          "not implemented");
+      break;
 
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       GMM_ASSERT1(false, "Sorry, gradient of the derivative of a "
@@ -4743,6 +4742,7 @@ namespace getfem {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
                         << ". No derivative provided or not derivable function.");
+            break;
           case 1:
             child0->name = F.derivative1();
             break;
@@ -4815,6 +4815,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative1();
               break;
@@ -4854,6 +4855,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative2();
               break;

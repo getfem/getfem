@@ -1368,8 +1368,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
              mf_coeff = to_meshfem_object(argin);
              vec_coeff = in.pop().to_darray();
              in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
-           } else
-             vec_coeff = darray(new double(argin.to_scalar()), 1);
+           } else {
+             auto coeff = std::make_shared_array<double>(1);
+             *coeff = argin.to_scalar();
+             vec_coeff = darray(coeff.get(), 1);
+           }
            int option = in.remaining() ? in.pop().to_integer() : 1;
            double alpha =  in.remaining() ? in.pop().to_scalar() : 1;
            darray vec_W;

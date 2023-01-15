@@ -2123,10 +2123,17 @@ namespace getfem {
     if (tree.root) ga_expand_macro(tree, tree.root, macro_dict);
     
     switch (t) {
-    case GA_RPAR: ga_throw_error(nexpr, pos-1, "Unbalanced parenthesis.");
-    case GA_RBRACKET: ga_throw_error(nexpr, pos-1, "Unbalanced braket.");
-    case GA_END: break;
-    default: ga_throw_error(nexpr, pos-1, "Unexpected token.");
+    case GA_RPAR:
+      ga_throw_error(nexpr, pos-1, "Unbalanced parenthesis.");
+      break;
+    case GA_RBRACKET:
+      ga_throw_error(nexpr, pos-1, "Unbalanced bracket.");
+      break;
+    case GA_END:
+      break;
+    default:
+      ga_throw_error(nexpr, pos-1, "Unexpected token.");
+      break;
     }
   }
   
