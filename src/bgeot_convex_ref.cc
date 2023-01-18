@@ -30,7 +30,7 @@ namespace bgeot {
   //    Interface with qhull
   // ******************************************************************
   
-# ifndef GETFEM_HAVE_LIBQHULL_QHULL_A_H
+# if !defined(GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H)
   void qhull_delaunay(const std::vector<base_node> &,
                 gmm::dense_matrix<size_type>&) {
     GMM_ASSERT1(false, "Qhull header files not installed. "
@@ -38,20 +38,7 @@ namespace bgeot {
   }
 # else
 
-  extern "C" {
-    // #ifdef _MSC_VER
-# include <libqhull/qhull_a.h>
-    // #else
-    // # include <qhull/qhull.h>
-    // # include <qhull/mem.h>
-    // # include <qhull/qset.h>
-    // # include <qhull/geom.h>
-    // # include <qhull/merge.h>
-    // # include <qhull/poly.h>
-    // # include <qhull/io.h>
-    // # include <qhull/stat.h>
-    // #endif
-  }
+# include <libqhull_r/qhull_ra.h>
   
   void qhull_delaunay(const std::vector<base_node> &pts,
 		      gmm::dense_matrix<size_type>& simplexes) {
@@ -79,7 +66,9 @@ namespace bgeot {
     facetT *facet;                  /* set by FORALLfacets */
     int curlong, totlong;          /* memory remaining after qh_memfreeshort */
     vertexT *vertex, **vertexp;
-    exitcode = qh_new_qhull (int(dim), int(pts.size()), &Pts[0], ismalloc,
+    qhT context = {};
+    qhT* qh = &context;
+    exitcode = qh_new_qhull (qh, int(dim), int(pts.size()), &Pts[0], ismalloc,
                              flags, outfile, errfile);
     if (!exitcode) { /* if no error */
       size_type nbf=0;
@@ -92,14 +81,14 @@ namespace bgeot {
           size_type s=0;
           FOREACHvertex_(facet->vertices) {
             assert(s < (unsigned)(dim+1));
-            simplexes(s++,nbf) = qh_pointid(vertex->point);
+            simplexes(s++,nbf) = qh_pointid(qh, vertex->point);
           }
           nbf++;
         }
       }
     }
-    qh_freeqhull(!qh_ALL);
-    qh_memfreeshort (&curlong, &totlong);
+    qh_freeqhull(qh, !qh_ALL);
+    qh_memfreeshort(qh, &curlong, &totlong);
     if (curlong || totlong)
       cerr << "qhull internal warning (main): did not free " << totlong <<
         " bytes of long memory (" << curlong << " pieces)\n";
@@ -132,7 +121,7 @@ namespace bgeot {
 	  m.add_simplex(n, ipts.begin());
 	}
       }	else {
-#       ifdef GETFEM_HAVE_LIBQHULL_QHULL_A_H
+#       if defined(GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H)
 	gmm::dense_matrix<size_type> t;
 	qhull_delaunay(cvr->points(), t);
 	for (size_type nc = 0; nc < gmm::mat_ncols(t); ++nc) {
