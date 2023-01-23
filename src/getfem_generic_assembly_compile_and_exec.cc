@@ -4214,7 +4214,7 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: vector term assembly for im_data variable");
       size_type cv = ctx.convex_num();
-      size_type i = t.size() * imd.filtered_index_of_point(cv, ipt);
+      size_type i = t.size() * imd.filtered_index_of_point(cv, ctx.ii());
       GMM_ASSERT1(i+t.size() <= I.size(),
                   "Internal error "<<i<<"+"<<t.size()<<" <= "<<I.size());
       auto itw = V.begin() + I.first() + i;
@@ -4280,7 +4280,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: extract residual for im_data variable");
       size_type ifirst = I.first();
       size_type cv = ctx.convex_num();
-      size_type i = t.size() * imd.filtered_index_of_point(cv, ipt);
+      size_type i = t.size() * imd.filtered_index_of_point(cv, ctx.ii());
       GMM_ASSERT1(i+t.size() <= I.size(),
                   "Internal error "<<i<<"+"<<t.size()<<" <= "<<I.size());
       for (auto &&val : t.as_vector())
@@ -4681,7 +4681,7 @@ namespace getfem {
       size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
       size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
       size_type ifirst1 = I1->first(), ifirst2 = I2->first();
-      if (imd1) ifirst1 += s1 * imd1->filtered_index_of_point(cv1, ipt);
+      if (imd1) ifirst1 += s1 * imd1->filtered_index_of_point(cv1, ctx1.ii());
 
       populate_contiguous_dofs_vector(dofs1, s1, ifirst1); // --> dofs1
       size_type qmult2 = mf2->get_qdim();
@@ -4743,7 +4743,7 @@ namespace getfem {
       size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
       size_type cv1 = ctx1.convex_num(), cv2 = ctx2.convex_num();
       size_type ifirst1 = I1->first(), ifirst2 = I2->first();
-      if (imd2) ifirst2 += s2 * imd2->filtered_index_of_point(cv2, ipt);
+      if (imd2) ifirst2 += s2 * imd2->filtered_index_of_point(cv2, ctx2.ii());
 
       size_type qmult1 = mf1->get_qdim();
       if (qmult1 > 1) qmult1 /= mf1->fem_of_element(cv1)->target_dim();
@@ -4803,9 +4803,9 @@ namespace getfem {
       size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
       size_type ifirst1 = I1.first(), ifirst2 = I2.first();
       if (imd1)
-        ifirst1 += s1 * imd1->filtered_index_of_point(ctx1.convex_num(), ipt);
+        ifirst1 += s1 * imd1->filtered_index_of_point(ctx1.convex_num(), ctx1.ii());
       if (imd2)
-        ifirst2 += s2 * imd2->filtered_index_of_point(ctx2.convex_num(), ipt);
+        ifirst2 += s2 * imd2->filtered_index_of_point(ctx2.convex_num(), ctx2.ii());
 
       populate_contiguous_dofs_vector(dofs2, s2, ifirst2);
       add_elem_matrix_contiguous_rows(K, ifirst1, s1, dofs2, elem, ninf*1E-14);
