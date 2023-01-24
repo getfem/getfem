@@ -38,7 +38,9 @@ namespace bgeot {
   }
 # else
 
+  extern "C" { // old versions of this header lack a __cplusplus guard
 # include <libqhull_r/qhull_ra.h>
+  }
   
   void qhull_delaunay(const std::vector<base_node> &pts,
 		      gmm::dense_matrix<size_type>& simplexes) {
