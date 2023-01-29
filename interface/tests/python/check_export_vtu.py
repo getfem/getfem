@@ -90,28 +90,28 @@ file_name = "check_meshfem_ascii.vtk"
 mfu.export_to_vtk(file_name, "ascii", U1, "U1")
 unstructured_grid = pv.read(file_name)
 expected = U1
-actual = unstructured_grid.point_arrays["U1"]
+actual = unstructured_grid.point_data["U1"]
 np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
 
 file_name = "check_meshfem_binary.vtk"
 mfu.export_to_vtk(file_name, U1, "U1")
 unstructured_grid = pv.read(file_name)
 expected = U1
-actual = unstructured_grid.point_arrays["U1"]
+actual = unstructured_grid.point_data["U1"]
 np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
 
 file_name = "check_meshfem_ascii.vtu"
 mfu.export_to_vtu(file_name, "ascii", U1, "U1")
 unstructured_grid = pv.read(file_name)
 expected = U1
-actual = unstructured_grid.point_arrays["U1"]
+actual = unstructured_grid.point_data["U1"]
 np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
 
 file_name = "check_meshfem_binary.vtu"
 mfu.export_to_vtu(file_name, U1, "U1")
 unstructured_grid = pv.read(file_name)
 expected = U1
-actual = unstructured_grid.point_arrays["U1"]
+actual = unstructured_grid.point_data["U1"]
 np.testing.assert_equal(expected, actual, "export of U1 is not correct.")
 
 sl = gf.Slice(("boundary",), mesh, 1)
@@ -121,26 +121,26 @@ file_name = "check_slice_ascii.vtk"
 sl.export_to_vtk(file_name, "ascii", U2, "U2")
 unstructured_grid = pv.read(file_name)
 expected = U2
-actual = unstructured_grid.point_arrays["U2"]
+actual = unstructured_grid.point_data["U2"]
 np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
 
 file_name = "check_slice_binary.vtk"
 sl.export_to_vtk(file_name, U2, "U2")
 unstructured_grid = pv.read(file_name)
 expected = U2
-actual = unstructured_grid.point_arrays["U2"]
+actual = unstructured_grid.point_data["U2"]
 np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
 
 file_name = "check_slice_ascii.vtu"
 sl.export_to_vtu(file_name, "ascii", U2, "U2")
 unstructured_grid = pv.read(file_name)
 expected = U2
-actual = unstructured_grid.point_arrays["U2"]
+actual = unstructured_grid.point_data["U2"]
 np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
 
 file_name = "check_slice_binary.vtu"
 sl.export_to_vtu(file_name, U2, "U2")
 unstructured_grid = pv.read(file_name)
 expected = U2
-actual = unstructured_grid.point_arrays["U2"]
+actual = unstructured_grid.point_data["U2"]
 np.testing.assert_equal(expected, actual, "export of U2 is not correct.")
