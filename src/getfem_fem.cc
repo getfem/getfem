@@ -1816,8 +1816,8 @@ namespace getfem {
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
-      M(i,i) = gmm::vect_norm2(n);
-      n /= M(i,i);
+      M(i,i) = scalar_type(1)/gmm::vect_norm2(n);
+      n *= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
@@ -1848,7 +1848,7 @@ namespace getfem {
       for (size_type i = 0; i <= nc; ++i) {
         base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
         if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
-        if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
+        if (i == 0) base_[i+j*(nc+1)] /= sqrt(opt_long_scalar_type(nc));
       }
 
     base_node pt(nc);
@@ -1913,8 +1913,8 @@ namespace getfem {
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
-      M(i,i) = gmm::vect_norm2(n);
-      n /= M(i,i);
+      M(i,i) = scalar_type(1)/gmm::vect_norm2(n);
+      n *= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
