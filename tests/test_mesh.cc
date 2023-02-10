@@ -327,23 +327,23 @@ void test_convex_ref() {
 
 
 
-struct basic_mesh_point_comparator2
-  : public std::binary_function<base_node, base_node, int> {
-  double eps;
-  std::vector<double> v;
-  
-  int operator()(const base_node &x, const base_node &y) const {
-    double a = gmm::vect_sp(x, v), b =  gmm::vect_sp(y, v);
-    if (a < b - eps) return -1; else if (a > b + eps) return +1; else return 0;
-  }
-  
-  basic_mesh_point_comparator2(unsigned dim_ = 3, double e = double(10000)
-			       *gmm::default_tol(double()))
-    : eps(e), v(dim_) {
-    gmm::fill_random(v);
-    gmm::scale(v, 1.0/gmm::vect_norm2(v));
-  }
-};
+//struct basic_mesh_point_comparator2
+//  : public std::binary_function<base_node, base_node, int> {
+//  double eps;
+//  std::vector<double> v;
+//
+//  int operator()(const base_node &x, const base_node &y) const {
+//    double a = gmm::vect_sp(x, v), b =  gmm::vect_sp(y, v);
+//    if (a < b - eps) return -1; else if (a > b + eps) return +1; else return 0;
+//  }
+//
+//  basic_mesh_point_comparator2(unsigned dim_ = 3, double e = double(10000)
+//			       *gmm::default_tol(double()))
+//    : eps(e), v(dim_) {
+//    gmm::fill_random(v);
+//    gmm::scale(v, 1.0/gmm::vect_norm2(v));
+//  }
+//};
 
 
 void test_mesh_building(int dim, int Nsubdiv) {

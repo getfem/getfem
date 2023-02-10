@@ -105,7 +105,7 @@ namespace gmm {
     size_type lu_factor(dense_matrix<base_type > &A, lapack_ipvt &ipvt){     \
     GMMLAPACK_TRACE("getrf_interface");                                      \
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A)), lda(m); \
-    long info(-1L);                                                          \
+    BLAS_INT info(-1);                                                       \
     if (m && n) lapack_name(&m, &n, &A(0,0), &lda, ipvt.pfirst(), &info);    \
     if ((sizeof(BLAS_INT) == 4) ||                                            \
         ((info & 0xFFFFFFFF00000000L) && !(info & 0x00000000FFFFFFFFL)))     \

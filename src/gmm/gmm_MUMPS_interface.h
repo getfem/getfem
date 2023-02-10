@@ -146,17 +146,21 @@ namespace gmm {
         case -2:
           GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
                       << " is out of range");
+          break;
         case -6 : case -10 :
           GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
           return false;
         case -9:
           GMM_ASSERT1(false, "Solve with MUMPS failed: error "
                       << id.INFO(1) << ", increase ICNTL(14)");
+          break;
         case -13 :
           GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+          break;
         default :
           GMM_ASSERT1(false, "Solve with MUMPS failed with error "
                       << id.INFO(1));
+          break;
       }
     }
     return true;

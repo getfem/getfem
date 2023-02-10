@@ -1,8 +1,8 @@
 <head>
 
-<title>Redirection en html</title>
+<title>Redirection to html</title>
 
-<meta http-equiv="refresh" content="0; URL=http://download.gna.org/getfem/html/homepage/">
+<meta http-equiv="refresh" content="0; URL=https://getfem.org/">
 </head>
 
 <body>

@@ -25,16 +25,16 @@
 
 namespace getfem {
 
-  context_dependencies::context_dependencies(const context_dependencies& cd) : 
-    state(cd.state),
-    touched(static_cast<bool>(cd.touched)),
-    dependencies(cd.dependencies),
-    dependent(cd.dependent),
-    locks_( )
+  context_dependencies::context_dependencies(const context_dependencies &cd)
+    : state(cd.state),
+      touched(static_cast<bool>(cd.touched)),
+      dependencies(cd.dependencies),
+      dependent(cd.dependent),
+      locks_( )
   {}
 
-  context_dependencies& context_dependencies::operator=(const context_dependencies& cd)
-  {
+  context_dependencies&
+  context_dependencies::operator=(const context_dependencies &cd) {
     state = cd.state;
     touched = static_cast<bool>(cd.touched);
     dependencies = cd.dependencies;
@@ -47,8 +47,13 @@ namespace getfem {
     getfem::local_guard lock = locks_.get_lock();
     size_type s = dependent.size();
     iterator_list it1 = dependent.begin(), it2 = it1, ite = dependent.end();
-    for (; it1 != ite; ++it1)
-      { *it2 = *it1; if (*it2 != &cd) ++it2; else --s; }
+    for (; it1 != ite; ++it1) {
+      *it2 = *it1;
+      if (*it2 != &cd)
+        ++it2;
+      else
+        --s;
+    }
     dependent.resize(s);
   }
   
@@ -57,16 +62,20 @@ namespace getfem {
     getfem::local_guard lock = locks_.get_lock();
     size_type s = dependencies.size();
     iterator_list it1=dependencies.begin(), it2=it1, ite=dependencies.end();
-    for (; it1 != ite; ++it1)
-      { *it2 = *it1; if (*it2 != &cd) ++it2; else --s; }
+    for (; it1 != ite; ++it1) {
+      *it2 = *it1;
+      if (*it2 != &cd)
+        ++it2;
+      else
+        --s;
+    }
     dependencies.resize(s);
   }
 
   void context_dependencies::invalid_context() const {
-    if (state != CONTEXT_INVALID) 
-    {
-      iterator_list it = dependent.begin(), ite = dependent.end();
-      for (; it != ite; ++it) (*it)->invalid_context();
+    if (state != CONTEXT_INVALID) {
+      for (auto &it : dependent)
+        it->invalid_context();
       getfem::local_guard lock = locks_.get_lock();
       state = CONTEXT_INVALID;
     }
@@ -76,23 +85,19 @@ namespace getfem {
     cd.context_check(); cd.touched = false;
     {
       getfem::local_guard lock = locks_.get_lock();
-      iterator_list it = dependencies.begin(), ite = dependencies.end();
-      for (; it != ite; ++it) if ((*it) == &cd) return;
+      for (auto &it : dependencies)
+        if (it == &cd) return;
       dependencies.push_back(&cd);
     }
     getfem::local_guard lock = cd.locks_.get_lock();
     cd.dependent.push_back(this);
   }
   
-  bool context_dependencies::go_check() const 
-  {
-    if (state == CONTEXT_CHANGED) 
-    {
-      iterator_list it = dependencies.begin(), ite = dependencies.end();
-      for (; it != ite; ++it) 
-      {
-        (*it)->context_check(); 
-        (*it)->touched = false;
+  bool context_dependencies::go_check() const {
+    if (state == CONTEXT_CHANGED) {
+      for (auto &it : dependencies) {
+        it->context_check(); 
+        it->touched = false;
       }
       getfem::local_guard lock = locks_.get_lock();
       state = CONTEXT_NORMAL;
@@ -103,28 +108,24 @@ namespace getfem {
     return false;
   }
   
-  void context_dependencies::touch() const 
-  {
-    if (!touched) 
-    {
-      iterator_list it = dependent.begin(), ite = dependent.end();
-      for (; it != ite; ++it) (*it)->change_context();
+  void context_dependencies::touch() const {
+    if (!touched) {
+      for (auto &it : dependent)
+        it->change_context();
       touched = true;
     }
   }
 
   void context_dependencies::clear_dependencies() {
-    iterator_list it = dependencies.begin(), ite = dependencies.end();
-    for (; it != ite; ++it) (*it)->sup_dependent_(*this);
+    for (auto &it : dependencies)
+      it->sup_dependent_(*this);
     dependencies.clear();
   }
  
   context_dependencies::~context_dependencies() {
     invalid_context();
-    iterator_list it = dependencies.begin(), ite = dependencies.end();
-    for (; it != ite; ++it) (*it)->sup_dependent_(*this);
-    it = dependent.begin(), ite = dependent.end();
-    for (; it != ite; ++it) (*it)->sup_dependency_(*this);
+    for (auto &it : dependencies) it->sup_dependent_(*this);
+    for (auto &it : dependent)    it->sup_dependency_(*this);
   }
   
 }

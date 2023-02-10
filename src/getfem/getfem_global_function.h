@@ -88,7 +88,7 @@ namespace getfem {
     virtual void hess(const base_node &pt, base_matrix&) const = 0;
 
     global_function_simple(dim_type dim__) : global_function(dim__)
-    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Global function simple");}
+    { DAL_STORED_OBJECT_DEBUG_CREATED(this, "Global function simple"); }
     virtual ~global_function_simple()
     { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function simple"); }
   };
@@ -320,6 +320,15 @@ namespace getfem {
   global_function_on_level_sets(const std::vector<level_set> &lsets,
                                 const pxy_function &fn);
 
+  pglobal_function
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const size_type order, const size_type xtype);
+
+  pglobal_function
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const scalar_type ymin, const scalar_type ymax,
+                          const size_type order,
+                          const size_type xtype, const size_type ytype);
 
 }  /* end of namespace getfem.                                            */
 

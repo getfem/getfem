@@ -488,7 +488,9 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
           nbdof += mf->nb_dof();
           workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
         }  else if (mimd) {
-          THROW_BADARG("Data defined on integration points can not be a variable");
+          gmm::sub_interval I(nbdof, mimd->nb_filtered_index());
+          nbdof += mimd->nb_filtered_index();
+          workspace.add_im_variable(varname, *mimd, I, vectors[varname]);
         }  else {
           gmm::sub_interval I(nbdof, U.size());
           nbdof += U.size();
@@ -604,7 +606,7 @@ static void do_expression_analysis(mexargs_in& in, mexargs_out& out) {
       if (mf)
         workspace.add_fem_variable(varname, *mf, dummy_I, dummy_V);
       else if (mimd) {
-        THROW_BADARG("Data defined on integration points can not be a variable");
+        workspace.add_im_variable(varname, *mimd, dummy_I, dummy_V);
       } else
         workspace.add_fixed_size_variable(varname, dummy_I, dummy_V);
     }
@@ -1366,8 +1368,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
              mf_coeff = to_meshfem_object(argin);
              vec_coeff = in.pop().to_darray();
              in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
-           } else
-             vec_coeff = darray(new double(argin.to_scalar()), 1);
+           } else {
+             auto coeff = std::make_shared_array<double>(1);
+             *coeff = argin.to_scalar();
+             vec_coeff = darray(coeff.get(), 1);
+           }
            int option = in.remaining() ? in.pop().to_integer() : 1;
            double alpha =  in.remaining() ? in.pop().to_scalar() : 1;
            darray vec_W;

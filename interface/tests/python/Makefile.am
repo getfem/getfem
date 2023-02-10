@@ -29,6 +29,7 @@ EXTRA_DIST= 						\
 	check_global_functions.py			\
 	check_levelset.py				\
 	check_asm.py    				\
+	check_bspline_mesh_fem.py    			\
 	check_secondary_domain.py    			\
 	check_mixed_mesh.py    				\
 	demo_crack.py 					\
@@ -71,6 +72,7 @@ TESTS = 						\
 	check_export_vtu.py				\
 	check_global_functions.py			\
 	check_asm.py	  				\
+	check_bspline_mesh_fem.py	  		\
 	check_secondary_domain.py 			\
 	check_mixed_mesh.py  				\
 	demo_truss.py                                   \

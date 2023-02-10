@@ -252,7 +252,8 @@ namespace getfem {
           pnode->parent->op_type = GA_COLON;
           tree.add_child(pnode->parent, GA_NODE_PARAMS);
           pga_tree_node pid = pnode->parent->children[1];
-          tree.add_child(pid); tree.add_child(pid);
+          tree.add_child(pid);
+          tree.add_child(pid);
           pid->children[0]->node_type = GA_NODE_NAME;
           pid->children[0]->name = "Id";
           pid->children[1]->node_type = GA_NODE_CONSTANT;
@@ -261,46 +262,39 @@ namespace getfem {
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
       case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with interpolate transformations. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with interpolate transformations. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
       case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with elementary transformations. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with elementary transformations. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
       case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
       case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
       case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with secondary domains. Future work.");
-        }
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with secondary domains. Future work.");
+        pnode->name = pexpr->name;
+        break;
       case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
       case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
       case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
       case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-        if (pexpr->node_type == GA_NODE_VAL_TEST) {
-          pnode->name = pexpr->name;
-        } else {
-          GMM_ASSERT1(false,
-                      "Sorry, directional derivative do not work for the "
-                      "moment with Xfem_plus and Xfem_minus operations. "
-                      "Future work.");
-        }
-      default: break;
+        GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
+                    "Sorry, directional derivative does not work for the "
+                    "moment with Xfem_plus and Xfem_minus operations. "
+                    "Future work.");
+        pnode->name = pexpr->name;
+        break;
+      default:
+        break;
       }
     }
   }
@@ -450,18 +444,22 @@ namespace getfem {
       = dal::singleton<ga_spec_function_tab>::instance(0);
 
     switch (pnode->node_type) {
-    case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
-    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
-    case GA_NODE_ELT_K:  case GA_NODE_ELT_B: case GA_NODE_NORMAL:
-    case GA_NODE_RESHAPE: case GA_NODE_CROSS_PRODUCT:
-    case GA_NODE_IND_MOVE_LAST: case GA_NODE_SWAP_IND:
-    case GA_NODE_CONTRACT: case GA_NODE_INTERPOLATE_X:
-    case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
+    case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC:
+    case GA_NODE_CONSTANT:    case GA_NODE_X:        case GA_NODE_ELT_SIZE:
+    case GA_NODE_ELT_K:       case GA_NODE_ELT_B:    case GA_NODE_NORMAL:
+    case GA_NODE_RESHAPE:     case GA_NODE_CROSS_PRODUCT:
+    case GA_NODE_IND_MOVE_LAST:      case GA_NODE_SWAP_IND:
+    case GA_NODE_CONTRACT:           case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_ELT_K:  case GA_NODE_INTERPOLATE_ELT_B:
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_SECONDARY_DOMAIN_X:
     case GA_NODE_SECONDARY_DOMAIN_NORMAL:
-      pnode->test_function_type = 0; break;
+      pnode->test_function_type = 0;
+      break;
 
-    case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
+    case GA_NODE_ALLINDICES:
+      pnode->test_function_type = 0;
+      break;
+
     case GA_NODE_VAL:
       if (eval_fixed_size && !(workspace.associated_mf(pnode->name))
           && !(workspace.associated_im_data(pnode->name))) {
@@ -470,35 +468,35 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_ZERO: case GA_NODE_GRAD:
-    case GA_NODE_HESS: case GA_NODE_DIVERG:
-    case GA_NODE_INTERPOLATE_VAL:  case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
-    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
-    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_ZERO:                  case GA_NODE_GRAD:
+    case GA_NODE_HESS:                  case GA_NODE_DIVERG:
+    case GA_NODE_INTERPOLATE_VAL:       case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:      case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL:        case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS:       case GA_NODE_ELEMENTARY_DIVERG:
     case GA_NODE_SECONDARY_DOMAIN_VAL:  case GA_NODE_SECONDARY_DOMAIN_GRAD:
     case GA_NODE_SECONDARY_DOMAIN_HESS: case GA_NODE_SECONDARY_DOMAIN_DIVERG:
-    case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_GRAD:
-    case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_DIVERG:
-    case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_GRAD:
-    case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_DIVERG:
+    case GA_NODE_XFEM_PLUS_VAL:         case GA_NODE_XFEM_PLUS_GRAD:
+    case GA_NODE_XFEM_PLUS_HESS:        case GA_NODE_XFEM_PLUS_DIVERG:
+    case GA_NODE_XFEM_MINUS_VAL:        case GA_NODE_XFEM_MINUS_GRAD:
+    case GA_NODE_XFEM_MINUS_HESS:       case GA_NODE_XFEM_MINUS_DIVERG:
       break;
 
-    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
-    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
-    case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_VAL_TEST:              case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST:             case GA_NODE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_VAL_TEST:  case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_DERIVATIVE:
-    case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
-    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_VAL_TEST:   case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:  case GA_NODE_ELEMENTARY_DIVERG_TEST:
     case GA_NODE_SECONDARY_DOMAIN_VAL_TEST:
     case GA_NODE_SECONDARY_DOMAIN_GRAD_TEST:
     case GA_NODE_SECONDARY_DOMAIN_HESS_TEST:
     case GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST:
-    case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
-    case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
-    case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
-    case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
+    case GA_NODE_XFEM_PLUS_VAL_TEST:    case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_PLUS_HESS_TEST:   case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+    case GA_NODE_XFEM_MINUS_VAL_TEST:   case GA_NODE_XFEM_MINUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_HESS_TEST:  case GA_NODE_XFEM_MINUS_DIVERG_TEST:
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         const im_data *imd = workspace.associated_im_data(pnode->name);
@@ -807,20 +805,17 @@ namespace getfem {
 
         if (ndt == 1) {
           if (!(workspace.interpolate_transformation_exists
-                (pnode->interpolate_name)))  {
+                (pnode->interpolate_name)))
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown interpolate transformation");
-          }
         } else if (ndt == 2) {
           if (!(workspace.elementary_transformation_exists
-                (pnode->elementary_name))) {
+                (pnode->elementary_name)))
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown elementary transformation");
-          }
-          if (!(workspace.variable_or_group_exists(pnode->elementary_target))) {
+          if (!(workspace.variable_or_group_exists(pnode->elementary_target)))
             ga_throw_error(pnode->expr, pnode->pos, "Unknown data or variable "
                            << pnode->elementary_target);
-          }
           const mesh_fem *mft = workspace.associated_mf(name);
           if (!mft)
             ga_throw_error(pnode->expr, pnode->pos,
@@ -828,10 +823,9 @@ namespace getfem {
                            "should be a finite element variables/data");
         } else if (ndt == 3) {
           if (!(workspace.secondary_domain_exists
-                (pnode->interpolate_name))) {
+                (pnode->interpolate_name)))
             ga_throw_error(pnode->expr, pnode->pos,
                            "Unknown secondary domain");
-          }
         }
       }
       break;
@@ -2108,7 +2102,7 @@ namespace getfem {
           ga_throw_error(pnode->expr, child1->pos,
                          "Wrong number of parameters for Cross_product");
         pga_tree_node child2 = pnode->children[2];
-        
+
         if (false && child1->is_constant() && child2->is_constant()) {
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->test_function_type = 0;
@@ -2721,7 +2715,7 @@ namespace getfem {
     if (!(tree.root)) return;
     // cout << "Begin semantic analysis with ";
     // ga_print_node(tree.root, cout); cout << endl;
-    
+
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
                      eval_fixed_size, ignore_X, option);
@@ -2993,7 +2987,10 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE_FILTER:
-      if (!child_0_is_constant) { is_constant = false; break; }
+      if (!child_0_is_constant) {
+        is_constant = false;
+        break;
+      }
       //[[fallthrough]];
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -3735,6 +3732,7 @@ namespace getfem {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
                      << ". No derivative provided or not derivable function.");
+            break;
           case 1:
             child0->name = F.derivative1();
             break;
@@ -3801,6 +3799,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative1();
               break;
@@ -3834,6 +3833,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative2();
               break;
@@ -3998,7 +3998,7 @@ namespace getfem {
 
     if ((interpolate_node || interpolate_test_node)  &&
         (workspace.associated_mf(pnode->name) != 0)) marked = true;
-      
+
     if (pnode->node_type == GA_NODE_INTERPOLATE_X ||
         pnode->node_type == GA_NODE_INTERPOLATE_ELT_K ||
         pnode->node_type == GA_NODE_INTERPOLATE_ELT_B ||
@@ -4043,6 +4043,7 @@ namespace getfem {
       break;
     case GA_NODE_HESS: case GA_NODE_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
+      break;
     case GA_NODE_DIVERG: case GA_NODE_DIVERG_TEST: // Hess_u : Id(meshdim)
       if (pnode->node_type == GA_NODE_DIVERG)
         pnode->node_type = GA_NODE_HESS;
@@ -4184,11 +4185,13 @@ namespace getfem {
     case GA_NODE_NORMAL:
     case GA_NODE_INTERPOLATE_NORMAL:
       GMM_ASSERT1(false, "Sorry, Gradient of Normal vector not implemented");
+      break;
 
     case GA_NODE_ELT_K: case GA_NODE_ELT_B:
     case GA_NODE_INTERPOLATE_ELT_K: case GA_NODE_INTERPOLATE_ELT_B:
       GMM_ASSERT1(false, "Sorry, Gradient of element_K or element_B "
                          "not implemented");
+      break;
 
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       GMM_ASSERT1(false, "Sorry, gradient of the derivative of a "
@@ -4209,7 +4212,7 @@ namespace getfem {
       pnode->t.adjust_sizes(mi);
       break;
     case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_GRAD_TEST:
-      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
+      if (pnode->node_type == GA_NODE_ELEMENTARY_GRAD)
         pnode->node_type = GA_NODE_ELEMENTARY_HESS;
       else
         pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
@@ -4301,11 +4304,15 @@ namespace getfem {
       else
         pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST;
       mi = pnode->tensor().sizes();
-      mi.pop_back(), mi.push_back(m.dim());
-      if (m.dim() > 1) mi.push_back(m.dim());
+      mi.pop_back();
+      mi.push_back(m.dim());
+      if (m.dim() > 1)
+        mi.push_back(m.dim());
       pnode->t.adjust_sizes(mi);
       tree.duplicate_with_operation(pnode, GA_COLON);
-      child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
+      child0 = pnode;
+      pnode = pnode->parent;
+      child1 = pnode->children[1];
       child1->init_matrix_tensor(meshdim, meshdim);
       gmm::clear(pnode->tensor().as_vector());
       for (size_type i = 0; i < meshdim; ++i)
@@ -4734,7 +4741,8 @@ namespace getfem {
           switch (F.dtype()) {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name
-                     << ". No derivative provided or not derivable function.");
+                        << ". No derivative provided or not derivable function.");
+            break;
           case 1:
             child0->name = F.derivative1();
             break;
@@ -4807,6 +4815,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative1();
               break;
@@ -4846,6 +4855,7 @@ namespace getfem {
             case 0:
               GMM_ASSERT1(false, "Cannot derive function " << child0->name
                           << ". No derivative provided");
+              break;
             case 1:
               child0->name = F.derivative2();
               break;

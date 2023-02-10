@@ -27,8 +27,8 @@
 
 namespace getfem {
   size_type vdim_specif_list::nb_mf() const {
-    return std::count_if(begin(),end(),
-      std::mem_fun_ref(&vdim_specif::is_mf_ref));
+    return std::count_if(begin(), end(),
+                         std::mem_fn(&vdim_specif::is_mf_ref));
   }
   size_type vdim_specif_list::nbelt() const {
     size_type sz = 1;

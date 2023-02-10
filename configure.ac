@@ -450,7 +450,7 @@ if test "x$usepython" = "xYES"; then
   echo "Building with python ($PYTHON) support (use --enable-python=no to disable it) "
   echo "You will need the python-numpy and python-scipy packages."
 dnl  AM_PATH_PYTHON(2.2)
-  AC_PYTHON_DEVEL
+  AX_PYTHON_DEVEL
   ac_python_numpy=`$PYTHON -c 'import numpy; print("YES")' 2>/dev/null`
   if  test "x$ac_python_numpy" != "xYES"; then
     usepython=NO
@@ -474,7 +474,7 @@ dnl  AM_PATH_PYTHON(2.2)
       WARNING_MSG="$WARNING_MSG\n$MSG"
     fi
   fi
-  PYTHON_SO=`$PYTHON -c "import distutils.sysconfig, sys; get = distutils.sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
+  PYTHON_SO=`$PYTHON -c "import sysconfig, sys; get = sysconfig.get_config_var; sys.stdout.write(get('EXT_SUFFIX') or get('SO') or '.so');"`
   AC_SUBST(PYTHON_SO)
 fi
 
@@ -910,14 +910,14 @@ save_LIBS="$LIBS";
 if test "x$useQHULL" = "xno"; then
   echo "Building with libqhull explicitly disabled";
 else
-  AC_CHECK_LIB(qhull, qh_new_qhull, [QHULL_LIBS="-lqhull"],
+  AC_CHECK_LIB(qhull_r, qh_new_qhull, [QHULL_LIBS="-lqhull_r"],
   [
-    AC_CHECK_LIB(qhullstatic, qh_new_qhull,[QHULL_LIBS="-lqhullstatic"],[QHULL_LIBS=""])
+    AC_CHECK_LIB(qhullstatic_r, qh_new_qhull,[QHULL_LIBS="-lqhullstatic_r"],[QHULL_LIBS=""])
   ])
-  AC_CHECK_HEADERS(libqhull/qhull_a.h,[useQHULL="yes"],
+  AC_CHECK_HEADERS(libqhull_r/qhull_ra.h,[useQHULL="yes"],
   [
     if test "x$useQHULL" = "xyes"; then
-      AC_MSG_ERROR([header files libqhull/qhull_a.h not found. Use --enable-qhull=no flag]);
+      AC_MSG_ERROR([header files libqhull_r/qhull_ra.h not found. Use --enable-qhull=no flag]);
       useQHULL="no"
     fi;
   ])

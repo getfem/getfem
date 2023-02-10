@@ -47,8 +47,12 @@ bgeot::scalar_type func(const bgeot::base_node& x) {
   return x[0];
 }
 
+#ifdef GMM_USES_MPI
 int main(int argc, char *argv[]) {
   GETFEM_MPI_INIT(argc, argv);
+#else
+int main(int, char **) {
+#endif
   try {
     getfem::mesh mymesh;
 
