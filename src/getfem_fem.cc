@@ -1816,8 +1816,8 @@ namespace getfem {
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
-      M(i,i) = scalar_type(1)/gmm::vect_norm2(n);
-      n *= M(i,i);
+      M(i,i) = gmm::vect_norm2(n);
+      n /= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
@@ -1825,6 +1825,15 @@ namespace getfem {
     }
   }
 
+  // The dof of this RT0 are not the integral on the edges or faces of the
+  // normal component but the normal component on the midpoint of each edge/face
+  // The reason : easier to deal in case of nonlinear transformation (otherwise
+  // an integral with several Gauss points would be necessary to compute on
+  // edges / faces)
+  // Shape fonctions on the reference element for nc = 2
+  // sqrt(2)(x, y) ; (x-1, y) ; (x, y-1)
+  // The shape functions on the real element are K \phi ||K^{-T}n_i||, where
+  //   K is the gradient of the transformation. 
   P1_RT0_::P1_RT0_(dim_type nc_) {
     nc = nc_;
     pgt_stored = 0;
@@ -1848,7 +1857,7 @@ namespace getfem {
       for (size_type i = 0; i <= nc; ++i) {
         base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
         if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
-        if (i == 0) base_[i+j*(nc+1)] /= sqrt(opt_long_scalar_type(nc));
+        if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
       }
 
     base_node pt(nc);
@@ -1913,8 +1922,8 @@ namespace getfem {
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
-      M(i,i) = scalar_type(1)/gmm::vect_norm2(n);
-      n *= M(i,i);
+      M(i,i) = gmm::vect_norm2(n);
+      n /= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) M(i, i) *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)

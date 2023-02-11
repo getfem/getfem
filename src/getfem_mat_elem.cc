@@ -151,7 +151,7 @@ namespace getfem {
               case virtual_fem::VECTORIAL_PRIMAL_TYPE:
                 K_reduction.push_back(k); break;
               case virtual_fem::VECTORIAL_DUAL_TYPE:
-                grad_reduction.push_back(k); break;
+                grad_reduction.push_back(k); break; // reduction with B
               default: break;
               }
             }
@@ -167,7 +167,7 @@ namespace getfem {
             case virtual_fem::VECTORIAL_PRIMAL_TYPE:
               K_reduction.push_back(k); break;
             case virtual_fem::VECTORIAL_DUAL_TYPE:
-              grad_reduction.push_back(k); break;
+              grad_reduction.push_back(k); break; // reduction with B
             default: break;
             }
             if ((*it).pfi->target_dim() > 1) ++k;
