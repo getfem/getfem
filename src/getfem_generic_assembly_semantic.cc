@@ -182,7 +182,7 @@ namespace getfem {
 
   static void ga_node_expand_expression_in_place_of_test
   (ga_tree &tree, const ga_workspace &workspace,
-   pga_tree_node &pnode, const std::string &varname,
+   pga_tree_node pnode, const std::string &varname,
    pga_tree_node pexpr, ga_tree &grad_expr, ga_tree &hess_expr,
    size_type order, const mesh &me, size_type ref_elt_dim, bool eval_fixed_size,
    bool ignore_X, int option) {
