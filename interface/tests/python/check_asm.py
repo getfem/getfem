@@ -33,7 +33,7 @@ import getfem as gf
 
 NX = 4
 m = gf.Mesh('triangles grid', np.arange(0,1+1./NX,1./NX),
-            np.arange(0,1+1./NX,1./NX))     # Structured mesh
+                              np.arange(0,1+1./NX,1./NX))     # Structured mesh
 fem = gf.Fem('FEM_PK(2,1)')
 mfu = gf.MeshFem(m, 1); mfu.set_fem(fem)    # Lagrange P1 scalar fem
 mfv = gf.MeshFem(m, 3); mfv.set_fem(fem)    # Lagrange P1 vector fem

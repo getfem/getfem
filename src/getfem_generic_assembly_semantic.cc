@@ -119,8 +119,8 @@ namespace getfem {
    const std::string &varname,
    const std::string &interpolatename, bool any_trans = false) {
     bool marked = false;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      if (ga_node_mark_tree_for_variable(pnode->children[i], workspace, m,
+    for (pga_tree_node &child : pnode->children)
+      if (ga_node_mark_tree_for_variable(child, workspace, m,
                                          varname, interpolatename, any_trans))
         marked = true;
 
@@ -169,12 +169,10 @@ namespace getfem {
       workspace.interpolate_transformation(pnode->interpolate_name)
         ->extract_variables(workspace, vars, true,
                             m, pnode->interpolate_name);
-      for (std::set<var_trans_pair>::iterator it=vars.begin();
-           it != vars.end(); ++it) {
-        if (it->varname.compare(varname) == 0 &&
-            (any_trans ||
-             it->transname.compare(interpolatename) == 0)) marked = true;
-      }
+      for (const var_trans_pair &pair : vars)
+        if (pair.varname.compare(varname) == 0 &&
+            (any_trans || pair.transname.compare(interpolatename) == 0))
+          marked = true;
     }
     pnode->marked = marked;
     return marked;
@@ -187,9 +185,9 @@ namespace getfem {
    size_type order, const mesh &me, size_type ref_elt_dim, bool eval_fixed_size,
    bool ignore_X, int option) {
     pga_tree_node parent = pnode->parent;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
+    for (pga_tree_node &child : pnode->children)
       ga_node_expand_expression_in_place_of_test
-        (tree, workspace, pnode->children[i], varname, pexpr, grad_expr,
+        (tree, workspace, child, varname, pexpr, grad_expr,
          hess_expr, order, me, ref_elt_dim, eval_fixed_size, ignore_X, option);
     const std::string &name = pnode->name;
     size_type loc_order = pnode->test_function_type;
@@ -253,14 +251,14 @@ namespace getfem {
           delete pnode; pnode = nullptr;                        // deallocates old
         }
         break;
-      case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
+      case GA_NODE_INTERPOLATE_VAL_TEST:  case GA_NODE_INTERPOLATE_GRAD_TEST:
       case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
         GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
                     "Sorry, directional derivative does not work for the "
                     "moment with interpolate transformations. Future work.");
         pnode->name = pexpr->name;
         break;
-      case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+      case GA_NODE_ELEMENTARY_VAL_TEST:  case GA_NODE_ELEMENTARY_GRAD_TEST:
       case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
         GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
                     "Sorry, directional derivative does not work for the "
@@ -276,9 +274,9 @@ namespace getfem {
                     "moment with secondary domains. Future work.");
         pnode->name = pexpr->name;
         break;
-      case GA_NODE_XFEM_PLUS_VAL_TEST: case GA_NODE_XFEM_PLUS_GRAD_TEST:
-      case GA_NODE_XFEM_PLUS_HESS_TEST: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
-      case GA_NODE_XFEM_MINUS_VAL_TEST: case GA_NODE_XFEM_MINUS_GRAD_TEST:
+      case GA_NODE_XFEM_PLUS_VAL_TEST:   case GA_NODE_XFEM_PLUS_GRAD_TEST:
+      case GA_NODE_XFEM_PLUS_HESS_TEST:  case GA_NODE_XFEM_PLUS_DIVERG_TEST:
+      case GA_NODE_XFEM_MINUS_VAL_TEST:  case GA_NODE_XFEM_MINUS_GRAD_TEST:
       case GA_NODE_XFEM_MINUS_HESS_TEST: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
         GMM_ASSERT1(pexpr->node_type == GA_NODE_VAL_TEST,
                     "Sorry, directional derivative does not work for the "
@@ -1990,10 +1988,10 @@ namespace getfem {
             ga_throw_error(pnode->expr, child2->pos, "Cannot derive further "
                            "this order two expression");
 
-          if (ga_node_mark_tree_for_variable(child1,workspace,me,
-                                             vardiff,"",true)) {
+          if (ga_node_mark_tree_for_variable(child1, workspace, me,
+                                             vardiff, "", true)) {
             ga_node_derivation(tree, workspace, me, child1,
-                               vardiff,"",order+1, true);
+                               vardiff, "", order+1, true);
             child1 = pnode->children[1];
             ga_node_analysis(tree, workspace, child1, me, ref_elt_dim,
                              eval_fixed_size, ignore_X, option);
@@ -2705,7 +2703,8 @@ namespace getfem {
     GMM_ASSERT1(predef_operators_nonlinear_elasticity_initialized &&
                 predef_operators_plasticity_initialized &&
                 predef_operators_contact_initialized, "Internal error");
-    if (!(tree.root)) return;
+    if (!(tree.root))
+      return;
     // cout << "Begin semantic analysis with ";
     // ga_print_node(tree.root, cout); cout << endl;
 
@@ -2733,7 +2732,7 @@ namespace getfem {
   void ga_extract_factor(ga_tree &result_tree, pga_tree_node pnode,
                          pga_tree_node &new_pnode) {
     result_tree.clear();
-    result_tree.copy_node(pnode, 0,  result_tree.root);
+    result_tree.copy_node(pnode, 0, result_tree.root);
     new_pnode = result_tree.root;
 
     bool minus_sign = false;
@@ -3102,7 +3101,8 @@ namespace getfem {
     if (cas == 0 && new_pnode->parent &&
         new_pnode->parent->node_type == GA_NODE_OP &&
         new_pnode->parent->op_type == GA_TRACE) {
-      cas = 2; nnew_pnode = new_pnode->parent;
+      cas = 2;
+      nnew_pnode = new_pnode->parent;
     }
     bool ok = true;
     pga_tree_node colon_pnode = nullptr;
@@ -4505,7 +4505,8 @@ namespace getfem {
                 ga_node_grad(tree, workspace, m, pg1->children[0]);
               } else GMM_ASSERT1(false, "internal error");
               tree.insert_node(pg1, GA_NODE_PARAMS);
-              tree.add_child(pg1->parent); tree.add_child(pg1->parent);
+              tree.add_child(pg1->parent);
+              tree.add_child(pg1->parent);
               std::swap(pg1->parent->children[0], pg1->parent->children[1]);
               pg1->parent->children[0]->node_type = GA_NODE_IND_MOVE_LAST;
               pg1->parent->children[2]->node_type = GA_NODE_CONSTANT;
@@ -4684,7 +4685,8 @@ namespace getfem {
         size_type order = pnode->tensor_order();
         ga_node_grad(tree, workspace, m, pnode->children[1]);
         tree.insert_node(pnode, GA_NODE_PARAMS);
-        tree.add_child(pnode->parent); tree.add_child(pnode->parent);
+        tree.add_child(pnode->parent);
+        tree.add_child(pnode->parent);
         tree.add_child(pnode->parent);
         std::swap(pnode->parent->children[0], pnode->parent->children[1]);
         pnode->parent->children[0]->node_type = GA_NODE_SWAP_IND;
@@ -4692,9 +4694,9 @@ namespace getfem {
         pnode->parent->children[3]->node_type = GA_NODE_CONSTANT;
         pnode->parent->children[2]->init_scalar_tensor(scalar_type(order));
         pnode->parent->children[3]->init_scalar_tensor(scalar_type(order+1));
-      }        else if (child0->node_type == GA_NODE_SWAP_IND) {
+      } else if (child0->node_type == GA_NODE_SWAP_IND) {
         ga_node_grad(tree, workspace, m, pnode->children[1]);
-      }        else if (child0->node_type == GA_NODE_CONTRACT) {
+      } else if (child0->node_type == GA_NODE_CONTRACT) {
         mark0 = mark1;
         size_type ch2 = 0;
         if (pnode->children.size() == 5) ch2 = 3;
@@ -4714,7 +4716,8 @@ namespace getfem {
             if (pnode->children.size() == 7) nred--;
             ga_node_grad(tree, workspace, m, pg1->children[1]);
             tree.insert_node(pg1, GA_NODE_PARAMS);
-            tree.add_child(pg1->parent); tree.add_child(pg1->parent);
+            tree.add_child(pg1->parent);
+            tree.add_child(pg1->parent);
             std::swap(pg1->parent->children[0], pg1->parent->children[1]);
             pg1->parent->children[0]->node_type = GA_NODE_IND_MOVE_LAST;
             pg1->parent->children[2]->node_type = GA_NODE_CONSTANT;

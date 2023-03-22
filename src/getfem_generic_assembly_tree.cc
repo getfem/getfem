@@ -431,7 +431,7 @@ namespace getfem {
       if (sibling != child) clear_node_rec(sibling);
     delete pnode;
   }
-  
+
   void ga_tree::copy_node(pga_tree_node pnode, pga_tree_node parent,
                           pga_tree_node &child) {
     GMM_ASSERT1(child == nullptr, "Internal error");
@@ -780,8 +780,7 @@ namespace getfem {
     GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
   }
 
-  void ga_print_node(const pga_tree_node pnode,
-                            std::ostream &str) {
+  void ga_print_node(const pga_tree_node pnode, std::ostream &str) {
     if (!pnode) return;
     long prec = str.precision(16);
 
@@ -1355,8 +1354,8 @@ namespace getfem {
   (ga_tree &tree, pga_tree_node pnode,
    const std::vector<pga_tree_node> &children) {
     if (!pnode) return;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_replace_macro_params(tree, pnode->children[i], children);
+    for (pga_tree_node &child : pnode->children)
+      ga_replace_macro_params(tree, child, children);
     
     if (pnode->node_type == GA_NODE_MACRO_PARAM) {
       size_type po = pnode->nbc2;
@@ -1407,7 +1406,7 @@ namespace getfem {
     if (!pnode) return;
     
     if (pnode->node_type == GA_NODE_PARAMS) {
-      
+
       for (size_type i = 1; i < pnode->children.size(); ++i)
         ga_expand_macro(tree, pnode->children[i], macro_dict);
 
@@ -1466,16 +1465,16 @@ namespace getfem {
       GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
       delete pnode_old;
     } else {
-      for (size_type i = 0; i < pnode->children.size(); ++i)
-        ga_expand_macro(tree, pnode->children[i], macro_dict);
+      for (pga_tree_node &child : pnode->children)
+        ga_expand_macro(tree, child, macro_dict);
     }
   }
 
   static void ga_mark_macro_params_rec(const pga_tree_node pnode,
                                        const std::vector<std::string> &params) {
     if (!pnode) return;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_mark_macro_params_rec(pnode->children[i], params);
+    for (pga_tree_node &child : pnode->children)
+      ga_mark_macro_params_rec(child, params);
     
     if (pnode->node_type == GA_NODE_NAME ||
         pnode->node_type == GA_NODE_INTERPOLATE ||
@@ -1957,10 +1956,9 @@ namespace getfem {
                     ga_throw_error(expr, pos-1, "Bad explicit "
                                    "vector/matrix/tensor format.");
                 }
-                for (size_type i = 0; i < sub_tree.root->children.size(); ++i) {
-                  sub_tree.root->children[i]->parent = tree.current_node;
-                  tree.current_node->children.push_back
-                    (sub_tree.root->children[i]);
+                for (pga_tree_node &child : sub_tree.root->children) {
+                  child->parent = tree.current_node;
+                  tree.current_node->children.push_back(child);
                 }
                 sub_tree.root->children.resize(0);
                 nb_comp++;

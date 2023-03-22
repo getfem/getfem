@@ -470,14 +470,19 @@ namespace getfem {
 
     ga_tree() : root(nullptr), current_node(nullptr), secondary_domain() {}
 
-    ga_tree(const ga_tree &tree) : root(nullptr), current_node(nullptr),
-      secondary_domain(tree.secondary_domain)
-    { if (tree.root) copy_node(tree.root, nullptr, root); }
+    ga_tree(const ga_tree &tree)
+      : root(nullptr), current_node(nullptr),
+        secondary_domain(tree.secondary_domain)
+    {
+      if (tree.root)
+        copy_node(tree.root, nullptr, root);
+    }
 
     ga_tree &operator =(const ga_tree &tree) {
-      clear(); secondary_domain = tree.secondary_domain;
+      clear();
+      secondary_domain = tree.secondary_domain;
       if (tree.root)
-        copy_node(tree.root,nullptr,root);
+        copy_node(tree.root, nullptr, root);
       return *this;
     }
 
@@ -494,8 +499,7 @@ namespace getfem {
 
   // Transform the expression of a node and its sub-nodes in the equivalent
   // assembly string sent to ostream str
-  void ga_print_node(const pga_tree_node pnode,
-                     std::ostream &str);
+  void ga_print_node(const pga_tree_node pnode, std::ostream &str);
   // The same for the whole tree, the result is a std::string
   std::string ga_tree_to_string(const ga_tree &tree);
 
