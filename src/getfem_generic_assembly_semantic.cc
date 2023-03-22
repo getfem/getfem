@@ -233,31 +233,24 @@ namespace getfem {
       }
       switch(pnode->node_type) {
       case GA_NODE_VAL_TEST:
-        delete pnode; pnode = nullptr;
-        tree.copy_node(pexpr, parent, pnode);
-        break;
       case GA_NODE_GRAD_TEST:
-        delete pnode; pnode = nullptr;
-        tree.copy_node(grad_expr.root, parent, pnode);
-        break;
       case GA_NODE_HESS_TEST:
-        delete pnode; pnode = nullptr;
-        tree.copy_node(hess_expr.root, parent, pnode);
-        break;
       case GA_NODE_DIVERG_TEST:
         {
-          delete pnode; pnode = nullptr;
-          tree.copy_node(grad_expr.root, parent, pnode);
-          tree.insert_node(pnode, GA_NODE_OP);
-          pnode->parent->op_type = GA_COLON;
-          tree.add_child(pnode->parent, GA_NODE_PARAMS);
-          pga_tree_node pid = pnode->parent->children[1];
-          tree.add_child(pid);
-          tree.add_child(pid);
-          pid->children[0]->node_type = GA_NODE_NAME;
-          pid->children[0]->name = "Id";
-          pid->children[1]->node_type = GA_NODE_CONSTANT;
-          pid->children[1]->init_scalar_tensor(me.dim());
+          pga_tree_node pnode_new = nullptr;
+          if (pnode->node_type == GA_NODE_VAL_TEST)
+            tree.copy_node(pexpr, parent, pnode_new);           // allocates new
+          else if (pnode->node_type == GA_NODE_GRAD_TEST ||
+                   pnode->node_type == GA_NODE_DIVERG_TEST)
+            tree.copy_node(grad_expr.root, parent, pnode_new);  // allocates new
+          else if (pnode->node_type == GA_NODE_HESS_TEST)
+            tree.copy_node(hess_expr.root, parent, pnode_new);  // allocates new
+          parent->replace_child(pnode, pnode_new);
+          if (pnode->node_type == GA_NODE_DIVERG_TEST) {
+            tree.insert_node(pnode_new, GA_NODE_OP);
+            pnode_new->parent->op_type = GA_TRACE;
+          }
+          delete pnode; pnode = nullptr;                        // deallocates old
         }
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
