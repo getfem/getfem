@@ -124,9 +124,9 @@ namespace gmm {
   /* ********************************************************************* */
 
 # define getrs_interface(f_name, trans1, lapack_name, base_type) inline    \
-  void f_name(const dense_matrix<base_type > &A,                           \
-              const lapack_ipvt &ipvt, std::vector<base_type > &x,	   \
-              const std::vector<base_type > &b) {                          \
+  void f_name(const dense_matrix<base_type> &A,                            \
+              const lapack_ipvt &ipvt, std::vector<base_type > &x,         \
+              const std::vector<base_type> &b) {                           \
     GMMLAPACK_TRACE("getrs_interface");                                    \
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), nrhs(1);                 \
     gmm::copy(b, x); trans1;                                               \
@@ -151,8 +151,8 @@ namespace gmm {
   /* ********************************************************************* */
 
 # define getri_interface(lapack_name, base_type) inline                    \
-  void lu_inverse(const dense_matrix<base_type > &LU,                      \
-	    const lapack_ipvt &ipvt, const dense_matrix<base_type > &A_) { \
+  void lu_inverse(const dense_matrix<base_type> &LU,                       \
+            const lapack_ipvt &ipvt, const dense_matrix<base_type> &A_) {  \
     GMMLAPACK_TRACE("getri_interface");                                    \
     dense_matrix<base_type >&                                              \
     A = const_cast<dense_matrix<base_type > &>(A_);                        \
@@ -206,8 +206,8 @@ namespace gmm {
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));         \
     BLAS_INT info(0), lwork(-1);                                           \
     base_type work1;                                                       \
-    if (m && n) {							   \
-      std::copy(A.begin(), A.end(), Q.begin());				   \
+    if (m && n) {                                                          \
+      std::copy(A.begin(), A.end(), Q.begin());                            \
       std::vector<base_type > tau(n);                                      \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info); \
       lwork = BLAS_INT(gmm::real(work1));                                  \
@@ -363,11 +363,11 @@ namespace gmm {
     resize(S, n, n); copy(A, S);                                        \
     resize(Q, n, n);                                                    \
     base_type rconde(0), rcondv(0);                                     \
-    BLAS_INT info(0);							\
+    BLAS_INT info(0);                                                   \
     lapack_name(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,        \
                 &sdim, &wr[0], &wi[0], &Q(0,0), &n, &rconde, &rcondv,   \
                 &work[0], &lwork, &iwork[0], &liwork, &bwork[0], &info);\
-    GMM_ASSERT1(!info, "SCHUR algorithm failed");			\
+    GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
   }
 
 # define geesx_interface2(lapack_name, base_type) inline                \
@@ -386,7 +386,7 @@ namespace gmm {
     resize(S, n, n); copy(A, S);                                        \
     resize(Q, n, n);                                                    \
     base_type rconde(0), rcondv(0);                                     \
-    BLAS_INT info(0);							\
+    BLAS_INT info(0);                                                   \
     lapack_name(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,        \
                 &sdim, &w[0], &Q(0,0), &n, &rconde, &rcondv,            \
                 &work[0], &lwork, &rwork[0], &bwork[0], &info);         \
@@ -424,7 +424,7 @@ namespace gmm {
     resize(U, m, m);                                                    \
     resize(Vtransposed, n, n);                                          \
     char job = 'A';                                                     \
-    BLAS_INT info(0);							\
+    BLAS_INT info(0);                                                   \
     lapack_name(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0),    \
                 &m, &Vtransposed(0,0), &n, &work[0], &lwork, &info);    \
   }
@@ -444,7 +444,7 @@ namespace gmm {
     resize(U, m, m);                                                    \
     resize(Vtransposed, n, n);                                          \
     char job = 'A';                                                     \
-    BLAS_INT info(0);							\
+    BLAS_INT info(0);                                                   \
     lapack_name(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0),    \
                 &m, &Vtransposed(0,0), &n, &work[0], &lwork,            \
                 &rwork[0], &info);                                      \

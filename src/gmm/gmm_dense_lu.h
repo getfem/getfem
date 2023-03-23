@@ -132,24 +132,24 @@ namespace gmm {
     size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
-    
+
     GMM_ASSERT2(ipvt.size()+1 >= NN, "IPVT too small");
     for (i = 0; i+1 < NN; ++i) ipvt.set(i, i);
-      
+
     if (M || N) {
       for (j = 0; j+1 < NN; ++j) {
-	R max = gmm::abs(A(j,j)); jp = j;
-	for (i = j+1; i < M; ++i)		   /* find pivot.          */
-	  if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
-	ipvt.set(j, jp + 1);
-	
-	if (max == R(0)) { info = j + 1; break; }
+        R max = gmm::abs(A(j,j)); jp = j;
+        for (i = j+1; i < M; ++i)                   /* find pivot.          */
+          if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
+        ipvt.set(j, jp + 1);
+
+        if (max == R(0)) { info = j + 1; break; }
         if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
-	
+
         for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
         for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
-	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
-				 sub_interval(j+1, N-j-1)), c, conjugated(r));
+        rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
+                                 sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
       ipvt.set(NN-1, NN);
     }
@@ -159,14 +159,14 @@ namespace gmm {
   /** LU Solve : Solve equation Ax=b, given an LU factored matrix.*/
   //  Thanks to Valient Gough for this routine!
   template <typename DenseMatrix, typename VectorB, typename VectorX,
-	    typename Pvector>
+            typename Pvector>
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
-		VectorX &x, const VectorB &b) {
+                VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     copy(b, x);
     for(size_type i = 0; i < pvector.size(); ++i) {
       size_type perm = pvector.get(i)-1;   // permutations stored in 1's offset
-      if(i != perm) { T aux = x[i]; x[i] = x[perm]; x[perm] = aux; }
+      if (i != perm) { T aux = x[i]; x[i] = x[perm]; x[perm] = aux; }
     }
     /* solve  Ax = b  ->  LUx = b  ->  Ux = L^-1 b.                        */
     lower_tri_solve(LU, x, true);
@@ -185,16 +185,20 @@ namespace gmm {
   }
   
   template <typename DenseMatrix, typename VectorB, typename VectorX,
-	    typename Pvector>
+            typename Pvector>
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
-			   VectorX &x, const VectorB &b) {
+                           VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     copy(b, x);
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
-    for(size_type i = pvector.size(); i > 0; --i) {
+    for (size_type i = pvector.size(); i > 0; --i) {
       size_type perm = pvector.get(i-1)-1; // permutations stored in 1's offset
-      if(i-1 != perm) { T aux = x[i-1]; x[i-1] = x[perm]; x[perm] = aux; }
+      if (i-1 != perm) {
+        T aux = x[i-1];
+        x[i-1] = x[perm];
+        x[perm] = aux;
+      }
     }
   }
 
@@ -202,7 +206,7 @@ namespace gmm {
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  DenseMatrix& AInv, col_major) {
+                  DenseMatrix& AInv, col_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
     std::vector<T> tmp(pvector.size(), T(0));
     std::vector<T> result(pvector.size());
@@ -216,7 +220,7 @@ namespace gmm {
 
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  DenseMatrix& AInv, row_major) {
+                  DenseMatrix& AInv, row_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
     std::vector<T> tmp(pvector.size(), T(0));
     std::vector<T> result(pvector.size());
@@ -236,10 +240,10 @@ namespace gmm {
   /** Given an LU factored matrix, build the inverse of the matrix. */
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  const DenseMatrix& AInv_) {
+                  const DenseMatrix& AInv_) {
     DenseMatrix& AInv = const_cast<DenseMatrix&>(AInv_);
     lu_inverse(LU, pvector, AInv, typename principal_orientation_type<typename
-	       linalg_traits<DenseMatrix>::sub_orientation>::potype());
+               linalg_traits<DenseMatrix>::sub_orientation>::potype());
   }
 
   /** Given a dense matrix, build the inverse of the matrix, and
