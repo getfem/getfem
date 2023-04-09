@@ -66,7 +66,7 @@ References
 
 .. [EncyclopCubature]
    R. Cools, `An Encyclopedia of Cubature Formulas
-   <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
+   <https://nines.cs.kuleuven.be/ecf/>`_, J. Complexity.
 
 .. [Dh-Go-Ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov.
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*.
