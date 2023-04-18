@@ -31,8 +31,8 @@ mfe.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(3,%d,0.01)' % (degree,)))
 # build a MeshIm object
 mim = gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(5)'))
 
-print 'nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
-      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof())
+print('nbcvs=%d, nbpts=%d, qdim=%d, fem = %s, nbdof=%d' % \
+      (m.nbcvs(), m.nbpts(), mfu.qdim(), mfu.fem()[0].char(), mfu.nbdof()))
 
 # detect some boundary of the mesh
 P = m.pts()
@@ -50,27 +50,27 @@ m.set_region(DIRICHLET_BOUNDARY,fbot)
 
 # assembly
 nbd = mfd.nbdof()
-print "nbd: ",nbd
+print("nbd: ",nbd)
 F = gf.asm_boundary_source(NEUMANN_BOUNDARY, mim, mfu, mfd, np.repeat([[0],[-100],[0]],nbd,1))
-print "F.shape: ",F.shape
-print "mfu.nbdof(): ",mfu.nbdof()
-print "np.repeat([[0],[-100],[0]],nbd,1).shape:",np.repeat([[0],[-100],[0]],nbd,1).shape
+print("F.shape: ",F.shape)
+print("mfu.nbdof(): ",mfu.nbdof())
+print("np.repeat([[0],[-100],[0]],nbd,1).shape:",np.repeat([[0],[-100],[0]],nbd,1).shape)
 
 K = gf.asm_linear_elasticity(mim, mfu, mfd, np.repeat([Lambda], nbd), np.repeat([Mu], nbd))
-print "K.info: ",K.info # Spmat instance
-print "np.repeat([Lambda], nbd).shape:",np.repeat([Lambda], nbd).shape
-print "np.repeat([Mu], nbd).shape:",np.repeat([Mu], nbd).shape
+print("K.display(): ",K.display()) # Spmat instance
+print("np.repeat([Lambda], nbd).shape:",np.repeat([Lambda], nbd).shape)
+print("np.repeat([Mu], nbd).shape:",np.repeat([Mu], nbd).shape)
 
 # handle Dirichlet condition
-(H,R) = gf.asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('identity(3)'), mfd.eval('[0,0,0]'))
-print "H.info: ",H.info # Spmat instance
-print "R.shape: ",R.shape
-print "mfd.eval('identity(3)').shape: ",mfd.eval('identity(3)').shape
-print "mfd.eval('[0,0,0]').shape: ",mfd.eval('[0,0,0]').shape
+(H,R) = gf.asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('[[1,0,0], [0,1,0], [0,0,1]]'), mfd.eval('[0,0,0]'))
+print("H.display(): ",H.display()) # Spmat instance
+print("R.shape: ",R.shape)
+print("mfd.eval('[[1,0,0], [0,1,0], [0,0,1]]').shape: ",mfd.eval('[[1,0,0], [0,1,0], [0,0,1]]').shape)
+print("mfd.eval('[0,0,0]').shape: ",mfd.eval('[0,0,0]').shape)
 
 (N,U0) = H.dirichlet_nullspace(R)
-print "N.info: ",N.info # Spmat instance
-print "U0.shape: ",U0.shape
+print("N.display(): ",N.display()) # Spmat instance
+print("U0.shape: ",U0.shape)
 
 Nt = gf.Spmat('copy',N)
 Nt.transpose()
@@ -80,9 +80,9 @@ FF = Nt*F # FF = Nt*(F-K*U0)
 # solve ...
 P = gf.Precond('ildlt',KK)
 UU = gf.linsolve_cg(KK,FF,P)
-print "UU.shape:",UU.shape
+print("UU.shape:",UU.shape)
 U = N*UU+U0
-print "U.shape:",U.shape
+print("U.shape:",U.shape)
 
 # post-processing
 sl = gf.Slice(('boundary',), mfu, degree)
@@ -98,7 +98,7 @@ for i in range(DU.shape[2]):
   Sigma[:,:,i]=E
   VM[i] = np.sum(E**2) - (1./3.)*np.sum(np.diagonal(E))**2
 
-print 'Von Mises range: ', VM.min(), VM.max()
+print('Von Mises range: ', VM.min(), VM.max())
 
 # export results to VTK (you can use http://mayavi.sourceforge.net/ to view these results )
 # i.e. with  "mayavi -d tripod.vtk -m BandedSurfaceMap -f WarpVector"
@@ -114,8 +114,8 @@ print 'Von Mises range: ', VM.min(), VM.max()
 SigmaSL = gf.compute_interpolate_on(mfe,Sigma,sl)
 #sl.export_to_vtk('tripod_ev.vtk', mfu, U, 'Displacement', SigmaSL, 'stress')
 
-#print 'You can view the tripod with (for example) mayavi:'
-#print 'mayavi -d ./tripod.vtk -f WarpVector -m BandedSurfaceMap'
+#print('You can view the tripod with (for example) mayavi:')
+#print('mayavi -d ./tripod.vtk -f WarpVector -m BandedSurfaceMap')
 
 # export to Gmsh
 sl.export_to_pos('tripod.pos', mfe, VM,'Von Mises Stress', mfu, U, 'Displacement')

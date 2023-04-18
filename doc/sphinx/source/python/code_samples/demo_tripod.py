@@ -42,7 +42,7 @@ except:
     with_graphics=False
 
 
-m=gf.Mesh('import','gid','../meshes/tripod.GiD.msh')
+m=gf.Mesh('import','gid','tripod.GiD.msh')
 print('done!')
 mfu=gf.MeshFem(m,3) # displacement
 mfp=gf.MeshFem(m,1) # pressure

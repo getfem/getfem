@@ -114,9 +114,9 @@ L2error = gf.compute(mfu, u-g, 'L2 norm', mim)
 H1error = gf.compute(mfu, u-g, 'H1 norm', mim)
 
 if (H1error > 1e-3):
-    print 'Error in L2 norm : ', L2error
-    print 'Error in H1 norm : ', H1error
-    print 'Error too large !'
+    print('Error in L2 norm : ', L2error)
+    print('Error in H1 norm : ', H1error)
+    print('Error too large !')
 
 # export data
 mfu.export_to_pos('sol.pos', g,'Exact solution',
