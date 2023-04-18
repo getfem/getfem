@@ -1,5 +1,5 @@
 [main]
-host = https://www.transifex.com
+host = https://app.transifex.com
 
 [getfem-doc.bugs]
 file_filter = source/locale/<lang>/LC_MESSAGES/bugs.po

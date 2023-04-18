@@ -22,10 +22,10 @@ How to contribute / Git repository on Savannah
 .. _sawebgsrc: http://git.savannah.nongnu.org/gitweb/?p=getfem.git;a=tree
 
 .. |tfweb| replace:: transifex
-.. _tfweb: https://www.transifex.com
+.. _tfweb: https://app.transifex.com
 
 .. |tfwebteam| replace:: Getfem translation team on Transifex
-.. _tfwebteam: https://www.transifex.com/tkoyama010/getfem-doc/dashboard
+.. _tfwebteam: https://app.transifex.com/tkoyama010/getfem-doc/dashboard
 
 .. |cfvlang| replace:: Currently supported languages by Sphinx are
 .. _cfvlang: https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-language
