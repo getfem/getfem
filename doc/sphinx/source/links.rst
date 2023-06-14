@@ -12,8 +12,8 @@ Some related links
 Jean Garrigues courses (in french)
 ----------------------------------
 
-.. |link1| replace:: http://jgarrigues.perso.egim-mrs.fr/ef.html
-.. _link1: http://jgarrigues.perso.egim-mrs.fr/ef.html
+.. |link1| replace:: http://jean.garrigues.perso.centrale-marseille.fr
+.. _link1: http://jean.garrigues.perso.centrale-marseille.fr
 
 |link1|_
 
