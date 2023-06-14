@@ -589,7 +589,7 @@ namespace getfem {
       int n=int(tok_number_dval());
       if (n != curr_tok_dval) ASM_THROW_PARSE_ERROR("not an integer"); 
       if (n > maxval) ASM_THROW_PARSE_ERROR("out of bound integer");
-      return n-1; /* -1 pour un indicage qui commence à 1! */ 
+      return n-1; /* -1 pour un indicage qui commence Ã  1! */
     }
     size_type tok_mfref_num()
     { assert(tok_type()==MFREF); return curr_tok_ival; }

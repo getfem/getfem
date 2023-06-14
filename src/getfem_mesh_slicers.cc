@@ -672,7 +672,7 @@ namespace getfem {
       gmm::mult(G,pc,K);
       scalar_type J = bgeot::lu_det(&(*(K.begin())), pgt->dim());
       // bgeot::geotrans_interpolation_context ctx(pgp,0,G);
-      // scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K même
+      // scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K mÃªme
       if (J < 0) return true;
       //cout << "cv = " << cv << ", J = " << J << "\n";
     }

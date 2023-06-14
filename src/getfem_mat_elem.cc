@@ -138,7 +138,7 @@ namespace getfem {
                       "Exact integration not allowed in this context");
 
           if ((*it).t != GETFEM_NONLINEAR_ && !((*it).pfi->is_equivalent())) {
-            // TODO : le numero d'indice à reduire peut changer ...
+            // TODO : le numero d'indice Ã  reduire peut changer ...
             trans_reduction.push_back(k);
             trans_reduction_pfi.push_back((*it).pfi);
           }
@@ -445,7 +445,7 @@ namespace getfem {
         std::fill(mref.begin()+1, mref.end(), aux);
       }
 
-      if (is_ppi) // pour accelerer, il faudrait précalculer les dérivées
+      if (is_ppi) // pour accelerer, il faudrait prÃ©calculer les dÃ©rivÃ©es
       {
         base_poly P(dim, 0), Q(dim, 0), R(dim, 0);
         size_type old_ind = size_type(-1), ind;

@@ -76,7 +76,7 @@
 
 namespace bgeot {
   typedef gmm::uint32_type index_type;
-  typedef gmm::int32_type stride_type; /* signé! */
+  typedef gmm::int32_type stride_type; /* signÃ©! */
 
   //  typedef std::vector<index_type> tensor_ranges;
   class tensor_ranges : public std::vector<index_type> {
@@ -313,7 +313,7 @@ namespace bgeot {
     tensor_mask_container masks_;
 
     /* verifie si un masque est completement vide,
-       si c'est le cas alors tous les autres masques sont vidés
+       si c'est le cas alors tous les autres masques sont vidÃ©s
        (le tenseur est identiquement nul) */
     void check_empty_mask() {
       if (card() == 0) {
@@ -506,13 +506,13 @@ namespace bgeot {
       update_idx2mask();
     }
 
-    /* forme d'une tranche (c'est la forme qu'on applique à un tenseur pour
+    /* forme d'une tranche (c'est la forme qu'on applique Ã  un tenseur pour
        en extraire la tranche) */
     tensor_shape slice_shape(tensor_mask::Slice slice) const {
       assert(slice.dim < ndim() && slice.i0 < dim(slice.dim));
       tensor_shape ts(ndim());
       ts.push_mask(tensor_mask(dim(slice.dim), slice));
-      ts.merge(*this); /* le masque peut se retrouver brutalement vidé si on a tranché au mauvais endroit! */
+      ts.merge(*this); /* le masque peut se retrouver brutalement vidÃ© si on a tranchÃ© au mauvais endroit! */
       return ts;
     }
 
@@ -548,8 +548,8 @@ namespace bgeot {
   */
   class tensor_ref : public tensor_shape {
     std::vector< tensor_strides > strides_;
-    TDIter *pbase_; /* pointeur sur un pointeur qui designe les données
-		       ça permet de changer la base pour toute une serie
+    TDIter *pbase_; /* pointeur sur un pointeur qui designe les donnÃ©es
+		       Ã§a permet de changer la base pour toute une serie
 		       de tensor_ref en un coup */
 
     stride_type base_shift_;
@@ -578,7 +578,7 @@ namespace bgeot {
 
     
 
-    /* s'assure que le stride du premier indice est toujours bien égal à zéro */
+    /* s'assure que le stride du premier indice est toujours bien Ã©gal Ã  zÃ©ro */
     void  ensure_0_stride() {
       for (index_type i=0; i < strides_.size(); ++i) {
 	if (strides_[i].size() >= 1 && strides_[i][0] != 0) {
@@ -589,8 +589,8 @@ namespace bgeot {
       }
     }
 
-    /* constructeur à partir d'une forme : ATTENTION ce constructeur n'alloue pas la
-       mémoire nécessaire pour les données !! */
+    /* constructeur Ã  partir d'une forme : ATTENTION ce constructeur n'alloue pas la
+       mÃ©moire nÃ©cessaire pour les donnÃ©es !! */
     explicit tensor_ref(const tensor_shape& ts) : tensor_shape(ts), pbase_(0), base_shift_(0) {
       strides_.reserve(16);
       init_strides();
@@ -614,8 +614,8 @@ namespace bgeot {
 
     void set_sub_tensor(const tensor_ref& tr, const tensor_shape& sub);
 
-    /* constructeur à partir d'un sous-tenseur à partir d'un tenseur et d'une forme 
-       hypothese: la forme 'sub' doit être un sous-ensemble de la forme du tenseur
+    /* constructeur Ã  partir d'un sous-tenseur Ã  partir d'un tenseur et d'une forme
+       hypothese: la forme 'sub' doit Ãªtre un sous-ensemble de la forme du tenseur
     */
     explicit tensor_ref(const tensor_ref& tr, const tensor_shape& sub) {
       set_sub_tensor(tr,sub);
@@ -658,7 +658,7 @@ namespace bgeot {
       if (n < pi.n) return true;
       else return false;
     }
-    stride_type mean_increm; /* valeur moyenne de l'increment (utilisé pour le tri) */
+    stride_type mean_increm; /* valeur moyenne de l'increment (utilisÃ© pour le tri) */
     tensor_strides inc; /* not strides but increments to the next index value,
 				     with inc[range-1] == -sum(inc[0..range-2]) (automatic rewinding!) 
 				     of course, stride_type MUST be signed
@@ -680,13 +680,13 @@ namespace bgeot {
     tensor_strides itbase;
     struct  index_value_data {
       dim_type cnt_num;
-      const stride_type **ppinc; /* pointe vers pr[cnt_num].pinc, initialisé par rewind()
-				  et pas avant (à cause de pbs lors de la copie de multi_tensor_iterator sinon) 
-				  permet de déduire la valeur du compteur: (*ppinc - pincbase) (à diviser par nn=(pri[cnt_num].n-N))
+      const stride_type **ppinc; /* pointe vers pr[cnt_num].pinc, initialisÃ© par rewind()
+				  et pas avant (Ã  cause de pbs lors de la copie de multi_tensor_iterator sinon)
+				  permet de dÃ©duire la valeur du compteur: (*ppinc - pincbase) (Ã  diviser par nn=(pri[cnt_num].n-N))
 			       */
       const stride_type *pincbase;
       const stride_type *pposbase; /* pointe dans pri[cnt_num].mask_pos, retrouve la position dans le masque en fonction
-				  du compteur déduit ci-dessus et des champs div et mod ci-dessous */
+				  du compteur dÃ©duit ci-dessus et des champs div et mod ci-dessous */
       index_type div, mod, nn;
       stride_type pos_; /* stores the position when the indexe is not part of the pri array
 			  (hence the index only has 1 value, and ppos == &pos_, and pcnt = &zero */
@@ -753,8 +753,8 @@ namespace bgeot {
     bool vnext() { return next(unsigned(-1), vectorized_pr_dim); }
     bool bnext(dim_type b) { return next(bloc_rank[b]-1, bloc_rank[b+1]-1); }
     bool bnext_useful(dim_type b) { return bloc_rank[b] != bloc_rank[b+1]; }
-    /* version speciale pour itérer sur des tenseurs de même dimensions
-       (doit être un poil plus rapide) */    
+    /* version speciale pour itÃ©rer sur des tenseurs de mÃªme dimensions
+       (doit Ãªtre un poil plus rapide) */
     bool qnext1() {
       if (pr.size() == 0) return false;
       std::vector<packed_range>::reverse_iterator p_ = pr.rbegin();
@@ -870,7 +870,7 @@ namespace bgeot {
     virtual ~tensor_reduction() { clear(); }
     void clear();
 
-    /* renvoie les formes diagonalisées 
+    /* renvoie les formes diagonalisÃ©es
        pour bien faire, il faudrait que cette fonction prenne en argument
        le required_shape de l'objet ATN_reducted_tensor, et fasse le merge
        avec ce qu'elle renvoie... non trivial

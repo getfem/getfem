@@ -528,7 +528,7 @@ namespace getfem {
     int augmentation_version; // 0 for non-symmetric Alart-Curnier version
                               // 1 for symmetric Alart-Curnier version
                               // 2 for new version (augmented multipliers)
-                              // 3 for new version with De Saxcé projection
+                              // 3 for new version with De SaxcÃ© projection
 
     void init_BBN_BBT(void) const {
       gmm::resize(BBN1, gmm::mat_nrows(BN1), gmm::mat_ncols(BN1));

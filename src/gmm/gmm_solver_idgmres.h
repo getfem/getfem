@@ -179,7 +179,7 @@ namespace gmm {
 	combine(KS, y, x, i);
 	mult(A, gmm::scaled(x, T(-1)), b, w);
 	mult(M, w, r);
-	beta = gmm::vect_norm2(r); // + verif sur beta ... à faire
+	beta = gmm::vect_norm2(r); // + verif sur beta ... Ã  faire
 	break;
       }
 
@@ -192,13 +192,13 @@ namespace gmm {
       beta = gmm::vect_norm2(r);
       
       mult(Hess, scaled(y, T(-1)), gamma, ztest);
-      // En fait, d'après Caroline qui s'y connait ztest et gam devrait
-      // être confondus
-      // Quand on aura vérifié que ça marche, il faudra utiliser gam à la 
+      // En fait, d'aprÃ¨s Caroline qui s'y connait ztest et gam devrait
+      // Ãªtre confondus
+      // Quand on aura vÃ©rifiÃ© que Ã§a marche, il faudra utiliser gam Ã  la
       // place de ztest.
       if (st.tb_def < p) {
         T nss = H(m,m-1) / ztest[m];
-	nss /= gmm::abs(nss); // ns à calculer plus tard aussi
+	nss /= gmm::abs(nss); // ns Ã  calculer plus tard aussi
 	gmm::copy(KS.mat(), W); gmm::copy(scaled(r, nss /beta), mat_col(W, m));
 	
 	// Computation of the oblique matrix
@@ -226,8 +226,8 @@ namespace gmm {
 			 sub_matrix(YB,  sub_interval(0, m-st.tb_def)),
 			 sub_interval(st.tb_def, m-st.tb_def), 
 			 (st.tb_defwant < p)); 
-	  // ns *= alpha; // à calculer plus tard ??
-	  //  V(:,m+1) = alpha*V(:, m+1); ça devait servir à qlq chose ...
+	  // ns *= alpha; // Ã  calculer plus tard ??
+	  //  V(:,m+1) = alpha*V(:, m+1); Ã§a devait servir Ã  qlq chose ...
 
 
 	  //       Clean the portions below the diagonal corresponding
@@ -451,8 +451,8 @@ namespace gmm {
 	  for (i = k1; i <= k2; ++i) {
             if (i > k1) Givens_rotation(H(i, i-1), H(i+1, i-1), c, s);
             
-	    // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre à zéro).
-	    // Vérifier qu'au final H(i+1,i) est bien un réel positif.
+	    // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre Ã  zÃ©ro).
+	    // VÃ©rifier qu'au final H(i+1,i) est bien un rÃ©el positif.
 
             // apply rotation from left to rows of H
 	    row_rot(sub_matrix(H, sub_interval(i,2), sub_interval(i, kend-i)),
@@ -468,7 +468,7 @@ namespace gmm {
             
             // accumulate e'  Q so residual can be updated k+p
 	    Apply_Givens_rotation_left(q(0,i), q(0,i+1), c, s);
-	    // peut être que nous utilisons G au lieu de G* et que
+	    // peut Ãªtre que nous utilisons G au lieu de G* et que
 	    // nous allons trop loin en k2.
 	  }
 	}
@@ -486,7 +486,7 @@ namespace gmm {
 	  num = num + 2;    // mark that a complex conjugate
 	  mark = true;      // pair has been applied
 
-	  // Indices de fin de boucle à surveiller... de près !
+	  // Indices de fin de boucle Ã  surveiller... de prÃ¨s !
 	  for (size_type k1 = 0, k3 = 0; k3 != kend-2; k1 = k3+1) {
 	    k3 = k1;
 	    while (h(k3+1, k3) != T(0) && k3 < kend-2) ++k3;
@@ -504,13 +504,13 @@ namespace gmm {
 		y = H(i+1, i-1);
 		z = H(i+2, i-1);
 		// Ne pas oublier de nettoyer H(i+1,i-1) et H(i+2,i-1) 
-		// (les mettre à zéro).
+		// (les mettre Ã  zÃ©ro).
 	      }
 
 	      hv[0] = x; hv[1] = y; hv[2] = z;
 	      house_vector(v);
 
-	      // Vérifier qu'au final H(i+1,i) est bien un réel positif
+	      // VÃ©rifier qu'au final H(i+1,i) est bien un rÃ©el positif
 
 	      // apply transformation from left to rows of H
 	      w.resize(kend-i);
@@ -545,8 +545,8 @@ namespace gmm {
 	  c = x; s = y;
 	  if (i > k1) Givens_rotation(H(i, i-1), H(i+1, i-1), c, s);
             
-	  // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre à zéro).
-	  // Vérifier qu'au final H(i+1,i) est bien un réel positif.
+	  // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre Ã  zÃ©ro).
+	  // VÃ©rifier qu'au final H(i+1,i) est bien un rÃ©el positif.
 
 	  // apply rotation from left to rows of H
 	  row_rot(sub_matrix(H, sub_interval(i,2), sub_interval(i, kend-i)),
@@ -653,7 +653,7 @@ namespace gmm {
     for (j = 0, ind = 0; j < m-p; ++j) {
       if (ritznew[j] == R(-1)) {
 	if (std::imag(eval[j]) != R(0)) {
-	  st.nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
+	  st.nb_nolong += 2; ++j; //  Ã  adapter dans le cas complexe ...
 	} 
 	else st.nb_nolong++;
       }

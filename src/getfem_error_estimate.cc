@@ -93,11 +93,11 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j)+F[i];
 	
-        ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
+        ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrÃ©e
         eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
       }    
         //if (ERR[cv] > 100)
-        //cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
+        //cout << "Erreur en rÃ©sidu sur element " << cv << " : " << ERR[cv] << endl;
         
         
        // jump of the stress between the element ant its neighbors.

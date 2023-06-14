@@ -99,8 +99,8 @@ namespace bgeot
       gmm::mult(K, CS, B);
     }
     else {
-      // L'inversion peut être optimisée par le non calcul global de B
-      // et la resolution d'un système linéaire.
+      // L'inversion peut Ãªtre optimisÃ©e par le non calcul global de B
+      // et la resolution d'un systÃ¨me linÃ©aire.
       base_matrix KT(K.nrows(), K.ncols());
       pgt->compute_K_matrix(G, pc, KT);
       gmm::copy(gmm::transposed(KT), K);

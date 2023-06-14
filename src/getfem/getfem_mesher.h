@@ -480,7 +480,7 @@ namespace getfem {
 	for (size_type k = 1; k < dists.size(); ++k)
 	  d = std::min(d, (*(dists[k]))(P));
       }
-      else { // essai raté ...
+      else { // essai ratÃ© ...
 	isin = false;
 	for (size_type k = 0; k < dists.size(); ++k) {
 	  vd[k] = (*(dists[k]))(P);
@@ -506,7 +506,7 @@ namespace getfem {
 	}
 	return d;
       }
-      else { // essai raté ...
+      else { // essai ratÃ© ...
 	vd[0] = (*(dists[0]))(P);
 	bool ok = (vd[0] > -SEPS);
 	for (size_type k = 1; k < dists.size(); ++k) {
@@ -534,7 +534,7 @@ namespace getfem {
 	}
 	return dists[i]->grad(P, G);
       }
-      else { // essai raté ...
+      else { // essai ratÃ© ...
 	d = operator()(P);
 	base_small_vector Gloc;
 	for (size_type k = 0; k < dists.size(); ++k) {
