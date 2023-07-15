@@ -1002,7 +1002,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       P   = P[:,Ind]
       nbd = P.shape[1]
     vars = ('x','y','z','u','v','w')
-    nbvars = min(P.shape[0],len(vars))
+    nbvars = min([P.shape[0],len(vars)])
     for i in range(0,nbvars):
       gl[vars[i]] = P[i,0]
       lo[vars[i]] = P[i,0]
