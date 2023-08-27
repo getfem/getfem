@@ -38,7 +38,7 @@ using namespace getfemint;
 struct sub_gf_util : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out) = 0;
+                   getfemint::mexargs_out& out) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_util> psub_command;
@@ -47,15 +47,15 @@ typedef std::shared_ptr<sub_gf_util> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_util {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_util {                                  \
+      virtual void run(getfemint::mexargs_in& in,                       \
+                       getfemint::mexargs_out& out)                     \
+      { dummy_func(in); dummy_func(out); code }                         \
+    };                                                                  \
+    psub_command psubc = std::make_shared<subc>();                      \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
+    subc_tab[cmd_normalize(name)] = psubc;                              \
   }
 
 
@@ -82,15 +82,15 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
        std::string fname = in.pop().to_string();
        if (!in.front().is_complex()) {
-	 gf_real_sparse_csc_const_ref H;  in.pop().to_sparse(H);
-	 gmm::csc_matrix<double> cscH; gmm::copy(H,cscH);
-	 if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
-	 else           gmm::MatrixMarket_save(fname.c_str(), cscH);
+         gf_real_sparse_csc_const_ref H;  in.pop().to_sparse(H);
+         gmm::csc_matrix<double> cscH; gmm::copy(H,cscH);
+         if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
+         else           gmm::MatrixMarket_save(fname.c_str(), cscH);
        } else {
-	 gf_cplx_sparse_csc_const_ref H;  in.pop().to_sparse(H);
-	 gmm::csc_matrix<complex_type> cscH; gmm::copy(H,cscH);
-	 if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
-	 else           gmm::MatrixMarket_save(fname.c_str(), cscH);
+         gf_cplx_sparse_csc_const_ref H;  in.pop().to_sparse(H);
+         gmm::csc_matrix<complex_type> cscH; gmm::copy(H,cscH);
+         if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
+         else           gmm::MatrixMarket_save(fname.c_str(), cscH);
        }
 
        );
@@ -113,9 +113,9 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("trace level", 0, 1, 0, 1,
        if (in.remaining())
-	 gmm::set_traces_level(in.pop().to_integer(0, 100));
+         gmm::set_traces_level(in.pop().to_integer(0, 100));
        else
-	 out.pop().from_integer(int(gmm::traces_level::level()));
+         out.pop().from_integer(int(gmm::traces_level::level()));
        );
 
 
@@ -127,9 +127,17 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("warning level", 0, 1, 0, 1,
        if (in.remaining())
-	 gmm::set_warning_level(in.pop().to_integer(0, 100));
+         gmm::set_warning_level(in.pop().to_integer(0, 100));
        else
-	 out.pop().from_integer(int(gmm::warning_level::level()));
+         out.pop().from_integer(int(gmm::warning_level::level()));
+       );
+
+    /*@FUNC tl = ('set num threads', @int nb_threads)
+      Sets the number of threads for the multithreaded GetFEM version.
+      It is available only when GetFEM is compiled with openmp support. @*/
+    sub_command
+      ("set num threads", 1, 1, 0, 0,
+       getfem::set_num_threads(in.pop().to_integer(0, 100));
        );
 
   }
@@ -140,12 +148,12 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   std::string init_cmd  = m_in.pop().to_string();
   std::string cmd       = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out);
   }
   else bad_cmd(init_cmd);
