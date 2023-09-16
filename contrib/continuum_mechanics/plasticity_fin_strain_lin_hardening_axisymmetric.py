@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2020-2020 Konstantinos Poulios.
+# Copyright (C) 2020-2023 Konstantinos Poulios.
 #
 # This file is a part of GetFEM
 #
@@ -68,7 +68,7 @@ resultspath = "./results"
 if not os.path.exists(resultspath):
    os.makedirs(resultspath)
 
-tee = subprocess.Popen(["tee", "%s/tension_axisymmetric.log" % resultspath],
+tee = subprocess.Popen(["tee", f"{resultspath}/tension_axisymmetric.log"],
                        stdin=subprocess.PIPE)
 sys.stdout.flush()
 os.dup2(tee.stdin.fileno(), sys.stdout.fileno())
@@ -86,8 +86,7 @@ ymin = 0.
 dx = L/2
 dy = H/2
 mesh = gf.Mesh("import", "structured",
-               "GT='%s';ORG=[%f,%f];SIZES=[%f,%f];NSUBDIV=[%i,%i]"
-               % (geotrans, xmin, ymin, dx, dy, N_L, N_H))
+               f"GT='{geotrans}';ORG=[{xmin},{ymin}];SIZES=[{dx},{dy}];NSUBDIV=[{N_L},{N_H}]")
 N = mesh.dim()
 
 outer_faces = mesh.outer_faces()
@@ -119,7 +118,7 @@ if dH > 0:
       pts[1,i] -= (y*dH)/(2*H) * (1 + np.cos(2.*np.pi*x/L))
    mesh.set_pts(pts)
 
-mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
+mesh.export_to_vtu(f"{resultspath}/mesh.vtu")
 
 # FEM
 mfN = gf.MeshFem(mesh, N)
@@ -171,12 +170,12 @@ md.add_macro("invCp0", "[[[1,0,0],[0,0,0],[0,0,0]],"+\
 md.add_macro("devlogbetr", "Deviator(Logm(F3d*invCp0*F3d'))")
 md.add_macro("Y0","{A}+{B}*gamma0".format(A=np.sqrt(2./3.)*pl_sigma_0, B=2./3.*pl_H))
 md.add_macro("ksi",
-             "(1-1/max(1,mu*pow(J,-5/3)*Norm(devlogbetr)/Y0))/(2+{B}/(mu*pow(J,-5/3)))"
+             "(1-1/max(1,mu/J*Norm(devlogbetr)/Y0))/(2+{B}/(mu/J))"
              .format(B=2./3.*pl_H))
 md.add_macro("gamma", "gamma0+ksi*Norm(devlogbetr)")
 md.add_macro("devlogbe", "(1-2*ksi)*devlogbetr")
-md.add_macro("tauD2d", "mu*pow(J,-2/3)*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
-md.add_macro("tauD33", "mu*pow(J,-2/3)*devlogbe(3,3)")
+md.add_macro("tauD2d", "mu*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
+md.add_macro("tauD33", "mu*devlogbe(3,3)")
 
 md.add_nonlinear_generic_assembly_brick\
    (mim, "2*pi*X(2)*(((tauH*Id(2)+tauD2d)*Inv(F')):Grad_Test_u+(tauH+tauD33)/(X(2)+u(2))*Test_u(2))")
@@ -190,22 +189,21 @@ md.add_macro("invCp", "(Inv(F3d)*Expm(-ksi*devlogbetr)*(F3d))*invCp0"\
 md.add_filtered_fem_variable("dirmult", mfmult, XP_RG)
 md.add_nonlinear_generic_assembly_brick(mim, "2*pi*X(2)*(disp-u(1))*dirmult", XP_RG)
 
-print("Model dofs: %i" % md.nbdof())
-print("Displacement fem dofs: %i" % mfu.nbdof())
+print(f"Model dofs: {md.nbdof()}\nDisplacement fem dofs: {mfu.nbdof()}")
 print("Dirichlet mult dofs: %i" % md.mesh_fem_of_variable("dirmult").nbdof())
 
 shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
 starttime_overall = time.process_time()
-with open("%s/tension_axisymmetric.dat" % resultspath, "w") as f1:
+with open(f"{resultspath}/tension_axisymmetric.dat", "w") as f1:
    for step in range(steps_t+1):
       md.set_variable("disp", disp*step/float(steps_t))
       print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")))
 
       starttime = time.process_time()
-      md.solve('noisy', 'max_iter', 25, 'max_res', 1e-10,
-               'lsearch', 'simplest', 'alpha max ratio', 100, 'alpha min', 0.2, 'alpha mult', 0.6,
-               'alpha threshold res', 1e9)
-      print('STEP %i COMPLETED IN %f SEC' % (step, time.process_time()-starttime))
+      md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
+               "lsearch", "simplest", "alpha max ratio", 100, "alpha min", 0.2, "alpha mult", 0.6,
+               "alpha threshold res", 1e9)
+      print("STEP %i COMPLETED IN %f SEC" % (step, time.process_time()-starttime))
 
       F = gf.asm_generic(mim, 0, "2*pi*X(2)*dirmult", XP_RG, md)
       print("Displacement %g, total force %g" % (md.variable("disp"), F))
@@ -226,7 +224,7 @@ with open("%s/tension_axisymmetric.dat" % resultspath, "w") as f1:
                 mfu, md.variable("u"), "Displacements",
                 mfout2, md.interpolation("dirmult", mfout2, XP_RG), "Nominal reaction traction",
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
-      mfout2.export_to_vtu("%s/tension_axisymmetric_%i.vtu" % (resultspath, step), *output)
+      mfout2.export_to_vtu(f"{resultspath}/tension_axisymmetric_{step}.vtu", *output)
 
       md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
       md.set_variable("invCp0vec",
@@ -234,5 +232,5 @@ with open("%s/tension_axisymmetric.dat" % resultspath, "w") as f1:
                                        " [[0,0,0,0.5],[0,1,0,0]  ,[0,0,0,0]],"+\
                                        " [[0,0,0,0]  ,[0,0,0,0]  ,[0,0,1,0]]]:invCp", mimd4, -1))
 
-print('OVERALL SOLUTION TIME IS %f SEC' % (time.process_time()-starttime_overall))
+print("OVERALL SOLUTION TIME IS %f SEC" % (time.process_time()-starttime_overall))
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: UTF8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2020-2020 Konstantinos Poulios.
+# Copyright (C) 2020-2023 Konstantinos Poulios.
 #
 # This file is a part of GetFEM
 #
@@ -62,14 +62,12 @@ mult_fem_order = 2  # dirichlet multipliers finite element order
 #integration_degree = 3 # 4 gauss points per quad
 integration_degree = 5 # 9 gauss points per quad
 
-export_results = False;
-
 #------------------------------------
 resultspath = "./results"
-if (export_results and not os.path.exists(resultspath)):
+if not os.path.exists(resultspath):
    os.makedirs(resultspath)
 
-tee = subprocess.Popen(["tee", "%s/tension_plane_strain.log" % resultspath],
+tee = subprocess.Popen(["tee", f"{resultspath}/tension_plane_strain.log"],
                        stdin=subprocess.PIPE)
 sys.stdout.flush()
 os.dup2(tee.stdin.fileno(), sys.stdout.fileno())
@@ -87,8 +85,7 @@ ymin = 0.
 dx = L/2
 dy = H/2
 mesh = gf.Mesh("import", "structured",
-               "GT='%s';ORG=[%f,%f];SIZES=[%f,%f];NSUBDIV=[%i,%i]"
-               % (geotrans, xmin, ymin, dx, dy, N_L, N_H))
+               f"GT='{geotrans}';ORG=[{xmin},{ymin}];SIZES=[{dx},{dy}];NSUBDIV=[{N_L},{N_H}]")
 N = mesh.dim()
 
 outer_faces = mesh.outer_faces()
@@ -119,9 +116,8 @@ if dH > 0:
       pts[0,i] = x
       pts[1,i] -= (y*dH)/(2*H) * (1 + np.cos(2.*np.pi*x/L))
    mesh.set_pts(pts)
-   
-if (export_results):
-   mesh.export_to_vtu("%s/mesh.vtu" % resultspath)
+
+mesh.export_to_vtu(f"{resultspath}/mesh.vtu")
 
 # FEM
 mfN = gf.MeshFem(mesh, N)
@@ -173,17 +169,17 @@ md.add_macro("invCp0", "[[[1,0,0],[0,0,0],[0,0,0]],"+\
 md.add_macro("devlogbetr", "Deviator(Logm(F3d*invCp0*F3d'))")
 md.add_macro("Y0","{A}+{B}*gamma0".format(A=np.sqrt(2./3.)*pl_sigma_0, B=2./3.*pl_H))
 md.add_macro("ksi",
-             "(1-1/max(1,mu*pow(J,-5/3)*Norm(devlogbetr)/Y0))/(2+{B}/(mu*pow(J,-5/3)))"
+             "(1-1/max(1,mu/J*Norm(devlogbetr)/Y0))/(2+{B}/(mu/J))"
              .format(B=2./3.*pl_H))
 md.add_macro("gamma", "gamma0+ksi*Norm(devlogbetr)")
 md.add_macro("devlogbe", "(1-2*ksi)*devlogbetr")
-md.add_macro("tauD2d", "mu*pow(J,-2/3)*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
+md.add_macro("tauD2d", "mu*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
 
 md.add_nonlinear_generic_assembly_brick\
    (mim, "((tauH*Id(2)+tauD2d)*Inv(F')):Grad_Test_u")
 
-md.add_macro("sigmaD", "(mu*pow(J,-5/3)*devlogbe)")
-md.add_macro("sigma", "tauH/J*Id(3)+mu*pow(J,-5/3)*devlogbe")
+md.add_macro("sigmaD", "(mu/J*devlogbe)")
+md.add_macro("sigma", "tauH/J*Id(3)+mu/J*devlogbe")
 md.add_macro("invCp", "(Inv(F3d)*Expm(-ksi*devlogbetr)*(F3d))*invCp0"\
                       "*(Inv(F3d)*Expm(-ksi*devlogbetr)*(F3d))'")
 
@@ -191,28 +187,21 @@ md.add_macro("invCp", "(Inv(F3d)*Expm(-ksi*devlogbetr)*(F3d))*invCp0"\
 md.add_filtered_fem_variable("dirmult", mfmult, XP_RG)
 md.add_nonlinear_generic_assembly_brick(mim, "(disp-u(1))*dirmult", XP_RG)
 
-print("Model dofs: %i" % md.nbdof())
-print("Displacement fem dofs: %i" % mfu.nbdof())
+print(f"Model dofs: {md.nbdof()}\nDisplacement fem dofs: {mfu.nbdof()}")
 print("Dirichlet mult dofs: %i" % md.mesh_fem_of_variable("dirmult").nbdof())
 
-if (export_results):
-   shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
-
+shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
 starttime_overall = time.process_time()
-
-if (export_results):
-   f1 = open("%s/tension_plane_strain.dat" % resultspath, "w")
-
-try:
+with open(f"{resultspath}/tension_plane_strain.dat", "w") as f1:
    for step in range(steps_t+1):
       md.set_variable("disp", disp*step/float(steps_t))
       print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")))
 
       starttime = time.process_time()
-      md.solve('noisy', 'max_iter', 25, 'max_res', 1e-10,
-               'lsearch', 'simplest', 'alpha max ratio', 100, 'alpha min', 1, 'alpha mult', 0.6,
-               'alpha threshold res', 1e9)
-      print('STEP %i COMPLETED IN %f SEC' % (step, time.process_time()-starttime))
+      md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
+               "lsearch", "simplest", "alpha max ratio", 100, "alpha min", 1, "alpha mult", 0.6,
+               "alpha threshold res", 1e9)
+      print("STEP %i COMPLETED IN %f SEC" % (step, time.process_time()-starttime))
 
       F = gf.asm_generic(mim, 0, "dirmult", XP_RG, md)
       print("Displacement %g, total force %g" % (md.variable("disp"), F))
@@ -220,12 +209,11 @@ try:
       V = gf.asm_generic(mim, 0, "1", -1, md)
       sigma11 = gf.asm_generic(mim, 0, "sigma(1,1)", -1, md)/V
       gamma = gf.asm_generic(mim, 0, "gamma", -1, md)/V
-      if (export_results):
-         f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
-                  % (md.variable("disp"), F, A, F/A, sigma11, gamma))
-         f1.flush()
+      f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
+               % (md.variable("disp"), F, A, F/A, sigma11, gamma))
+      f1.flush()
 
-         output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
+      output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
                 mfout1, md.local_projection(mim, "J", mfout1), "J",
                 mfout1, md.local_projection(mim, "sigma(1,1)", mfout1), "Cauchy stress 11",
                 mfout1, md.local_projection(mim, "sigma(2,2)", mfout1), "Cauchy stress 22",
@@ -234,17 +222,13 @@ try:
                 mfu, md.variable("u"), "Displacements",
                 mfout2, md.interpolation("dirmult", mfout2, XP_RG), "Nominal reaction traction",
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
-         
-         mfout2.export_to_vtu("%s/tension_plane_strain_%i.vtu" % (resultspath, step), *output)
+      mfout2.export_to_vtu(f"{resultspath}/tension_plane_strain_{step}.vtu", *output)
 
       md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
       md.set_variable("invCp0vec",
                       md.interpolation("[[[1,0,0,0]  ,[0,0,0,0.5],[0,0,0,0]],"+\
                                        " [[0,0,0,0.5],[0,1,0,0]  ,[0,0,0,0]],"+\
                                        " [[0,0,0,0]  ,[0,0,0,0]  ,[0,0,1,0]]]:invCp", mimd4, -1))
-finally:
-   if (export_results) :
-      f1.close()
 
-print('OVERALL SOLUTION TIME IS %f SEC' % (time.process_time()-starttime_overall))
+print("OVERALL SOLUTION TIME IS %f SEC" % (time.process_time()-starttime_overall))
 
