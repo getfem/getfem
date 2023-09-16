@@ -4047,7 +4047,9 @@ namespace getfem {
       if (m.dim() > 1) mi.push_back(m.dim());
       pnode->t.adjust_sizes(mi);
       tree.duplicate_with_operation(pnode, GA_COLON);
-      child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
+      child0 = pnode;
+      pnode = pnode->parent;
+      child1 = pnode->children[1];
       child1->init_matrix_tensor(meshdim, meshdim);
       gmm::clear(pnode->tensor().as_vector());
       for (size_type i = 0; i < meshdim; ++i)
@@ -4129,7 +4131,9 @@ namespace getfem {
             if (trans_dim > 1) mi.push_back(trans_dim);
             pnode->t.adjust_sizes(mi);
             tree.duplicate_with_operation(pnode, GA_COLON);
-            child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
+            child0 = pnode;
+            pnode = pnode->parent;
+            child1 = pnode->children[1];
             child1->init_matrix_tensor(trans_dim, trans_dim);
             gmm::clear(pnode->tensor().as_vector());
             for (size_type i = 0; i < trans_dim; ++i)
@@ -4155,7 +4159,8 @@ namespace getfem {
                          pnode->parent->children[1]);
         } else {
           pnode->node_type = GA_NODE_ZERO;
-          mi = pnode->tensor().sizes(); mi.push_back(m.dim());
+          mi = pnode->tensor().sizes();
+          mi.push_back(m.dim());
           gmm::clear(pnode->tensor().as_vector());
         }
       }

@@ -232,7 +232,8 @@ namespace getfem {
 
     double test_function_bp(const MAT &A, const VECT &g,
                             const VECT &tx, double tgamma) {
-      VECT v_x(g); double v_gamma;
+      VECT v_x(g);
+      double v_gamma;
       return test_function_bp(A, g, tx, tgamma, v_x, v_gamma);
     }
 
@@ -249,7 +250,8 @@ namespace getfem {
 
     double test_function_bp(const VECT &x, double gamma,
                             const VECT &tx, double tgamma) {
-      VECT v_x(x); double v_gamma;
+      VECT v_x(x);
+      double v_gamma;
       return test_function_bp(x, gamma, tx, tgamma, v_x, v_gamma);
     }
 
@@ -801,39 +803,39 @@ namespace getfem {
   public:
 
     // Misc. for accessing private data
-    int noisy(void) const { return noisy_; }
-    double h_init(void) const { return h_init_; }
-    double h_min(void) const { return h_min_; }
-    double h_max(void) const { return h_max_; }
-    double h_dec(void) const { return h_dec_; }
-    double h_inc(void) const { return h_inc_; }
-    size_type maxit(void) const { return maxit_; }
-    size_type thrit(void) const { return thrit_; }
-    double maxres(void) const { return maxres_; }
-    double maxdiff(void) const { return maxdiff_; }
-    double mincos(void) const { return mincos_; }
-    double delta_max(void) const { return delta_max_; }
-    double delta_min(void) const { return delta_min_; }
-    double thrvar(void) const { return thrvar_; }
-    size_type nbdir(void) const { return nbdir_; }
-    size_type nbspan(void) const { return nbspan_; }
+    int noisy() const { return noisy_; }
+    double h_init() const { return h_init_; }
+    double h_min() const { return h_min_; }
+    double h_max() const { return h_max_; }
+    double h_dec() const { return h_dec_; }
+    double h_inc() const { return h_inc_; }
+    size_type maxit() const { return maxit_; }
+    size_type thrit() const { return thrit_; }
+    double maxres() const { return maxres_; }
+    double maxdiff() const { return maxdiff_; }
+    double mincos() const { return mincos_; }
+    double delta_max() const { return delta_max_; }
+    double delta_min() const { return delta_min_; }
+    double thrvar() const { return thrvar_; }
+    size_type nbdir() const { return nbdir_; }
+    size_type nbspan() const { return nbspan_; }
 
     void set_tau_lp(double tau) { tau_lp = tau; }
-    double get_tau_lp(void) const { return tau_lp; }
+    double get_tau_lp() const { return tau_lp; }
     void set_tau_bp_1(double tau) { tau_bp_1 = tau; }
-    double get_tau_bp_1(void) const { return tau_bp_1; }
+    double get_tau_bp_1() const { return tau_bp_1; }
     void set_tau_bp_2(double tau) { tau_bp_2 = tau; }
-    double get_tau_bp_2(void) const { return tau_bp_2; }
-    void clear_tau_bp_currentstep(void) {
+    double get_tau_bp_2() const { return tau_bp_2; }
+    void clear_tau_bp_currentstep() {
       tau_bp_graph.clear();
     }
-    void init_tau_bp_graph(void) { tau_bp_graph[0.] = tau_bp_2; }
+    void init_tau_bp_graph() { tau_bp_graph[0.] = tau_bp_2; }
     void insert_tau_bp_graph(double alpha, double tau) {
       tau_bp_graph[alpha] = tau;
       gmm::resize(alpha_hist, 0);
       gmm::resize(tau_bp_hist, 0);
     }
-    const VECT &get_alpha_hist(void) {
+    const VECT &get_alpha_hist() {
       size_type i = 0;
       gmm::resize(alpha_hist, tau_bp_graph.size());
       for (std::map<double, double>::iterator it = tau_bp_graph.begin();
@@ -842,7 +844,7 @@ namespace getfem {
       }
       return alpha_hist;
     }
-    const VECT &get_tau_bp_hist(void) {
+    const VECT &get_tau_bp_hist() {
       size_type i = 0;
       gmm::resize(tau_bp_hist, tau_bp_graph.size());
       for (std::map<double, double>::iterator it = tau_bp_graph.begin();
@@ -852,7 +854,7 @@ namespace getfem {
       return tau_bp_hist;
     }
 
-    void clear_sing_data(void) {
+    void clear_sing_data() {
       sing_label = "";
       gmm::resize(x_sing, 0);
       gmm::resize(x_next, 0);
@@ -862,14 +864,14 @@ namespace getfem {
       tgamma_predict.clear();
     }
     void set_sing_label(std::string label) { sing_label = label; }
-    const std::string get_sing_label(void) const { return sing_label; }
+    const std::string get_sing_label() const { return sing_label; }
     void set_sing_point(const VECT &x, double gamma) {
       gmm::resize(x_sing, gmm::vect_size(x));
       copy(x, gamma, x_sing, gamma_sing);
     }
-    const VECT &get_x_sing(void) const { return x_sing; }
-    double get_gamma_sing(void) const { return gamma_sing; }
-    size_type nb_tangent_sing(void) const { return tx_sing.size(); }
+    const VECT &get_x_sing() const { return x_sing; }
+    double get_gamma_sing() const { return gamma_sing; }
+    size_type nb_tangent_sing() const { return tx_sing.size(); }
     bool insert_tangent_sing(const VECT &tx, double tgamma){
       bool is_included = false;
       for (size_type i = 0; (i < tx_sing.size()) && (!is_included); ++i) {
@@ -884,8 +886,8 @@ namespace getfem {
     }
     const VECT &get_tx_sing(size_type i) const { return tx_sing[i]; }
     double get_tgamma_sing(size_type i) const { return tgamma_sing[i]; }
-    const std::vector<VECT> &get_tx_sing(void) const { return tx_sing; }
-    const std::vector<double> &get_tgamma_sing(void) const { return tgamma_sing; }
+    const std::vector<VECT> &get_tx_sing() const { return tx_sing; }
+    const std::vector<double> &get_tgamma_sing() const { return tgamma_sing; }
 
     void set_next_point(const VECT &x, double gamma) {
       if (gmm::vect_size(x_next) == 0) {
@@ -893,8 +895,8 @@ namespace getfem {
         copy(x, gamma, x_next, gamma_next);
       }
     }
-    const VECT &get_x_next(void) const { return x_next; }
-    double get_gamma_next(void) const { return gamma_next; }
+    const VECT &get_x_next() const { return x_next; }
+    double get_gamma_next() const { return gamma_next; }
 
     bool insert_tangent_predict(const VECT &tx, double tgamma) {
       bool is_included = false;
@@ -927,7 +929,7 @@ namespace getfem {
     const VECT &cc_x(size_type nbdof)
     { if (gmm::vect_size(cc_x_) != nbdof) init_border(nbdof); return cc_x_; }
 
-    size_type estimated_memsize(void) {
+    size_type estimated_memsize() {
       size_type szd = sizeof(double);
       return (this->singularities == 0) ? 0
              : (2 * gmm::vect_size(bb_x_) * szd
@@ -1045,8 +1047,8 @@ namespace getfem {
                    const base_vector &w, base_vector &y) const;
 
   public:
-    size_type estimated_memsize(void);
-    const model &linked_model(void) { return *md; }
+    size_type estimated_memsize();
+    const model &linked_model() { return *md; }
 
     void set_parametrised_data_names
     (const std::string &in, const std::string &fn, const std::string &cn) {

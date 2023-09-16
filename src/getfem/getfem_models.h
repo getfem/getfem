@@ -1189,8 +1189,45 @@ namespace getfem {
     const std::string &dataname_of_brick(size_type ind_brick,
                                          size_type ind_data);
 
-    /** Assembly of the tangent system taking into account the terms
-        from all bricks. */
+    /** Assembly of the tangent system taking into account all enabled
+        terms in the model.
+
+      version = BUILD_RHS
+        assembles the rhs only for the primary variables, accessible with
+        ::real_rhs() = ::real_rhs(false)
+
+      version = BUILD_MATRIX
+        assembles the tangent matrix only for the primary variables,
+        accessible with ::real_tangent_matrix() = ::real_tangent_matrix(false)
+
+      version = BUILD_ALL
+        assembles the rhs and the tangent matrix only for primary variables
+
+      version = BUILD_RHS_WITH_LIN
+        assembles the rhs, including linear terms
+
+      version = BUILD_RHS_WITH_INTERNAL
+        assembles the rhs of both primary and internal variables, accessible
+        with ::real_rhs(true), no condensation is performed
+        the part of the rhs for primary variables is still accessible with
+        ::real_rhs() = ::real_rhs(false)
+
+      version = BUILD_MATRIX_CONDENSED
+        assembles the condensed tangent system for the primary system,
+        accessible with ::real_tangent_matrix() = ::real_tangent_matrix(false)
+        as well as the coupling tangent matrix between internal and
+        primary variables accessible with ::real_tangent_matrix(true)
+
+        Moreover, the condensed rhs for primary variables will be computed
+        based on whatever is currently contained in the full rhs. The
+        condensed rhs is accessible with ::real_rhs() = ::real_rhs(false)
+        the unmodified content of the full rhs is still accessible with
+        ::real_rhs(true)
+
+      version = BUILD_ALL_CONDENSED
+        assembles the full rhs first and then it assembles the condensed
+        tangent matrix and the condensed rhs
+    */
     virtual void assembly(build_version version);
 
     /** Gives the assembly string corresponding to the Neumann term of

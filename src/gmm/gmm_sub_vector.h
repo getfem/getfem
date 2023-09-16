@@ -62,9 +62,9 @@ namespace gmm {
     typedef size_t                                  size_type;
     typedef sparse_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
-    size_type index(void) const { return si.rindex(itb.index()); }
-    void forward(void);
-    void backward(void);
+    size_type index() const { return si.rindex(itb.index()); }
+    void forward();
+    void backward();
     iterator &operator ++()
     { ++itb; forward(); return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
@@ -76,7 +76,7 @@ namespace gmm {
     bool operator ==(const iterator &i) const { return itb == i.itb; }
     bool operator !=(const iterator &i) const { return !(i == *this); }
 
-    sparse_sub_vector_iterator(void) {}
+    sparse_sub_vector_iterator() {}
     sparse_sub_vector_iterator(const IT &it, const IT &ite, const SUBI &s)
       : itb(it), itbe(ite), si(s) { forward(); }
     sparse_sub_vector_iterator
@@ -89,11 +89,11 @@ namespace gmm {
   };
 
   template <typename IT, typename MIT, typename SUBI>
-  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::forward(void)
+  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::forward()
   { while(itb!=itbe && index()==size_type(-1)) { ++itb; } }
 
   template <typename IT, typename MIT, typename SUBI>
-  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward(void)
+  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward()
   { while(itb!=itbe && index()==size_type(-1)) --itb; }
 
   template <typename PT, typename SUBI> struct sparse_sub_vector {
@@ -109,7 +109,7 @@ namespace gmm {
     porigin_type origin;
     SUBI si;
 
-    size_type size(void) const { return si.size(); }
+    size_type size() const { return si.size(); }
    
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }
@@ -283,9 +283,9 @@ namespace gmm {
     typedef size_t                                  size_type;
     typedef skyline_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
-    size_type index(void) const
+    size_type index() const
     { return (itb.index() - si.min + si.step() - 1) / si.step(); }
-    void backward(void);
+    void backward();
     iterator &operator ++()
     { itb += si.step(); return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
@@ -311,11 +311,12 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const { return index()  < i.index();}
 
-    skyline_sub_vector_iterator(void) {}
+    skyline_sub_vector_iterator() {}
     skyline_sub_vector_iterator(const IT &it, const SUBI &s)
       : itb(it), si(s) {}
-    skyline_sub_vector_iterator(const skyline_sub_vector_iterator<MIT, MIT,
-         SUBI> &it) : itb(it.itb), si(it.si) {}
+    skyline_sub_vector_iterator
+      (const skyline_sub_vector_iterator<MIT, MIT, SUBI> &it)
+      : itb(it.itb), si(it.si) {}
   };
 
   template <typename IT, typename SUBI>
@@ -339,7 +340,7 @@ namespace gmm {
     porigin_type origin;
     SUBI si;
 
-    size_type size(void) const { return si.size(); }
+    size_type size() const { return si.size(); }
    
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }

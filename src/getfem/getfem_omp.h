@@ -340,7 +340,7 @@ namespace getfem
   /* Use these macros only in function local context to achieve
   the effect of thread local storage for any type of objects
   and their initialization (it's more general and portable
-  then using __declspec(thread))*/
+  than using __declspec(thread))*/
   #ifdef GETFEM_HAS_OPENMP
     #define THREAD_SAFE_STATIC thread_local
   #else

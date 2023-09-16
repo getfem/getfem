@@ -1289,7 +1289,8 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: copy small vector");
       GMM_ASSERT1(!(inin.has_ctx) || inin.ctx.is_convex_num_valid(),
                   "Invalid element, probably transformation failed");
-      GMM_ASSERT1(t.size() == vec.size(), "Invalid vector size.");
+      GMM_ASSERT1(t.size() == vec.size(),
+                  "Invalid vector size: " << t.size() << "!=" << vec.size());
       gmm::copy(vec, t.as_vector());
       return 0;
     }
@@ -2991,7 +2992,7 @@ namespace getfem {
         return std::make_shared<ga_instruction_contraction_opt0_1_unrolled<5>>
           (t, tc1, tc2);
       default:
-        return std::make_shared<ga_instruction_contraction_opt0_1>(t,tc1,tc2, n);
+        return std::make_shared<ga_instruction_contraction_opt0_1>(t,tc1,tc2,n);
       }
     }
     if (tc2_.sparsity() == 2) {

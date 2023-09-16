@@ -153,7 +153,7 @@ namespace getfem {
   }
 
   // numerical differantiation of logm
-  // not used becaused it caused some issues and was slower than
+  // not used because it caused some issues and was slower than
   // simply inverting the derivative of expm
   bool logm_deriv(const base_matrix &a, base_tensor &dalog,
                   base_matrix *palog=NULL) {

@@ -189,8 +189,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        gsp->allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
        );
 
-    /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J]])
-      Duplicate a matrix `K` (which might be a @tsp@MATLAB{ or a native matlab
+    /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J=I]])
+      Duplicate a matrix `K` (which might be an @tsp@MATLAB{ or a native matlab
       sparse matrix}). If index `I` and/or `J` are given, the matrix will
       be a submatrix of `K`. For example::
 
