@@ -432,16 +432,19 @@ namespace getfem {
     delete pnode;
   }
 
-  void ga_tree::copy_node(pga_tree_node pnode, pga_tree_node parent,
-                          pga_tree_node &child) {
-    GMM_ASSERT1(child == nullptr, "Internal error");
-    child = new ga_tree_node();
-    *child = *pnode;
-    child->parent = parent;
-    for (pga_tree_node &grandchild : child->children)
-      grandchild = nullptr;
-    for (size_type j = 0; j < child->children.size(); ++j)
-      copy_node(pnode->children[j], child, child->children[j]);
+  // This function allocates a new node "pnode_new", copies the content of "pnode"
+  // into the newly allocated node (including deep copies of all of its children)
+  void ga_tree::copy_node(pga_tree_node pnode,
+                          pga_tree_node &pnode_new) {
+    GMM_ASSERT1(pnode_new == nullptr, "Internal error");
+    pnode_new = new ga_tree_node();
+    *pnode_new = *pnode;
+    pnode_new->parent = nullptr;
+    for (size_type j = 0; j < pnode_new->children.size(); ++j) {
+      pnode_new->children[j] = nullptr;
+      copy_node(pnode->children[j], pnode_new->children[j]);
+      pnode_new->accept_child(j);
+    }
   }
   
   void ga_tree::duplicate_with_operation(pga_tree_node pnode,
@@ -456,7 +459,8 @@ namespace getfem {
     else
       root = newop;
     pnode->parent = newop;
-    copy_node(pnode, newop, newop->children[1]);
+    copy_node(pnode, newop->children[1]);
+    newop->accept_child(1);
   }
 
   void ga_tree::add_child(pga_tree_node pnode, GA_NODE_TYPE node_type) {
@@ -1390,7 +1394,8 @@ namespace getfem {
       } else {
         pga_tree_node pnode_old = pnode;
         pnode = nullptr;
-        tree.copy_node(pchild, pnode_old->parent, pnode);
+        tree.copy_node(pchild, pnode);
+        pnode->parent = pnode_old->parent;
         if (pnode_old->parent)
           pnode_old->parent->replace_child(pnode_old, pnode);
         else
@@ -1421,8 +1426,8 @@ namespace getfem {
           if (gam.nb_params()==0) { // Macro without parameters
             pga_tree_node pnode_old = pnode->children[0];
             pnode->children[0] = nullptr;
-            tree.copy_node(gam.tree().root,
-                           pnode_old->parent,pnode->children[0]);
+            tree.copy_node(gam.tree().root, pnode->children[0]);
+            pnode->children[0]->parent = pnode_old->parent;
             GMM_ASSERT1(pnode_old->children.empty(), "Internal error");
             delete pnode_old;
           } else { // Macro with parameters
@@ -1434,7 +1439,8 @@ namespace getfem {
 
             pga_tree_node pnode_old = pnode;
             pnode = nullptr;
-            tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+            tree.copy_node(gam.tree().root, pnode);
+            pnode->parent = pnode_old->parent;
             if (pnode_old->parent)
               pnode_old->parent->replace_child(pnode_old, pnode);
             else
@@ -1457,7 +1463,8 @@ namespace getfem {
 
       pga_tree_node pnode_old = pnode;
       pnode = nullptr;
-      tree.copy_node(gam.tree().root, pnode_old->parent, pnode);
+      tree.copy_node(gam.tree().root, pnode);
+      pnode->parent = pnode_old->parent;
       if (pnode_old->parent)
         pnode_old->parent->replace_child(pnode_old, pnode);
       else

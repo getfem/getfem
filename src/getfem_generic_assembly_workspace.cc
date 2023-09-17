@@ -490,7 +490,8 @@ namespace getfem {
           ftree.insert_node(ftree.root, GA_NODE_OP);
           ftree.root->op_type = GA_PLUS;
           ftree.root->children.resize(2, nullptr);
-          ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
+          ftree.copy_node(tree.root, ftree.root->children[1]);
+          ftree.root->children[1]->parent = ftree.root;
           ga_semantic_analysis(ftree, *this, m,
                                ref_elt_dim_of_mesh(m,rg), false, function_expr);
           found = true;

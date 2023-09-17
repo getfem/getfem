@@ -199,7 +199,7 @@ namespace getfem {
       bool need_hess = (pnode->node_type == GA_NODE_HESS_TEST);
 
       if (need_grad && grad_expr.root == nullptr) {
-        tree.copy_node(pexpr, nullptr, grad_expr.root);
+        tree.copy_node(pexpr, grad_expr.root);
         if (ga_node_mark_tree_for_grad(grad_expr.root, workspace)) {
           ga_node_grad(grad_expr, workspace, me, grad_expr.root);
           ga_node_analysis(grad_expr, workspace, grad_expr.root, me,
@@ -215,7 +215,7 @@ namespace getfem {
       }
 
       if (need_hess && hess_expr.root == nullptr) {
-        tree.copy_node(grad_expr.root, nullptr, hess_expr.root);
+        tree.copy_node(grad_expr.root, hess_expr.root);
         if (ga_node_mark_tree_for_grad(hess_expr.root, workspace)) {
           ga_node_grad(hess_expr, workspace, me, hess_expr.root);
           ga_node_analysis(hess_expr, workspace, hess_expr.root, me,
@@ -237,18 +237,20 @@ namespace getfem {
         {
           pga_tree_node pnode_new = nullptr;
           if (pnode->node_type == GA_NODE_VAL_TEST)
-            tree.copy_node(pexpr, parent, pnode_new);           // allocates new
+            tree.copy_node(pexpr, pnode_new);           // allocates new
           else if (pnode->node_type == GA_NODE_GRAD_TEST ||
                    pnode->node_type == GA_NODE_DIVERG_TEST)
-            tree.copy_node(grad_expr.root, parent, pnode_new);  // allocates new
+            tree.copy_node(grad_expr.root, pnode_new);  // allocates new
           else if (pnode->node_type == GA_NODE_HESS_TEST)
-            tree.copy_node(hess_expr.root, parent, pnode_new);  // allocates new
+            tree.copy_node(hess_expr.root, pnode_new);  // allocates new
+          pnode_new->parent = parent;
           parent->replace_child(pnode, pnode_new);
           if (pnode->node_type == GA_NODE_DIVERG_TEST) {
             tree.insert_node(pnode_new, GA_NODE_OP);
             pnode_new->parent->op_type = GA_TRACE;
           }
-          delete pnode; pnode = nullptr;                        // deallocates old
+          delete pnode;                                 // deallocates old
+          pnode = nullptr;
         }
         break;
       case GA_NODE_INTERPOLATE_VAL_TEST:  case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -598,15 +600,15 @@ namespace getfem {
         break;
       }
       //[[fallthrough]];
-    case GA_NODE_ELEMENTARY: // and ... case GA_NODE_INTERPOLATE:
+    case GA_NODE_ELEMENTARY: // +GA_NODE_SECONDARY_DOMAIN, GA_NODE_INTERPOLATE:
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_MINUS:
       {
-        int ndt = ((pnode->node_type == GA_NODE_INTERPOLATE) ? 1 : 0)
-          + ((pnode->node_type == GA_NODE_ELEMENTARY) ? 2 : 0)
-          + ((pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ? 3 : 0)
-          + ((pnode->node_type == GA_NODE_XFEM_PLUS) ? 4 : 0)
-          + ((pnode->node_type == GA_NODE_XFEM_MINUS) ? 5 : 0);
+        int ndt = ((pnode->node_type == GA_NODE_INTERPOLATE)      ? 1 : 0)
+                + ((pnode->node_type == GA_NODE_ELEMENTARY)       ? 2 : 0)
+                + ((pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ? 3 : 0)
+                + ((pnode->node_type == GA_NODE_XFEM_PLUS)        ? 4 : 0)
+                + ((pnode->node_type == GA_NODE_XFEM_MINUS)       ? 5 : 0);
         std::string op__name =
           (pnode->node_type == GA_NODE_INTERPOLATE) ? "Interpolation" : ""
           + (pnode->node_type == GA_NODE_ELEMENTARY) ?
@@ -2725,14 +2727,16 @@ namespace getfem {
     }
     ga_valid_operand(tree.root);
     // cout << "End of semantic analysis";
-    // if (tree.root) ga_print_node(tree.root, cout); cout << endl;
+    // if (tree.root)
+    //   ga_print_node(tree.root, cout);
+    // cout << endl;
   }
 
 
   void ga_extract_factor(ga_tree &result_tree, pga_tree_node pnode,
                          pga_tree_node &new_pnode) {
     result_tree.clear();
-    result_tree.copy_node(pnode, 0, result_tree.root);
+    result_tree.copy_node(pnode, result_tree.root);
     new_pnode = result_tree.root;
 
     bool minus_sign = false;
@@ -2774,13 +2778,13 @@ namespace getfem {
           result_tree.root->expr = pnode->expr;
           result_tree.root->children.resize(2, nullptr);
           if (child0 == pnode_child) {
-            result_tree.copy_node(child1, result_tree.root,
-                                  result_tree.root->children[1]);
+            result_tree.copy_node(child1, result_tree.root->children[1]);
+            result_tree.root->accept_child(1);
           } else if (child1 == pnode_child) {
             std::swap(result_tree.root->children[1],
                       result_tree.root->children[0]);
-            result_tree.copy_node(child0, result_tree.root,
-                                  result_tree.root->children[0]);
+            result_tree.copy_node(child0, result_tree.root->children[0]);
+            result_tree.root->accept_child(0);
           } else GMM_ASSERT1(false, "Corrupted tree");
           break;
         default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
@@ -2799,9 +2803,11 @@ namespace getfem {
           std::swap(result_tree.root->children[1],
                     result_tree.root->children[0]);
           for (size_type i = 0; i < pnode->children.size(); ++i)
-            if (i != 1)
-              result_tree.copy_node(pnode->children[i], result_tree.root,
+            if (i != 1) {
+              result_tree.copy_node(pnode->children[i],
                                     result_tree.root->children[i]);
+              result_tree.root->accept_child(i);
+            }
         } else if (child0->node_type == GA_NODE_CROSS_PRODUCT) {
           pga_tree_node child2 = pnode->children[2];
           result_tree.insert_node(result_tree.root, pnode->node_type);
@@ -2811,17 +2817,21 @@ namespace getfem {
           if (child1 == pnode_child) {
             std::swap(result_tree.root->children[1],
                       result_tree.root->children[0]);
-            result_tree.copy_node(pnode->children[0], result_tree.root,
-                                result_tree.root->children[0]);
-            result_tree.copy_node(pnode->children[2], result_tree.root,
+            result_tree.copy_node(pnode->children[0],
+                                  result_tree.root->children[0]);
+            result_tree.root->accept_child(0);
+            result_tree.copy_node(pnode->children[2],
                                   result_tree.root->children[2]);
+            result_tree.root->accept_child(2);
           } else if (child2 == pnode_child) {
             std::swap(result_tree.root->children[2],
                       result_tree.root->children[0]);
-            result_tree.copy_node(pnode->children[0], result_tree.root,
-                                result_tree.root->children[0]);
-            result_tree.copy_node(pnode->children[1], result_tree.root,
+            result_tree.copy_node(pnode->children[0],
+                                  result_tree.root->children[0]);
+            result_tree.root->accept_child(0);
+            result_tree.copy_node(pnode->children[1],
                                   result_tree.root->children[1]);
+            result_tree.root->accept_child(1);
           } else GMM_ASSERT1(false, "Corrupted tree");
         } else if (child0->node_type == GA_NODE_SWAP_IND) {
           GMM_ASSERT1(child1 == pnode_child, "Cannot extract a factor of a "
@@ -2836,9 +2846,11 @@ namespace getfem {
               std::swap(result_tree.root->children[i],
                         result_tree.root->children[0]);
           for (size_type i = 0; i < pnode->children.size(); ++i)
-            if (pnode->children[i] != pnode_child)
-              result_tree.copy_node(pnode->children[i], result_tree.root,
+            if (pnode->children[i] != pnode_child) {
+              result_tree.copy_node(pnode->children[i],
                                     result_tree.root->children[i]);
+              result_tree.root->accept_child(i);
+            }
         } else if (child0->node_type == GA_NODE_IND_MOVE_LAST) {
           GMM_ASSERT1(child1 == pnode_child, "Cannot extract a factor of a "
                       "Index_move_last size parameter");
@@ -2852,9 +2864,11 @@ namespace getfem {
               std::swap(result_tree.root->children[i],
                         result_tree.root->children[0]);
           for (size_type i = 0; i < pnode->children.size(); ++i)
-            if (pnode->children[i] != pnode_child)
-              result_tree.copy_node(pnode->children[i], result_tree.root,
+            if (pnode->children[i] != pnode_child) {
+              result_tree.copy_node(pnode->children[i],
                                     result_tree.root->children[i]);
+              result_tree.root->accept_child(i);
+            }
         } else if (child0->node_type == GA_NODE_CONTRACT) {
           // Copy of the term and other children
           result_tree.insert_node(result_tree.root, pnode->node_type);
@@ -2866,9 +2880,11 @@ namespace getfem {
               std::swap(result_tree.root->children[i],
                         result_tree.root->children[0]);
           for (size_type i = 0; i < pnode->children.size(); ++i)
-            if (pnode->children[i] != pnode_child)
-              result_tree.copy_node(pnode->children[i], result_tree.root,
+            if (pnode->children[i] != pnode_child) {
+              result_tree.copy_node(pnode->children[i],
                                     result_tree.root->children[i]);
+              result_tree.root->accept_child(i);
+            }
         } else
           GMM_ASSERT1(false, "Cannot extract a factor which is a parameter "
                       "of a nonlinear operator/function");
@@ -2890,7 +2906,7 @@ namespace getfem {
             pnode->children[i]
               = new ga_tree_node(GA_NODE_ZERO, pnode->pos, pnode->expr);
             pnode->children[i]->init_scalar_tensor(scalar_type(0));
-            pnode->children[i]->parent = pnode;
+            pnode->accept_child(i);
           }
         }
         break;
@@ -3198,14 +3214,14 @@ namespace getfem {
             if (j == i) {
               pga_tree_node param_node = new_pnode->children[k*N+j]
                 = new ga_tree_node(GA_NODE_PARAMS, pnode->pos, pnode->expr);
-              new_pnode->children[k+j*meshdim]->parent = new_pnode;
+              new_pnode->accept_child(k+j*meshdim);
               param_node->children.resize(2);
               param_node->children[0]
                 = new ga_tree_node(GA_NODE_NORMAL, pnode->pos, pnode->expr);
-              param_node->children[0]->parent = param_node;
+              param_node->accept_child(0);
               param_node->children[1]
                 = new ga_tree_node(GA_NODE_CONSTANT, pnode->pos, pnode->expr);
-              param_node->children[1]->parent = param_node;
+              param_node->accept_child(1);
               param_node->children[1]->init_scalar_tensor(scalar_type(k));
 
             } else {
@@ -3213,7 +3229,7 @@ namespace getfem {
                 = new ga_tree_node(GA_NODE_ZERO, pnode->pos, pnode->expr);
               new_pnode->children[k+j*meshdim]
                 ->init_scalar_tensor(scalar_type(0));
-              new_pnode->children[k+j*meshdim]->parent = new_pnode;
+              new_pnode->accept_child(k+j*meshdim);
             }
           }
         }
@@ -3642,8 +3658,8 @@ namespace getfem {
           else
             pnode_mult->op_type = GA_MULT;
           pnode_mult->children.resize(2, nullptr);
-          tree.copy_node(pnode_param->children[1],
-                         pnode_mult, pnode_mult->children[1]);
+          tree.copy_node(pnode_param->children[1], pnode_mult->children[1]);
+          pnode_mult->accept_child(1);
           ga_node_derivation(tree, workspace, m, pnode_mult->children[1],
                              varname, interpolatename, order, any_trans);
         } else {
@@ -3774,7 +3790,8 @@ namespace getfem {
             else
               pnode_op->op_type = GA_DOTMULT;
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child1, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
                                varname, interpolatename, order, any_trans);
           }
@@ -3813,7 +3830,8 @@ namespace getfem {
             else
               pnode_op->op_type = GA_DOTMULT;
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child1, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
                                varname, interpolatename, order, any_trans);
           }
@@ -3847,7 +3865,8 @@ namespace getfem {
             else
               pnode_op->op_type = GA_DOTMULT;
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child2, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child2, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
                                varname, interpolatename, order, any_trans);
           }
@@ -3874,7 +3893,8 @@ namespace getfem {
               pnode_op->node_type = GA_NODE_OP;
               pnode_op->op_type = GA_PLUS;
               pnode_op->children.resize(2, nullptr);
-              tree.copy_node(pnode, pnode_op , pnode_op->children[1]);
+              tree.copy_node(pnode, pnode_op->children[1]);
+              pnode_op->accept_child(1);
               pnode2 = pnode_op->children[1];
             }
             else pnode2 = pnode;
@@ -3895,8 +3915,8 @@ namespace getfem {
                                  "string. Bad reduction order.")
             }
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(pnode->children[i], pnode_op,
-                           pnode_op->children[1]);
+            tree.copy_node(pnode->children[i], pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_derivation(tree, workspace, m, pnode_op->children[1],
                                varname, interpolatename, order, any_trans);
 
@@ -4155,8 +4175,8 @@ namespace getfem {
 
           tree.clear_node_rec(pnode->parent->children[1]);
           pnode->parent->children[1] = nullptr;
-          tree.copy_node(trans_tree.root, pnode->parent,
-                         pnode->parent->children[1]);
+          tree.copy_node(trans_tree.root, pnode->parent->children[1]);
+          pnode->parent->accept_child(1);
         } else {
           pnode->node_type = GA_NODE_ZERO;
           mi = pnode->tensor().sizes();
@@ -4362,25 +4382,15 @@ namespace getfem {
         }
         break;
 
-      case GA_SYM: // Replace Sym(T) by (T+T')*0.5
-        tree.replace_node_by_child(pnode, 0);
-        tree.duplicate_with_addition(child0);
-        tree.insert_node(child0->parent, GA_NODE_OP);
-        tree.add_child(child0->parent->parent);
-        child0->parent->parent->op_type = GA_MULT;
-        child0->parent->parent->children[1]->node_type = GA_NODE_CONSTANT;
-        child0->parent->parent->children[1]->init_scalar_tensor(0.5);
-        tree.insert_node(child0->parent->children[1], GA_NODE_OP);
-        child0->parent->children[1]->op_type = GA_QUOTE;
-        ga_node_grad(tree, workspace, m, child0);
-        ga_node_grad(tree, workspace, m,
-                     child0->parent->children[1]->children[0]);
-        break;
-
-
+      case GA_SYM:  // Replace Sym(T) by (T+T')*0.5
       case GA_SKEW: // Replace Skew(T) by (T-T')*0.5
-        tree.replace_node_by_child(pnode, 0);
-        tree.duplicate_with_substraction(child0);
+        if (pnode->op_type == GA_SYM) {
+          tree.replace_node_by_child(pnode, 0); // cannot be before the if
+          tree.duplicate_with_addition(child0);
+        } else { // if (pnode->node_type == GA_SKEW)
+          tree.replace_node_by_child(pnode, 0); // cannot be before the if
+          tree.duplicate_with_substraction(child0);
+        }
         tree.insert_node(child0->parent, GA_NODE_OP);
         tree.add_child(child0->parent->parent);
         child0->parent->parent->op_type = GA_MULT;
@@ -4620,7 +4630,8 @@ namespace getfem {
             }
             pnode_mult->children.resize(2, nullptr);
             tree.copy_node(pnode_param->children[1],
-                           pnode_mult, pnode_mult->children[1]);
+                           pnode_mult->children[1]);
+            pnode_mult->accept_child(1);
             ga_node_grad(tree, workspace, m, pnode_mult->children[1]);
           }
 
@@ -4662,8 +4673,9 @@ namespace getfem {
 
           pnode->children.resize(orgsize*m.dim(), nullptr);
           for (size_type i = orgsize; i < pnode->children.size(); ++i) {
-            tree.copy_node(pnode->children[i % orgsize], pnode,
+            tree.copy_node(pnode->children[i % orgsize],
                            pnode->children[i]);
+            pnode->accept_child(i);
           }
           for (size_type i = 0; i < pnode->children.size(); ++i) {
             pga_tree_node child = pnode->children[i];
@@ -4799,7 +4811,8 @@ namespace getfem {
                         scalar_type(1));
             }
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child1, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_grad(tree, workspace, m, pnode_op->children[1]);
           }
         } else {
@@ -4844,7 +4857,8 @@ namespace getfem {
                         scalar_type(1));
             }
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child1, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_grad(tree, workspace, m, pnode_op->children[1]);
           }
           if (child2->marked) {
@@ -4884,7 +4898,8 @@ namespace getfem {
                         scalar_type(1));
             }
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(child2, pnode_op, pnode_op->children[1]);
+            tree.copy_node(child2, pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_grad(tree, workspace, m, pnode_op->children[1]);
           }
         }
@@ -4910,7 +4925,8 @@ namespace getfem {
               pnode_op->node_type = GA_NODE_OP;
               pnode_op->op_type = GA_PLUS;
               pnode_op->children.resize(2, nullptr);
-              tree.copy_node(pnode, pnode_op , pnode_op->children[1]);
+              tree.copy_node(pnode, pnode_op->children[1]);
+              pnode_op->accept_child(1);
               pnode2 = pnode_op->children[1];
             }
             else pnode2 = pnode;
@@ -4931,8 +4947,8 @@ namespace getfem {
                                  "string. Bad reduction order.")
             }
             pnode_op->children.resize(2, nullptr);
-            tree.copy_node(pnode->children[i], pnode_op,
-                           pnode_op->children[1]);
+            tree.copy_node(pnode->children[i], pnode_op->children[1]);
+            pnode_op->accept_child(1);
             ga_node_grad(tree, workspace, m, pnode_op->children[1]);
 
             if (pnode2->children[0]->name.compare("Norm_sqr") == 0

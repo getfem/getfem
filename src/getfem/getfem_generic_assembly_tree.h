@@ -401,6 +401,11 @@ namespace getfem {
     inline void adopt_child(pga_tree_node new_child)
     { children.push_back(new_child); children.back()->parent = this; }
 
+    inline void accept_child(size_type i) {
+      GMM_ASSERT1(i < children.size(), "Internal error");
+      children[i]->parent = this;
+    }
+
     inline void replace_child(pga_tree_node oldchild,
                               pga_tree_node newchild) {
         bool found = false;
@@ -453,8 +458,7 @@ namespace getfem {
     void clear() { clear_node_rec(root); root = current_node = nullptr; }
     void clear_children(pga_tree_node pnode);
     void replace_node_by_child(pga_tree_node pnode, size_type i);
-    void copy_node(pga_tree_node pnode, pga_tree_node parent,
-                   pga_tree_node &child);
+    void copy_node(pga_tree_node pnode, pga_tree_node &pnode_new);
     void duplicate_with_operation(pga_tree_node pnode, GA_TOKEN_TYPE op_type);
     void duplicate_with_addition(pga_tree_node pnode)
     { duplicate_with_operation(pnode, GA_PLUS); }
@@ -475,14 +479,14 @@ namespace getfem {
         secondary_domain(tree.secondary_domain)
     {
       if (tree.root)
-        copy_node(tree.root, nullptr, root);
+        copy_node(tree.root, root);
     }
 
     ga_tree &operator =(const ga_tree &tree) {
       clear();
       secondary_domain = tree.secondary_domain;
       if (tree.root)
-        copy_node(tree.root, nullptr, root);
+        copy_node(tree.root, root);
       return *this;
     }
 
