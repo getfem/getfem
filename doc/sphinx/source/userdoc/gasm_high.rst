@@ -417,9 +417,12 @@ A certain number of predefined scalar functions can be used. The exhaustive list
   - ``Heaviside(t)`` (:math:`0 \mbox{ for } t < 0, 1 \mbox{ for } t \ge 0`)
   - ``sign(t)``
   - ``abs(t)``
-  - ``pos_part(t)`` (:math:`tH(t)`)
   - ``reg_pos_part(t, eps)`` (:math:`(t-eps/2-t^2/(2eps))H(t-eps) + t^2H(t)/(2eps)`)
+  - ``max(t, u)``, ``min(t, u)``
+  - ``pos_part(t)`` (:math:`tH(t)`)
+  - ``sqr_pos_part(t)`` (:math:`(tH(t))^2`)
   - ``neg_part(t)`` (:math:`-tH(-t)`), ``max(t, u)``, ``min(t, u)``
+  - ``sqr_neg_part(t)`` (:math:`(tH(-t))^2`)
 
 A scalar function can be applied to a scalar expression, but also to a tensor one. If is is applied to a tensor expression, is is applied componentwise and the result is a tensor with the same dimensions. For functions having two arguments (pow(t,u), min(t,u) ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[0;3]".
 
