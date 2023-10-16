@@ -85,15 +85,15 @@ int main(int argc, char *argv[]) {
     exprA = "(-p*Id(2)+2*G*(Sym(Grad_u)-Div_u*Id(2)/3)):Grad_Test_u";
     exprB = "(p+K*Trace(Sym(Grad_u)))*Test_p";
   }
-  getfem::add_nonlinear_generic_assembly_brick(md1, mim, exprA);
-  getfem::add_nonlinear_generic_assembly_brick(md2, mim, exprA);
-  getfem::add_nonlinear_generic_assembly_brick(md1, mim, exprB);
-  getfem::add_nonlinear_generic_assembly_brick(md2, mim, exprB);
+  getfem::add_nonlinear_term(md1, mim, exprA);
+  getfem::add_nonlinear_term(md2, mim, exprA);
+  getfem::add_nonlinear_term(md1, mim, exprB);
+  getfem::add_nonlinear_term(md2, mim, exprB);
 
   md1.add_filtered_fem_variable("dirmult", mf, 102);
   md2.add_filtered_fem_variable("dirmult", mf, 102);
-  getfem::add_linear_generic_assembly_brick(md1, mim, "(u-0.001*X(1)*[1;0]).dirmult", 102);
-  getfem::add_linear_generic_assembly_brick(md2, mim, "(u-0.001*X(1)*[1;0]).dirmult", 102);
+  getfem::add_linear_term(md1, mim, "(u-0.001*X(1)*[1;0]).dirmult", 102);
+  getfem::add_linear_term(md2, mim, "(u-0.001*X(1)*[1;0]).dirmult", 102);
 
   gmm::iteration iter(1E-9, 1, 100);
   getfem::standard_solve(md1, iter);

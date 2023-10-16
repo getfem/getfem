@@ -2578,7 +2578,7 @@ namespace getfem {
     }
     expr += "-Test_"+varname_u+")";
 
-    return add_nonlinear_generic_assembly_brick
+    return add_nonlinear_term
       (md, mim, expr, region, false, false,
        "Nitsche contact with rigid obstacle");
   }
@@ -2642,7 +2642,7 @@ namespace getfem {
     }
     expr += "-Test_"+varname_u+")";
 
-    return add_nonlinear_generic_assembly_brick
+    return add_nonlinear_term
       (md, mim, expr, region, false, false,
        "Nitsche contact with rigid obstacle");
   }

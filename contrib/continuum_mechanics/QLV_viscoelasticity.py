@@ -155,7 +155,7 @@ md.add_macro("SvD", "exp(-dt/tauD)*SvDprev"
 #                    "-(1-rD)*(1-tauD/dt*(1-exp(-dt/tauD)))*(SeD-SeDprev)")
 
 # Virtual work expression
-md.add_nonlinear_generic_assembly_brick(mim, "(F*(SeH+SvH+SeD+SvD)):Grad_Test_u")
+md.add_nonlinear_term(mim, "(F*(SeH+SvH+SeD+SvD)):Grad_Test_u")
 
 # Cauchy and von Mises definitions
 md.add_macro("Cauchy", "(F*(SeH+SvH+SeD+SvD)*F')/Det(F)")
@@ -163,7 +163,7 @@ md.add_macro("VM", "sqrt(1.5)*Norm(Deviator(F*(SeH+SvH+SeD+SvD)*F'))/Det(F)")
 
 # Dirichlet condition
 md.add_filtered_fem_variable("dirmult", mfmult, RG_TOP)
-md.add_linear_generic_assembly_brick(mim, "(epsYY*X(2)-u(2))*dirmult", RG_TOP)
+md.add_linear_term(mim, "(epsYY*X(2)-u(2))*dirmult", RG_TOP)
 
 Vol = gf.asm_generic(mim, 0, "1", -1, md)
 with open("QLV_viscoelasticity_results.dat", "w") as f:

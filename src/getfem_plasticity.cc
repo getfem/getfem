@@ -1287,11 +1287,11 @@ namespace getfem {
     if (unknowns_type == DISPLACEMENT_AND_PLASTIC_MULTIPLIER) {
       std::string expr = ("("+sigma_np1+"):Grad_Test_"+dispname
                           + "+("+compcond+")*Test_"+xi);
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, false, false,
          "Small strain isotropic perfect elastoplasticity brick");
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, "("+sigma_np1+"):Grad_Test_"+dispname, region, true, false,
          "Small strain isotropic perfect elastoplasticity brick");
     }
@@ -1592,7 +1592,7 @@ namespace getfem {
       std::string expr, dummy1, dummy2, dummy3;
       build_Simo_Miehe_elastoplasticity_expressions
         (md, unknowns_type, varnames, params, expr, dummy1, dummy2, dummy3);
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr, region, true, false, "Simo Miehe elastoplasticity brick");
     } else
       GMM_ASSERT1(false, lawname << " is not a known elastoplastic law");

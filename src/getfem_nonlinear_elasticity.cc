@@ -2317,7 +2317,7 @@ namespace getfem {
     std::string expr = "((Id(meshdim)+Grad_"+varname+")*(" + adapted_lawname
       + "_PK2(Grad_"+varname+","+params+"))):Grad_" + test_varname;
 
-    return add_nonlinear_generic_assembly_brick
+    return add_nonlinear_term
       (md, mim, expr, region, true, false,
        "Finite strain elasticity brick for " + adapted_lawname + " law");
   }
@@ -2333,7 +2333,7 @@ namespace getfem {
       + "-(" + multname + ")*(Det(Id(meshdim)+Grad_" + varname + ")"
       + "*((Inv(Id(meshdim)+Grad_" + varname + "))':Grad_"
       + test_varname + "))" ;
-    return add_nonlinear_generic_assembly_brick
+    return add_nonlinear_term
       (md, mim, expr, region, true, false,
        "Finite strain incompressibility brick");
   }

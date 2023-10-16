@@ -6131,7 +6131,7 @@ namespace getfem {
       if (dataname3.size()) dl.push_back(dataname3);
       return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
     } else {
-      return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, dataname3.size() ? expr1 : expr2, region, false, false,
          "Linearized isotropic elasticity (with nonlinear dependance)");
     }

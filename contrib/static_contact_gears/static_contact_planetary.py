@@ -201,7 +201,7 @@ md.add_Dirichlet_condition_with_multipliers(mim_2, 'u_2', mfu_2, RG_DIRICHLET_2,
 area_1_in = gf.asm_generic(mim_1, 0, "1", RG_NEUMANN_1)
 m1 = torsion / area_1_in
 _expr_load_ = "{m}/Norm_sqr(X+u_1)*[-X(2)-u_1(2);X(1)+u_1(1)].Test_u_1".format(m=m1)
-md.add_nonlinear_generic_assembly_brick(mim_1, _expr_load_, RG_NEUMANN_1)
+md.add_nonlinear_term(mim_1, _expr_load_, RG_NEUMANN_1)
 
 
 # Add inertia, used temporarily for getting an initial solution
@@ -212,10 +212,10 @@ md.add_initialized_data('penalty_param', 1e0)
 #ibin_p2 = md.add_mass_brick(mim_p2, 'u_p2', 'penalty_param')
 #ibin_p3 = md.add_mass_brick(mim_p3, 'u_p3', 'penalty_param')
 
-ibin_1 = md.add_linear_generic_assembly_brick(mim_1, 'penalty_param*u_1.Test_u_1')
-ibin_p1 = md.add_linear_generic_assembly_brick(mim_p1, 'penalty_param*u_p1.Test_u_p1')
-ibin_p2 = md.add_linear_generic_assembly_brick(mim_p2, 'penalty_param*u_p2.Test_u_p2')
-ibin_p3 = md.add_linear_generic_assembly_brick(mim_p3, 'penalty_param*u_p3.Test_u_p3')
+ibin_1 = md.add_linear_term(mim_1, 'penalty_param*u_1.Test_u_1')
+ibin_p1 = md.add_linear_term(mim_p1, 'penalty_param*u_p1.Test_u_p1')
+ibin_p2 = md.add_linear_term(mim_p2, 'penalty_param*u_p2.Test_u_p2')
+ibin_p3 = md.add_linear_term(mim_p3, 'penalty_param*u_p3.Test_u_p3')
 
 md.add_filtered_fem_variable('mult_1', mfmult_1, RG_NEUMANN_1)
 #md.add_filtered_fem_variable('mult_2', mfmult_2, RG_CONTACT_2)

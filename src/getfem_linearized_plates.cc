@@ -64,19 +64,19 @@ namespace getfem {
     
     switch(variant) {
     case 0: // Without reduction
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr_left+"+"+expr_right, region, false, false,
          "Reissner-Mindlin plate model brick");
     case 1: // With reduced integration
-      add_linear_generic_assembly_brick
+      add_linear_term
         (md, mim, expr_left, region, false, false,
          "Reissner-Mindlin plate model brick, rotation term");
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim_red, expr_right, region, false, false,
          "Reissner-Mindlin plate model brick, transverse shear term");
     case 2: // Variant with projection on rotated RT0
       add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
-      return add_linear_generic_assembly_brick
+      return add_linear_term
         (md, mim, expr_left+"+"+expr_right, region, false, false,
          "Reissner-Mindlin plate model brick");
       break;
@@ -136,43 +136,43 @@ namespace getfem {
         
     switch(variant) {
     case 0: // Without reduction
-        add_nonlinear_generic_assembly_brick
+      add_nonlinear_term
         (md, mim, expr_no_coupled_1+"+"+expr_no_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, no coupled");
-        return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr_coupled_1+"+"+expr_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled");
     case 1: // With reduced integration
-        add_nonlinear_generic_assembly_brick
+      add_nonlinear_term
         (md, mim, expr_no_coupled_1+"+"+expr_no_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, no coupled");
-        add_nonlinear_generic_assembly_brick
+      add_nonlinear_term
         (md, mim_red1, expr_coupled_1, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled MR");
-        return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim_red2, expr_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled eMR");
     case 2: // Variant with projection on rotated RT0 and reduction
-        add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
-        add_nonlinear_generic_assembly_brick
+      add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
+      add_nonlinear_term
         (md, mim, expr_no_coupled_1+"+"+expr_no_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, no coupled");
-        add_nonlinear_generic_assembly_brick
+      add_nonlinear_term
         (md, mim, expr_coupled_1, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled MR");
-        return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim_red2, expr_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled eMR");  
     case 3: // Variant with projection on rotated RT0 and projection P0
-        add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
-        add_P0_projection(md, "_P0_projection__434");
-        add_nonlinear_generic_assembly_brick
+      add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
+      add_P0_projection(md, "_P0_projection__434");
+      add_nonlinear_term
         (md, mim, expr_no_coupled_1+"+"+expr_no_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, no coupled");
-        add_nonlinear_generic_assembly_brick
+      add_nonlinear_term
         (md, mim, expr_coupled_1, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled MR");
-        return add_nonlinear_generic_assembly_brick
+      return add_nonlinear_term
         (md, mim, expr_coupled_2, region, false, false,
          "enriched Reissner-Mindlin plate model brick, coupled eMR");  
       break;

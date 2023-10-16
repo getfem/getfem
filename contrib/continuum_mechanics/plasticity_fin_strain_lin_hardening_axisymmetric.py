@@ -177,7 +177,7 @@ md.add_macro("devlogbe", "(1-2*ksi)*devlogbetr")
 md.add_macro("tauD2d", "mu*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
 md.add_macro("tauD33", "mu*devlogbe(3,3)")
 
-md.add_nonlinear_generic_assembly_brick\
+md.add_nonlinear_term\
    (mim, "2*pi*X(2)*(((tauH*Id(2)+tauD2d)*Inv(F')):Grad_Test_u+(tauH+tauD33)/(X(2)+u(2))*Test_u(2))")
 
 md.add_macro("sigmaD", "(mu*pow(J,-5/3)*devlogbe)")
@@ -187,7 +187,7 @@ md.add_macro("invCp", "(Inv(F3d)*Expm(-ksi*devlogbetr)*(F3d))*invCp0"\
 
 # Dirichlet condition
 md.add_filtered_fem_variable("dirmult", mfmult, XP_RG)
-md.add_nonlinear_generic_assembly_brick(mim, "2*pi*X(2)*(disp-u(1))*dirmult", XP_RG)
+md.add_nonlinear_term(mim, "2*pi*X(2)*(disp-u(1))*dirmult", XP_RG)
 
 print(f"Model dofs: {md.nbdof()}\nDisplacement fem dofs: {mfu.nbdof()}")
 print("Dirichlet mult dofs: %i" % md.mesh_fem_of_variable("dirmult").nbdof())

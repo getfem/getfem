@@ -33,8 +33,8 @@ A program using getfem will often have the following structure ::
 
       Model.add_fem_data(MeshFem, "some data name")
 
-      Model.add_nonlinear_generic_assembly_brick(MeshIm,
-                              "copy & paste your PDE weak formulation here", MeshRegion)
+      Model.add_nonlinear_term(MeshIm,
+                               "copy & paste your PDE weak formulation here", MeshRegion)
 	
       Model.solve(...options)
 

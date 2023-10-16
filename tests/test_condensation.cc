@@ -110,25 +110,25 @@ int main(int argc, char *argv[]) {
     exprC = "(p+K*Div_u)*Test_p";
   else
     exprC = "((p+1e3*pow(p,3))+K*Div_u)*Test_p";
-  getfem::add_nonlinear_generic_assembly_brick(md1, mim, exprA);
-  getfem::add_nonlinear_generic_assembly_brick(md2, mim, exprA);
+  getfem::add_nonlinear_term(md1, mim, exprA);
+  getfem::add_nonlinear_term(md2, mim, exprA);
   if (DIFFICULTY % 100 > 9) {
-    getfem::add_nonlinear_generic_assembly_brick(md1, mim, exprB);
-    getfem::add_nonlinear_generic_assembly_brick(md2, mim, exprB);
+    getfem::add_nonlinear_term(md1, mim, exprB);
+    getfem::add_nonlinear_term(md2, mim, exprB);
   }
-  getfem::add_nonlinear_generic_assembly_brick(md1, mim, exprC);
-  getfem::add_nonlinear_generic_assembly_brick(md2, mim, exprC);
+  getfem::add_nonlinear_term(md1, mim, exprC);
+  getfem::add_nonlinear_term(md2, mim, exprC);
 
   if (DIFFICULTY % 1000 > 99) {
     md1.add_filtered_fem_variable("dirmult", mf, 98);
     md2.add_filtered_fem_variable("dirmult", mf, 98);
-    getfem::add_linear_generic_assembly_brick(md1, mim, "u.dirmult", 98);
-    getfem::add_linear_generic_assembly_brick(md2, mim, "u.dirmult", 98);
+    getfem::add_linear_term(md1, mim, "u.dirmult", 98);
+    getfem::add_linear_term(md2, mim, "u.dirmult", 98);
   }
 
   // load
-  getfem::add_linear_generic_assembly_brick(md1, mim, "1e-3*Test_u(2)", 99);
-  getfem::add_linear_generic_assembly_brick(md2, mim, "1e-3*Test_u(2)", 99);
+  getfem::add_linear_term(md1, mim, "1e-3*Test_u(2)", 99);
+  getfem::add_linear_term(md2, mim, "1e-3*Test_u(2)", 99);
 
   std::cout << "Displacement dofs: " << mf.nb_dof() << std::endl;
   std::cout << "Total dofs of model 1: " << md1.nb_dof() << std::endl;
