@@ -1609,23 +1609,34 @@ namespace getfem {
           }
         }
         int to_add = int(pnode->nb_test_functions() + pnode->nbc1)
-          - int(pnode->tensor().sizes().size());
-        GMM_ASSERT1(to_add >= 0 && to_add <=2, "Internal error");
+                   - int(pnode->tensor().sizes().size());
+        GMM_ASSERT1(to_add >= 0 && to_add <= 2, "Internal error");
         if (to_add) {
           mi = pnode->tensor().sizes();
           mi.resize(pnode->nbc1+pnode->nb_test_functions());
           for (int i = int(mi.size()-1); i >= to_add; --i)
             mi[i] = mi[i-to_add];
-          for (int i = 0; i < to_add; ++i) mi[i] = 2;
-          if (pnode->test_function_type & 1 &&
-              !(workspace.associated_mf(pnode->name_test1))
-              && !(workspace.associated_im_data(pnode->name_test1)))
-            mi[0] = gmm::vect_size(workspace.value(pnode->name_test1));
-          if (pnode->test_function_type & 2 &&
-              !(workspace.associated_mf(pnode->name_test2))
-              && !(workspace.associated_im_data(pnode->name_test2)))
-            mi[(pnode->test_function_type & 1) ? 1 : 0]
-              = gmm::vect_size(workspace.value(pnode->name_test2));
+          for (int i = 0; i < to_add; ++i)
+            mi[i] = 2;
+
+          if (pnode->test_function_type & 1) {
+            const mesh_fem *mf1 = workspace.associated_mf(pnode->name_test1);
+            const im_data *imd1 = workspace.associated_im_data(pnode->name_test1);
+            if (mf1 == 0 && imd1 == 0) // global variable
+              mi[0] = gmm::vect_size(workspace.value(pnode->name_test1));
+            else if (imd1) // im_data variable
+              mi[0] = workspace.qdim(pnode->name_test1); // == 1 because of all_sc = true
+          }
+          if (pnode->test_function_type & 2) {
+            const mesh_fem *mf2 = workspace.associated_mf(pnode->name_test2);
+            const im_data *imd2 = workspace.associated_im_data(pnode->name_test2);
+            if (mf2 == 0 && imd2 == 0) // global variable
+              mi[(pnode->test_function_type & 1) ? 1 : 0]
+                = gmm::vect_size(workspace.value(pnode->name_test2)); // == 1 because of all_sc = true
+            else if (imd2) // im_data variable
+              mi[(pnode->test_function_type & 1) ? 1 : 0]
+                = workspace.qdim(pnode->name_test2);
+          }
           pnode->tensor().adjust_sizes(mi);
         }
 
