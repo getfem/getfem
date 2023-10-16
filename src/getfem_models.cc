@@ -73,10 +73,10 @@ namespace getfem {
     clear_temporaries();
     v_num_var_iter.resize(n_iter);
     v_num_iter.resize(n_iter);
-    size_type s = is_fem_dofs ? passociated_mf()->nb_dof()
-                              : (imd ? imd->nb_filtered_index()
-                                       * imd->nb_tensor_elem()
-                                     : 1);
+    size_type s = mf ? passociated_mf()->nb_dof()
+                     : (imd ? imd->nb_filtered_index()
+                              *imd->nb_tensor_elem()
+                            : 1);
     s *= qdim();
     for (size_type i = 0; i < n_iter; ++i)
       if (is_complex)
@@ -385,14 +385,14 @@ namespace getfem {
     for (auto &&v : variables) {
       const std::string &vname = v.first;
       var_description &vdescr = v.second;
-      if (vdescr.is_fem_dofs && !vdescr.is_affine_dependent) {
+      if (vdescr.mf && !vdescr.is_affine_dependent) {
         if ((vdescr.filter & VDESCRFILTER_CTERM)
             || (vdescr.filter & VDESCRFILTER_INFSUP)) {
           VAR_SET::iterator vfilt = variables.find(vdescr.filter_var);
           GMM_ASSERT1(vfilt != variables.end(), "The primal variable of the"
                       " multiplier does not exist : " << vdescr.filter_var);
-          GMM_ASSERT1(vfilt->second.is_fem_dofs, "The primal variable of "
-                      "the multiplier is not a fem variable");
+          GMM_ASSERT1(vfilt->second.mf, "The primal variable of the "
+                      "multiplier should be a fem variable");
           multipliers[vdescr.filter_var].push_back(vname);
           if (vdescr.v_num < vdescr.mf->version_number() ||
               vdescr.v_num < vfilt->second.mf->version_number()) {
@@ -428,7 +428,7 @@ namespace getfem {
 
     for (auto &&v : variables) {
       var_description &vdescr = v.second;
-      if (vdescr.is_fem_dofs && !(vdescr.is_affine_dependent) &&
+      if (vdescr.mf && !(vdescr.is_affine_dependent) &&
           ((vdescr.filter & VDESCRFILTER_CTERM)
            || (vdescr.filter & VDESCRFILTER_INFSUP))) {
         if (tobedone.count(vdescr.filter_var)) {
@@ -677,7 +677,7 @@ namespace getfem {
           ost << std::setw(30) << std::left << v.first;
           ost << std::setw(2) << std::right << vdescr.n_iter;
           ost << ((vdescr.n_iter == 1) ? " copy   " : " copies ");
-          ost << (vdescr.is_fem_dofs ? "fem dependant " : "constant size ");
+          ost << (vdescr.mf ? "fem dependant " : "constant size ");
           ost << std::setw(8) << std::right << vdescr.size();
           if (is_complex()) ost << " complex";
           ost << ((vdescr.size() > 1) ? " doubles." : " double.");
@@ -751,10 +751,10 @@ namespace getfem {
 
   void model::resize_fixed_size_variable(const std::string &name,
                                          const bgeot::multi_index &sizes) {
-    GMM_ASSERT1(!(variables[name].is_fem_dofs),
+    GMM_ASSERT1(variables[name].mf == 0,
                 "Cannot explicitly resize a fem variable or data");
     GMM_ASSERT1(variables[name].imd == 0,
-                "Cannot explicitly resize an im data");
+                "Cannot explicitly resize an im variable or data");
     variables[name].qdims = sizes;
     variables[name].set_size();
   }
@@ -969,8 +969,7 @@ namespace getfem {
            if (bricks[ibb].mims[j] == mim) found = true;
        }
        for (const auto &v : variables) {
-         if (v.second.is_fem_dofs &&
-             (v.second.filter & VDESCRFILTER_INFSUP) &&
+         if (v.second.mf && (v.second.filter & VDESCRFILTER_INFSUP) &&
              mim == v.second.filter_mim) found = true;
         }
        if (!found) sup_dependency(*mim);
@@ -997,12 +996,12 @@ namespace getfem {
 
     VAR_SET::const_iterator it = find_variable(varname);
 
-    if (it->second.is_fem_dofs) {
+    if (it->second.mf) {
       const mesh_fem *mf = it->second.mf;
       bool found = false;
       for(VAR_SET::iterator it2 = variables.begin();
           it2 != variables.end(); ++it2) {
-        if (it != it2 && it2->second.is_fem_dofs && mf == it2->second.mf)
+        if (it != it2 && it2->second.mf && mf == it2->second.mf)
           found = true;
       }
       if (!found) sup_dependency(*mf);
@@ -1016,7 +1015,7 @@ namespace getfem {
         }
         for (VAR_SET::iterator it2 = variables.begin();
              it2 != variables.end(); ++it2) {
-          if (it != it2 && it2->second.is_fem_dofs &&
+          if (it != it2 && it2->second.mf &&
               (it2->second.filter & VDESCRFILTER_INFSUP) &&
               mim == it2->second.filter_mim) found = true;
         }
@@ -2963,7 +2962,7 @@ namespace getfem {
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
@@ -2989,7 +2988,7 @@ namespace getfem {
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
@@ -3017,7 +3016,7 @@ namespace getfem {
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
@@ -3045,7 +3044,7 @@ namespace getfem {
     context_check();
     auto it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
@@ -3067,7 +3066,7 @@ namespace getfem {
     GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.is_affine_dependent,
                 "Only for affine dependent variables");
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else
@@ -3083,7 +3082,7 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.is_fem_dofs) {
+    if (act_size_to_be_done && it->second.mf) {
       if (it->second.filter != VDESCRFILTER_NO)
         actualize_sizes();
       else

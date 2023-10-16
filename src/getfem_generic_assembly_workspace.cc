@@ -241,7 +241,7 @@ namespace getfem {
   ga_workspace::associated_mf(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end())
-      return it->second.is_fem_dofs ? it->second.mf : 0;
+      return it->second.mf;
     if (md && md->variable_exists(name))
       return md->pmesh_fem_of_variable(name);
     if (parent_workspace && parent_workspace->variable_exists(name))
@@ -266,7 +266,7 @@ namespace getfem {
   size_type ga_workspace::qdim(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) {
-      const mesh_fem *mf = it->second.is_fem_dofs ? it->second.mf : 0;
+      const mesh_fem *mf = it->second.mf;
       const im_data *imd = it->second.imd;
       size_type n = it->second.qdim();
       if (mf) {
@@ -289,7 +289,7 @@ namespace getfem {
   ga_workspace::qdims(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) {
-      const mesh_fem *mf =  it->second.is_fem_dofs ? it->second.mf : 0;
+      const mesh_fem *mf = it->second.mf;
       const im_data *imd = it->second.imd;
       size_type n = it->second.qdim();
       if (mf) {

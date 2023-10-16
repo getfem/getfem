@@ -272,7 +272,6 @@ namespace getfem {
     struct var_description {
 
       const bool is_variable;
-      const bool is_fem_dofs;
       const mesh_fem *mf;
       const im_data *imd;
       gmm::sub_interval I;
@@ -291,7 +290,7 @@ namespace getfem {
       var_description(bool is_var, const mesh_fem *mf_, const im_data *imd_,
                       gmm::sub_interval I_, const model_real_plain_vector *V_,
                       size_type Q, bool is_intern_=false)
-        : is_variable(is_var), is_fem_dofs(mf_ != 0), mf(mf_), imd(imd_),
+        : is_variable(is_var), mf(mf_), imd(imd_),
           I(I_), V(V_), qdims(1), is_internal(is_intern_)
       {
         GMM_ASSERT1(Q > 0, "Bad dimension");

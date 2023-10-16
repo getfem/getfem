@@ -158,7 +158,6 @@ namespace getfem {
                                 // to another variable.
       bool is_internal;         // An internal variable defined on integration
                                 // points, condensed out of the global system.
-      bool is_fem_dofs;         // The variable is the dofs of a fem
       size_type n_iter;         // Number of versions of the variable stored.
       size_type n_temp_iter;    // Number of additional temporary versions
       size_type default_iter;   // default iteration number.
@@ -206,7 +205,6 @@ namespace getfem {
                       mesh_im const *filter_mim_ = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_compl),
           is_affine_dependent(false), is_internal(false),
-          is_fem_dofs(mf_ != 0),
           n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
           default_iter(0), ptsc(0),
           filter(filter_), filter_region(filter_reg), filter_var(filter_var_),
@@ -230,12 +228,12 @@ namespace getfem {
       void clear_temporaries();
 
       const mesh_fem &associated_mf() const {
-        GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
+        GMM_ASSERT1(mf, "This variable is not linked to a fem");
         return (filter == VDESCRFILTER_NO) ? *mf : *partial_mf;
       }
 
       const mesh_fem *passociated_mf() const {
-        if (is_fem_dofs)
+        if (mf)
           return (filter == VDESCRFILTER_NO || partial_mf.get() == 0)
                  ? mf : partial_mf.get();
         return 0;
