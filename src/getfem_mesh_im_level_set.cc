@@ -337,11 +337,9 @@ namespace getfem {
 
         if (integrate_where == INTEGRATE_BOUNDARY) {
           bool lisin = true;
-          for (unsigned ipt = 0; ipt <
-                 pgt2->structure()->nb_points_of_face(f); ++ipt) {
-            const base_node &P = msh.points_of_face_of_convex(i, f)[ipt];
-            isin = is_point_in_selected_area(mesherls0, mesherls1, P).bin;
-            //cerr << P << ":" << isin << " ";
+          for (const base_node &pt : msh.points_of_face_of_convex(i, f)) {
+            isin = is_point_in_selected_area(mesherls0, mesherls1, pt).bin;
+            //cerr << pt << ":" << isin << " ";
             if (!isin) { lisin = false; break; }
           }
           if (!lisin) continue;
@@ -591,10 +589,12 @@ namespace getfem {
       bgeot::geotrans_interpolation_context
         cc(linked_mesh().trans_of_convex(cv), base_node(n), G2);
 
+      mesh::ref_mesh_pt_ct cvpts = msh.points_of_convex(i);
+
       dal::bit_vector ptinter;
       for (short_type k = 0; k < n; ++k) {
         size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
-        const base_node &P = msh.points_of_convex(i)[ipt];
+        const base_node &P = cvpts[ipt];
         if (is_point_in_intersection(mesherls0, mesherls1, P))
           ptinter.add(ipt);
       }
@@ -605,7 +605,7 @@ namespace getfem {
           size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
           if (ptinter.is_in(ipt)) {
 
-            const base_node &P = msh.points_of_convex(i)[ipt];
+            const base_node &P = cvpts[ipt];
             cc.set_xref(P);
 
             if (global_intersection.search_point(cc.xreal())
@@ -626,8 +626,8 @@ namespace getfem {
               size_type ipt2=msh.structure_of_convex(i)->ind_dir_points()[k2];
               if (ptinter.is_in(ipt1) && ptinter.is_in(ipt2)) {
 
-                const base_node &P1 = msh.points_of_convex(i)[ipt1];
-                const base_node &P2 = msh.points_of_convex(i)[ipt2];
+                const base_node &P1 = cvpts[ipt1];
+                const base_node &P2 = cvpts[ipt2];
                 cc.set_xref(P1);
                 base_node PR1 = cc.xreal();
                 cc.set_xref(P2);
@@ -651,10 +651,10 @@ namespace getfem {
 
                   for (bgeot::rtree::pbox_set::const_iterator
                          it=boxlst.begin(); it != boxlst.end(); ++it) {
-                    const base_node &PP1
-                      = global_intersection.points_of_convex((*it)->id)[0];
-                    const base_node &PP2
-                      = global_intersection.points_of_convex((*it)->id)[1];
+                    mesh::ref_mesh_pt_ct intersect_cvpts
+                      = global_intersection.points_of_convex((*it)->id);
+                    const base_node &PP1 = intersect_cvpts[0];
+                    const base_node &PP2 = intersect_cvpts[1];
                     if (is_edges_intersect(PP1, PP2, PR1, PR2))
                       { found_intersect = true; break; }
                   }

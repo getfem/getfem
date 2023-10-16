@@ -360,8 +360,7 @@ namespace getfem {
       if (fe_convex.is_in(cv)) {
         gmm::copy(linked_mesh().points_of_convex(cv)[0], bmin);
         gmm::copy(bmin, bmax);
-        for (size_type i = 0; i < linked_mesh().nb_points_of_convex(cv); ++i) {
-          const base_node &pt = linked_mesh().points_of_convex(cv)[i];
+        for (const base_node &pt : linked_mesh().points_of_convex(cv)) {
           for (size_type d = 1; d < bmin.size(); ++d) {
             bmin[d] = std::min(bmin[d], pt[d]);
             bmax[d] = std::max(bmax[d], pt[d]);
