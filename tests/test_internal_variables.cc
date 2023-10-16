@@ -53,6 +53,8 @@ int main(int argc, char *argv[]) {
   m.region(100) = getfem::select_faces_of_normal(m, outer_faces, base_node(-1, 0), 0.001);
   m.region(101) = getfem::select_faces_of_normal(m, outer_faces, base_node(1, 0), 0.001);
   m.region(102) = getfem::mesh_region::merge(m.region(100), m.region(101));
+  m.region(201) = getfem::select_convexes_in_box(m, base_node(-1e-3, -1e-3),
+                                                    base_node(1+1e-3, 0.5+1e-3));
 
   dim_type N(2);
   getfem::mesh_fem mf(m, N), mf_intern(m);
@@ -65,6 +67,10 @@ int main(int argc, char *argv[]) {
 
   getfem::im_data mimd(mim);
   if (DIFFICULTY) mimd.set_tensor_size(bgeot::multi_index(3,4));
+
+  getfem::im_data mimd_filtered(mim);
+  mimd_filtered.set_region(201);
+
 
   getfem::model md1, md2;
   md1.add_fem_variable("u", mf);
@@ -111,6 +117,13 @@ int main(int argc, char *argv[]) {
   std::cout << "Total dofs of model 1: " << md1.nb_dof() << std::endl;
   std::cout << "Total dofs of model 2: " << md2.nb_dof() << std::endl;
 
+
+  getfem::model md3;
+  md3.add_im_variable("p", mimd_filtered);
+
+  getfem::add_nonlinear_term(md3, mim, "(p-exp(p+2)+10)*Test_p", 201);
+  iter.init();
+  getfem::standard_solve(md3, iter);
   GETFEM_MPI_FINALIZE;
   
   return gmm::vect_dist2(md1.real_variable("u"), md2.real_variable("u")) < 1e-9 ? 0 : 1;
