@@ -5366,7 +5366,8 @@ namespace getfem {
 
     // Produce a resize instruction which is stored if no equivalent node is
     // detected and if the mesh is not uniform.
-    pnode->t.set_to_original(); pnode->t.set_sparsity(0, 0);
+    pnode->t.set_to_original();
+    pnode->t.set_sparsity(0, 0);
     bool is_uniform = false;
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)

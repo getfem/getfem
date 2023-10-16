@@ -2257,7 +2257,8 @@ namespace getfem {
         else if (pnode->children.size() == 5)
           { ind[0] = 2; ind[1] = 4; }
         else if (pnode->children.size() == 7) {
-          ind.resize(4); indsize.resize(4);
+          ind.resize(4);
+          indsize.resize(4);
           ind[0] = 2; ind[1] = 3; ind[2] = 5; ind[3] = 6;
         }
 

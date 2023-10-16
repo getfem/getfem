@@ -542,12 +542,12 @@ namespace getfem {
           return false;
       break;
     case GA_NODE_C_MATRIX:
-      if (pnode1->children.size() != pnode2->children.size()) return false;
-      if (pnode1->nb_test_functions() != pnode2->nb_test_functions())
+      if (pnode1->children.size() != pnode2->children.size() ||
+          pnode1->nb_test_functions() != pnode2->nb_test_functions() ||
+          pnode1->t.sizes().size() != pnode2->t.sizes().size())
         return false;
-      if (pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
       for (size_type i=pnode1->nb_test_functions();
-           i<pnode1->t.sizes().size(); ++i)
+           i < pnode1->t.sizes().size(); ++i)
         if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
       if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
@@ -1951,7 +1951,8 @@ namespace getfem {
                   mi.pop_back();
                   sub_tree.root->tensor().adjust_sizes(mi);
                 }
-                if (!nb_comp) mii = sub_tree.root->tensor().sizes();
+                if (!nb_comp)
+                  mii = sub_tree.root->tensor().sizes();
                 else {
                   const bgeot::multi_index &mi=sub_tree.root->tensor().sizes();
                   bool cmp = true;
@@ -2034,23 +2035,32 @@ namespace getfem {
 
               } while (r_type != GA_RBRACKET);
               bgeot::multi_index mi;
-              nbc1 = tree.current_node->nbc1; nbc2 = tree.current_node->nbc2;
+              nbc1 = tree.current_node->nbc1;
+              nbc2 = tree.current_node->nbc2;
               nbc3 = tree.current_node->nbc3;
 
               size_type nbl = tree.current_node->children.size()
                 / (nbc2 * nbc1 * nbc3);
               switch(tensor_order) {
               case 1:
-                /* mi.push_back(1); */ mi.push_back(nbc1); break;
+                // mi.push_back(1);
+                mi.push_back(nbc1);
+                break;
               case 2:
-                mi.push_back(nbl); if (nbc1 > 1) mi.push_back(nbc1); break;
+                mi.push_back(nbl);
+                if (nbc1 > 1)
+                  mi.push_back(nbc1);
+                break;
               case 3:
-                mi.push_back(nbl); mi.push_back(nbc2);
+                mi.push_back(nbl);
+                mi.push_back(nbc2);
                 mi.push_back(nbc1);
                 break;
               case 4:
-                mi.push_back(nbl); mi.push_back(nbc3);
-                mi.push_back(nbc2); mi.push_back(nbc1);
+                mi.push_back(nbl);
+                mi.push_back(nbc3);
+                mi.push_back(nbc2);
+                mi.push_back(nbc1);
                 break;
               default: GMM_ASSERT1(false, "Internal error");
               }
@@ -2080,10 +2090,12 @@ namespace getfem {
         case GA_COLON: case GA_DOT: case GA_DOTMULT: case GA_DOTDIV:
         case GA_TMULT:
           tree.add_op(t_type, token_pos, expr);
-          state = 1; break;
+          state = 1;
+          break;
         case GA_QUOTE:
           tree.add_op(t_type, token_pos, expr);
-          state = 2; break;
+          state = 2;
+          break;
         case GA_END: case GA_RPAR: case GA_COMMA: case GA_DCOMMA:
         case GA_RBRACKET: case GA_SEMICOLON: case GA_DSEMICOLON:
           return t_type;
