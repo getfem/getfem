@@ -85,17 +85,17 @@ if (not(explicit_potential)):
     md.add_finite_strain_elasticity_brick(mim, lawname, 'u', 'params')
 else:
     print("Explicit elastic potential")
-    K = 1.2; mu = 3.0;
-    md.add_macro('F_',  '(Id(meshdim)+Grad_u)')
-    md.add_macro('J_',  'Det(F_)')
-    md.add_macro('be_', 'Left_Cauchy_Green(F_)')
-    md.add_initialized_data('K',  [K])
-    md.add_initialized_data('mu', [mu])
+    K = 1.2
+    mu = 3.0
+    md.add_macro('F',  'Id(meshdim)+Grad_u')
+    md.add_macro('J',  'Det(F)')
+    md.add_macro('be', 'Left_Cauchy_Green(F)')
+    md.add_initialized_data('K',  K)
+    md.add_initialized_data('mu', mu)
     md.add_initialized_data('paramsIMR', [1,1,2])
-    _expr_1 = "(K/2)*sqr(log(J_))+(mu/2)*(Matrix_j1(be_)-3)";
-    _expr_2 = "(K/2)*sqr(log(J_))+(mu/2)*(pow(Det(be_),-1./3.)*Trace(be_)-3)"
-    _expr_3 = "paramsIMR(1)*(Matrix_j1(Right_Cauchy_Green(F_))-3)+ paramsIMR(2)*(Matrix_j2(Right_Cauchy_Green(F_)) - 3)+paramsIMR(3)*sqr(J_-1)"
-    md.add_nonlinear_term(mim, _expr_3);
+#    md.add_nonlinear_term(mim, "(K/2)*sqr(log(J))+(mu/2)*(Matrix_j1(be)-3)")
+#    md.add_nonlinear_term(mim, "(K/2)*sqr(log(J))+(mu/2)*(pow(Det(be),-1./3.)*Trace(be)-3)")
+    md.add_nonlinear_term(mim, "paramsIMR(1)*(Matrix_j1(Right_Cauchy_Green(F))-3)+ paramsIMR(2)*(Matrix_j2(Right_Cauchy_Green(F)) - 3)+paramsIMR(3)*sqr(J-1)");
 
 # md.add_nonlinear_term(mim, 'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4')
 # md.add_nonlinear_term(mim, '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u')
