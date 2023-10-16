@@ -324,9 +324,9 @@ namespace getfem {
     GMM_ASSERT1(rg == size_type(-1) || msource.region(rg).is_only_convexes(),
                 "The provided mesh region should only contain convexes");
 
+    const mesh_region &mr = msource.region(rg);
     const dal::bit_vector &convexes = (rg == size_type(-1))
-                                    ? msource.convex_index()
-                                    : msource.region(rg).index();
+                                    ? msource.convex_index() : mr.index();
     std::vector<size_type> old2new(msource.points_index().last()+1, size_type(-1));
     for (dal::bv_visitor cv(convexes); !cv.finished(); ++cv) {
 
