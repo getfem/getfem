@@ -165,8 +165,11 @@ int main(int argc, char *argv[])
 
         //actual step solving
         level_set_contact::solve_with_contact(standard_solve, model,
+#ifdef GMM_USES_MUMPS
+            iter_newton, iter_contact, "mumps", line_search);
+#else
             iter_newton, iter_contact, "superlu", line_search);
-
+#endif
         GMM_ASSERT1(iter_contact.converged(), "ERROR: contact algorithm did not converge");
         std::cout << "update" << std::endl;
 

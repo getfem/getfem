@@ -332,7 +332,11 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
     // getfem::simplest_newton_line_search ls;
     gmm::iteration iter(residual, 2, 40000);
     getfem::standard_solve(model, iter,
+#ifdef GMM_USES_MUMPS
+			   getfem::rselect_linear_solver(model, "mumps"), ls);
+#else
 			   getfem::rselect_linear_solver(model, "superlu"), ls);
+#endif
  
     getfem::small_strain_elastoplasticity_next_iter
       (model, mim, "Prandtl Reuss", getfem::DISPLACEMENT_ONLY,
