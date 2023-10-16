@@ -124,6 +124,15 @@ int main(int argc, char *argv[]) {
   getfem::add_nonlinear_term(md3, mim, "(p-exp(p+2)+10)*Test_p", 201);
   iter.init();
   getfem::standard_solve(md3, iter);
+
+  if (!DIFFICULTY) {
+    getfem::model md4;
+    md4.add_im_variable("f33", mimd);
+    gmm::fill(md4.set_real_variable("f33"), 1);
+    getfem::add_nonlinear_term(md4, mim, "Det([1,0,0;0,1,0;0,0,f33])*Test_f33");
+    md4.assembly(getfem::model::BUILD_MATRIX);
+  }
+
   GETFEM_MPI_FINALIZE;
   
   return gmm::vect_dist2(md1.real_variable("u"), md2.real_variable("u")) < 1e-9 ? 0 : 1;
