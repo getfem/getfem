@@ -344,17 +344,20 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET V = ('from variables')
+    /*@GET V = ('from variables'[, @bool with_internal])
       Return the vector of all the degrees of freedom of the model consisting
       of the concatenation of the variables of the model (useful
       to solve your problem with you own solver). @*/
     sub_command
-      ("from variables", 0, 0, 0, 1,
+      ("from variables", 0, 1, 0, 1,
        if (!md->is_complex()) {
-         std::vector<double> V(md->nb_dof());
-         md->from_variables(V);
+         bool with_internal = in.remaining() && in.pop().to_bool();
+         std::vector<double> V(md->nb_dof(with_internal));
+         md->from_variables(V, with_internal);
          out.pop().from_dcvector(V);
        } else {
+         GMM_ASSERT1(!in.remaining(),
+                     "Not supported argument for complex model");
          std::vector<std::complex<double> > V(md->nb_dof());
          md->from_variables(V);
          out.pop().from_dcvector(V);

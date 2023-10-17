@@ -409,21 +409,24 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('to variables', @vec V)
+    /*@SET ('to variables', @vec V[, @bool with_internal])
       Set the value of the variables of the model with the vector `V`.
       Typically, the vector `V` results of the solve of the tangent
       linear system (useful to solve your problem with you own solver).@*/
     sub_command
-      ("to variables", 1, 1, 0, 0,
+      ("to variables", 1, 2, 0, 0,
        if (!md->is_complex()) {
          darray st = in.pop().to_darray(-1);
          std::vector<double> V;
          V.assign(st.begin(), st.end());
-         md->to_variables(V);
+         bool with_internal = in.remaining() && in.pop().to_bool();
+         md->to_variables(V, with_internal);
        } else {
          carray st = in.pop().to_carray(-1);
          std::vector<std::complex<double> > V;
          V.assign(st.begin(), st.end());
+         GMM_ASSERT1(!in.remaining(),
+                     "Not supported argument for complex model");
          md->to_variables(V);
        }
        );
