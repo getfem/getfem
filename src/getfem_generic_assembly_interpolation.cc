@@ -593,10 +593,10 @@ namespace getfem {
         box_to_convexes.clear();
         element_boxes.clear();
         base_node bmin(N), bmax(N);
+        const mesh_region &mr = target_mesh.region(target_region);
         const dal::bit_vector&
           convex_index = (target_region == mesh_region::all_convexes().id())
-                       ? target_mesh.convex_index()
-                       : target_mesh.region(target_region).index();
+                       ? target_mesh.convex_index() : mr.index();
         for (dal::bv_visitor cv(convex_index); !cv.finished(); ++cv) {
 
           bgeot::pgeometric_trans pgt = target_mesh.trans_of_convex(cv);
@@ -609,10 +609,10 @@ namespace getfem {
             gmm::clear(bmin);
             gmm::clear(bmax);
           }
+          mesh::ref_mesh_pt_ct cvpts = target_mesh.points_of_convex(cv);
           for (short_type ip = 1; ip < nbd_t; ++ip) {
             // size_type ind = target_mesh.ind_points_of_convex(cv)[ip];
-            const base_node &pt = target_mesh.points_of_convex(cv)[ip];
-
+            const base_node &pt = cvpts[ip];
             for (size_type k = 0; k < N; ++k) {
               bmin[k] = std::min(bmin[k], pt[k]);
               bmax[k] = std::max(bmax[k], pt[k]);

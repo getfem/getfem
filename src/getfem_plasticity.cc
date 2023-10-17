@@ -2193,15 +2193,10 @@ namespace getfem {
 
     pbrick pbr = std::make_shared<elastoplasticity_brick>(ACP);
 
-    model::termlist tl;
-    tl.push_back(model::term_description
-                 (varname, varname, true));
-    model::varnamelist dl(1, datalambda);
-    dl.push_back(datamu);
-    dl.push_back(datathreshold);
-    dl.push_back(datasigma);
-    dl.push_back(data_previous_disp);
-    model::varnamelist vl(1, varname);
+    model::termlist tl{model::term_description(varname, varname, true)};
+    model::varnamelist
+      dl{datalambda, datamu, datathreshold, datasigma, data_previous_disp},
+      vl{varname};
 
     return md.add_brick(pbr, vl, dl, tl,
                         model::mimlist(1,&mim), region);
