@@ -341,14 +341,14 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     //printf("String\n");
     /* for strings, the pointer is shared, no copy */
     int L = (int)(strlen(PyUnicode_AsUTF8(o)));
-    char *s = PyUnicode_AsUTF8(o);
-    gc_ref(gc, o, 0);
+    const char *s = PyUnicode_AsUTF8(o);
 
     t->storage.type = GFI_CHAR;
     t->dim.dim_len = 1;
     t->dim.dim_val = &TGFISTORE(char,len);
     TGFISTORE(char,len)=L;
-    TGFISTORE(char,val)=s;
+    if (!(TGFISTORE(char,val)=gc_alloc(gc,L*sizeof(char)))) return NULL;
+    memcpy(TGFISTORE(char,val), s, L);
 #if PY_MAJOR_VERSION < 3
   } else if (PyInt_Check(o) || PyLong_Check(o)) {
 #else
