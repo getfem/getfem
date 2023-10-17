@@ -139,7 +139,7 @@ static PyTypeObject PyGetfemObject_Type = {
     0,                                 /* tp_getattr */
     0,                                 /* tp_setattr */
 #if PY_MAJOR_VERSION >= 3
-    GetfemObject_compare,              /* tp_compare, necessary for dictionary*/
+    0,                                 /* tp_as_async */
 #else
     (cmpfunc)GetfemObject_compare,     /* tp_compare, necessary for dictionary*/
 #endif
