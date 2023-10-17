@@ -331,7 +331,8 @@ static gfi_array *
 PyObject_to_gfi_array(gcollect *gc, PyObject *o)
 {
   gfi_object_id id;
-  gfi_array *t = gc_alloc(gc, sizeof(gfi_array)); if (!t) return NULL;
+  gfi_array *t = gc_alloc(gc, sizeof(gfi_array));
+  if (!t) return NULL;
 #define TGFISTORE0(T) t->storage.gfi_storage_u.data_##T
 #define TGFISTORE1(T,field) data_##T##_##field
 #define TGFISTORE(T,field) TGFISTORE0(T).TGFISTORE1(T,field)
@@ -344,7 +345,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     gc_ref(gc, o, 0);
 
     t->storage.type = GFI_CHAR;
-    t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(char,len);
+    t->dim.dim_len = 1;
+    t->dim.dim_val = &TGFISTORE(char,len);
     TGFISTORE(char,len)=L;
     TGFISTORE(char,val)=s;
 #if PY_MAJOR_VERSION < 3
@@ -364,7 +366,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
                                        "in getfem interface.");
 
     t->storage.type = GFI_INT32;
-    t->dim.dim_len = 0; t->dim.dim_val = &TGFISTORE(int32,len);
+    t->dim.dim_len = 0;
+    t->dim.dim_val = &TGFISTORE(int32,len);
     TGFISTORE(int32,len)=1;
     if (!(TGFISTORE(int32,val)=gc_alloc(gc,sizeof(int)))) return NULL;
     TGFISTORE(int32,val)[0] = d;
@@ -373,7 +376,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     /* usual python float */
     double df = PyFloat_AsDouble(o);
     t->storage.type = GFI_DOUBLE;
-    t->dim.dim_len = 0; t->dim.dim_val = &TGFISTORE(double,len);
+    t->dim.dim_len = 0;
+    t->dim.dim_val = &TGFISTORE(double,len);
     TGFISTORE(double,len)=1;
     t->storage.gfi_storage_u.data_double.is_complex = 0;
     if (!(TGFISTORE(double,val)=gc_alloc(gc,sizeof(double)))) return NULL;
@@ -384,7 +388,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     double real = PyComplex_RealAsDouble(o);
     double imag = PyComplex_ImagAsDouble(o);
     t->storage.type = GFI_DOUBLE;
-    t->dim.dim_len = 0; t->dim.dim_val = &TGFISTORE(double,len);
+    t->dim.dim_len = 0;
+    t->dim.dim_val = &TGFISTORE(double,len);
     TGFISTORE(double,len)=2;
     t->storage.gfi_storage_u.data_double.is_complex = 1;
     if (!(TGFISTORE(double,val)=gc_alloc(gc,sizeof(double)*2))) return NULL;
@@ -487,7 +492,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
        (i.e. matlab's lists of inhomogeneous elements) */
     int i;
     t->storage.type = GFI_CELL;
-    t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
+    t->dim.dim_len = 1;
+    t->dim.dim_val = &TGFISTORE(cell,len);
 
     if (PyTuple_Check(o)) TGFISTORE(cell,len) = (unsigned)(PyTuple_GET_SIZE(o));
     else TGFISTORE(cell,len) = (unsigned)(PyList_GET_SIZE(o));
@@ -506,7 +512,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     //printf("Object\n");
     /* getfem objects are refered to with a couple (classid, objectid) */
     t->storage.type = GFI_OBJID;
-    t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
+    t->dim.dim_len = 1;
+    t->dim.dim_val = &TGFISTORE(cell,len);
     t->storage.gfi_storage_u.objid.objid_len = 1;
     if (!(t->storage.gfi_storage_u.objid.objid_val =
           gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
@@ -586,7 +593,8 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       int i;
       for(i=0; i < t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
-      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1))) return NULL;
+      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1)))
+        return NULL;
       PyDimMem_FREE(dim);
 
       npy_intp itemsize = PyArray_ITEMSIZE((PyArrayObject *)o);
@@ -652,8 +660,8 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       int i;
       for(i=0; i< t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
-      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_OBJECT,1))) return NULL;
-
+      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_OBJECT,1)))
+        return NULL;
       if (!PyArray_ISFARRAY(PyArray_DATA((PyArrayObject *)o))) {
         // I'm just too lazy to transpose matrices
         PyErr_Format(PyExc_RuntimeError,
