@@ -34,15 +34,13 @@
 #include "getfem_arch_config.h"
 #include <assert.h>
 
-#if PY_MAJOR_VERSION >= 3
-#define PyString_AsString(o) PyUnicode_AsUTF8(o)
-#define PyString_FromFormat(a,b,c) PyUnicode_FromFormat(a,b,c)
-#define PyString_Check(o) PyUnicode_Check(o)
-#define PyInt_Check(o) PyLong_Check(o)
-#define PyInt_AsLong(o) PyLong_AsLong(o)
-#define PyString_FromString(o) PyUnicode_FromString(o)
-#define PyString_FromStringAndSize(o,l) PyUnicode_FromStringAndSize(o,l)
-#define PyInt_FromLong(o) PyLong_FromLong(o)
+#if PY_MAJOR_VERSION < 3
+#define PyUnicode_AsUTF8(o) PyString_AsString(o)
+#define PyUnicode_FromFormat(a,b,c) PyString_FromFormat(a,b,c)
+#define PyUnicode_Check(o) PyString_Check(o)
+#define PyUnicode_FromString(o) PyString_FromString(o)
+#define PyUnicode_FromStringAndSize(o,l) PyString_FromStringAndSize(o,l)
+#define PyLong_FromLong(o) PyInt_FromLong(o)
 #endif
 
 static PyObject *call_getfem(PyObject *self, PyObject *args);
@@ -63,8 +61,8 @@ typedef struct PyGetfemObject {
 
 static PyObject *
 GetfemObject_name(PyGetfemObject *self) {
-  return PyString_FromFormat("getfem.GetfemObject(classid=%d,objid=%d)",
-                             self->classid, self->objid);
+  return PyUnicode_FromFormat("getfem.GetfemObject(classid=%d,objid=%d)",
+                              self->classid, self->objid);
 }
 
 static int
@@ -338,21 +336,29 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
 #define TGFISTORE1(T,field) data_##T##_##field
 #define TGFISTORE(T,field) TGFISTORE0(T).TGFISTORE1(T,field)
   PyErr_Clear();
-  if (PyString_Check(o)) {
+  if (PyUnicode_Check(o)) {
     //printf("String\n");
     /* for strings, the pointer is shared, no copy */
-    int L = (int)(strlen(PyString_AsString(o)));
-    char *s = PyString_AsString(o);
+    int L = (int)(strlen(PyUnicode_AsUTF8(o)));
+    char *s = PyUnicode_AsUTF8(o);
     gc_ref(gc, o, 0);
 
     t->storage.type = GFI_CHAR;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(char,len);
     TGFISTORE(char,len)=L;
     TGFISTORE(char,val)=s;
+#if PY_MAJOR_VERSION < 3
   } else if (PyInt_Check(o) || PyLong_Check(o)) {
+#else
+  } else if (PyLong_Check(o)) {
+#endif
     //printf("Int or Long\n");
     /* usual python integer */
+#if PY_MAJOR_VERSION < 3
     int d = (int)PyInt_AsLong(o);
+#else
+    int d = (int)PyLong_AsLong(o);
+#endif
     if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_OverflowError))
       return (gfi_array *)PyErr_Format(PyExc_OverflowError,
                                        "in getfem interface.");
@@ -464,7 +470,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
       default: {
         PyObject *sdtype =PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
         PyErr_Format(PyExc_RuntimeError, "invalid numeric dtype: %s",
-          PyString_AsString(sdtype));
+                     PyUnicode_AsUTF8(sdtype));
         Py_DECREF(sdtype);
         return NULL;
       }
@@ -511,7 +517,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
     PyErr_Format(PyExc_RuntimeError,
                  "unhandled argument (type, dtype): (%s, %s)",
-                 PyString_AsString(stype), PyString_AsString(sdtype));
+                 PyUnicode_AsUTF8(stype), PyUnicode_AsUTF8(sdtype));
     Py_DECREF(stype);
     Py_DECREF(sdtype);
     return NULL;
@@ -547,11 +553,11 @@ build_gfi_array_list(gcollect *gc, PyObject *tuple, char **pfunction_name,
   if (PyTuple_GET_SIZE(tuple) == 0) {
     PyErr_SetString(PyExc_RuntimeError, "missing function name"); return NULL;
   }
-  if (!PyString_Check(PyTuple_GET_ITEM(tuple,0))) {
+  if (!PyUnicode_Check(PyTuple_GET_ITEM(tuple,0))) {
     PyErr_SetString(PyExc_RuntimeError, "expecting function name as a string");
     return NULL;
   }
-  *pfunction_name = PyString_AsString(PyTuple_GET_ITEM(tuple,0));
+  *pfunction_name = PyUnicode_AsUTF8(PyTuple_GET_ITEM(tuple,0));
   *nb = (int)(PyTuple_GET_SIZE(tuple) - 1);
   if (!(l = gc_alloc(gc, sizeof(gfi_array*) * *nb))) return NULL;
   for (i=0, j = 0; i < *nb; ++i) {
@@ -573,7 +579,8 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   case GFI_UINT32:
   case GFI_INT32: {
     //printf("GFI_INT32\n");
-    if (t->dim.dim_len == 0) return PyInt_FromLong(TGFISTORE(int32,val)[0]);
+    if (t->dim.dim_len == 0)
+      return PyLong_FromLong(TGFISTORE(int32,val)[0]);
     else {
       npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
       int i;
@@ -623,7 +630,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   } break;
   case GFI_CHAR: {
     //printf("GFI_CHAR\n");
-    o = PyString_FromStringAndSize(TGFISTORE(char,val),TGFISTORE(char,len));
+    o = PyUnicode_FromStringAndSize(TGFISTORE(char,val),TGFISTORE(char,len));
   } break;
   case GFI_CELL: {
     //printf("GFI_CELL\n");
@@ -775,32 +782,32 @@ getfem_env(PyObject *self, PyObject *args) {
   PyObject* word_out;
 
   if (strcmp(word_in,"project") == 0) {
-    word_out = PyString_FromString("GetFEM");
+    word_out = PyUnicode_FromString("GetFEM");
   } else if (strcmp(word_in,"copyright") == 0) {
-    word_out = PyString_FromString
+    word_out = PyUnicode_FromString
     ("2004-2022 GetFEM project");
   } else if (strcmp(word_in,"authors") == 0) {
-    word_out = PyString_FromString
+    word_out = PyUnicode_FromString
     ("Yves Renard, Julien Pommier, Konstantinos Poulios");
   } else if (strcmp(word_in,"url") == 0) {
-    word_out = PyString_FromString("http://home.gna.org/getfem/");
+    word_out = PyUnicode_FromString("http://home.gna.org/getfem/");
   } else if (strcmp(word_in,"license") == 0) {
-    word_out = PyString_FromString("GNU LGPL v3");
+    word_out = PyUnicode_FromString("GNU LGPL v3");
   } else if (strcmp(word_in,"package") == 0) {
-    word_out = PyString_FromString(GETFEM_PACKAGE);
+    word_out = PyUnicode_FromString(GETFEM_PACKAGE);
   } else if (strcmp(word_in,"package_name") == 0) {
-    word_out = PyString_FromString(GETFEM_PACKAGE_NAME);
+    word_out = PyUnicode_FromString(GETFEM_PACKAGE_NAME);
   } else if (strcmp(word_in,"package_string") == 0) {
-    word_out = PyString_FromString(GETFEM_PACKAGE_STRING);
+    word_out = PyUnicode_FromString(GETFEM_PACKAGE_STRING);
   } else if(strcmp(word_in,"package_tarname") == 0) {
-    word_out = PyString_FromString(GETFEM_PACKAGE_TARNAME);
+    word_out = PyUnicode_FromString(GETFEM_PACKAGE_TARNAME);
   } else if(strcmp(word_in,"package_version") == 0 ||
             strcmp(word_in,"release") == 0) {
-    word_out = PyString_FromString(GETFEM_PACKAGE_VERSION);
+    word_out = PyUnicode_FromString(GETFEM_PACKAGE_VERSION);
   } else if(strcmp(word_in,"version") == 0) {
-    word_out = PyString_FromString(GETFEM_VERSION);
+    word_out = PyUnicode_FromString(GETFEM_VERSION);
   } else {
-    word_out = PyString_FromString("");
+    word_out = PyUnicode_FromString("");
   }
 
   Py_INCREF(word_out);
