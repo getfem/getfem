@@ -255,7 +255,10 @@ namespace getfem {
         j1_c(false), j2_c(false), di1_c(false), di2_c(false), di3_c(false),
         dj1_c(false), dj2_c(false), ddi1_c(false), ddi2_c(false),
         ddi3_c(false), ddj1_c(false), ddj2_c(false)
-      { N = gmm::mat_nrows(E); }
+    {
+      N = gmm::mat_nrows(E);
+      i1_=i2_=i3_=j1_=j2_=0.;
+    }
 
   };
 

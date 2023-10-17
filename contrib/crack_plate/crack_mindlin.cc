@@ -938,7 +938,7 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
   getfem::compute_gradient(mf_u, mf_vm, U, DU);
   
   gmm::resize(VM, mf_vm.nb_dof());
-  scalar_type vm_min, vm_max;
+  scalar_type vm_min=0, vm_max=0;
   for (size_type i=0; i < mf_vm.nb_dof(); ++i) {
     VM[i] = 0;
     scalar_type sdiag = 0.;

@@ -419,7 +419,7 @@ namespace bgeot {
     pgeotrans_precomp pgp_;
     pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
     size_type ii_;           /** index of current point in the pgp */
-    mutable scalar_type J_, J__; /** Jacobian */
+    mutable scalar_type J_=0, J__=0; /** Jacobian */
     mutable base_matrix PC, B_factors;
     mutable base_vector aux1, aux2;
     mutable std::vector<long> ipvt;
@@ -519,7 +519,7 @@ namespace bgeot {
                                    const base_node& xref__,
                                    const base_matrix& G__)
       : xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), pspt_(0),
-      ii_(size_type(-1)),have_J_(false), have_B_(false), have_B3_(false),
+      ii_(size_type(-1)), have_J_(false), have_B_(false), have_B3_(false),
       have_B32_(false), have_K_(false), have_cv_center_(false) {}
   };
 

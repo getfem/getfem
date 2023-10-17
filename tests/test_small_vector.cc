@@ -29,6 +29,7 @@
 #endif
 #include <valarray>
 #include <unistd.h>
+#include <random>
 #include "getfem/bgeot_small_vector.h"
 #include "getfem/getfem_mesh.h"
 
@@ -575,7 +576,7 @@ namespace getfem {
     for (size_type i=0; i < N; ++i) {
       std::vector<V> w, z;
       w = vv;
-      std::random_shuffle(vv.begin(), vv.end());
+      std::shuffle(vv.begin(), vv.end(), std::mt19937());
       z = w;
     }
     cout << " copies : " << c.toc().cpu() << " sec\n";
@@ -601,7 +602,8 @@ namespace getfem {
 //     }
     gmm::lexicographical_less<V, gmm::approx_less<typename V::value_type> > comp;
     c.init().tic();
-    init(vv); std::random_shuffle(vv.begin(), vv.end());
+    init(vv);
+    std::shuffle(vv.begin(), vv.end(), std::mt19937());
     for (size_type i=0; i < N*4; ++i) {
       size_type cnt = 0;
       for (size_type j=vv.size()-1; j > 0; --j) {
@@ -615,7 +617,7 @@ namespace getfem {
     cout << "mesh<base_node> : empty size = " << m.memsize() << "\n";
     init(vv);
     c.init().tic();
-    std::random_shuffle(vv.begin(), vv.end());
+    std::shuffle(vv.begin(), vv.end(), std::mt19937());
     for (size_type i=0; i < N; ++i) {
       m.clear();
       for (size_type j=0; j < vv.size(); ++j) {
@@ -633,7 +635,7 @@ namespace getfem {
     for (size_type j=0; j < w.size(); ++j) {
       w[j] = MICRO_VEC::alloc.allocate(3);
     }
-    std::random_shuffle(w.begin(), w.end());
+    std::shuffle(w.begin(), w.end(), std::mt19937());
     for (size_type j=0; j < w.size(); ++j) {
       MICRO_VEC::alloc.deallocate(w[j]);
     }

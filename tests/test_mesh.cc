@@ -54,14 +54,16 @@ void test_conforming(getfem::mesh &m) {
   getfem::outer_faces_of_mesh(m, border_faces);
   size_type nb_faces = 0;
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i, nb_faces++) {
+    getfem::mesh::ref_mesh_face_pt_ct
+      face_pts = m.points_of_face_of_convex(i.cv(), i.f());
     for (size_type ip = 0; ip < dim; ++ip) {
       bool onbound = false;
-      const POINT &pt = m.points_of_face_of_convex(i.cv(), i.f())[ip];
+      const POINT &pt = face_pts[ip];
       for (size_type nc = 0; nc < dim; ++nc)
-	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
-	  onbound = true;
+        if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
+          onbound = true;
       if (!onbound)
-	GMM_ASSERT1(false, "Mesh is not conforming " << pt);
+        GMM_ASSERT1(false, "Mesh is not conforming " << pt);
     }
   }
   cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
@@ -112,7 +114,7 @@ void test_mesh_matching(size_type dim) {
   
 
   getfem::parallelepiped_regular_simplex_mesh(m, bgeot::dim_type(dim), pt1, vects.begin(),
-					      iref.begin());
+                                              iref.begin());
 
   test_conforming(m);
 }
@@ -280,7 +282,7 @@ void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
   for (size_type i=0; i < 10; ++i) {    
     size_type cv = m.add_triangle_by_points(A,B,C);
     cout << "Q=" << m.convex_quality_estimate(cv) << "\t"
-	 << "R=" << m.convex_radius_estimate(cv) << endl;
+         << "R=" << m.convex_radius_estimate(cv) << endl;
     A[0] += dx; A[1] += dy;
   }
 }
@@ -338,7 +340,7 @@ void test_convex_ref() {
 //  }
 //
 //  basic_mesh_point_comparator2(unsigned dim_ = 3, double e = double(10000)
-//			       *gmm::default_tol(double()))
+//                               *gmm::default_tol(double()))
 //    : eps(e), v(dim_) {
 //    gmm::fill_random(v);
 //    gmm::scale(v, 1.0/gmm::vect_norm2(v));
@@ -372,8 +374,8 @@ void test_mesh_building(int dim, int Nsubdiv) {
 //   cout << "Time to insert points in structure with random component: "
 //        << gmm::uclock_sec() - exectime << endl;
 //   GMM_ASSERT1(pttab2.card() == m.nb_points(),
-// 	      "Problem in identifying points " << pttab2.card()
-// 	      << " : " << m.nb_points());
+//               "Problem in identifying points " << pttab2.card()
+//               << " : " << m.nb_points());
   
 
 //   // Test on the new structure
@@ -388,8 +390,8 @@ void test_mesh_building(int dim, int Nsubdiv) {
 //   cout << "Time to insert points in new structure: "
 //        << gmm::uclock_sec() - exectime << endl;
 //   GMM_ASSERT1(pttab3.card() == m.nb_points(),
-// 	      "Problem in identifying points " << pttab3.card()
-// 	      << " : " << m.nb_points());
+//               "Problem in identifying points " << pttab3.card()
+//               << " : " << m.nb_points());
   
 
 
@@ -406,22 +408,22 @@ void test_mesh_building(int dim, int Nsubdiv) {
 //       T0.push_back(m.points_of_convex(ic)[jp]);
 
 //       if (T0.size() >= 4) {
-// 	size_type i = 0;
-// 	for (; i < 30; ++i)
-// 	  if (trees[i].nb_points() == 0) break;
+//         size_type i = 0;
+//         for (; i < 30; ++i)
+//           if (trees[i].nb_points() == 0) break;
 
-// 	// cout << "building tree " << i << endl;
-	
-// 	for (size_type j = 0; j < 4; ++j)
-// 	  trees[i].add_point(T0[j]);
-// 	T0.resize(0);
+//         // cout << "building tree " << i << endl;
+        
+//         for (size_type j = 0; j < 4; ++j)
+//           trees[i].add_point(T0[j]);
+//         T0.resize(0);
 
-// 	for (size_type j = 0; j < i; ++j) {
-// 	  for (size_type k = 0; k < trees[j].nb_points(); ++k)
-// 	    trees[i].add_point(trees[j].points()[k].n);
-// 	  trees[j].clear();
-// 	}
-// 	trees[i].points_in_box(ipts, base_node(dim), base_node(dim));
+//         for (size_type j = 0; j < i; ++j) {
+//           for (size_type k = 0; k < trees[j].nb_points(); ++k)
+//             trees[i].add_point(trees[j].points()[k].n);
+//           trees[j].clear();
+//         }
+//         trees[i].points_in_box(ipts, base_node(dim), base_node(dim));
 //       }
       
 
@@ -438,7 +440,7 @@ void test_mesh_building(int dim, int Nsubdiv) {
   cout << "nb points = " << m.nb_points()
        << "nb dof = " << mf1.nb_dof() <<  endl;
   GMM_ASSERT1(m.nb_points() == mf1.nb_dof(),
-	      "Problem in identifying dofs");
+              "Problem in identifying dofs");
 
   // shake a little bit the mesh
   getfem::mesh::PT_TAB &pts = m.points();
@@ -450,7 +452,7 @@ void test_mesh_building(int dim, int Nsubdiv) {
   cout << "nb points = " << m.nb_points()
        << "nb dof = " << mf2.nb_dof() <<  endl;
   GMM_ASSERT1(m.nb_points() == mf2.nb_dof(),
-	      "Problem in identifying dofs");
+              "Problem in identifying dofs");
 
 }
 
