@@ -340,7 +340,7 @@ namespace getfem {
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
-      //[[fallthrough]]; // The hash code is completed with the next item
+      [[fallthrough]]; // The hash code is completed with the next item
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
@@ -558,7 +558,7 @@ namespace getfem {
       if (tree.secondary_domain.size() == 0)
         ga_throw_error(pnode->expr, pnode->pos, "Secondary domain used "
                        "in a single domain term.");
-      //[[fallthrough]];
+      [[fallthrough]];
     case GA_NODE_INTERPOLATE:
       if (pnode->name.compare("X") == 0) {
         if (pnode->node_type == GA_NODE_INTERPOLATE) {
@@ -599,7 +599,7 @@ namespace getfem {
         }
         break;
       }
-      //[[fallthrough]];
+      [[fallthrough]];
     case GA_NODE_ELEMENTARY: // +GA_NODE_SECONDARY_DOMAIN, GA_NODE_INTERPOLATE:
     case GA_NODE_XFEM_PLUS:
     case GA_NODE_XFEM_MINUS:
@@ -3011,7 +3011,7 @@ namespace getfem {
         is_constant = false;
         break;
       }
-      //[[fallthrough]];
+      [[fallthrough]];
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_DIVERG_TEST:
