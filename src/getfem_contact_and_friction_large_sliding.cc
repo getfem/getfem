@@ -2334,10 +2334,14 @@ namespace getfem {
                   "should share the same mesh");
       if (is_slave) {
         const mesh_fem *mf_l = md.pmesh_fem_of_variable(lambda);
-        GMM_ASSERT1(mf, "The multiplier variable should be a f.e.m. one");
-        GMM_ASSERT1(&(mf_l->linked_mesh()) == &(mim.linked_mesh()),
-                    "The displacement variable and the multiplier one "
-                    "should share the same mesh");
+        const im_data *mimd_l = md.pim_data_of_variable(lambda);
+        GMM_ASSERT1(mf_l || mimd_l,
+                    "The multiplier variable should be defined on a "
+                    "mesh_fem or an im_data");
+        GMM_ASSERT1(&(mf_l ? mf_l->linked_mesh() : mimd_l->linked_mesh())
+                    == &(mim.linked_mesh()),
+                    "The displacement and the multiplier fields "
+                    "should be defined on the same mesh");
       }
 
       if (w.size()) {
