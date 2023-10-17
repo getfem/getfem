@@ -609,14 +609,14 @@ namespace getfem {
                 + ((pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ? 3 : 0)
                 + ((pnode->node_type == GA_NODE_XFEM_PLUS)        ? 4 : 0)
                 + ((pnode->node_type == GA_NODE_XFEM_MINUS)       ? 5 : 0);
-        std::string op__name =
-          (pnode->node_type == GA_NODE_INTERPOLATE) ? "Interpolation" : ""
-          + (pnode->node_type == GA_NODE_ELEMENTARY) ?
-             "Elementary_transformation" : ""
-          + (pnode->node_type == GA_NODE_SECONDARY_DOMAIN) ?
-             "Secondary_domain" : ""
-           + (pnode->node_type == GA_NODE_XFEM_PLUS) ? "Xfem_plus" : ""
-          + (pnode->node_type == GA_NODE_XFEM_MINUS) ? "Xfem_minus" : "";
+        GMM_ASSERT1(ndt > 0 && ndt < 6, "internal error");
+        constexpr std::array<const char*,5>
+          op_name_selector{"Interpolation",
+                           "Elementary_transformation",
+                           "Secondary_domain",
+                           "Xfem_plus",
+                           "Xfem_minus"};
+        std::string op__name = op_name_selector.at(ndt-1);
 
         std::string name = pnode->name;
         size_type prefix_id = ga_parse_prefix_operator(name);
@@ -674,26 +674,53 @@ namespace getfem {
                            "Invalid null size of variable");
         }
 
+        constexpr std::array<GA_NODE_TYPE,5>
+          node_type_selector_val{GA_NODE_INTERPOLATE_VAL,
+                                 GA_NODE_ELEMENTARY_VAL,
+                                 GA_NODE_SECONDARY_DOMAIN_VAL,
+                                 GA_NODE_XFEM_PLUS_VAL,
+                                 GA_NODE_XFEM_MINUS_VAL},
+          node_type_selector_val_test{GA_NODE_INTERPOLATE_VAL_TEST,
+                                      GA_NODE_ELEMENTARY_VAL_TEST,
+                                      GA_NODE_SECONDARY_DOMAIN_VAL_TEST,
+                                      GA_NODE_XFEM_PLUS_VAL_TEST,
+                                      GA_NODE_XFEM_MINUS_VAL_TEST},
+          node_type_selector_grad{GA_NODE_INTERPOLATE_GRAD,
+                                  GA_NODE_ELEMENTARY_GRAD,
+                                  GA_NODE_SECONDARY_DOMAIN_GRAD,
+                                  GA_NODE_XFEM_PLUS_GRAD,
+                                  GA_NODE_XFEM_MINUS_GRAD},
+          node_type_selector_grad_test{GA_NODE_INTERPOLATE_GRAD_TEST,
+                                       GA_NODE_ELEMENTARY_GRAD_TEST,
+                                       GA_NODE_SECONDARY_DOMAIN_GRAD_TEST,
+                                       GA_NODE_XFEM_PLUS_GRAD_TEST,
+                                       GA_NODE_XFEM_MINUS_GRAD_TEST},
+          node_type_selector_hess{GA_NODE_INTERPOLATE_HESS,
+                                  GA_NODE_ELEMENTARY_HESS,
+                                  GA_NODE_SECONDARY_DOMAIN_HESS,
+                                  GA_NODE_XFEM_PLUS_HESS,
+                                  GA_NODE_XFEM_MINUS_HESS},
+          node_type_selector_hess_test{GA_NODE_INTERPOLATE_HESS_TEST,
+                                       GA_NODE_ELEMENTARY_HESS_TEST,
+                                       GA_NODE_SECONDARY_DOMAIN_HESS_TEST,
+                                       GA_NODE_XFEM_PLUS_HESS_TEST,
+                                       GA_NODE_XFEM_MINUS_HESS_TEST},
+          node_type_selector_div{GA_NODE_INTERPOLATE_DIVERG,
+                                 GA_NODE_ELEMENTARY_DIVERG,
+                                 GA_NODE_SECONDARY_DOMAIN_DIVERG,
+                                 GA_NODE_XFEM_PLUS_DIVERG,
+                                 GA_NODE_XFEM_MINUS_DIVERG},
+          node_type_selector_div_test{GA_NODE_INTERPOLATE_DIVERG_TEST,
+                                      GA_NODE_ELEMENTARY_DIVERG_TEST,
+                                      GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST,
+                                      GA_NODE_XFEM_PLUS_DIVERG_TEST,
+                                      GA_NODE_XFEM_MINUS_DIVERG_TEST};
+
         switch (prefix_id) {
         case 0: // value
-          if (!test) {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_VAL; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_VAL; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_VAL; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_VAL; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_VAL; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
-          } else {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_VAL_TEST; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_VAL_TEST; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_VAL_TEST; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
+          pnode->node_type = test ? node_type_selector_val_test[ndt-1]
+                                  : node_type_selector_val[ndt-1];
+          if (test) {
             if (q == 1 && mii.size() <= 1) {
               mii.resize(1);
               mii[0] = 2;
@@ -702,65 +729,41 @@ namespace getfem {
           }
           break;
         case 1: // grad
-          if (!test) {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_GRAD; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_GRAD; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_GRAD; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
-            if (n > 1) {
-              if (q == 1 && mii.size() == 1) mii[0] = n;
-              else mii.push_back(n);
-            }
-          } else {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_GRAD_TEST;break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
+          pnode->node_type = test ? node_type_selector_grad_test[ndt-1]
+                                  : node_type_selector_grad[ndt-1];
+          if (test) {
             if (q == 1 && mii.size() <= 1) {
               mii.resize(1);
               mii[0] = 2;
             } else
               mii.insert(mii.begin(), 2);
             if (n > 1) mii.push_back(n);
+          } else if (n > 1) {
+            if (q == 1 && mii.size() == 1)
+              mii[0] = n;
+            else
+              mii.push_back(n);
           }
           break;
         case 2: // Hessian
-          if (!test) {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_HESS; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_HESS; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_HESS; break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_HESS; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_HESS; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
-            if (n > 1) {
-              if (q == 1 && mii.size() == 1) { mii[0] = n;  mii.push_back(n); }
-              else { mii.push_back(n); mii.push_back(n); }
-            }
-          } else {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_HESS_TEST;break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
+          pnode->node_type = test ? node_type_selector_hess_test[ndt-1]
+                                  : node_type_selector_hess[ndt-1];
+          if (test) {
             if (q == 1 && mii.size() <= 1) {
               mii.resize(1);
               mii[0] = 2;
             } else
               mii.insert(mii.begin(), 2);
-            if (n > 1) { mii.push_back(n); mii.push_back(n); }
+            if (n > 1) {
+              mii.push_back(n);
+              mii.push_back(n);
+            }
+          } else if (n > 1) {
+            if (q == 1 && mii.size() == 1)
+              mii[0] = n;
+            else
+              mii.push_back(n);
+            mii.push_back(n);
           }
           break;
         case 3: // divergence
@@ -768,29 +771,10 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos,
                            "Divergence operator requires fem qdim ("
                            << q << ") to be equal to dim (" << n << ")");
-          if (!test) {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_DIVERG; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_DIVERG; break;
-            case 3: pnode->node_type = GA_NODE_SECONDARY_DOMAIN_DIVERG;break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
-            mii.resize(1);
-            mii[0] = 1;
-          } else {
-            switch (ndt) {
-            case 1: pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST; break;
-            case 2: pnode->node_type = GA_NODE_ELEMENTARY_DIVERG_TEST; break;
-            case 3: pnode->node_type=GA_NODE_SECONDARY_DOMAIN_DIVERG_TEST;break;
-            case 4: pnode->node_type = GA_NODE_XFEM_PLUS_DIVERG_TEST; break;
-            case 5: pnode->node_type = GA_NODE_XFEM_MINUS_DIVERG_TEST; break;
-            default: GMM_ASSERT1(false, "internal error");
-            }
-            mii.resize(1);
-            mii[0] = 2;
-          }
+          pnode->node_type = test ? node_type_selector_div_test[ndt-1]
+                                  : node_type_selector_div[ndt-1];
+          mii.resize(1);
+          mii[0] = test ? 2 : 1;
           break;
         }
         pnode->t.adjust_sizes(mii);
@@ -4232,107 +4216,57 @@ namespace getfem {
       ga_node_grad(tree, workspace, m, child0);
       break;
 
-    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_VAL_TEST:
-      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
-        pnode->node_type = GA_NODE_ELEMENTARY_GRAD;
-      else
-        pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST;
-      mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
-      pnode->t.adjust_sizes(mi);
-      break;
+    case GA_NODE_ELEMENTARY_VAL:  case GA_NODE_ELEMENTARY_VAL_TEST:
+    case GA_NODE_XFEM_PLUS_VAL:   case GA_NODE_XFEM_PLUS_VAL_TEST:
+    case GA_NODE_XFEM_MINUS_VAL:  case GA_NODE_XFEM_MINUS_VAL_TEST:
     case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_GRAD_TEST:
-      if (pnode->node_type == GA_NODE_ELEMENTARY_GRAD)
-        pnode->node_type = GA_NODE_ELEMENTARY_HESS;
-      else
-        pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
+    case GA_NODE_XFEM_PLUS_GRAD:  case GA_NODE_XFEM_PLUS_GRAD_TEST:
+    case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_GRAD_TEST:
+      {
+        static const std::map<GA_NODE_TYPE, GA_NODE_TYPE>
+          replacement_table =
+           { {GA_NODE_ELEMENTARY_VAL,       GA_NODE_ELEMENTARY_GRAD},
+             {GA_NODE_ELEMENTARY_VAL_TEST,  GA_NODE_ELEMENTARY_GRAD_TEST},
+             {GA_NODE_ELEMENTARY_GRAD,      GA_NODE_ELEMENTARY_HESS},
+             {GA_NODE_ELEMENTARY_GRAD_TEST, GA_NODE_ELEMENTARY_HESS_TEST},
+             {GA_NODE_XFEM_PLUS_VAL,        GA_NODE_XFEM_PLUS_GRAD},
+             {GA_NODE_XFEM_PLUS_VAL_TEST,   GA_NODE_XFEM_PLUS_GRAD_TEST},
+             {GA_NODE_XFEM_PLUS_GRAD,       GA_NODE_XFEM_PLUS_HESS},
+             {GA_NODE_XFEM_PLUS_GRAD_TEST,  GA_NODE_XFEM_PLUS_HESS_TEST},
+             {GA_NODE_XFEM_MINUS_VAL,       GA_NODE_XFEM_MINUS_GRAD},
+             {GA_NODE_XFEM_MINUS_VAL_TEST,  GA_NODE_XFEM_MINUS_GRAD_TEST},
+             {GA_NODE_XFEM_MINUS_GRAD,      GA_NODE_XFEM_MINUS_HESS},
+             {GA_NODE_XFEM_MINUS_GRAD_TEST, GA_NODE_XFEM_MINUS_HESS_TEST}
+           };
+        pnode->node_type = replacement_table.at(pnode->node_type);
+      }
       mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
+      if (mi.back() == 1)
+        mi.back() = m.dim();
+      else
+        mi.push_back(m.dim());
       pnode->t.adjust_sizes(mi);
       break;
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_HESS_TEST:
-      GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_ELEMENTARY_DIVERG: case GA_NODE_ELEMENTARY_DIVERG_TEST:
-      if (pnode->node_type == GA_NODE_ELEMENTARY_DIVERG)
-        pnode->node_type = GA_NODE_ELEMENTARY_HESS;
-      else
-        pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
-      mi = pnode->tensor().sizes();
-      mi.pop_back(), mi.push_back(m.dim());
-      if (m.dim() > 1) mi.push_back(m.dim());
-      pnode->t.adjust_sizes(mi);
-      tree.duplicate_with_operation(pnode, GA_COLON);
-      child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
-      child1->init_matrix_tensor(meshdim, meshdim);
-      gmm::clear(pnode->tensor().as_vector());
-      for (size_type i = 0; i < meshdim; ++i)
-        child1->tensor()(i,i) = scalar_type(1);
-      child1->node_type = GA_NODE_CONSTANT;
-      break;
-
-    case GA_NODE_XFEM_PLUS_VAL: case GA_NODE_XFEM_PLUS_VAL_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_PLUS_VAL)
-        pnode->node_type = GA_NODE_XFEM_PLUS_GRAD;
-      else
-        pnode->node_type = GA_NODE_XFEM_PLUS_GRAD_TEST;
-      mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
-      pnode->t.adjust_sizes(mi);
-      break;
-    case GA_NODE_XFEM_PLUS_GRAD: case GA_NODE_XFEM_PLUS_GRAD_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_PLUS_GRAD)
-        pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
-      else
-        pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST;
-      mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
-      pnode->t.adjust_sizes(mi);
-      break;
     case GA_NODE_XFEM_PLUS_HESS: case GA_NODE_XFEM_PLUS_HESS_TEST:
-      GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
-    case GA_NODE_XFEM_PLUS_DIVERG: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_PLUS_DIVERG)
-        pnode->node_type = GA_NODE_XFEM_PLUS_HESS;
-      else
-        pnode->node_type = GA_NODE_XFEM_PLUS_HESS_TEST;
-      mi = pnode->tensor().sizes();
-      mi.pop_back(), mi.push_back(m.dim());
-      if (m.dim() > 1) mi.push_back(m.dim());
-      pnode->t.adjust_sizes(mi);
-      tree.duplicate_with_operation(pnode, GA_COLON);
-      child0 = pnode; pnode = pnode->parent; child1 = pnode->children[1];
-      child1->init_matrix_tensor(meshdim, meshdim);
-      gmm::clear(pnode->tensor().as_vector());
-      for (size_type i = 0; i < meshdim; ++i)
-        child1->tensor()(i,i) = scalar_type(1);
-      child1->node_type = GA_NODE_CONSTANT;
-      break;
-
-    case GA_NODE_XFEM_MINUS_VAL: case GA_NODE_XFEM_MINUS_VAL_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_MINUS_VAL)
-        pnode->node_type = GA_NODE_XFEM_MINUS_GRAD;
-      else
-        pnode->node_type = GA_NODE_XFEM_MINUS_GRAD_TEST;
-      mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
-      pnode->t.adjust_sizes(mi);
-      break;
-    case GA_NODE_XFEM_MINUS_GRAD: case GA_NODE_XFEM_MINUS_GRAD_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_MINUS_GRAD)
-        pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
-      else
-        pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST;
-      mi = pnode->tensor().sizes();
-      if (mi.back() != 1) mi.push_back(m.dim()); else mi.back() = m.dim();
-      pnode->t.adjust_sizes(mi);
-      break;
     case GA_NODE_XFEM_MINUS_HESS: case GA_NODE_XFEM_MINUS_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
+      break;
+    case GA_NODE_ELEMENTARY_DIVERG: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+    case GA_NODE_XFEM_PLUS_DIVERG: case GA_NODE_XFEM_PLUS_DIVERG_TEST:
     case GA_NODE_XFEM_MINUS_DIVERG: case GA_NODE_XFEM_MINUS_DIVERG_TEST:
-      if (pnode->node_type == GA_NODE_XFEM_MINUS_DIVERG)
-        pnode->node_type = GA_NODE_XFEM_MINUS_HESS;
-      else
-        pnode->node_type = GA_NODE_XFEM_MINUS_HESS_TEST;
+      {
+        static const std::map<GA_NODE_TYPE, GA_NODE_TYPE>
+          replacement_table =
+           { {GA_NODE_ELEMENTARY_DIVERG,      GA_NODE_ELEMENTARY_HESS},
+             {GA_NODE_ELEMENTARY_DIVERG_TEST, GA_NODE_ELEMENTARY_HESS_TEST},
+             {GA_NODE_XFEM_PLUS_DIVERG,       GA_NODE_XFEM_PLUS_HESS},
+             {GA_NODE_XFEM_PLUS_DIVERG_TEST,  GA_NODE_XFEM_PLUS_HESS_TEST},
+             {GA_NODE_XFEM_MINUS_DIVERG,      GA_NODE_XFEM_MINUS_HESS},
+             {GA_NODE_XFEM_MINUS_DIVERG_TEST, GA_NODE_XFEM_MINUS_HESS_TEST}
+           };
+        pnode->node_type = replacement_table.at(pnode->node_type);
+      }
       mi = pnode->tensor().sizes();
       mi.pop_back();
       mi.push_back(m.dim());
