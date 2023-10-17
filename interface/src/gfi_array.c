@@ -41,22 +41,31 @@ void* gfi_calloc(size_t n, size_t m) {
 
 void gfi_free(void *p) {
   /*printf("gfi_free  (%p)\n", p);*/
-  if (p) free(p); 
+  if (p) free(p);
 }
 
 #define FREE(p) { /*printf("%s@%d ", __FILE__, __LINE__); fflush(stdout); */gfi_free(p); p = NULL; }
 
 gfi_array*
-gfi_array_create(int ndim, int *dims, 
+gfi_array_create(int ndim, int *dims,
                  gfi_type_id type, gfi_complex_flag is_complex) {
-  int i,sz;
-  gfi_array *t = gfi_calloc(1, sizeof(gfi_array)); if (t == NULL) return NULL;
+  gfi_array *t = gfi_calloc(1, sizeof(gfi_array));
+  if (!t)
+    return NULL;
   t->dim.dim_len = ndim;
-  t->dim.dim_val = gfi_calloc(ndim, sizeof(int)); if ( t->dim.dim_val == NULL) { gfi_free(t); return NULL; }
+  t->dim.dim_val = gfi_calloc(ndim, sizeof(int));
+  if (t->dim.dim_val == NULL) {
+    gfi_free(t);
+    return NULL;
+  }
 
   /*printf("gfi_array_create(ndim = %d, type = %d, @%p %p\n", ndim, type, t, t->dim.dim_val);*/
 
-  for (i=0,sz=1; i < ndim; ++i) { t->dim.dim_val[i] = dims[i]; sz *= dims[i]; }
+  int sz=1;
+  for (int i=0; i < ndim; ++i) {
+    t->dim.dim_val[i] = dims[i];
+    sz *= dims[i];
+  }
   t->storage.type = type;
   switch (t->storage.type) {
   case GFI_CHAR: {
@@ -87,13 +96,13 @@ gfi_array_create(int ndim, int *dims,
   } break;
   case GFI_OBJID: {
     t->storage.gfi_storage_u.objid.objid_len = sz;
-    t->storage.gfi_storage_u.objid.objid_val = gfi_calloc(sz, sizeof(gfi_object_id));  
+    t->storage.gfi_storage_u.objid.objid_val = gfi_calloc(sz, sizeof(gfi_object_id));
     if (t->storage.gfi_storage_u.objid.objid_val == NULL) goto not_enough_mem;
   } break;
   default: {
-    printf("internal error"); return NULL; 
+    printf("internal error"); return NULL;
   } break;
-  }  
+  }
   return t;
  not_enough_mem:
   gfi_array_destroy(t); gfi_free(t); return NULL;
@@ -118,9 +127,9 @@ gfi_array_create_2(int M, int N, gfi_type_id type, gfi_complex_flag is_complex) 
 
 gfi_array*
 gfi_array_from_string(const char *s) {
-  gfi_array*t;
+  gfi_array *t;
   int n = (int)strlen(s);
-  t = gfi_array_create_1(n,GFI_CHAR, GFI_REAL);
+  t = gfi_array_create_1(n, GFI_CHAR, GFI_REAL);
   if (t) memcpy(gfi_char_get_data(t), s, n);
   return t;
 }
@@ -128,14 +137,14 @@ gfi_array_from_string(const char *s) {
 gfi_array*
 gfi_create_sparse(int m, int n, int nzmax, gfi_complex_flag is_complex) {
   gfi_array *t = gfi_calloc(1, sizeof(gfi_array));
-  t->dim.dim_len = 2; 
-  t->dim.dim_val = gfi_calloc(2, sizeof(int)); 
+  t->dim.dim_len = 2;
+  t->dim.dim_val = gfi_calloc(2, sizeof(int));
   t->dim.dim_val[0] = m; t->dim.dim_val[1] = n;
   t->storage.type = GFI_SPARSE;
   t->storage.gfi_storage_u.sp.is_complex = is_complex;
   t->storage.gfi_storage_u.sp.ir.ir_len = nzmax; t->storage.gfi_storage_u.sp.ir.ir_val = gfi_calloc(nzmax,sizeof(int));
   t->storage.gfi_storage_u.sp.jc.jc_len = n+1;   t->storage.gfi_storage_u.sp.jc.jc_val = gfi_calloc(n+1,sizeof(int));
-  t->storage.gfi_storage_u.sp.pr.pr_len = nzmax * (is_complex ? 2 : 1); 
+  t->storage.gfi_storage_u.sp.pr.pr_len = nzmax * (is_complex ? 2 : 1);
   t->storage.gfi_storage_u.sp.pr.pr_val = gfi_calloc(nzmax,sizeof(double) * (is_complex ? 2 : 1));
   if ((nzmax && (t->storage.gfi_storage_u.sp.ir.ir_val == NULL ||
 		 t->storage.gfi_storage_u.sp.pr.pr_val == NULL)) ||
@@ -145,14 +154,13 @@ gfi_create_sparse(int m, int n, int nzmax, gfi_complex_flag is_complex) {
 /*
 gfi_array*
 gfi_create_objid(int nid, unsigned *ids, unsigned cid) {
-  int i;
   gfi_array *t = gfi_calloc(1, sizeof(gfi_array));
-  t->dim.dim_len = nid; 
+  t->dim.dim_len = nid;
   t->dim.dim_val = gfi_calloc(1, sizeof(int)); t->dim.dim_val[0]=1;
   t->storage.type = GFI_OBJID;
   t->storage.gfi_storage_u.objid.objid_len = nid;
   t->storage.gfi_storage_u.objid.objid_val = gfi_calloc(nid, sizeof(gfi_object_id));
-  for (i=0; i < nid; ++i) {
+  for (int i=0; i < nid; ++i) {
     t->storage.gfi_storage_u.objid.objid_val[i].id = ids[i];
     t->storage.gfi_storage_u.objid.objid_val[i].cid = cid;
   }
@@ -161,7 +169,7 @@ gfi_create_objid(int nid, unsigned *ids, unsigned cid) {
 */
 /* ----------------- destruction ------------ */
 
-void 
+void
 gfi_array_destroy(gfi_array *t) {
   if (t == NULL) return;
   FREE(t->dim.dim_val);
@@ -176,10 +184,9 @@ gfi_array_destroy(gfi_array *t) {
     FREE(t->storage.gfi_storage_u.data_uint32.data_uint32_val);
   } break;
   case GFI_CELL: {
-    int i;
     if (t->storage.gfi_storage_u.data_cell.data_cell_len)
       assert(t->storage.gfi_storage_u.data_cell.data_cell_val);
-    for (i=0; i < t->storage.gfi_storage_u.data_cell.data_cell_len; ++i)
+    for (int i=0; i < t->storage.gfi_storage_u.data_cell.data_cell_len; ++i)
       gfi_array_destroy(t->storage.gfi_storage_u.data_cell.data_cell_val[i]);
     FREE(t->storage.gfi_storage_u.data_cell.data_cell_val);
   } break;
@@ -214,33 +221,34 @@ gfi_array_get_dim(const gfi_array*t) {
   return (const int*)t->dim.dim_val;
 }
 
-unsigned 
+unsigned
 gfi_array_nb_of_elements(const gfi_array *t) {
-  unsigned i,sz=1;
   assert(t);
   if (t->storage.type != GFI_SPARSE) {
-    for (i=0,sz=1; i < t->dim.dim_len; ++i) { sz *= t->dim.dim_val[i]; }
+    unsigned sz=1;
+    for (unsigned i=0; i < t->dim.dim_len; ++i)
+      sz *= t->dim.dim_val[i];
     return sz;
   } else return t->storage.gfi_storage_u.sp.pr.pr_len;
 }
 
 unsigned int*
 gfi_sparse_get_ir(const gfi_array *t) {
-  assert(t); 
+  assert(t);
   assert(t->storage.type == GFI_SPARSE);
   return (unsigned int*)t->storage.gfi_storage_u.sp.ir.ir_val;
 }
 
 unsigned int*
 gfi_sparse_get_jc(const gfi_array *t) {
-  assert(t); 
+  assert(t);
   assert(t->storage.type == GFI_SPARSE);
   return (unsigned int*)t->storage.gfi_storage_u.sp.jc.jc_val;
 }
 
 double*
 gfi_sparse_get_pr(const gfi_array *t) {
-  assert(t); 
+  assert(t);
   assert(t->storage.type == GFI_SPARSE);
   return t->storage.gfi_storage_u.sp.pr.pr_val;
 }
@@ -276,7 +284,7 @@ gfi_double_get_data(const gfi_array* t) {
 int
 gfi_array_is_complex(const gfi_array* t) {
   assert(t);
-  if (t->storage.type == GFI_DOUBLE) 
+  if (t->storage.type == GFI_DOUBLE)
     return t->storage.gfi_storage_u.data_double.is_complex;
   else if (t->storage.type == GFI_SPARSE)
     return t->storage.gfi_storage_u.sp.is_complex;
@@ -334,11 +342,11 @@ void gfi_array_print_(gfi_array *t, int lev) {
   unsigned int i;
   if (t == NULL) { printf("NULL array ...\n"); return; }
   for (i=0; i < lev; ++i) printf("  ");
-  printf("dim : "); 
+  printf("dim : ");
   for (i=0; i < t->dim.dim_len; ++i) printf("%s%d",i>0?"x":"", t->dim.dim_val[i]);
   printf(" of %s, content={", gfi_array_get_class_name(t));
   switch (t->storage.type) {
-  case GFI_CHAR: {    
+  case GFI_CHAR: {
     PRINT_ARR("%c","",t->storage.gfi_storage_u.data_char.data_char_len,400,80,t->storage.gfi_storage_u.data_char.data_char_val);
   } break;
   case GFI_INT32: {
@@ -356,14 +364,14 @@ void gfi_array_print_(gfi_array *t, int lev) {
     printf("\n"); for (i=0; i < lev; ++i) printf("  ");
   } break;
   case GFI_DOUBLE: {
-    PRINT_ARR("%8g",", ",t->storage.gfi_storage_u.data_double.data_double_len,40,10,t->storage.gfi_storage_u.data_double.data_double_val);    
+    PRINT_ARR("%8g",", ",t->storage.gfi_storage_u.data_double.data_double_len,40,10,t->storage.gfi_storage_u.data_double.data_double_val);
   } break;
   case GFI_SPARSE: {
-    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("ir="); 
+    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("ir=");
     PRINT_ARR("%4d",", ",t->storage.gfi_storage_u.sp.ir.ir_len,15,16,t->storage.gfi_storage_u.sp.ir.ir_val);
-    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("jc="); 
+    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("jc=");
     PRINT_ARR("%4d",", ",t->storage.gfi_storage_u.sp.jc.jc_len,15,16,t->storage.gfi_storage_u.sp.jc.jc_val);
-    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("pr="); 
+    printf("\n"); for (i=0; i < lev+1; ++i) printf("  "); printf("pr=");
     PRINT_ARR("%8g",", ",t->storage.gfi_storage_u.sp.pr.pr_len,15,8,t->storage.gfi_storage_u.sp.pr.pr_val);
     printf("\n"); for (i=0; i < lev; ++i) printf("  ");
   } break;
@@ -374,13 +382,13 @@ void gfi_array_print_(gfi_array *t, int lev) {
     printf("]\n");
   } break;
   default: {
-    printf("internal error"); return; 
+    printf("internal error"); return;
   } break;
   }
   printf("}\n");
 }
 
-void 
+void
 gfi_array_print(gfi_array *t) {
   gfi_array_print_(t,0);
 }
