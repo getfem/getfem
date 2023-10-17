@@ -483,14 +483,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     t->dim.dim_len = PyArray_NDIM((PyArrayObject *)po);
     t->dim.dim_val = (u_int *)gc_alloc(gc, t->dim.dim_len * sizeof(u_int));
 
-    int i;
-    for (i=0; i < t->dim.dim_len; ++i)
+    for (u_int i=0; i < t->dim.dim_len; ++i)
       t->dim.dim_val[i] = (u_int)PyArray_DIM((PyArrayObject *)po,i);
   } else if (PyTuple_Check(o) || PyList_Check(o)) {
     //printf("Tuple or List\n");
     /* python tuples and lists are stored in 'cell arrays'
        (i.e. matlab's lists of inhomogeneous elements) */
-    int i;
     t->storage.type = GFI_CELL;
     t->dim.dim_len = 1;
     t->dim.dim_val = &TGFISTORE(cell,len);
@@ -502,7 +500,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           = gc_alloc(gc,sizeof(gfi_array*)*TGFISTORE(cell,len)))) return NULL;
     gfi_array **p = TGFISTORE(cell,val);
 
-    for (i=0; i < TGFISTORE(cell,len); ++i) {
+    for (u_int i=0; i < TGFISTORE(cell,len); ++i) {
       if (PyTuple_Check(o))
         p[i] = PyObject_to_gfi_array(gc, PyTuple_GET_ITEM(o,i));
       else p[i] = PyObject_to_gfi_array(gc, PyList_GET_ITEM(o,i));
@@ -545,7 +543,7 @@ PyGetfemObject_FromObjId(gfi_object_id id, int in__init__) {
     PyObject *arg;
     if (!(arg = Py_BuildValue("(O)", go))) return NULL;
     //printf("  -> arg= "); PyObject_Print(arg,stdout,0); printf("\n");
-    o = PyEval_CallObject(python_factory, arg);
+    o = PyObject_CallObject(python_factory, arg);
     Py_DECREF(arg);
   } else o = (PyObject*)go;
   //printf("  -> return "); PyObject_Print(o,stdout,0); printf("\n");
@@ -553,7 +551,7 @@ PyGetfemObject_FromObjId(gfi_object_id id, int in__init__) {
 }
 
 static const gfi_array **
-build_gfi_array_list(gcollect *gc, PyObject *tuple, char **pfunction_name,
+build_gfi_array_list(gcollect *gc, PyObject *tuple, const char **pfunction_name,
                      int *nb) {
   const gfi_array **l;
   int i, j;
@@ -590,8 +588,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       return PyLong_FromLong(TGFISTORE(int32,val)[0]);
     else {
       npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
-      int i;
-      for(i=0; i < t->dim.dim_len; i++)
+      for (u_int i=0; i < t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
       if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1)))
         return NULL;
@@ -610,8 +607,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
         return PyFloat_FromDouble(TGFISTORE(double,val)[0]);
       else {
         npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
-        int i;
-        for(i=0; i< t->dim.dim_len; i++)
+        for (u_int i=0; i < t->dim.dim_len; i++)
           dim[i] = (npy_intp)t->dim.dim_val[i];
         if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_DOUBLE, 1)))
           return NULL;
@@ -623,8 +619,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
                                      TGFISTORE(double,val)[1]);
       else {
         npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
-        int i;
-        for(i=0; i< t->dim.dim_len; i++)
+        for (u_int i=0; i < t->dim.dim_len; i++)
           dim[i] = (npy_intp)t->dim.dim_val[i];
         if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_CDOUBLE, 1)))
           return NULL;
@@ -642,9 +637,8 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   } break;
   case GFI_CELL: {
     //printf("GFI_CELL\n");
-    unsigned i;
     if (!(o = PyTuple_New(TGFISTORE(cell,len)))) return NULL;
-    for (i=0; i < TGFISTORE(cell,len); ++i) {
+    for (u_int i=0; i < TGFISTORE(cell,len); ++i) {
       PyObject *to = gfi_array_to_PyObject(TGFISTORE(cell,val)[i], in__init__);
       if (!to) return NULL;
       PyTuple_SET_ITEM(o,i,to);
@@ -657,8 +651,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
 #if 0
       /* PyArray_OBJECT is not supported in numarray ... */
       npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
-      int i;
-      for(i=0; i< t->dim.dim_len; i++)
+      for (u_int i=0; i < t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
       if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_OBJECT,1)))
         return NULL;
@@ -715,7 +708,8 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
   const gfi_array **in = 0;
   gfi_array **out = 0;
   int in_cnt = 0, out_cnt = -1;
-  char *function_name, *infomsg, *errmsg;
+  const char *function_name;
+  char *infomsg, *errmsg;
   gcollect gc;
   PyObject *result = NULL;
   gc.allocated = gc.pyobjects = NULL;
