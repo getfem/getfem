@@ -32,25 +32,24 @@ namespace dal {
      If you call this function with a non-mangled name (i.e. "main"),
      you will get strange results.
    */
-  std::string demangle(const char *
 #ifdef GETFEM_HAVE_CXXABI_H
-		       s
-#endif
-		       ) {
-#ifdef GETFEM_HAVE_CXXABI_H
+  std::string demangle(const char *s) {
     int status;
     /* documented in http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/namespaceabi.html */
     char *sd = abi::__cxa_demangle(s, NULL, NULL, &status);
     if (sd == NULL || status) {
-      if (sd) free(sd);
+      if (sd)
+        free(sd);
       return std::string(""); // + " [could not be demangled]";
     } else {
-      std::string res(sd); free(sd); return res;
+      std::string res(sd);
+      free(sd);
+      return res;
     }
-#else
-    return std::string("");
-#endif
   }
+#else
+  std::string demangle(const char *) { return std::string(""); }
+#endif
 
 #ifdef GETFEM_HAVE_BACKTRACE
   void dump_glibc_backtrace() {

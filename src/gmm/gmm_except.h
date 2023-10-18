@@ -63,7 +63,7 @@ namespace gmm {
     int errorLevel_;
   };
 
-#ifdef GETFEM_HAVE_PRETTY_FUNCTION
+#ifdef GMM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #elif _MSC_VER
 #  define GMM_PRETTY_FUNCTION __FUNCTION__

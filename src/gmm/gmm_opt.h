@@ -37,7 +37,7 @@
 #ifndef GMM_OPT_H__
 #define GMM_OPT_H__
 
-#include <gmm/gmm_dense_lu.h>
+#include "gmm_dense_lu.h"
 
 namespace gmm {
 

@@ -35,8 +35,7 @@
    @brief gmm interface for fortran BLAS.
 */
 
-#if defined(GETFEM_USES_BLAS) || defined(GMM_USES_BLAS) \
-  || defined(GMM_USES_LAPACK) || defined(GMM_USES_ATLAS)
+#if defined(GMM_USES_BLAS) || defined(GMM_USES_LAPACK)
 
 #ifndef GMM_BLAS_INTERFACE_H
 #define GMM_BLAS_INTERFACE_H

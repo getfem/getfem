@@ -65,7 +65,7 @@ namespace SuperLU_C {
 #include "superlu/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "superlu/slu_zdefs.h" 
+#include "superlu/slu_zdefs.h"
 }
 
 
@@ -75,28 +75,28 @@ namespace gmm {
   /*  interface for Create_CompCol_Matrix */
 
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-			     float *a, int *ir, int *jc) {
+                                    float *a, int *ir, int *jc) {
     SuperLU_S::sCreate_CompCol_Matrix(A, m, n, nnz, a, ir, jc,
-				      SLU_NC, SLU_S, SLU_GE);
+                                      SLU_NC, SLU_S, SLU_GE);
   }
-  
+
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-			     double *a, int *ir, int *jc) {
+                                    double *a, int *ir, int *jc) {
     SuperLU_D::dCreate_CompCol_Matrix(A, m, n, nnz, a, ir, jc,
-				      SLU_NC, SLU_D, SLU_GE);
+                                      SLU_NC, SLU_D, SLU_GE);
   }
-  
+
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-			     std::complex<float> *a, int *ir, int *jc) {
+                                    std::complex<float> *a, int *ir, int *jc) {
     SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (SuperLU_C::complex *)(a),
-				      ir, jc, SLU_NC, SLU_C, SLU_GE);
+                                      ir, jc, SLU_NC, SLU_C, SLU_GE);
   }
-  
+
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
-			     std::complex<double> *a, int *ir, int *jc) {
+                             std::complex<double> *a, int *ir, int *jc) {
     SuperLU_Z::zCreate_CompCol_Matrix(A, m, n, nnz,
-				      (SuperLU_Z::doublecomplex *)(a), ir, jc,
-				      SLU_NC, SLU_Z, SLU_GE);
+                                      (SuperLU_Z::doublecomplex *)(a), ir, jc,
+                                      SLU_NC, SLU_Z, SLU_GE);
   }
 
   /*  interface for Create_Dense_Matrix */
@@ -106,14 +106,14 @@ namespace gmm {
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, double *a, int k)
   { SuperLU_D::dCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_D, SLU_GE); }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
-			   std::complex<float> *a, int k) {
+                                  std::complex<float> *a, int k) {
     SuperLU_C::cCreate_Dense_Matrix(A, m, n, (SuperLU_C::complex *)(a),
-				    k, SLU_DN, SLU_C, SLU_GE);
+                                    k, SLU_DN, SLU_C, SLU_GE);
   }
-  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, 
-			   std::complex<double> *a, int k) {
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
+                                  std::complex<double> *a, int k) {
     SuperLU_Z::zCreate_Dense_Matrix(A, m, n, (SuperLU_Z::doublecomplex *)(a),
-				    k, SLU_DN, SLU_Z, SLU_GE);
+                                    k, SLU_DN, SLU_Z, SLU_GE);
   }
 
   /*  interface for gssv */
@@ -133,18 +133,18 @@ namespace gmm {
   /*  interface for gssvx */
 
 #define DECL_GSSVX(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
-    inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,	\
-		     int *perm_c, int *perm_r, int *etree, char *equed,  \
-		     FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,         \
-		     SuperMatrix *U, void *work, int lwork,              \
-		     SuperMatrix *B, SuperMatrix *X,                     \
-		     FLOATTYPE *recip_pivot_growth,                      \
-		     FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr, \
-		     SuperLUStat_t *stats, int *info, KEYTYPE) {         \
+    inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,         \
+                               int *perm_c, int *perm_r, int *etree, char *equed,  \
+                               FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,         \
+                               SuperMatrix *U, void *work, int lwork,              \
+                               SuperMatrix *B, SuperMatrix *X,                     \
+                               FLOATTYPE *recip_pivot_growth,                      \
+                               FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr, \
+                               SuperLUStat_t *stats, int *info, KEYTYPE) {         \
     NAMESPACE::mem_usage_t mem_usage;                                    \
     NAMESPACE::FNAME(options, A, perm_c, perm_r, etree, equed, R, C, L,  \
-		     U, work, lwork, B, X, recip_pivot_growth, rcond,    \
-		     ferr, berr, &mem_usage, stats, info);               \
+                     U, work, lwork, B, X, recip_pivot_growth, rcond,    \
+                     ferr, berr, &mem_usage, stats, info);               \
     return mem_usage.for_lu; /* bytes used by the factor storage */     \
   }
 
@@ -159,11 +159,11 @@ namespace gmm {
 
   template <typename MAT, typename VECTX, typename VECTB>
   int SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
-		     double& rcond_, int permc_spec = 3) {
+                    double& rcond_, int permc_spec = 3) {
     VECTX &X = const_cast<VECTX &>(X_);
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
-     *   permc_spec = 0: use the natural ordering 
+     *   permc_spec = 0: use the natural ordering
      *   permc_spec = 1: use minimum degree ordering on structure of A'*A
      *   permc_spec = 2: use minimum degree ordering on structure of A'+A
      *   permc_spec = 3: use approximate minimum degree column ordering
@@ -180,7 +180,7 @@ namespace gmm {
     int nz = nnz(csc_A);
     if ((2 * nz / n) >= m)
       GMM_WARNING2("CAUTION : it seems that SuperLU has a problem"
-		  " for nearly dense sparse matrices");
+                   " for nearly dense sparse matrices");
 
     superlu_options_t options;
     set_default_options(&options);
@@ -197,7 +197,7 @@ namespace gmm {
 
     SuperMatrix SA, SL, SU, SB, SX; // SuperLU format.
     Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
-			  (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
+                          (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
     memset(&SL,0,sizeof SL);
@@ -210,21 +210,21 @@ namespace gmm {
     R recip_pivot_gross, rcond;
     std::vector<int> perm_r(m), perm_c(n);
 
-    SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
-		  &etree[0] /* output */, equed /* output         */, 
-		  &Rscale[0] /* row scale factors (output)        */, 
-		  &Cscale[0] /* col scale factors (output)        */,
-		  &SL /* fact L (output)*/, &SU /* fact U (output)*/, 
-		  NULL /* work                                    */, 
-		  0 /* lwork: superlu auto allocates (input)      */, 
-		  &SB /* rhs */, &SX /* solution                  */,
-		  &recip_pivot_gross /* reciprocal pivot growth   */
-		  /* factor max_j( norm(A_j)/norm(U_j) ).         */,  
-		  &rcond /*estimate of the reciprocal condition   */
-		  /* number of the matrix A after equilibration   */,
-		  &ferr[0] /* estimated forward error             */,
-		  &berr[0] /* relative backward error             */,
-		  &stat, &info, T());
+    SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0],
+                  &etree[0] /* output */, equed /* output         */,
+                  &Rscale[0] /* row scale factors (output)        */,
+                  &Cscale[0] /* col scale factors (output)        */,
+                  &SL /* fact L (output)*/, &SU /* fact U (output)*/,
+                  NULL /* work                                    */,
+                  0 /* lwork: superlu auto allocates (input)      */,
+                  &SB /* rhs */, &SX /* solution                  */,
+                  &recip_pivot_gross /* reciprocal pivot growth   */
+                  /* factor max_j( norm(A_j)/norm(U_j) ).         */,
+                  &rcond /*estimate of the reciprocal condition   */
+                  /* number of the matrix A after equilibration   */,
+                  &ferr[0] /* estimated forward error             */,
+                  &berr[0] /* relative backward error             */,
+                  &stat, &info, T());
     rcond_ = rcond;
     Destroy_SuperMatrix_Store(&SB);
     Destroy_SuperMatrix_Store(&SX);
@@ -258,7 +258,7 @@ namespace gmm {
     enum { LU_NOTRANSP, LU_TRANSP, LU_CONJUGATED };
     void free_supermatrix(void);
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3);
-    template <typename VECTX, typename VECTB> 
+    template <typename VECTX, typename VECTB>
     /* transp = LU_NOTRANSP   -> solves Ax = B
        transp = LU_TRANSP     -> solves A'x = B
        transp = LU_CONJUGATED -> solves conj(A)X = B */
@@ -266,12 +266,12 @@ namespace gmm {
     SuperLU_factor(void) { is_init = false; }
     SuperLU_factor(const SuperLU_factor& other) {
       GMM_ASSERT2(!(other.is_init),
-		 "copy of initialized SuperLU_factor is forbidden");
+                  "copy of initialized SuperLU_factor is forbidden");
       is_init = false;
     }
     SuperLU_factor& operator=(const SuperLU_factor& other) {
       GMM_ASSERT2(!(other.is_init) && !is_init,
-		  "assignment of initialized SuperLU_factor is forbidden");
+                  "assignment of initialized SuperLU_factor is forbidden");
       return *this;
     }
     ~SuperLU_factor() { free_supermatrix(); }
@@ -280,117 +280,117 @@ namespace gmm {
 
 
   template <class T> void SuperLU_factor<T>::free_supermatrix(void) {
-      if (is_init) {
-	if (SB.Store) Destroy_SuperMatrix_Store(&SB);
-	if (SX.Store) Destroy_SuperMatrix_Store(&SX);
-	if (SA.Store) Destroy_SuperMatrix_Store(&SA);
-	if (SL.Store) Destroy_SuperNode_Matrix(&SL);
-	if (SU.Store) Destroy_CompCol_Matrix(&SU);
-      }
+    if (is_init) {
+      if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+      if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+      if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+      if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+      if (SU.Store) Destroy_CompCol_Matrix(&SU);
     }
+  }
 
-    
-    template <class T> template <class MAT>
-    void SuperLU_factor<T>::build_with(const MAT &A,  int permc_spec) {
+
+  template <class T> template <class MAT>
+  void SuperLU_factor<T>::build_with(const MAT &A, int permc_spec) {
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
-     *   permc_spec = 0: use the natural ordering 
+     *   permc_spec = 0: use the natural ordering
      *   permc_spec = 1: use minimum degree ordering on structure of A'*A
      *   permc_spec = 2: use minimum degree ordering on structure of A'+A
      *   permc_spec = 3: use approximate minimum degree column ordering
      */
-      free_supermatrix();
-      int n = mat_nrows(A), m = mat_ncols(A), info = 0;
-      csc_A.init_with(A);
+    free_supermatrix();
+    int n = mat_nrows(A), m = mat_ncols(A), info = 0;
+    csc_A.init_with(A);
 
-      rhs.resize(m); sol.resize(m);
-      gmm::clear(rhs);
-      int nz = nnz(csc_A);
+    rhs.resize(m); sol.resize(m);
+    gmm::clear(rhs);
+    int nz = nnz(csc_A);
 
-      set_default_options(&options);
-      options.ColPerm = NATURAL;
-      options.PrintStat = NO;
-      options.ConditionNumber = NO;
-      switch (permc_spec) {
+    set_default_options(&options);
+    options.ColPerm = NATURAL;
+    options.PrintStat = NO;
+    options.ConditionNumber = NO;
+    switch (permc_spec) {
       case 1 : options.ColPerm = MMD_ATA; break;
       case 2 : options.ColPerm = MMD_AT_PLUS_A; break;
       case 3 : options.ColPerm = COLAMD; break;
-      }
-      StatInit(&stat);
-
-      Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
-			    (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
-
-      Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
-      Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
-      memset(&SL,0,sizeof SL);
-      memset(&SU,0,sizeof SU);
-      equed = 'B';
-      Rscale.resize(m); Cscale.resize(n); etree.resize(n);
-      ferr.resize(1); berr.resize(1);
-      R recip_pivot_gross, rcond;
-      perm_r.resize(m); perm_c.resize(n);
-      memory_used = SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
-		    &etree[0] /* output */, &equed /* output        */, 
-		    &Rscale[0] /* row scale factors (output)        */, 
-		    &Cscale[0] /* col scale factors (output)        */,
-		    &SL /* fact L (output)*/, &SU /* fact U (output)*/, 
-		    NULL /* work                                    */, 
-		    0 /* lwork: superlu auto allocates (input)      */, 
-		    &SB /* rhs */, &SX /* solution                  */,
-		    &recip_pivot_gross /* reciprocal pivot growth   */
-		    /* factor max_j( norm(A_j)/norm(U_j) ).         */,  
-		    &rcond /*estimate of the reciprocal condition   */
-		    /* number of the matrix A after equilibration   */,
-		    &ferr[0] /* estimated forward error             */,
-		    &berr[0] /* relative backward error             */,
-		    &stat, &info, T());
-      
-      Destroy_SuperMatrix_Store(&SB);
-      Destroy_SuperMatrix_Store(&SX);
-      Create_Dense_Matrix(&SB, m, 1, &rhs[0], m);
-      Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
-      StatFree(&stat);
-
-      GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
-      is_init = true;
     }
-    
-    template <class T> template <typename VECTX, typename VECTB> 
-    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B,
-				  int transp) const {
-      VECTX &X = const_cast<VECTX &>(X_);
-      gmm::copy(B, rhs);
-      options.Fact = FACTORED;
-      options.IterRefine = NOREFINE;
-      switch (transp) {
+    StatInit(&stat);
+
+    Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
+                          (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
+
+    Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
+    Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
+    memset(&SL,0,sizeof SL);
+    memset(&SU,0,sizeof SU);
+    equed = 'B';
+    Rscale.resize(m); Cscale.resize(n); etree.resize(n);
+    ferr.resize(1); berr.resize(1);
+    R recip_pivot_gross, rcond;
+    perm_r.resize(m); perm_c.resize(n);
+    memory_used = SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0],
+                                &etree[0] /* output */, &equed /* output        */,
+                                &Rscale[0] /* row scale factors (output)        */,
+                                &Cscale[0] /* col scale factors (output)        */,
+                                &SL /* fact L (output)*/, &SU /* fact U (output)*/,
+                                NULL /* work                                    */,
+                                0 /* lwork: superlu auto allocates (input)      */,
+                                &SB /* rhs */, &SX /* solution                  */,
+                                &recip_pivot_gross /* reciprocal pivot growth   */
+                                /* factor max_j( norm(A_j)/norm(U_j) ).         */,
+                                &rcond /*estimate of the reciprocal condition   */
+                                /* number of the matrix A after equilibration   */,
+                                &ferr[0] /* estimated forward error             */,
+                                &berr[0] /* relative backward error             */,
+                                &stat, &info, T());
+
+    Destroy_SuperMatrix_Store(&SB);
+    Destroy_SuperMatrix_Store(&SX);
+    Create_Dense_Matrix(&SB, m, 1, &rhs[0], m);
+    Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
+    StatFree(&stat);
+
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+    is_init = true;
+  }
+
+  template <class T> template <typename VECTX, typename VECTB>
+  void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B,
+                                int transp) const {
+    VECTX &X = const_cast<VECTX &>(X_);
+    gmm::copy(B, rhs);
+    options.Fact = FACTORED;
+    options.IterRefine = NOREFINE;
+    switch (transp) {
       case LU_NOTRANSP: options.Trans = NOTRANS; break;
       case LU_TRANSP: options.Trans = TRANS; break;
       case LU_CONJUGATED: options.Trans = CONJ; break;
       default: GMM_ASSERT1(false, "invalid value for transposition option");
-      }
-      StatInit(&stat);
-      int info = 0;
-      R recip_pivot_gross, rcond;
-      SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
-		    &etree[0] /* output */, &equed /* output        */, 
-		    &Rscale[0] /* row scale factors (output)        */, 
-		    &Cscale[0] /* col scale factors (output)        */,
-		    &SL /* fact L (output)*/, &SU /* fact U (output)*/, 
-		    NULL /* work                                    */, 
-		    0 /* lwork: superlu auto allocates (input)      */, 
-		    &SB /* rhs */, &SX /* solution                  */,
-		    &recip_pivot_gross /* reciprocal pivot growth   */
-		    /* factor max_j( norm(A_j)/norm(U_j) ).         */,  
-		    &rcond /*estimate of the reciprocal condition   */
-		    /* number of the matrix A after equilibration   */,
-		    &ferr[0] /* estimated forward error             */,
-		    &berr[0] /* relative backward error             */,
-		    &stat, &info, T());
-     StatFree(&stat);
-     GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
-     gmm::copy(sol, X);
     }
+    StatInit(&stat);
+    int info = 0;
+    R recip_pivot_gross, rcond;
+    SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0],
+                  &etree[0] /* output */, &equed /* output        */,
+                  &Rscale[0] /* row scale factors (output)        */,
+                  &Cscale[0] /* col scale factors (output)        */,
+                  &SL /* fact L (output)*/, &SU /* fact U (output)*/,
+                  NULL /* work                                    */,
+                  0 /* lwork: superlu auto allocates (input)      */,
+                  &SB /* rhs */, &SX /* solution                  */,
+                  &recip_pivot_gross /* reciprocal pivot growth   */
+                  /* factor max_j( norm(A_j)/norm(U_j) ).         */,
+                  &rcond /*estimate of the reciprocal condition   */
+                  /* number of the matrix A after equilibration   */,
+                  &ferr[0] /* estimated forward error             */,
+                  &berr[0] /* relative backward error             */,
+                  &stat, &info, T());
+    StatFree(&stat);
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+    gmm::copy(sol, X);
+  }
 
   template <typename T, typename V1, typename V2> inline
   void mult(const SuperLU_factor<T>& P, const V1 &v1, const V2 &v2) {
@@ -404,7 +404,7 @@ namespace gmm {
 
 }
 
-  
+
 #endif // GMM_SUPERLU_INTERFACE_H
 
 #endif // GMM_USES_SUPERLU

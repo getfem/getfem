@@ -59,7 +59,7 @@ namespace getfem {
   void get_crack_tip_and_orientation_KL(const level_set &/* ls */,
                                      base_node &P, 
                                      base_small_vector &T, base_small_vector &N) {
-    cerr << __PRETTY_FUNCTION__ << " IS TO BE DONE\n";
+    cerr << GMM_PRETTY_FUNCTION << " IS TO BE DONE\n";
     /* too lazy to do it now */
     P.resize(2); P[0] = 0.; P[1] = 0;
     T.resize(2); T[0] = 1; T[1] = 0;
