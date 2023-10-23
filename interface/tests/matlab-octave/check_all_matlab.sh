@@ -22,7 +22,7 @@
 echo "running checks..."
 echo "  srcdir='$srcdir'"
 
-export MATLABPATH=$(pwd)/../../src/matlab:$(pwd)/../../tests/matlab:${srcdir}:${srcdir}/../../src/matlab
+export MATLABPATH=$(pwd)/../../src/matlab:$(pwd)/../../tests/matlab-octave:${srcdir}:${srcdir}/../../src/matlab
 
 echo "  export MATLAB_ROOT=$MATLAB_ROOT"
 echo "  export MATLABPATH=$MATLABPATH"
