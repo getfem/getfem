@@ -644,21 +644,23 @@ It is important to use a corresponding composite integration method.
 
 
 Classical vector elements
-----------------------------
+-------------------------
 
-Raviart-Thomas of lowest order elements
-+++++++++++++++++++++++++++++++++++++++
+Raviart-Thomas elements
++++++++++++++++++++++++
 
 .. _ud-fig-triangle_comptrois:
 .. figure:: images/getfemlistRT0.png
    :align: center
    :scale: 60
 
-   RT0 elements in dimension two and three. (P+1 dof, H(div))
+   Example of RT0 elements in dimension two and three. The RTk element on a simplex of dimension :math:`P` and degree :math:`K` has :math:`\dfrac{(K+P-1)!}{K!(P-1)!}` normal component degrees of freedom on each face and :math:`\dfrac{K(K+P-1)!}{K!(P-1)!}` internal Lagrange degrees of freedom. For the quadrilateral, only the lowest degree element is implemented yet.
+           
+   
 
 :math:`.\\`
 
-  .. list-table:: Raviart-Thomas of lowest order element on simplices ``"FEM_RT0(P)"``
+  .. list-table:: Raviart-Thomas element on simplices on dimension :math:`P \ge 1` and degree :math:`K \ge 0`: ``"FEM_RTK(P,K)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 
@@ -670,9 +672,9 @@ Raviart-Thomas of lowest order elements
        - :math:`\tau`-equivalent
        - Polynomial
 
-     * - :math:`1`
+     * - :math:`K`
        - :math:`P`
-       - :math:`P+1`
+       - :math:`\dfrac{(K+P+1)(K+P-1)!}{K!(P-1)!}`
        - H(div)
        - Yes :math:`(Q = P)`
        - No
@@ -700,7 +702,34 @@ Raviart-Thomas of lowest order elements
        - No
        - Yes
 
+Brezzi-Douglas-Marini element on simplices
+++++++++++++++++++++++++++++++++++++++++++
 
+BDM elements on simplices of dimension :math:`P \ge 1` and degree :math:`K \ge 1` has :math:`\dfrac{(K+P-1)!}{K!(P-1)!}` normal component degrees of freedom on each face and :math:`\dfrac{(K-1)(K+P-1)!}{K!(P-1)!}` internal degrees of freedom. Not yet implemented for quadrilateral.
+
+:math:`.\\`
+
+  .. list-table:: Brezzi-Douglas-Marini element on simplices on dimension :math:`P` and degree :math:`K`: ``"FEM_BDMK(P,K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
+
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vector
+       - :math:`\tau`-equivalent
+       - Polynomial
+
+     * - :math:`K`
+       - :math:`P`
+       - :math:`\dfrac{(K+P)!}{K!(P-1)!}`
+       - H(div)
+       - Yes :math:`(Q = P)`
+       - No
+       - Yes
+
+         
 Nedelec (or Whitney) edge elements
 ++++++++++++++++++++++++++++++++++
 

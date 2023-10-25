@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 1999-2020 Yves Renard
+ Copyright (C) 1999-2023 Yves Renard
 
  This file is a part of GetFEM
 
@@ -22,7 +22,7 @@
 /** @file getfem_fem.cc
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @date December 21, 1999.
-    @brief implementation of some finite elements.
+    @brief implementation of various finite elements.
  */
 
 #include "getfem/bgeot_torus.h"
@@ -34,6 +34,7 @@
 #include "getfem/getfem_integration.h"
 #include "getfem/getfem_omp.h"
 #include "getfem/getfem_torus.h"
+#include "getfem/getfem_assembling.h"
 
 namespace getfem {
 
@@ -785,7 +786,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*        Tensorial product of fem (for polynomial fem).                    */
+  /*        Tensorial product of fem (for polynomial fem).                */
   /* ******************************************************************** */
 
   struct tproduct_femi : public fem<base_poly> {
@@ -1778,14 +1779,14 @@ namespace getfem {
 
 
 
-  
+
 
   /* ******************************************************************** */
-  /*    Element RT0 on the simplexes.                                     */
+  /*    Element RTk on simplices.                                         */
   /* ******************************************************************** */
 
-  struct P1_RT0_ : public fem<base_poly> {
-    dim_type nc;
+  struct RTk_ : public fem<base_poly> {
+    dim_type nc, k;
     mutable base_matrix K;
     base_small_vector norient;
     mutable bgeot::pgeotrans_precomp pgp;
@@ -1794,12 +1795,12 @@ namespace getfem {
 
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    P1_RT0_(dim_type nc_);
+    RTk_(dim_type nc_, dim_type k_);
   };
 
-  void P1_RT0_::mat_trans(base_matrix &M,
-                          const base_matrix &G,
-                          bgeot::pgeometric_trans pgt) const {
+  void RTk_::mat_trans(base_matrix &M,
+                       const base_matrix &G,
+                       bgeot::pgeometric_trans pgt) const {
     dim_type N = dim_type(G.nrows());
     gmm::copy(gmm::identity_matrix(), M);
     if (pgt != pgt_stored) {
@@ -1810,32 +1811,40 @@ namespace getfem {
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
     gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
-    for (unsigned i = 0; i <= nc; ++i) {
-      if (!(pgt->is_linear()))
-        { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
-      bgeot::base_small_vector n(nc);
-      gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
+    for (unsigned j = 0; j <= nb_dof(0); ++j) {
+      
+      if (faces_of_dof(0, j).size()) {
+        unsigned nf = faces_of_dof(0, j)[0];
+        if (!(pgt->is_linear()))
+        { gmm::mult(G, pgp->grad(j), K); gmm::lu_inverse(K); }
+        bgeot::base_small_vector n(nc);
+        gmm::mult(gmm::transposed(K), cvr->normals()[nf], n);
 
-      M(i,i) = gmm::vect_norm2(n);
-      n /= M(i,i);
-      scalar_type ps = gmm::vect_sp(n, norient);
-      if (ps < 0) M(i, i) *= scalar_type(-1);
-      if (gmm::abs(ps) < 1E-8)
-        GMM_WARNING2("RT0 : The normal orientation may be incorrect");
+        M(j,j) = gmm::vect_norm2(n);
+        n /= M(j,j);
+        scalar_type ps = gmm::vect_sp(n, norient);
+
+        if (ps < 0) M(j, j) *= scalar_type(-1);
+        if (gmm::abs(ps) < 1E-8)
+          GMM_WARNING2("RTk : The normal orientation may be incorrect");
+      }
     }
   }
 
-  // The dof of this RT0 are not the integral on the edges or faces of the
-  // normal component but the normal component on the midpoint of each edge/face
-  // The reason : easier to deal in case of nonlinear transformation (otherwise
-  // an integral with several Gauss points would be necessary to compute on
-  // edges / faces)
-  // Shape fonctions on the reference element for nc = 2
-  // sqrt(2)(x, y) ; (x-1, y) ; (x, y-1)
-  // The shape functions on the real element are K \phi ||K^{-T}n_i||, where
-  //   K is the gradient of the transformation. 
-  P1_RT0_::P1_RT0_(dim_type nc_) {
-    nc = nc_;
+  // Raviart-Thomas Element on simplices, dimension d and degree k
+  // The dof nodes are on the Lagrange lattice of a Lagrange P_(k+2)
+  // The internal nodes (i.e. a P_(k-1) lattice) correspond to vectorial
+  // Lagrange dof and the nodes on the boundary which are one oly one face
+  // (i.e. internal to one face) correspond to a normal component dof.
+  // The orientation of the normal component dof is selected in comparaison to
+  // a the fixed direction (pi, pi^2, pi^3) arbitrarily chosen.
+  // The number of ddl is (k+d+1)*(k+d-1)!/(k! (d-1)!)
+  // The definition of RTk is
+  // RTk = (Pk)^d + x(Pk)
+  // But this is not a direct sum, in fact a direct sum is given by
+  // RTk = (Pk)^d + x(Pk \ P(k-1))
+  RTk_::RTk_(dim_type nc_, dim_type k_) {
+    nc = nc_; k = k_;
     pgt_stored = 0;
     gmm::resize(K, nc, nc);
     gmm::resize(norient, nc);
@@ -1845,44 +1854,211 @@ namespace getfem {
     cvr = bgeot::simplex_of_reference(nc);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
-    es_degree = 1;
+    es_degree = k;
     is_pol = true;
     is_standard_fem = is_lag = is_equiv = false;
     ntarget_dim = nc;
     vtype = VECTORIAL_PRIMAL_TYPE;
-    base_.resize(nc*(nc+1));
 
+    bgeot::pconvex_ref cvn
+      = bgeot::simplex_of_reference(nc, bgeot::short_type(k+2));
 
-    for (size_type j = 0; j < nc; ++j)
-      for (size_type i = 0; i <= nc; ++i) {
-        base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
-        if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
-        if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
+    size_type nddl = (k+nc+1);
+    for (unsigned i = 1; i < nc; ++i) nddl *= (k+i);
+    for (unsigned i = 1; i < nc; ++i) nddl /= i;
+    std::vector<bgeot::base_poly> base_RT(nddl*nc, base_poly(nc,0));
+
+    // Building a simple base of RTk 
+    PK_fem_ PK(nc, k); // First (PK)^d
+    size_type nddl_pk = (PK.base()).size();
+    for (unsigned i = 0; i < nddl_pk; ++i)
+      for (unsigned j = 0; j < nc; ++j) {
+        base_RT[i*nc + j * (nddl_pk*nc+1)] = PK.base()[i];
       }
+    unsigned l = 0;
+    bgeot::power_index pi(nc);
+    do { // Second, searching for degree k monomials
+      base_poly p0(nc,0); p0.add_monomial(1., pi);
+      
+      if (pi.degree() == k) {
+        for (dim_type j = 0; j < nc; ++j) {
+          base_poly p(nc,0); p.add_monomial(1., pi);
+          base_RT[nddl_pk*nc*nc + l * nc + j] = p * base_poly(nc, 1, j);
+        }
+        ++l;
+      }
+      for (dim_type j = 0; j < nc; ++j)
+        { pi[j]++; if (pi[j] == k+1) pi[j] = 0; else break; }
+    } while(pi.degree() != 0);
+    GMM_ASSERT2(nddl_pk*nc+l == nddl, "Internal error");
 
-    base_node pt(nc);
-    pt.fill(scalar_type(1)/scalar_type(nc));
-    add_node(normal_component_dof(nc), pt);
-
-    for (size_type i = 0; i < nc; ++i) {
-      pt[i] = scalar_type(0);
-      add_node(normal_component_dof(nc), pt);
-      pt[i] = scalar_type(1)/scalar_type(nc);
+    // Estimating the base functions on the dofs
+    base_matrix A(nddl, nddl);
+    unsigned ipoint = 0;
+    for (unsigned i = 0; i < cvn->nb_points(); ++i) {
+      l = 0; unsigned cpt_found = 0;
+      for(dim_type j = 0; j < nc+1; ++j)
+        if (gmm::abs(cvn->is_in_face(j, cvn->points()[i])) < 1E-10)
+          { l = j; cpt_found++; }
+      
+      switch (cpt_found) {
+      case 0 :
+        for (unsigned j = 0; j < nddl; ++j) {
+          for (unsigned m = 0; m < nc; ++m)
+            A(ipoint+m, j) = base_RT[j*nc+m].eval(cvn->points()[i].begin());
+        }
+        for (dim_type m = 0; m < nc; ++m)
+          add_node(to_coord_dof(lagrange_dof(nc), m), cvn->points()[i]);
+        
+        ipoint += nc; break;
+      case 1 :
+         for (unsigned j = 0; j < nddl; ++j) {
+          base_small_vector v(nc);
+          for (unsigned m = 0; m < nc; ++m)
+            v[m] = base_RT[j*nc+m].eval(cvn->points()[i].begin());
+          A(ipoint, j) = gmm::vect_sp(v, cvn->normals()[l]);          
+        }
+        add_node(normal_component_dof(nc), cvn->points()[i]);
+        ++ipoint; break;
+      default : break;
+      }
     }
+    GMM_ASSERT2(ipoint == nddl, "Internal error");
+
+    // Deducing the base of shape functions
+    gmm::lu_inverse(A);
+    base_.resize(nddl*nc, base_poly(nc,0));
+    for (size_type i = 0; i < nddl; ++i)
+      for (size_type j = 0; j < nddl; ++j)
+        for (unsigned m = 0; m < nc; ++m)
+          if (gmm::abs(A(j, i)) > 1e-14)
+            base_[i+m*nddl] += base_RT[j*nc+m] * A(j, i);
   }
 
-  static pfem P1_RT0(fem_param_list &params,
+  static pfem RTk(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    GMM_ASSERT1(params[1].type() == 0, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
+                "Bad parameter n");
+    GMM_ASSERT1(k >= 0 && k < 100 && double(k) == params[1].num(),
+                "Bad parameter k");
+    pfem p = std::make_shared<RTk_>(dim_type(n), dim_type(k));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+  
+
+
+  // struct P1_RT0_ : public fem<base_poly> {
+  //   dim_type nc;
+  //   mutable base_matrix K;
+  //   base_small_vector norient;
+  //   mutable bgeot::pgeotrans_precomp pgp;
+  //   mutable bgeot::pgeometric_trans pgt_stored;
+  //   // mutable pfem_precomp pfp;
+
+  //   virtual void mat_trans(base_matrix &M, const base_matrix &G,
+  //                          bgeot::pgeometric_trans pgt) const;
+  //   P1_RT0_(dim_type nc_);
+  // };
+
+  // void P1_RT0_::mat_trans(base_matrix &M,
+  //                         const base_matrix &G,
+  //                         bgeot::pgeometric_trans pgt) const {
+  //   dim_type N = dim_type(G.nrows());
+  //   gmm::copy(gmm::identity_matrix(), M);
+  //   if (pgt != pgt_stored) {
+  //     pgt_stored = pgt;
+  //     pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+  //     // pfp = fem_precomp(this, node_tab(0), 0);
+  //   }
+  //   GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
+
+  //   gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
+  //   for (unsigned i = 0; i <= nc; ++i) {
+  //     if (!(pgt->is_linear()))
+  //       { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+  //     bgeot::base_small_vector n(nc);
+  //     gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
+
+  //     M(i,i) = gmm::vect_norm2(n);
+  //     n /= M(i,i);
+  //     scalar_type ps = gmm::vect_sp(n, norient);
+  //     if (ps < 0) M(i, i) *= scalar_type(-1);
+  //     if (gmm::abs(ps) < 1E-8)
+  //       GMM_WARNING2("RT0 : The normal orientation may be incorrect");
+  //   }
+  // }
+
+  // // The dof of this RT0 are not the integral on the edges or faces of the
+  // // normal component but the normal component on the midpoint of each edge/face
+  // // The reason : easier to deal in case of nonlinear transformation (otherwise
+  // // an integral with several Gauss points would be necessary to compute on
+  // // edges / faces)
+  // // Shape fonctions on the reference element for nc = 2
+  // // sqrt(2)(x, y) ; (x-1, y) ; (x, y-1)
+  // // The shape functions on the real element are K \phi ||K^{-T}n_i||, where
+  // //   K is the gradient of the transformation. 
+  // P1_RT0_::P1_RT0_(dim_type nc_) {
+  //   nc = nc_;
+  //   pgt_stored = 0;
+  //   gmm::resize(K, nc, nc);
+  //   gmm::resize(norient, nc);
+  //   norient[0] = M_PI;
+  //   for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
+
+  //   cvr = bgeot::simplex_of_reference(nc);
+  //   dim_ = cvr->structure()->dim();
+  //   init_cvs_node();
+  //   es_degree = 1;
+  //   is_pol = true;
+  //   is_standard_fem = is_lag = is_equiv = false;
+  //   ntarget_dim = nc;
+  //   vtype = VECTORIAL_PRIMAL_TYPE;
+  //   base_.resize(nc*(nc+1));
+
+
+  //   for (size_type j = 0; j < nc; ++j)
+  //     for (size_type i = 0; i <= nc; ++i) {
+  //       base_[i+j*(nc+1)] = base_poly(nc, 1, short_type(j));
+  //       if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
+  //       if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
+  //     }
+
+  //   base_node pt(nc);
+  //   pt.fill(scalar_type(1)/scalar_type(nc));
+  //   add_node(normal_component_dof(nc), pt);
+
+  //   for (size_type i = 0; i < nc; ++i) {
+  //     pt[i] = scalar_type(0);
+  //     add_node(normal_component_dof(nc), pt);
+  //     pt[i] = scalar_type(1)/scalar_type(nc);
+      
+  //   }
+  // }
+
+  static pfem P1_RT0(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &) {
     GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
                 << params.size() << " should be 1.");
     GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
                 "Bad parameter");
-    pfem p = std::make_shared<P1_RT0_>(dim_type(n));
-    dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_tab(0));
-    return p;
+    std::stringstream name;
+    name << "FEM_RTK(" << n << ",0)";
+    return fem_descriptor(name.str());
+    
+    // pfem p = std::make_shared<P1_RT0_>(dim_type(n));
+    // dependencies.push_back(p->ref_convex(0));
+    // dependencies.push_back(p->node_tab(0));
+    // return p;
   }
 
 
@@ -1984,6 +2160,199 @@ namespace getfem {
 
 
   /* ******************************************************************** */
+  /*    Element BDMk on simplices.                                        */
+  /* ******************************************************************** */
+
+  struct BDMk_ : public fem<base_poly> {
+    dim_type nc, k;
+    mutable base_matrix K;
+    base_small_vector norient;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    // mutable pfem_precomp pfp;
+
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+                           bgeot::pgeometric_trans pgt) const;
+    BDMk_(dim_type nc_, dim_type k_);
+  };
+
+  void BDMk_::mat_trans(base_matrix &M,
+                       const base_matrix &G,
+                       bgeot::pgeometric_trans pgt) const {
+    dim_type N = dim_type(G.nrows());
+    gmm::copy(gmm::identity_matrix(), M);
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      // pfp = fem_precomp(this, node_tab(0), 0);
+    }
+    GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
+
+    gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
+    for (unsigned j = 0; j <= nb_dof(0); ++j) {
+      
+      if (faces_of_dof(0, j).size()) {
+        unsigned nf = faces_of_dof(0, j)[0];
+        if (!(pgt->is_linear()))
+        { gmm::mult(G, pgp->grad(j), K); gmm::lu_inverse(K); }
+        bgeot::base_small_vector n(nc);
+        gmm::mult(gmm::transposed(K), cvr->normals()[nf], n);
+
+        M(j,j) = gmm::vect_norm2(n);
+        n /= M(j,j);
+        scalar_type ps = gmm::vect_sp(n, norient);
+
+        if (ps < 0) M(j, j) *= scalar_type(-1);
+        if (gmm::abs(ps) < 1E-8)
+          GMM_WARNING2("RTk : The normal orientation may be incorrect");
+      }
+    }
+  }
+
+  // Brezzi-Douglas-Marini Element on simplices, dimension d and degree k=1 or 2
+  // The orientation of the normal component dof is selected in comparaison to
+  // a the fixed direction (pi, pi^2, pi^3) arbitrarily chosen.
+  // The definition of RTk is
+  // BDMk = (Pk)^d
+ 
+  BDMk_::BDMk_(dim_type nc_, dim_type k_) {
+    nc = nc_; k = k_;
+    pgt_stored = 0;
+    gmm::resize(K, nc, nc);
+    gmm::resize(norient, nc);
+    norient[0] = M_PI;
+    for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
+
+    cvr = bgeot::simplex_of_reference(nc);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = k;
+    is_pol = true;
+    is_standard_fem = is_lag = is_equiv = false;
+    ntarget_dim = nc;
+    vtype = VECTORIAL_PRIMAL_TYPE;
+
+    bgeot::pconvex_ref cvn
+      = bgeot::simplex_of_reference(nc, bgeot::short_type(k+2));
+
+    // Building a simple base of BDMk 
+    PK_fem_ PK(nc, k);
+    size_type nddl_pk = (PK.base()).size(), nddl = nddl_pk * nc;
+    std::vector<bgeot::base_poly> base_BDM(nddl*nc, base_poly(nc,0));
+    for (unsigned i = 0; i < nddl_pk; ++i)
+      for (unsigned j = 0; j < nc; ++j) {
+        base_BDM[i*nc + j * (nddl_pk*nc+1)] = PK.base()[i];
+      }
+    GMM_ASSERT2(nddl_pk*nc == nddl, "Internal error");
+
+    // Estimating the base functions on the dofs
+    base_matrix A(nddl, nddl);
+    unsigned ipoint = 0;
+    for (unsigned i = 0; i < cvn->nb_points(); ++i) {
+      unsigned l = 0; unsigned cpt_found = 0;
+      for(dim_type j = 0; j < nc+1; ++j)
+        if (gmm::abs(cvn->is_in_face(j, cvn->points()[i])) < 1E-10)
+          { l = j; cpt_found++; }
+      
+      if (cpt_found == 1) { 
+        for (unsigned j = 0; j < nddl; ++j) {
+          base_small_vector v(nc);
+          for (unsigned m = 0; m < nc; ++m)
+            v[m] = base_BDM[j*nc+m].eval(cvn->points()[i].begin());
+          A(ipoint, j) = gmm::vect_sp(v, cvn->normals()[l]);          
+        }
+        add_node(normal_component_dof(nc), cvn->points()[i]);
+        ++ipoint;
+      }
+    }
+
+    base_node barycenter(nc); barycenter.fill(1./(nc+1));
+    
+    if (k > 1) {
+      bgeot::pbasic_mesh pm;
+      bgeot::pmesh_precomposite pmp;
+      
+      structured_mesh_for_convex(PK.ref_convex(0), 1, pm, pmp);
+      mesh m(*pm);
+      mesh_fem mf(m);
+      mf.set_classical_finite_element(pm->convex_index(), bgeot::dim_type(k-1));
+      mesh_fem mfd(m);
+      mfd.set_qdim(nc);
+      mfd.set_classical_finite_element(pm->convex_index(), k);
+      mesh_im mim(m);
+      mim.set_integration_method(bgeot::dim_type(k*(k-1)));
+      
+      gmm::sub_interval Iu(0, mfd.nb_dof()), Ip(Iu.last(), mf.nb_dof());
+      base_vector u(mfd.nb_dof()), p(mf.nb_dof());
+      ga_workspace workspace;
+      workspace.add_fem_variable("u", mfd, Iu, u);
+      workspace.add_fem_variable("p", mf, Ip, p);
+      workspace.add_expression("Div(u).Test_p", mim);
+      workspace.assembly(2);
+      gmm::sub_interval IA1(ipoint, mf.nb_dof()), IA2(0, nddl);
+      if (gmm::mat_nrows(workspace.assembled_matrix()))
+	gmm::add(gmm::sub_matrix(workspace.assembled_matrix(), Ip, Iu),
+		 gmm::sub_matrix(A, IA1, IA2));
+      
+      for (size_type i = 0; i < mf.nb_dof(); ++i) {
+        add_node(ipk_center_dof(nc, ipoint), barycenter);
+        ++ipoint;
+      }
+    }
+
+    if (k > 2) { // Completing the base with an orthogonal base of the kernel
+#     if defined(GMM_USES_LAPACK)
+      base_vector EIG(nddl);
+      base_matrix U(nddl, nddl), V(nddl, nddl), AA(A);
+      gmm::svd(AA, U, V, EIG);
+      gmm::clean(V, 1E-14);
+
+      for (size_type i = 0; i < nddl; ++i)
+        if (gmm::abs(EIG[i]) < 1E-16) {
+          gmm::copy(gmm::mat_row(V, i), gmm::mat_row(A, ipoint));
+          add_node(ipk_center_dof(nc, ipoint), barycenter); ++ipoint;
+        }
+#     else
+      GMM_ASSERT2(false, "You need Lapack to useget BDMk with k > 2");
+#     endif
+    }
+    
+    GMM_ASSERT2(ipoint == nddl, "Internal error");
+
+    // Deducing the base of shape functions
+    gmm::lu_inverse(A);
+    base_.resize(nddl*nc, base_poly(nc,0));
+    for (size_type i = 0; i < nddl; ++i)
+      for (size_type j = 0; j < nddl; ++j)
+        for (unsigned m = 0; m < nc; ++m)
+          if (gmm::abs(A(j, i)) > 1e-14)
+            base_[i+m*nddl] += base_BDM[j*nc+m] * A(j, i);
+
+    // for (size_type i = 0; i < nddl; ++i)
+    //   for (unsigned m = 0; m < nc; ++m)
+    //     cout << base_[i+m*nddl] << endl;
+  }
+
+  static pfem BDMk(fem_param_list &params,
+        std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters for BDM element: "
+                << params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    GMM_ASSERT1(params[1].type() == 0, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
+                "Bad parameter n for BDM element");
+    GMM_ASSERT1(k >= 1 && k < 100 && double(k) == params[1].num(),
+                "Bad parameter k for BDM element");
+    pfem p = std::make_shared<BDMk_>(dim_type(n), dim_type(k));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+  /* ******************************************************************** */
   /*    Nedelec Element.                                                  */
   /* ******************************************************************** */
 
@@ -2072,14 +2441,12 @@ namespace getfem {
         for (size_type i = 0; i < nc; ++i) {
           base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
             - lambda[l] * grad_lambda[k][i];
-          // cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
         }
 
         base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
         add_node(edge_component_dof(nc), pt);
         tangents[j] = cvr->points()[l] - cvr->points()[k];
         tangents[j] /= gmm::vect_norm2(tangents[j]);
-        // cout << "tangent(" << j << ") = " << tangents[j] << endl;
       }
   }
 
@@ -3286,10 +3653,8 @@ namespace getfem {
       points[i] = gl_im->approx_method()->point(i);
     }
     std::sort(points.begin(),points.end());
-    for (size_type i = 0; i < k+1; ++i) {
-      // cout << points[i][0] << endl;
+    for (size_type i = 0; i < k+1; ++i)
       add_node(lagrange_dof(1), points[i]);
-    }
     base_.resize(k+1);
     const double *coefs = fem_coeff_gausslob[k];
     for (size_type r = 0; r < k+1; r++) {
@@ -3771,7 +4136,6 @@ namespace getfem {
       for (unsigned j = 0; j < 6; ++j)
         W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
-    //    cout << "W = " << W << endl; getchar();
 
     THREAD_SAFE_STATIC base_matrix A(3, 3);
     THREAD_SAFE_STATIC base_vector w(3);
@@ -4031,7 +4395,6 @@ namespace getfem {
     base_[j] = base_poly(nc, 0);
     base_[j].one();
     for (size_type i = 0; i < P1.nb_dof(0); i++) base_[j] *= P1.base()[i];
-    // cout << "bubble = " << base_[j] << endl;
   }
 
   static pfem PK_with_cubic_bubble(fem_param_list &params,
@@ -4222,6 +4585,8 @@ namespace getfem {
       add_suffix("REDUCED_QUADC1_COMPOSITE", reduced_quadc1p3_fem);
       add_suffix("HHO", hho_method);
       add_suffix("RT0", P1_RT0);
+      add_suffix("RTK", RTk);
+      add_suffix("BDMK", BDMk);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
       add_suffix("PYRAMID_QK", pyramid_QK_fem);
