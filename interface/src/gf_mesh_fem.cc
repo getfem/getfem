@@ -134,10 +134,36 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       Create a copy of a @tmf.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
-       
-       getfem::mesh_fem *mmf2 = to_meshfem_object(in.pop());
-       mm = &mmf2->linked_mesh();
-       mmf = std::make_shared<getfem::mesh_fem>(*mmf2);
+       getfem::mesh_fem *mmf_in = to_meshfem_object(in.pop());
+       mm = &mmf_in->linked_mesh();
+       getfem::mesh_fem_sum *mfsum
+         = dynamic_cast<getfem::mesh_fem_sum *>(mmf_in);
+       getfem::mesh_fem_product *mfprod
+         = dynamic_cast<getfem::mesh_fem_product *>(mmf_in);
+       getfem::mesh_fem_level_set *mfls
+         = dynamic_cast<getfem::mesh_fem_level_set *>(mmf_in);
+       getfem::partial_mesh_fem *mfpart
+         = dynamic_cast<getfem::partial_mesh_fem *>(mmf_in);
+       getfem::mesh_fem_global_function *mfglob
+         = dynamic_cast<getfem::mesh_fem_global_function *>(mmf_in);
+       if (mfsum)
+         mmf = std::make_shared<getfem::mesh_fem_sum>(*mfsum);
+       else if (mfprod)
+         mmf = std::make_shared<getfem::mesh_fem_product>(*mfprod);
+       else if (mfls) {
+         std::shared_ptr<getfem::mesh_fem_level_set> mmfls
+           = std::make_shared<getfem::mesh_fem_level_set>(mfls->linked_mesh_level_set(),
+                                                          mfls->linked_mesh_fem());
+         mmfls->adapt();
+         mmf = mmfls;
+       } else if (mfpart) {
+         GMM_WARNING1("Cloning a partial_mesh_fem simply clones the underlying"
+		              " adapted mesh_fem");
+         mmf = std::make_shared<getfem::mesh_fem>(mfpart->linked_mesh_fem());
+       } else if (mfglob)
+         mmf = std::make_shared<getfem::mesh_fem_global_function>(*mfglob);
+       else
+         mmf = std::make_shared<getfem::mesh_fem>(*mmf_in);
        );
 
     
@@ -156,7 +182,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
          if (mmf.get() == 0) {
            mm = &gfimf->linked_mesh();
            msum = std::make_shared<getfem::mesh_fem_sum>(*mm);
-           mmf = msum; store_meshfem_object(mmf);
+           mmf = msum;
+           store_meshfem_object(mmf);
          }
          workspace().set_dependence(mmf.get(), gfimf);
          mftab.push_back(gfimf);

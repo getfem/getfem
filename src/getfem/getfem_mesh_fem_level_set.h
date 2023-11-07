@@ -59,12 +59,13 @@ namespace getfem {
     void build_method_of_convex(size_type cv);
 
   public :
-    void update_from_context(void) const { is_adapted = false; }
-    void adapt(void);
-    void clear(void); // to be modified
-    size_type get_xfem_index(void) const { return xfem_index; }
+    void update_from_context() const { is_adapted = false; }
+    void adapt();
+    void clear(); // to be modified
+    size_type get_xfem_index() const { return xfem_index; }
 
     const mesh_level_set &linked_mesh_level_set() const { return mls; }
+    const mesh_fem &linked_mesh_fem() const { return mf; }
     
     size_type memsize() const {
       return mesh_fem::memsize(); // + ... ;

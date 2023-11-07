@@ -98,6 +98,8 @@ namespace getfem {
                   "the original fem");
     }
 
+    const mesh_fem &linked_mesh_fem() const { return mf; }
+
     ind_dof_ct ind_basic_dof_of_element(size_type cv) const
     { return  mf.ind_basic_dof_of_element(cv); }
 
