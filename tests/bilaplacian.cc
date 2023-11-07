@@ -38,7 +38,6 @@
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
 #include "gmm/gmm.h"
-#include "getfem/getfem_superlu.h"
 #include "getfem/getfem_derivatives.h"
 #include "gmm/gmm_inoutput.h"
 

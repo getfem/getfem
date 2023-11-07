@@ -24,7 +24,6 @@
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
-#include "getfem/getfem_superlu.h"
 
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;

@@ -31,7 +31,6 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
 #include "getfem/getfem_mesh_fem.h"
-#include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
 
 using std::endl; using std::cout; using std::cerr;
