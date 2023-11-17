@@ -4865,15 +4865,15 @@ namespace getfem {
 
   struct simplification_Dirichlet_condition_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type /*ib*/,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version /*version*/) const {
+    virtual void real_pre_assembly_in_serial(const model &md, size_type /*ib*/,
+                                             const model::varnamelist &vl,
+                                             const model::varnamelist &dl,
+                                             const model::mimlist &mims,
+                                             model::real_matlist &matl,
+                                             model::real_veclist &vecl,
+                                             model::real_veclist &,
+                                             size_type region,
+                                             build_version /*version*/) const {
       if (MPI_IS_MASTER()) {
 
         GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
@@ -4934,15 +4934,15 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type /*ib*/,
-                                           const model::varnamelist &vl,
-                                           const model::varnamelist &dl,
-                                           const model::mimlist &mims,
-                                           model::complex_matlist &matl,
-                                           model::complex_veclist &vecl,
-                                           model::complex_veclist &,
-                                           size_type region,
-                                           build_version /*version*/) const {
+    virtual void complex_pre_assembly_in_serial(const model &md, size_type /*ib*/,
+                                                const model::varnamelist &vl,
+                                                const model::varnamelist &dl,
+                                                const model::mimlist &mims,
+                                                model::complex_matlist &matl,
+                                                model::complex_veclist &vecl,
+                                                model::complex_veclist &,
+                                                size_type region,
+                                                build_version /*version*/) const {
       if (MPI_IS_MASTER()) {
         GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
                     "Dirichlet condition brick by simplification has no term");
