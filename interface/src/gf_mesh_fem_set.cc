@@ -24,6 +24,7 @@
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <gmm/gmm_range_basis.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
+#include <getfem/getfem_mesh_fem_sum.h>
 #include <getfem/getfem_mesh_fem_product.h>
 #include <getfem/getfem_fem.h>
 
@@ -266,7 +267,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        dal::bit_vector doflst = in.pop().to_bit_vector();
        dal::bit_vector rcvlst;
        if (in.remaining()) rcvlst = in.pop().to_bit_vector();
-       
+
        getfem::partial_mesh_fem *ppmf
        = dynamic_cast<getfem::partial_mesh_fem *>(mf);
        if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
@@ -279,11 +280,21 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
       change of the levelset function. @*/
     sub_command
       ("adapt", 0, 0, 0, 0,
+       getfem::mesh_fem_sum *mfsum
+         = dynamic_cast<getfem::mesh_fem_sum *>(mf);
+       getfem::mesh_fem_product *mfprod
+         = dynamic_cast<getfem::mesh_fem_product *>(mf);
        getfem::mesh_fem_level_set *mfls
-       = dynamic_cast<getfem::mesh_fem_level_set *>(mf);
-       if (!mfls) THROW_BADARG("The command 'adapt' can only be "
+         = dynamic_cast<getfem::mesh_fem_level_set *>(mf);
+       if (mfsum)
+         mfsum->adapt();
+       else if (mfprod)
+         mfprod->adapt();
+       else if (mfls)
+         mfls->adapt();
+       else
+        THROW_BADARG("The command 'adapt' can only be "
                                "applied to a mesh_fem_level_set object");
-       mfls->adapt();
        );
 
     /*@SET ('set enriched dofs', @ivec DOFs)
