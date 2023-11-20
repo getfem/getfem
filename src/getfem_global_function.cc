@@ -32,7 +32,7 @@ namespace getfem {
   (const fem_interpolation_context &c) const {
     base_node pt = c.xreal();
     GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
-		<< "passed to a global function of dim = "<< dim_ <<".");
+                << "passed to a global function of dim = "<< dim_ <<".");
     return this->val(pt);
   }
 
@@ -40,7 +40,7 @@ namespace getfem {
   (const fem_interpolation_context &c, base_small_vector &g) const {
     base_node pt = c.xreal();
     GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
-		<< "passed to a global function of dim = "<< dim_ <<".");
+                << "passed to a global function of dim = "<< dim_ <<".");
     this->grad(pt, g);
   }
 
@@ -48,7 +48,7 @@ namespace getfem {
   (const fem_interpolation_context &c, base_matrix &h) const {
     base_node pt = c.xreal();
     GMM_ASSERT1(pt.size() == dim_, "Point of wrong size (" << pt.size() << ") "
-		<< "passed to a global function of dim = "<< dim_ <<".");
+                << "passed to a global function of dim = "<< dim_ <<".");
     this->hess(pt, h);
   }
 
@@ -717,12 +717,12 @@ namespace getfem {
       if (cv_ != cv) {
         cv=cv_;
         if (lsets.size() == 0) {
-	  mls_x = ls.mls_of_convex(cv, 1);
-	  mls_y = ls.mls_of_convex(cv, 0);
+          mls_x = ls.mls_of_convex(cv, 1);
+          mls_y = ls.mls_of_convex(cv, 0);
         } else {
-	  base_node pt(n);
+          base_node pt(n);
           scalar_type d = scalar_type(-2);
-          for (const auto &ls_ : lsets) {
+          for (const level_set &ls_ : lsets) {
             pmesher_signed_distance mls_xx, mls_yy;
             mls_xx = ls_.mls_of_convex(cv, 1);
             mls_yy = ls_.mls_of_convex(cv, 0);
@@ -806,8 +806,8 @@ namespace getfem {
       GMM_ASSERT1(lsets.size() > 0, "The list of level sets should"
                                     " contain at least one level set.");
       cv = size_type(-1);
-      for (size_type i = 0; i < lsets.size(); ++i)
-        this->add_dependency(lsets[i]);
+      for (const level_set &ls_ : lsets)
+        this->add_dependency(ls_);
     }
 
     global_function_on_levelsets_2D_(const level_set &ls_,

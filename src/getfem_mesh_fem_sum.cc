@@ -273,7 +273,8 @@ namespace getfem {
           pfem pf = pmf->fem_of_element(i);
           if (pf->nb_dof(i)) {
             pfems.push_back(pf);
-            if (pf->is_on_real_element()) is_cv_dep = true;
+            if (pf->is_on_real_element())
+              is_cv_dep = true;
           }
         }
       }

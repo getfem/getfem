@@ -176,21 +176,21 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     sub_command
       ("sum", 1, -1, 0, 1,
        std::vector<const getfem::mesh_fem*> mftab;
-       std::shared_ptr<getfem::mesh_fem_sum> msum;
+       std::shared_ptr<getfem::mesh_fem_sum> mfsum;
        while (in.remaining()) {
          getfem::mesh_fem *gfimf = to_meshfem_object(in.pop());
          if (mmf.get() == 0) {
            mm = &gfimf->linked_mesh();
-           msum = std::make_shared<getfem::mesh_fem_sum>(*mm);
-           mmf = msum;
+           mfsum = std::make_shared<getfem::mesh_fem_sum>(*mm);
+           mmf = mfsum;
            store_meshfem_object(mmf);
          }
          workspace().set_dependence(mmf.get(), gfimf);
          mftab.push_back(gfimf);
        }
-       msum->set_mesh_fems(mftab);
-       msum->adapt();
-       mmf = msum;
+       mfsum->set_mesh_fems(mftab);
+       mfsum->adapt();
+       mmf = mfsum;
        );
 
     /*@INIT MF = ('product', @tmf mf1, @tmf mf2)
