@@ -52,6 +52,12 @@ namespace getfem {
     GMM_ASSERT1(&m != &dummy_mesh(), "A non-empty mesh object"
                                      " is expected.");
     this->add_dependency(m_);
+    for (const pglobal_function &glob_func : funcs) {
+      std::shared_ptr<const context_dependencies>
+        dep = std::dynamic_pointer_cast<const context_dependencies>(glob_func);
+      if (dep)
+        this->add_dependency(*dep);
+    }
     init();
   }
 

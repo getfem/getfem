@@ -815,6 +815,7 @@ namespace getfem {
       : global_function(2), dummy_lsets(0, dummy_level_set()),
         lsets(dummy_lsets), ls(ls_), fn(fn_) {
       cv = size_type(-1);
+      this->add_dependency(ls);
     }
 
   };
