@@ -25,7 +25,7 @@
 #include "getfem/getfem_generic_assembly_compile_and_exec.h"
 #include "getfem/getfem_generic_assembly_functions_and_operators.h"
 
-// #define GA_USES_BLAS // not so interesting, at least for debian blas
+//#define GA_USES_BLAS
 
 // #define GA_DEBUG_INFO(a) { cout << a << endl; }
 #define GA_DEBUG_INFO(a)
@@ -2515,43 +2515,46 @@ namespace getfem {
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_contraction : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
-    size_type nn;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    const size_type I;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: contraction operation of size " << nn);
-#if GA_USES_BLAS
-      long m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
-      long lda = m, ldb = n, ldc = m;
-      char T = 'T', N = 'N';
-      scalar_type alpha(1), beta(0);
-      gmm::dgemm_(&N, &T, &m, &n, &k, &alpha, &(tc1[0]), &lda, &(tc2[0]), &ldb,
-                  &beta, &(t[0]), &ldc);
+      GA_DEBUG_INFO("Instruction: contraction operation of size " << I);
+#if defined(GA_USES_BLAS)
+      BLAS_INT N = BLAS_INT(tc1.size()/I), I_ = BLAS_INT(I),
+               M = BLAS_INT(tc2.size()/I);
+      char notrans = 'N', trans = 'T';
+      static const scalar_type one(1), zero(0);
+      gmm::dgemm_(&notrans, &trans, &M, &N, &I_, &one,
+                  &(tc2[0]), &M, &(tc1[0]), &N, &zero, &(t[0]), &M);
 #else
-      size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn;
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      size_type N = tc1.size()/I,
+                M = tc2.size()/I;
+      GA_DEBUG_ASSERT(t.size() == N*M, "Internal error");
 
-      auto it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
+      auto it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + M;
       for (auto it = t.begin(); it != t.end(); ++it) {
         auto it11 = it1, it22 = it2;
         scalar_type a = (*it11) * (*it22);
-        for (size_type i = 1; i < nn; ++i)
-          { it11 += s1; it22 += s2; a += (*it11) * (*it22); }
+        for (size_type i = 1; i < I; ++i)
+          { it11 += N; it22 += M; a += (*it11) * (*it22); }
         *it = a;
         ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
       }
       // auto it = t.begin(); // Unoptimized version.
-      // for (size_type i = 0; i < s1; ++i)
-      //   for (size_type j = 0; j < s2; ++j, ++it) {
+      // for (size_type n = 0; n < N; ++n)
+      //   for (size_type m = 0; m < M; ++m, ++it) {
       //     *it = scalar_type(0);
-      //     for (size_type k = 0; k < nn; ++k)
-      //       *it += tc1[i+k*s1] * tc2[j+k*s2];
+      //     for (size_type i = 0; i < I; ++i)
+      //       *it += tc1[n+N*i] * tc2[m+M*i];
       //   }
 #endif
       return 0;
     }
-    ga_instruction_contraction(base_tensor &t_, base_tensor &tc1_,
-                             base_tensor &tc2_, size_type n_)
-      : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
+    ga_instruction_contraction(base_tensor &t_,
+                               const base_tensor &tc1_,
+                               const base_tensor &tc2_, size_type I_)
+      : t(t_), tc1(tc1_), tc2(tc2_), I(I_) {}
   };
 
   // Performs Ani Bmi -> Cmn
@@ -2850,29 +2853,116 @@ namespace getfem {
 
 
 
-  template<int N> inline scalar_type reduc_elem_unrolled__
-  (base_tensor::iterator &it1, base_tensor::iterator &it2,
-   size_type s1, size_type s2) {
-    return (it1[(N-1)*s1])*(it2[(N-1)*s2])
-      + reduc_elem_unrolled__<N-1>(it1, it2, s1, s2);
+  template<int I> inline
+  void reduc_elem_unrolled__(base_tensor::iterator &it,
+                             base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                             size_type s1, size_type s2) {
+    *it = (*it1)*(*it2);
+    for (int i=1; i < I; ++i)
+      *it += (*(it1+i*s1)) * (*(it2+i*s2));
   }
-  template<> inline scalar_type reduc_elem_unrolled__<1>
-  (base_tensor::iterator &it1, base_tensor::iterator &it2,
-   size_type /*s1*/, size_type /*s2*/)
-  { return (*it1)*(*it2); }
+  template<> inline
+  void reduc_elem_unrolled__<9>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+    *it += (*(it1+5*s1)) * (*(it2+5*s2));
+    *it += (*(it1+6*s1)) * (*(it2+6*s2));
+    *it += (*(it1+7*s1)) * (*(it2+7*s2));
+    *it += (*(it1+8*s1)) * (*(it2+8*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<8>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+    *it += (*(it1+5*s1)) * (*(it2+5*s2));
+    *it += (*(it1+6*s1)) * (*(it2+6*s2));
+    *it += (*(it1+7*s1)) * (*(it2+7*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<7>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+    *it += (*(it1+5*s1)) * (*(it2+5*s2));
+    *it += (*(it1+6*s1)) * (*(it2+6*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<6>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+    *it += (*(it1+5*s1)) * (*(it2+5*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<5>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<4>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<3>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<2>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type s1, size_type s2) {
+    *it = (*it1) * (*it2);
+    *it += (*(it1+s1)) * (*(it2+s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<1>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                size_type /*s1*/, size_type /*s2*/)
+  { *it = (*it1)*(*it2); }
 
   // Performs Ani Bmi -> Cmn. Unrolled operation.
-  template<int N> struct ga_instruction_contraction_unrolled
+  template<int I> struct ga_instruction_contraction_unrolled
     : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec() {
-      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N);
-      size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
-                      << " != " << s1 << "*" << s2);
-      base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
+      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << I);
+      size_type N = tc1.size()/I, M = tc2.size()/I;
+      GA_DEBUG_ASSERT(t.size() == N*M, "Internal error, " << t.size()
+                      << " != " << N << "*" << M);
+      base_tensor::const_iterator it1=tc1.cbegin(), it2=tc2.cbegin(), it2end=it2+M;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
-        *it = reduc_elem_unrolled__<N>(it1, it2, s1, s2);
+        reduc_elem_unrolled__<I>(it, it1, it2, N, M);
         ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
       }
       return 0;
@@ -2883,62 +2973,63 @@ namespace getfem {
   };
 
   template<int N, int S2> inline void reduc_elem_d_unrolled__
-  (base_tensor::iterator &it, base_tensor::iterator &it1,
-   base_tensor::iterator &it2, size_type s1, size_type s2)  {
-    *it++ = reduc_elem_unrolled__<N>(it1, it2, s1, s2);
-    reduc_elem_d_unrolled__<N, S2-1>(it, it1, ++it2, s1, s2);
+  (base_tensor::iterator &it,
+   base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+   size_type s1, size_type s2)  {
+    reduc_elem_unrolled__<N>(it, it1, it2, s1, s2);
+    reduc_elem_d_unrolled__<N, S2-1>(++it, it1, ++it2, s1, s2);
   }
   // A Repeated definition is following because partial specialization
   // of functions is not allowed in C++ for the moment.
   // The gain in assembly time is small compared to the simply unrolled version
   template<> inline void reduc_elem_d_unrolled__<1, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<2, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<3, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<4, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<5, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<6, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<7, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<8, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<9, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<10, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<11, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<12, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<13, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<14, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<15, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
   template<> inline void reduc_elem_d_unrolled__<16, 0>
-  (base_tensor::iterator &/* it */, base_tensor::iterator &/* it1 */,
-   base_tensor::iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
+  (base_tensor::iterator &/* it */, base_tensor::const_iterator &/* it1 */,
+   base_tensor::const_iterator &/* it2 */, size_type /* s1 */, size_type /* s2 */) { }
 
   // Performs Ani Bmi -> Cmn. Automatically doubly unrolled operation
   // (for uniform meshes).
@@ -2952,9 +3043,10 @@ namespace getfem {
       GA_DEBUG_ASSERT(s2 == S2, "Internal error");
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
                       << " != " << s1 << "*" << s2);
-      base_tensor::iterator it = t.begin(), it1 = tc1.begin();
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it1 = tc1.cbegin();
       for (size_type ii = 0; ii < s1; ++ii, ++it1) {
-        base_tensor::iterator it2 = tc2.begin();
+        base_tensor::const_iterator it2 = tc2.cbegin();
         reduc_elem_d_unrolled__<N, S2>(it, it1, it2, s1, s2);
       }
       GA_DEBUG_ASSERT(it == t.end(), "Internal error");
@@ -3141,6 +3233,7 @@ namespace getfem {
     }
 
     switch(n) {
+    case  1 : GMM_ASSERT1(false, "n=1 should not happen");
     case  2 : return std::make_shared<ga_instruction_contraction_unrolled< 2>>
                      (t, tc1, tc2);
     case  3 : return std::make_shared<ga_instruction_contraction_unrolled< 3>>
@@ -3498,34 +3591,114 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-  template<int S1> inline void tmult_elem_unrolled__
-  (base_tensor::iterator &it, base_tensor::iterator &it1,
-   base_tensor::iterator &it2) {
-    *it++ = (*it1++)*(*it2);
-    tmult_elem_unrolled__<S1-1>(it, it1, it2);
+  template<int I> inline void dax__(base_tensor::iterator &it,
+                                    base_tensor::const_iterator &itx,
+                                    const scalar_type &a) {
+    constexpr int I1 = I/8;
+    constexpr int I2 = I - I1*8;
+    for (int i=0; i < I1; ++i)
+      dax__<8>(it, itx , a);
+    dax__<I2>(it, itx , a);
   }
-  template<> inline void tmult_elem_unrolled__<0>
-  (base_tensor::iterator &/*it*/, base_tensor::iterator &/*it1*/,
-   base_tensor::iterator &/*it2*/) { }
+  template<> inline void dax__<8>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<7>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<6>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<5>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<4>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<3>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<2>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<1>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<0>(base_tensor::iterator &,
+                                  base_tensor::const_iterator &,
+                                  const scalar_type &) {}
 
   // Performs Aij Bkl -> Cijkl, partially unrolled version
-  template<int S1> struct ga_instruction_simple_tmult_unrolled
+  template<int IJ> struct ga_instruction_simple_tmult_unrolled
   : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
-      size_type s2 = tc2.size();
-      GA_DEBUG_ASSERT(tc1.size() == S1,
-                      "Wrong sizes " << tc1.size() << " != " << S1);
+      size_type KL = tc2.size();
+      GA_DEBUG_ASSERT(tc1.size() == IJ,
+                      "Wrong sizes " << tc1.size() << " != " << IJ);
       GA_DEBUG_INFO("Instruction: simple tensor product, unrolled with "
-                    << S1 << " operations");
-      GA_DEBUG_ASSERT(t.size() == S1 * s2,
-                      "Wrong sizes " << t.size() << " != " << S1 << "*" << s2);
-      base_tensor::iterator it = t.begin(), it2 = tc2.begin();
-      for (size_type ii = 0; ii < s2; ++ii, ++it2) {
-        base_tensor::iterator it1 = tc1.begin();
-        tmult_elem_unrolled__<S1>(it, it1, it2);
+                    << IJ << " operations");
+      GA_DEBUG_ASSERT(t.size() == IJ * KL,
+                      "Wrong sizes " << t.size() << " != " << IJ << "*" << KL);
+#if 0 // too slow, how can this be? that's what dger should be good at. (it is slower even without the std::fill overhead)
+      const BLAS_INT IJ_=BLAS_INT(IJ), KL_=BLAS_INT(KL), INC(1);
+      const scalar_type one(1);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+      gmm::dger_(&IJ_, &KL_, &one, &tc1[0], &INC, &tc2[0], &INC, &(t[0]), &IJ_);
+#else
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it2 = tc2.cbegin();
+      for (size_type kl = 0; kl < KL; ++kl, ++it2) {
+        base_tensor::const_iterator it1 = tc1.cbegin();
+        dax__<IJ>(it, it1, *it2);
       }
       GA_DEBUG_ASSERT(it == t.end(), "Internal error");
+#endif
       return 0;
     }
     ga_instruction_simple_tmult_unrolled(base_tensor &t_, base_tensor &tc1_,
@@ -3536,6 +3709,7 @@ namespace getfem {
   pga_instruction  ga_uniform_instruction_simple_tmult
   (base_tensor &t, base_tensor &tc1, base_tensor &tc2) {
     switch(tc1.size()) {
+    case  1 : GMM_ASSERT1(false, "size 1 should not happen");
     case  2 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 2>>
                      (t, tc1, tc2);
     case  3 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 3>>
@@ -3574,27 +3748,30 @@ namespace getfem {
 
   // Performs Ami Bnj -> Cmnij. To be optimized.
   struct ga_instruction_spec_tmult : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
-    size_type s1_2, s2_2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    const size_type I, J;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: specific tensor product");
       GA_DEBUG_ASSERT(t.size() == tc1.size() * tc2.size(), "Wrong sizes");
-      size_type s1_1 = tc1.size() / s1_2;
-      size_type s2_1 = tc2.size() / s2_2;
-
+      const size_type M = tc1.size() / I,
+                      N = tc2.size() / J;
       base_tensor::iterator it = t.begin();
-      for (size_type j = 0; j < s2_2; ++j)
-        for (size_type i = 0; i < s1_2; ++i)
-          for (size_type n = 0; n < s2_1; ++n)
-            for (size_type m = 0; m < s1_1; ++m, ++it)
-              *it = tc1[m+i*s1_1] * tc2[n+j*s2_1];
+      for (size_type j = 0; j < J; ++j)
+        for (size_type i = 0; i < I; ++i)
+          for (size_type n = 0; n < N; ++n) {
+            scalar_type val = tc2[n+N*j];
+            for (size_type m = 0; m < M; ++m, ++it)
+              *it = tc1[m+M*i] * val;
+          }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_spec_tmult(base_tensor &t_, base_tensor &tc1_,
-                              base_tensor &tc2_, size_type s1_2_,
-                              size_type s2_2_)
-      : t(t_), tc1(tc1_), tc2(tc2_), s1_2(s1_2_), s2_2(s2_2_) {}
+    ga_instruction_spec_tmult(base_tensor &t_,
+                              const base_tensor &tc1_,
+                              const base_tensor &tc2_,
+                              size_type I_, size_type J_)
+      : t(t_), tc1(tc1_), tc2(tc2_), I(I_), J(J_) {}
   };
 
   // Performs Ai Bmj -> Cmij. To be optimized.
