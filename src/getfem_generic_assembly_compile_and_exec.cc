@@ -2092,37 +2092,40 @@ namespace getfem {
   };
 
   struct ga_instruction_scalar_mult : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     const scalar_type &c;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: multiplication of a tensor by a scalar " << c);
       gmm::copy(gmm::scaled(tc1.as_vector(), c), t.as_vector());
       return 0;
     }
-    ga_instruction_scalar_mult(base_tensor &t_, base_tensor &tc1_,
-                               const scalar_type &c_)
+    ga_instruction_scalar_mult(base_tensor &t_,
+                               const base_tensor &tc1_, const scalar_type &c_)
       : t(t_), tc1(tc1_), c(c_) {}
   };
 
   struct ga_instruction_scalar_div : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     const scalar_type &c;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: division of a tensor by a scalar");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-
-      base_tensor::iterator it = t.begin(), it1 = tc1.begin();
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it1 = tc1.cbegin();
       for (; it != t.end(); ++it, ++it1) *it = *it1/c;
       return 0;
     }
-    ga_instruction_scalar_div(base_tensor &t_, base_tensor &tc1_,
-                               const scalar_type &c_)
+    ga_instruction_scalar_div(base_tensor &t_,
+                              const base_tensor &tc1_, const scalar_type &c_)
       : t(t_), tc1(tc1_), c(c_) {}
   };
 
   // Performs Cross product in the presence of test functions
   struct ga_instruction_cross_product_tf : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     bool inv;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Cross product with test functions");
@@ -2130,11 +2133,11 @@ namespace getfem {
       size_type n1 = tc1.size() / 3, n2 =  tc2.size() / 3, nn=n1*n2;
       GA_DEBUG_ASSERT(t.size() == nn*3, "Bad tensor size for cross product");
       size_type mm=2*nn, n1_2 = 2*n1, n2_2 = 2*n2;
-      base_tensor::iterator it = t.begin(), it2 = tc2.begin();
-
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it2 = tc2.cbegin();
       if (inv) {
         for (size_type i = 0; i < n2; ++i, ++it2) {
-          base_tensor::iterator it1 = tc1.begin();
+          base_tensor::const_iterator it1 = tc1.cbegin();
           for (size_type j = 0; j < n1; ++j, ++it, ++it1) {
             *it    = - it1[n1]  *it2[n2_2] + it1[n1_2]*it2[n2];
             it[nn] = - it1[n1_2]*it2[0]    + it1[0]   *it2[n2_2];
@@ -2143,7 +2146,7 @@ namespace getfem {
         }
       } else {
         for (size_type i = 0; i < n2; ++i, ++it2) {
-          base_tensor::iterator it1 = tc1.begin();
+          base_tensor::const_iterator it1 = tc1.cbegin();
           for (size_type j = 0; j < n1; ++j, ++it, ++it1) {
             *it    = it1[n1]  *it2[n2_2] - it1[n1_2]*it2[n2];
             it[nn] = it1[n1_2]*it2[0]    - it1[0]   *it2[n2_2];
@@ -2153,14 +2156,16 @@ namespace getfem {
       } 
       return 0;
     }
-    ga_instruction_cross_product_tf(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, bool inv_)
+    ga_instruction_cross_product_tf(base_tensor &t_,
+                                    const base_tensor &tc1_,
+                                    const base_tensor &tc2_, bool inv_)
       : t(t_), tc1(tc1_), tc2(tc2_), inv(inv_) {}
   };
 
   // Performs Cross product in the absence of test functions
   struct ga_instruction_cross_product : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: Cross product with test functions");
       GA_DEBUG_ASSERT(t.size() == 3 && tc1.size() == 3 && tc2.size() == 3,
@@ -2170,8 +2175,8 @@ namespace getfem {
       t[2] = tc1[0]*tc2[1] - tc1[1]*tc2[0];
       return 0;
     }
-    ga_instruction_cross_product(base_tensor &t_, base_tensor &tc1_,
-                                 base_tensor &tc2_)
+    ga_instruction_cross_product(base_tensor &t_,
+                                 const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -2179,7 +2184,8 @@ namespace getfem {
 
   
   struct ga_instruction_dotmult : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: componentwise multiplication");
       size_type s2 = tc2.size(), s1_1 = tc1.size() / s2;
@@ -2191,13 +2197,14 @@ namespace getfem {
           *it = tc1[m+s1_1*i] * tc2[i];
       return 0;
     }
-    ga_instruction_dotmult(base_tensor &t_, base_tensor &tc1_,
-                           base_tensor &tc2_)
+    ga_instruction_dotmult(base_tensor &t_,
+                           const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   struct ga_instruction_dotdiv : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: componentwise division");
       size_type s2 = tc2.size(), s1_1 = tc1.size() / s2;
@@ -2209,14 +2216,15 @@ namespace getfem {
           *it = tc1[m+s1_1*i] / tc2[i];
       return 0;
     }
-    ga_instruction_dotdiv(base_tensor &t_, base_tensor &tc1_,
-                          base_tensor &tc2_)
+    ga_instruction_dotdiv(base_tensor &t_,
+                          const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Ami Bni -> Cmni
   struct ga_instruction_dotmult_spec : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: specific componentwise multiplication");
       size_type s2_1 = tc2.sizes()[0], s2_2 = tc2.size() / s2_1;
@@ -2230,14 +2238,15 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_dotmult_spec(base_tensor &t_, base_tensor &tc1_,
-                           base_tensor &tc2_)
+    ga_instruction_dotmult_spec(base_tensor &t_,
+                                const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Amijik -> Cmjk. To be optimized
   struct ga_instruction_contract_1_1 : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     size_type nn, ii2, ii3;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: single contraction on a single tensor");
@@ -2257,14 +2266,15 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_contract_1_1(base_tensor &t_, base_tensor &tc1_,
+    ga_instruction_contract_1_1(base_tensor &t_, const base_tensor &tc1_,
                                 size_type n_, size_type i2_, size_type i3_)
       : t(t_), tc1(tc1_), nn(n_), ii2(i2_), ii3(i3_)  {}
   };
 
   // Performs Amijk Bnljp -> Cmniklp. To be optimized
   struct ga_instruction_contract_2_1 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn, ii1, ii2, ii3, ii4;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: single contraction on two tensors");
@@ -2289,8 +2299,8 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_contract_2_1(base_tensor &t_, base_tensor &tc1_,
-                                base_tensor &tc2_,
+    ga_instruction_contract_2_1(base_tensor &t_,
+                                const base_tensor &tc1_, const base_tensor &tc2_,
                                 size_type n_, size_type i1_, size_type i2_,
                                 size_type i3_, size_type i4_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_),
@@ -2299,7 +2309,8 @@ namespace getfem {
 
   // Performs Amijk Bnljp -> Cnmiklp. To be optimized
   struct ga_instruction_contract_2_1_rev : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn, ii1, ii2, ii3, ii4;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: single contraction on two tensors");
@@ -2324,8 +2335,8 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_contract_2_1_rev(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_,
+    ga_instruction_contract_2_1_rev(base_tensor &t_,
+                                    const base_tensor &tc1_, const base_tensor &tc2_,
                                     size_type n_, size_type i1_, size_type i2_,
                                     size_type i3_, size_type i4_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_),
@@ -2334,7 +2345,8 @@ namespace getfem {
 
   // Performs Amijklp Bnqjrls -> Cmnikpqrs. To be optimized
   struct ga_instruction_contract_2_2 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn1, nn2, ii1, ii2, ii3, ii4, ii5, ii6;
     bool inv_tc2;
     virtual int exec() {
@@ -2369,8 +2381,8 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_contract_2_2(base_tensor &t_, base_tensor &tc1_,
-                                base_tensor &tc2_,
+    ga_instruction_contract_2_2(base_tensor &t_,
+                                const base_tensor &tc1_, const base_tensor &tc2_,
                                 size_type n1_, size_type n2_,
                                 size_type i1_, size_type i2_, size_type i3_,
                                 size_type i4_, size_type i5_, size_type i6_,
@@ -2382,7 +2394,8 @@ namespace getfem {
 
   // Performs Amijklp Bnqjrls -> Cnmikpqrs. To be optimized
   struct ga_instruction_contract_2_2_rev : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn1, nn2, ii1, ii2, ii3, ii4, ii5, ii6;
     bool inv_tc2;
     virtual int exec() {
@@ -2417,8 +2430,8 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_contract_2_2_rev(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_,
+    ga_instruction_contract_2_2_rev(base_tensor &t_,
+                                    const base_tensor &tc1_, const base_tensor &tc2_,
                                     size_type n1_, size_type n2_,
                                     size_type i1_, size_type i2_, size_type i3_,
                                     size_type i4_, size_type i5_, size_type i6_,
@@ -2431,86 +2444,87 @@ namespace getfem {
 
   // Performs Amj Bjk -> Cmk. To be optimized
   struct ga_instruction_matrix_mult : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
-    size_type n;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    const size_type J;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: order one contraction "
                     "(dot product or matrix multiplication)");
-
-      size_type s1 = tc1.size() / n;
-      size_type s2 = tc2.size() / n;
-
-      base_tensor::iterator it = t.begin();
-      for (size_type k = 0; k < s2; ++k)
-        for (size_type i = 0; i < s1; ++i, ++it) {
+      size_type M = tc1.size() / J,
+                K = tc2.size() / J;
+      auto it = t.begin();
+      for (size_type k = 0; k < K; ++k)
+        for (size_type m = 0; m < M; ++m, ++it) {
             *it = scalar_type(0);
-            for (size_type j = 0; j < n; ++j)
-              *it += tc1[i+j*s1] * tc2[j+k*n];
+            for (size_type j = 0; j < J; ++j)
+              *it += tc1[m+M*j] * tc2[j+J*k];
           }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_matrix_mult(base_tensor &t_, base_tensor &tc1_,
-                               base_tensor &tc2_, size_type n_)
-      : t(t_), tc1(tc1_), tc2(tc2_), n(n_) {}
+    ga_instruction_matrix_mult(base_tensor &t_,
+                               const base_tensor &tc1_,
+                               const base_tensor &tc2_, size_type J_)
+      : t(t_), tc1(tc1_), tc2(tc2_), J(J_) {}
   };
 
   // Performs Amij Bnjk -> Cmnik. To be optimized
   struct ga_instruction_matrix_mult_spec : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
-    size_type n, m, p; // tc1 of size q*m*n, tc2 of size l*n*p
-                       // t of size q*l*m*p
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    size_type J, I, K; // tc1 of size M*I*J, tc2 of size N*J*K
+                       // t of size M*N*I*K
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: specific order one contraction "
                     "(dot product or matrix multiplication)");
-      size_type q = tc1.size() / (m * n);
-      size_type l = tc2.size() / (p * n);
-
-      base_tensor::iterator it = t.begin();
-      for (size_type r = 0; r < p; ++r)
-        for (size_type k = 0; k < m; ++k)
-          for (size_type j = 0; j < l; ++j)
-            for (size_type i = 0; i < q; ++i, ++it) {
+      const size_type MI = tc1.size() / J,    M = MI / I,
+                      NJ = tc2.size() / K,    N = NJ / J;
+      auto it = t.begin();
+      for (size_type k = 0; k < K; ++k)
+        for (size_type i = 0; i < I; ++i)
+          for (size_type n = 0; n < N; ++n)
+            for (size_type m = 0; m < M; ++m, ++it) {
               *it = scalar_type(0);
-              for (size_type s = 0; s < n; ++s)
-                *it += tc1[i+k*q+s*q*m] * tc2[j+s*l+r*l*n];
+              for (size_type j = 0; j < J; ++j)
+                *it += tc1[m+M*i+MI*j] * tc2[n+N*j+NJ*k];
             }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_matrix_mult_spec(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, size_type n_,
-                                    size_type m_, size_type p_)
-      : t(t_), tc1(tc1_), tc2(tc2_), n(n_), m(m_), p(p_) {}
+    ga_instruction_matrix_mult_spec(base_tensor &t_,
+                                    const base_tensor &tc1_,
+                                    const base_tensor &tc2_,
+                                    size_type J_, size_type I_, size_type K_)
+      : t(t_), tc1(tc1_), tc2(tc2_), J(J_), I(I_), K(K_) {}
   };
 
   // Performs Amij Bnjk -> Cnmik. To be optimized
   struct ga_instruction_matrix_mult_spec2 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
-    size_type n, m, p; // tc1 of size q*m*n, tc2 of size l*n*p
-                       // t of size l*q*m*p
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    size_type J, I, K; // tc1 of size M*I*J, tc2 of size N*J*K
+                       // t of size N*M*I*K
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: specific order one contraction "
                     "(dot product or matrix multiplication)");
-      size_type q = tc1.size() / (m * n);
-      size_type l = tc2.size() / (p * n);
-
-      base_tensor::iterator it = t.begin();
-      for (size_type r = 0; r < p; ++r)
-        for (size_type k = 0; k < m; ++k)
-          for (size_type i = 0; i < q; ++i)
-            for (size_type j = 0; j < l; ++j, ++it) {
-              *it = scalar_type(0);
-              for (size_type s = 0; s < n; ++s)
-                *it += tc1[i+k*q+s*q*m] * tc2[j+s*l+r*l*n];
-            }
+      const size_type MI = tc1.size() / J,
+                      NJ = tc2.size() / K,    N = NJ / J;
+      auto it = t.begin();
+      for (size_type k = 0; k < K; ++k)
+        for (size_type mi = 0; mi < MI; ++mi)
+          for (size_type n = 0; n < N; ++n, ++it) {
+            *it = scalar_type(0);
+            for (size_type j = 0; j < J; ++j)
+              *it += tc1[mi+MI*j] * tc2[n+N*j+NJ*k];
+          }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_matrix_mult_spec2(base_tensor &t_, base_tensor &tc1_,
-                                     base_tensor &tc2_, size_type n_,
-                                     size_type m_, size_type p_)
-      : t(t_), tc1(tc1_), tc2(tc2_), n(n_), m(m_), p(p_) {}
+    ga_instruction_matrix_mult_spec2(base_tensor &t_,
+                                     const base_tensor &tc1_,
+                                     const base_tensor &tc2_,
+                                     size_type J_, size_type I_, size_type K_)
+      : t(t_), tc1(tc1_), tc2(tc2_), J(J_), I(I_), K(K_) {}
   };
 
   // Performs Ani Bmi -> Cmn
@@ -2559,7 +2573,8 @@ namespace getfem {
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_contraction_opt0_2 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type n, q;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction operation of size " << n*q <<
@@ -2568,9 +2583,10 @@ namespace getfem {
       size_type s1_qq = s1*q, s2_qq = s2*q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
-        auto it2 = tc2.begin();
+        auto it2 = tc2.cbegin();
         for (size_type j = 0; j < s2_q; ++j) {
           if (j) it2+=q;
           auto itt1 = it1;
@@ -2590,16 +2606,18 @@ namespace getfem {
       // GMM_ASSERT1(gmm::vect_dist2(t.as_vector(), u.as_vector()) < 1E-9, "Erroneous");
       return 0;
     }
-    ga_instruction_contraction_opt0_2(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, size_type n_,
-                                    size_type q_)
+    ga_instruction_contraction_opt0_2(base_tensor &t_,
+                                      const base_tensor &tc1_,
+                                      const base_tensor &tc2_,
+                                      size_type n_, size_type q_)
       : t(t_), tc1(tc1_), tc2(tc2_), n(n_), q(q_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   template <int N>
   struct ga_instruction_contraction_opt0_2_unrolled : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type q;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q <<
@@ -2608,9 +2626,10 @@ namespace getfem {
       size_type s1_qq = s1*q, s2_qq = s2*q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
-        auto it2 = tc2.begin();
+        auto it2 = tc2.cbegin();
         for (size_type j = 0; j < s2_q; ++j) {
           if (j) it2+=q;
           auto itt1 = it1;
@@ -2626,15 +2645,18 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt0_2_unrolled(base_tensor &t_, base_tensor &tc1_,
-                                             base_tensor &tc2_, size_type q_)
+    ga_instruction_contraction_opt0_2_unrolled(base_tensor &t_,
+                                               const base_tensor &tc1_,
+                                               const base_tensor &tc2_,
+                                               size_type q_)
       : t(t_), tc1(tc1_), tc2(tc2_), q(q_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   template <int N, int Q>
   struct ga_instruction_contraction_opt0_2_dunrolled : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*Q
                     << " optimized for vectorized second tensor of type 2");
@@ -2642,9 +2664,10 @@ namespace getfem {
       size_type s1_qq = s1*Q, s2_qq = s2*Q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
-        auto it2 = tc2.begin();
+        auto it2 = tc2.cbegin();
         for (size_type j = 0; j < s2_q; ++j) {
           if (j) it2+=Q;
           auto itt1 = it1;
@@ -2660,14 +2683,16 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt0_2_dunrolled
-    (base_tensor &t_, base_tensor &tc1_, base_tensor &tc2_)
+    ga_instruction_contraction_opt0_2_dunrolled(base_tensor &t_,
+                                                const base_tensor &tc1_,
+                                                const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_contraction_opt2_0 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type n, q;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction operation of size " << n*q <<
@@ -2678,9 +2703,9 @@ namespace getfem {
 
       auto it = t.begin();
       for (size_type i = 0; i < s1_q; ++i)  {
-        auto it1 = tc1.begin() + i*q;
+        auto it1 = tc1.cbegin() + i*q;
         for (size_type l = 0; l < q; ++l) {
-          auto it2 = tc2.begin() + l*s2;
+          auto it2 = tc2.cbegin() + l*s2;
           for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
             auto itt1 = it1, itt2 = it2;
             *it = *itt1 * (*itt2);
@@ -2692,16 +2717,18 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt2_0(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, size_type n_,
-                                    size_type q_)
+    ga_instruction_contraction_opt2_0(base_tensor &t_,
+                                      const base_tensor &tc1_,
+                                      const base_tensor &tc2_,
+                                      size_type n_, size_type q_)
       : t(t_), tc1(tc1_), tc2(tc2_), n(n_), q(q_) { }
   };
 
   // Performs Ani Bmi -> Cmn
   template <int N>
   struct ga_instruction_contraction_opt2_0_unrolled : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type q;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*q
@@ -2710,10 +2737,11 @@ namespace getfem {
       size_type s1_q = s1/q, s1_qq = s1*q, s2_qq = s2*q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1_q; ++i, it1 += q)  {
         for (size_type l = 0; l < q; ++l) {
-          auto it2 = tc2.begin() + l*s2;
+          auto it2 = tc2.cbegin() + l*s2;
           for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
             auto itt1 = it1, itt2 = it2;
             *it = *itt1 * (*itt2);
@@ -2725,15 +2753,18 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt2_0_unrolled(base_tensor &t_, base_tensor &tc1_,
-                                             base_tensor &tc2_, size_type q_)
+    ga_instruction_contraction_opt2_0_unrolled(base_tensor &t_,
+                                               const base_tensor &tc1_,
+                                               const base_tensor &tc2_,
+                                               size_type q_)
       : t(t_), tc1(tc1_), tc2(tc2_), q(q_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   template <int N, int Q>
   struct ga_instruction_contraction_opt2_0_dunrolled : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction of size " << N*Q
                     << " optimized for vectorized second tensor of type 2");
@@ -2741,10 +2772,11 @@ namespace getfem {
       size_type s1_q = s1/Q, s1_qq = s1*Q, s2_qq = s2*Q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1_q; ++i, it1 += Q)  {
         for (size_type l = 0; l < Q; ++l) {
-          auto it2 = tc2.begin() + l*s2;
+          auto it2 = tc2.cbegin() + l*s2;
           for (size_type j = 0; j < s2; ++j, ++it, ++it2) {
             auto itt1 = it1, itt2 = it2;
             *it = *itt1 * (*itt2);
@@ -2756,23 +2788,26 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt2_0_dunrolled
-    (base_tensor &t_, base_tensor &tc1_, base_tensor &tc2_)
+    ga_instruction_contraction_opt2_0_dunrolled(base_tensor &t_,
+                                                const base_tensor &tc1_,
+                                                const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_contraction_opt0_1 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction operation of size " << nn <<
                     " optimized for vectorized second tensor of type 1");
       size_type ss1=tc1.size(), s1 = ss1/nn, s2=tc2.size()/nn, s2_n=s2/nn;
 
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
-        auto it2 = tc2.begin();
+        auto it2 = tc2.cbegin();
         for (size_type j = 0; j < s2_n; ++j) {
           if (j) it2 += nn;
           auto itt1 = it1;
@@ -2783,46 +2818,52 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt0_1(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, size_type n_)
+    ga_instruction_contraction_opt0_1(base_tensor &t_,
+                                      const base_tensor &tc1_,
+                                      const base_tensor &tc2_,
+                                      size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
   template<int N> inline void reduc_elem_unrolled_opt1_
-  (const base_vector::iterator &it, const base_vector::iterator &it1,
+  (const base_vector::iterator &it, const base_vector::const_iterator &it1,
    scalar_type a, size_type s1) {
     it[N-1] = it1[(N-1)*s1] * a;
     reduc_elem_unrolled_opt1_<N-1>(it, it1, a, s1);
   }
   template<> inline void reduc_elem_unrolled_opt1_<1>
-  (const base_vector::iterator &it, const base_vector::iterator &it1,
+  (const base_vector::iterator &it, const base_vector::const_iterator &it1,
    scalar_type a, size_type /* s1 */)
   { *it = (*it1) * a; }
 
   // Performs Ani Bmi -> Cmn
   template <int N>
   struct ga_instruction_contraction_opt0_1_unrolled : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << N
                     << " optimized for vectorized second tensor of type 1");
       size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
-      auto it = t.begin(), it1 = tc1.begin();
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
       for (size_type i = 0; i < s1; ++i, ++it1) {
-        auto it2 = tc2.begin(), it2e = it2 + s2;
+        auto it2 = tc2.cbegin(), it2e = it2 + s2;
         for (; it2 != it2e; it2 += N, it += N)
           reduc_elem_unrolled_opt1_<N>(it, it1, *it2, s1);
       }
       return 0;
     }
-    ga_instruction_contraction_opt0_1_unrolled(base_tensor &t_, base_tensor &tc1_,
-                                             base_tensor &tc2_)
+    ga_instruction_contraction_opt0_1_unrolled(base_tensor &t_,
+                                               const base_tensor &tc1_,
+                                               const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_contraction_opt1_1 : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction operation of size " << nn <<
@@ -2832,10 +2873,11 @@ namespace getfem {
       size_type ss1 = s1/nn, ss2 = s2/nn;
 
       // std::fill(t.begin(), t.end(), scalar_type(0)); // Factorized
-      auto it2 = tc2.begin();
+      auto it2 = tc2.cbegin();
       for (size_type j = 0; j < ss2; ++j) {
         if (j) it2 += nn;
-        auto it1 = tc1.begin(), it = t.begin() + j*nn;
+        auto it1 = tc1.cbegin();
+        auto it = t.begin() + j*nn;
         for (size_type i = 0; i < ss1; ++i) {
           if (i) { it1 += nn, it += s2*nn; }
           scalar_type a = (*it1) * (*it2);
@@ -2846,8 +2888,9 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_opt1_1(base_tensor &t_, base_tensor &tc1_,
-                                    base_tensor &tc2_, size_type n_)
+    ga_instruction_contraction_opt1_1(base_tensor &t_,
+                                      const base_tensor &tc1_,
+                                      const base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
@@ -2952,9 +2995,11 @@ namespace getfem {
   { *it = (*it1)*(*it2); }
 
   // Performs Ani Bmi -> Cmn. Unrolled operation.
-  template<int I> struct ga_instruction_contraction_unrolled
+  template<int I>
+  struct ga_instruction_contraction_unrolled
     : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unrolled contraction operation of size " << I);
       size_type N = tc1.size()/I, M = tc2.size()/I;
@@ -2967,15 +3012,17 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_contraction_unrolled(base_tensor &t_, base_tensor &tc1_,
-                                      base_tensor &tc2_)
+    ga_instruction_contraction_unrolled(base_tensor &t_,
+                                        const base_tensor &tc1_,
+                                        const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-  template<int N, int S2> inline void reduc_elem_d_unrolled__
-  (base_tensor::iterator &it,
-   base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-   size_type s1, size_type s2)  {
+  template<int N, int S2>
+  inline void reduc_elem_d_unrolled__(base_tensor::iterator &it,
+                                      base_tensor::const_iterator &it1,
+                                      base_tensor::const_iterator &it2,
+                                      size_type s1, size_type s2)  {
     reduc_elem_unrolled__<N>(it, it1, it2, s1, s2);
     reduc_elem_d_unrolled__<N, S2-1>(++it, it1, ++it2, s1, s2);
   }
@@ -3033,26 +3080,28 @@ namespace getfem {
 
   // Performs Ani Bmi -> Cmn. Automatically doubly unrolled operation
   // (for uniform meshes).
-  template<int N, int S2> struct ga_ins_red_d_unrolled
-    : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+  template<int I, int M>
+  struct ga_ins_red_d_unrolled : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: doubly unrolled contraction operation of size "
-                    << S2 << "x" << N);
-      size_type s1 = tc1.size()/N, s2 = tc2.size()/N;
-      GA_DEBUG_ASSERT(s2 == S2, "Internal error");
-      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error, " << t.size()
-                      << " != " << s1 << "*" << s2);
-      base_tensor::iterator it = t.begin();
-      base_tensor::const_iterator it1 = tc1.cbegin();
-      for (size_type ii = 0; ii < s1; ++ii, ++it1) {
-        base_tensor::const_iterator it2 = tc2.cbegin();
-        reduc_elem_d_unrolled__<N, S2>(it, it1, it2, s1, s2);
+                    << M << "x" << I);
+      size_type N = tc1.size()/I, M_ = tc2.size()/I;
+      GA_DEBUG_ASSERT(M_ == M, "Internal error");
+      GA_DEBUG_ASSERT(t.size() == N*M, "Internal error, " << t.size()
+                      << " != " << N << "*" << M);
+      auto it = t.begin();
+      auto it1 = tc1.cbegin();
+      for (size_type n = 0; n < N; ++n, ++it1) {
+        auto it2 = tc2.cbegin();
+        reduc_elem_d_unrolled__<I, M>(it, it1, it2, N, M); // M argument is known at compile time it can be optimized
       }
       GA_DEBUG_ASSERT(it == t.end(), "Internal error");
       return 0;
     }
-    ga_ins_red_d_unrolled(base_tensor &t_, base_tensor &tc1_, base_tensor &tc2_)
+    ga_ins_red_d_unrolled(base_tensor &t_,
+                          const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -3523,7 +3572,8 @@ namespace getfem {
 
   // Performs Amij Bnj -> Cmni. To be optimized.
   struct ga_instruction_spec_contraction : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: specific contraction operation of "
@@ -3541,14 +3591,16 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_spec_contraction(base_tensor &t_, base_tensor &tc1_,
-                                  base_tensor &tc2_, size_type n_)
+    ga_instruction_spec_contraction(base_tensor &t_,
+                                    const base_tensor &tc1_,
+                                    const base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
   // Performs Amik Bnjk -> Cmnij. To be optimized.
   struct ga_instruction_spec2_contraction : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     size_type nn;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: second specific contraction operation of "
@@ -3567,27 +3619,29 @@ namespace getfem {
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_spec2_contraction(base_tensor &t_, base_tensor &tc1_,
-                                   base_tensor &tc2_, size_type n_)
+    ga_instruction_spec2_contraction(base_tensor &t_,
+                                     const base_tensor &tc1_,
+                                     const base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
   // Performs Aij Bkl -> Cijkl
   struct ga_instruction_simple_tmult : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: simple tensor product");
       size_type s1 = tc1.size();
       GA_DEBUG_ASSERT(t.size() == s1 * tc2.size(), "Wrong sizes");
-      base_tensor::iterator it2=tc2.begin(), it1=tc1.begin(), it1end=it1 + s1;
+      base_tensor::const_iterator it2=tc2.cbegin(), it1=tc1.cbegin(), it1end=it1 + s1;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         *it = *(it2) * (*it1);
         ++it1; if (it1 == it1end) { it1 = tc1.begin(), ++it2; }
       }
       return 0;
     }
-    ga_instruction_simple_tmult(base_tensor &t_, base_tensor &tc1_,
-                                base_tensor &tc2_)
+    ga_instruction_simple_tmult(base_tensor &t_,
+                                const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -3701,13 +3755,14 @@ namespace getfem {
 #endif
       return 0;
     }
-    ga_instruction_simple_tmult_unrolled(base_tensor &t_, base_tensor &tc1_,
-                                         base_tensor &tc2_)
+    ga_instruction_simple_tmult_unrolled(base_tensor &t_,
+                                         const base_tensor &tc1_,
+                                         const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
   pga_instruction  ga_uniform_instruction_simple_tmult
-  (base_tensor &t, base_tensor &tc1, base_tensor &tc2) {
+  (base_tensor &t, const base_tensor &tc1, const base_tensor &tc2) {
     switch(tc1.size()) {
     case  1 : GMM_ASSERT1(false, "size 1 should not happen");
     case  2 : return std::make_shared<ga_instruction_simple_tmult_unrolled< 2>>
@@ -3756,7 +3811,7 @@ namespace getfem {
       GA_DEBUG_ASSERT(t.size() == tc1.size() * tc2.size(), "Wrong sizes");
       const size_type M = tc1.size() / I,
                       N = tc2.size() / J;
-      base_tensor::iterator it = t.begin();
+      auto it = t.begin();
       for (size_type j = 0; j < J; ++j)
         for (size_type i = 0; i < I; ++i)
           for (size_type n = 0; n < N; ++n) {
@@ -3776,23 +3831,24 @@ namespace getfem {
 
   // Performs Ai Bmj -> Cmij. To be optimized.
   struct ga_instruction_spec2_tmult : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: second specific tensor product");
       GA_DEBUG_ASSERT(t.size() == tc1.size() * tc2.size(), "Wrong sizes");
-      size_type s1 = tc1.size();
-      size_type s2_1 = tc2.sizes()[0], s2_2 = tc2.size() / s2_1;
+      size_type I = tc1.size();
+      size_type M = tc2.sizes()[0], J = tc2.size() / M;
 
       base_tensor::iterator it = t.begin();
-      for (size_type j = 0; j < s2_2; ++j)
-        for (size_type i = 0; i < s1; ++i)
-          for (size_type m = 0; m < s2_1; ++m, ++it)
-            *it = tc1[i] * tc2[m+j*s2_1];
+      for (size_type j = 0; j < J; ++j)
+        for (size_type i = 0; i < I; ++i)
+          for (size_type m = 0; m < M; ++m, ++it)
+            *it = tc1[i] * tc2[m+M*j];
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
-    ga_instruction_spec2_tmult(base_tensor &t_, base_tensor &tc1_,
-                              base_tensor &tc2_)
+    ga_instruction_spec2_tmult(base_tensor &t_,
+                               const base_tensor &tc1_, const base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
@@ -3872,31 +3928,36 @@ namespace getfem {
   };
 
   struct ga_instruction_eval_func_1arg : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     pscalar_func_onearg f1;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a one argument "
                     "predefined function on tensor");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f1)(tc1[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = (*f1)(tc1[i]);
       return 0;
     }
-    ga_instruction_eval_func_1arg(base_tensor &t_, base_tensor &c_,
-                                  pscalar_func_onearg f1_)
+    ga_instruction_eval_func_1arg(base_tensor &t_,
+                                  const base_tensor &c_, pscalar_func_onearg f1_)
       : t(t_), tc1(c_), f1(f1_) {}
   };
 
   struct ga_instruction_eval_func_1arg_expr : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     const ga_predef_function &F;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a one argument "
                     "predefined function on tensor");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = F(tc1[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = F(tc1[i]);
       return 0;
     }
-    ga_instruction_eval_func_1arg_expr(base_tensor &t_, base_tensor &c_,
+    ga_instruction_eval_func_1arg_expr(base_tensor &t_,
+                                       const base_tensor &c_,
                                        const ga_predef_function &F_)
       : t(t_), tc1(c_), F(F_) {}
   };
@@ -3935,103 +3996,118 @@ namespace getfem {
   };
 
   struct ga_instruction_eval_func_2arg_first_scalar : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on one scalar and one tensor");
       GA_DEBUG_ASSERT(t.size() == tc2.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[0], tc2[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = (*f2)(tc1[0], tc2[i]);
       return 0;
     }
-    ga_instruction_eval_func_2arg_first_scalar
-    (base_tensor &t_, base_tensor &c_, base_tensor &d_,
-     pscalar_func_twoargs f2_)
+    ga_instruction_eval_func_2arg_first_scalar(base_tensor &t_,
+                                               const base_tensor &c_,
+                                               const base_tensor &d_,
+                                               pscalar_func_twoargs f2_)
       : t(t_), tc1(c_), tc2(d_), f2(f2_) {}
   };
 
   struct ga_instruction_eval_func_2arg_first_scalar_expr
     : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     const ga_predef_function &F;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on one scalar and one tensor");
       GA_DEBUG_ASSERT(t.size() == tc2.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = F(tc1[0], tc2[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = F(tc1[0], tc2[i]);
       return 0;
     }
-    ga_instruction_eval_func_2arg_first_scalar_expr
-    (base_tensor &t_, base_tensor &c_, base_tensor &d_,
-     const ga_predef_function &F_)
+    ga_instruction_eval_func_2arg_first_scalar_expr(base_tensor &t_,
+                                                    const base_tensor &c_,
+                                                    const base_tensor &d_,
+                                                    const ga_predef_function &F_)
       : t(t_), tc1(c_), tc2(d_), F(F_) {}
   };
 
   struct ga_instruction_eval_func_2arg_second_scalar : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on one tensor and one scalar");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[i], tc2[0]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = (*f2)(tc1[i], tc2[0]);
       return 0;
     }
     ga_instruction_eval_func_2arg_second_scalar(base_tensor &t_,
-                                                base_tensor &c_,
-                                                base_tensor &d_,
+                                                const base_tensor &c_,
+                                                const base_tensor &d_,
                                                 pscalar_func_twoargs f2_)
       : t(t_), tc1(c_), tc2(d_), f2(f2_) {}
   };
 
   struct ga_instruction_eval_func_2arg_second_scalar_expr
     : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     const ga_predef_function &F;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on one tensor and one scalar");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = F(tc1[i], tc2[0]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = F(tc1[i], tc2[0]);
       return 0;
     }
-    ga_instruction_eval_func_2arg_second_scalar_expr
-    (base_tensor &t_, base_tensor &c_, base_tensor &d_,
-     const ga_predef_function &F_)
+    ga_instruction_eval_func_2arg_second_scalar_expr(base_tensor &t_,
+                                                     const base_tensor &c_,
+                                                     const base_tensor &d_,
+                                                     const ga_predef_function &F_)
       : t(t_), tc1(c_), tc2(d_), F(F_) {}
   };
 
   struct ga_instruction_eval_func_2arg : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on two tensors");
       GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
                       "Wrong sizes");
-
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[i], tc2[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = (*f2)(tc1[i], tc2[i]);
       return 0;
     }
-    ga_instruction_eval_func_2arg(base_tensor &t_, base_tensor &c_,
-                                  base_tensor &d_, pscalar_func_twoargs f2_)
+    ga_instruction_eval_func_2arg(base_tensor &t_,
+                                  const base_tensor &c_,
+                                  const base_tensor &d_, pscalar_func_twoargs f2_)
       : t(t_), tc1(c_), tc2(d_), f2(f2_) {}
   };
 
   struct ga_instruction_eval_func_2arg_expr : public ga_instruction {
-    base_tensor &t, &tc1, &tc2;
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
     const ga_predef_function &F;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                     "predefined function on two tensors");
       GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
                       "Wrong sizes");
-
-      for (size_type i = 0; i < t.size(); ++i)  t[i] = F(tc1[i], tc2[i]);
+      for (size_type i = 0; i < t.size(); ++i)
+        t[i] = F(tc1[i], tc2[i]);
       return 0;
     }
-    ga_instruction_eval_func_2arg_expr(base_tensor &t_, base_tensor &c_,
-                                       base_tensor &d_,
+    ga_instruction_eval_func_2arg_expr(base_tensor &t_,
+                                       const base_tensor &c_,
+                                       const base_tensor &d_,
                                        const ga_predef_function &F_)
       : t(t_), tc1(c_), tc2(d_), F(F_) {}
   };
@@ -4084,7 +4160,8 @@ namespace getfem {
   };
 
   struct ga_instruction_tensor_slice : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     bgeot::multi_index mi, indices;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: tensor slice");
@@ -4097,7 +4174,8 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_tensor_slice(base_tensor &t_, base_tensor &tc1_,
+    ga_instruction_tensor_slice(base_tensor &t_,
+                                const base_tensor &tc1_,
                                 bgeot::multi_index &mi_,
                                 bgeot::multi_index &indices_)
       : t(t_), tc1(tc1_), mi(mi_), indices(indices_)  {}
@@ -4307,7 +4385,7 @@ namespace getfem {
       E += t[0] * coeff;
       return 0;
      }
-    ga_instruction_scalar_assembly(base_tensor &t_, scalar_type &E_,
+    ga_instruction_scalar_assembly(const base_tensor &t_, scalar_type &E_,
                                    scalar_type &coeff_)
       : t(t_), E(E_), coeff(coeff_) {}
   };
