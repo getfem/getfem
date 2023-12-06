@@ -2455,8 +2455,8 @@ namespace getfem {
 #if defined(GA_USES_BLAS)
       if (M*J*K > 27) {
         const BLAS_INT M_=BLAS_INT(M), J_=BLAS_INT(J), K_=BLAS_INT(K);
-        char notrans = 'N';
-        static const scalar_type one(1), zero(0);
+        constexpr char notrans = 'N';
+        constexpr scalar_type one(1), zero(0);
         gmm::dgemm_(&notrans, &notrans, &M_, &K_, &J_, &one,
                     &(tc1[0]), &M_, &(tc2[0]), &J_, &zero, &(t[0]), &M_);
       } else
@@ -2507,6 +2507,20 @@ namespace getfem {
                     "(dot product or matrix multiplication)");
       const size_type MI = tc1.size() / J,    M = MI / I,
                       NJ = tc2.size() / K,    N = NJ / J;
+#if defined(GA_USES_BLAS)
+      const BLAS_INT J_ = BLAS_INT(J), M_ = BLAS_INT(M), N_ = BLAS_INT(N),
+                     MI_ = BLAS_INT(MI);
+      constexpr char notrans = 'N', trans = 'T';
+      constexpr scalar_type one(1), zero(0);
+      size_type MN = M*N;
+      auto it = t.begin();
+      for (size_type k = 0; k < K; ++k)
+        for (size_type i = 0; i < I; ++i, it += MN)  // => t[M*N*(i+I*k)]
+          gmm::dgemm_(&notrans, &trans, &M_, &N_, &J_, &one,
+                      &(tc1[M*i]), &MI_, &(tc2[NJ*k]), &N_, &zero,
+                      &(*it), &M_);
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#else
       auto it = t.begin();
       for (size_type k = 0; k < K; ++k)
         for (size_type i = 0; i < I; ++i)
@@ -2517,6 +2531,7 @@ namespace getfem {
                 *it += tc1[m+M*i+MI*j] * tc2[n+N*j+NJ*k];
             }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#endif
       return 0;
     }
     ga_instruction_matrix_mult_spec(base_tensor &t_,
@@ -2537,6 +2552,18 @@ namespace getfem {
                     "(dot product or matrix multiplication)");
       const size_type MI = tc1.size() / J,
                       NJ = tc2.size() / K,    N = NJ / J;
+#if defined(GA_USES_BLAS)
+      const BLAS_INT J_ = BLAS_INT(J), MI_ = BLAS_INT(MI), N_ = BLAS_INT(N);
+      constexpr char notrans = 'N', trans = 'T';
+      constexpr scalar_type one(1), zero(0);
+      size_type NMI = N*MI;
+      auto it = t.begin();
+      for (size_type k = 0; k < K; ++k, it += NMI) // => it[N*M*I*k]
+        gmm::dgemm_(&notrans, &trans, &N_, &MI_, &J_, &one,
+                    &(tc2[NJ*k]), &N_, &(tc1[0]), &MI_, &zero,
+                    &(*it), &N_);
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#else
       auto it = t.begin();
       for (size_type k = 0; k < K; ++k)
         for (size_type mi = 0; mi < MI; ++mi)
@@ -2546,6 +2573,7 @@ namespace getfem {
               *it += tc1[mi+MI*j] * tc2[n+N*j+NJ*k];
           }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#endif
       return 0;
     }
     ga_instruction_matrix_mult_spec2(base_tensor &t_,
@@ -2924,6 +2952,88 @@ namespace getfem {
 
 
 
+  template<int I> inline void dax__(base_tensor::iterator &it,
+                                    base_tensor::const_iterator &itx,
+                                    const scalar_type &a) {
+    constexpr int I1 = I/8;
+    constexpr int I2 = I - I1*8;
+    for (int i=0; i < I1; ++i)
+      dax__<8>(it, itx , a);
+    dax__<I2>(it, itx , a);
+  }
+  template<> inline void dax__<8>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<7>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<6>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<5>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<4>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<3>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<2>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<1>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<0>(base_tensor::iterator &,
+                                  base_tensor::const_iterator &,
+                                  const scalar_type &) {}
+
+
   template<int I> inline
   void reduc_elem_unrolled__(base_tensor::iterator &it,
                              base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
@@ -3037,6 +3147,61 @@ namespace getfem {
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         reduc_elem_unrolled__<I>(it, it1, it2, N, M);
         ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
+      }
+      return 0;
+    }
+    ga_instruction_contraction_unrolled(base_tensor &t_,
+                                        const base_tensor &tc1_,
+                                        const base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
+  };
+
+  // Performs An Bm -> Cmn. Unrolled operation.
+  template<>
+  struct ga_instruction_contraction_unrolled<1> : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: unrolled contraction operation of size 1");
+      size_type N = tc1.size(), M = tc2.size();
+      GA_DEBUG_ASSERT(t.size() == N*M, "Internal error, " << t.size()
+                      << " != " << N << "*" << M);
+
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it1 = tc1.cbegin();
+      switch(M) {
+      case(1):
+        for (size_type n = 0; n < N; ++n, ++it1)
+          *it++ = tc2[0] * (*it1);
+        break;
+      case(2):
+        for (size_type n = 0; n < N; ++n, ++it1) {
+          base_tensor::const_iterator it2 = tc2.cbegin();
+          dax__<2>(it, it2, *it1);
+        }
+        break;
+      case(3):
+        for (size_type n = 0; n < N; ++n, ++it1) {
+          base_tensor::const_iterator it2 = tc2.cbegin();
+          dax__<4>(it, it2, *it1);
+        }
+        break;
+      case(4):
+        for (size_type n = 0; n < N; ++n, ++it1) {
+          base_tensor::const_iterator it2 = tc2.cbegin();
+          dax__<4>(it, it2, *it1);
+        }
+        break;
+      default:
+        const int M1 = int(M)/4;
+        const int M2 = int(M) - M1*4;
+        for (size_type n = 0; n < N; ++n, ++it1) {
+          base_tensor::const_iterator it2 = tc2.cbegin();
+          for (int mm=0; mm < M1; ++mm)
+            dax__<4>(it, it2, *it1);
+          for (int mm=0; mm < M2; ++mm)
+            *it++ = (*it2++) * (*it1);
+        }
       }
       return 0;
     }
@@ -3310,7 +3475,8 @@ namespace getfem {
     }
 
     switch(n) {
-    case  1 : GMM_ASSERT1(false, "n=1 should not happen");
+    case  1 : return std::make_shared<ga_instruction_contraction_unrolled< 1>>
+                     (t, tc1, tc2);
     case  2 : return std::make_shared<ga_instruction_contraction_unrolled< 2>>
                      (t, tc1, tc2);
     case  3 : return std::make_shared<ga_instruction_contraction_unrolled< 3>>
@@ -3673,86 +3839,6 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-  template<int I> inline void dax__(base_tensor::iterator &it,
-                                    base_tensor::const_iterator &itx,
-                                    const scalar_type &a) {
-    constexpr int I1 = I/8;
-    constexpr int I2 = I - I1*8;
-    for (int i=0; i < I1; ++i)
-      dax__<8>(it, itx , a);
-    dax__<I2>(it, itx , a);
-  }
-  template<> inline void dax__<8>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<7>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<6>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<5>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<4>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<3>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<2>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<1>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<0>(base_tensor::iterator &,
-                                  base_tensor::const_iterator &,
-                                  const scalar_type &) {}
 
   // Performs Aij Bkl -> Cijkl, partially unrolled version
   template<int IJ> struct ga_instruction_simple_tmult_unrolled
@@ -3842,12 +3928,17 @@ namespace getfem {
       auto it = t.begin();
 #if 1 // there could be a smarter way to implement this, but this hardcoded version is fast and robust
       switch(M) {
-      case 1: GMM_ASSERT1(false, "M=1 should not happen");
+      case 1:
+        for (size_type j = 0; j < J; ++j)
+          for (auto it1 = tc1.cbegin(); it1 != tc1.end(); ++it1)
+            for (size_type n = 0; n < N; ++n)
+              *it++ = (*it1) * tc2[n+N*j];
+        break;
       case 2:
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<2>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3855,7 +3946,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<3>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3863,7 +3954,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<4>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3871,7 +3962,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<5>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3879,7 +3970,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<6>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3887,7 +3978,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<7>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3895,7 +3986,7 @@ namespace getfem {
         for (size_type j = 0; j < J; ++j)
           for (size_type i = 0; i < I; ++i)
             for (size_type n = 0; n < N; ++n) {
-              auto it1 = tc1.begin() + M*i;
+              auto it1 = tc1.cbegin() + M*i;
               dax__<8>(it, it1, tc2[n+N*j]);
             }
         break;
@@ -3907,7 +3998,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
               }
@@ -3916,7 +4007,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<1>(it, it1, tc2[n+N*j]);
@@ -3926,7 +4017,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<2>(it, it1, tc2[n+N*j]);
@@ -3936,7 +4027,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<3>(it, it1, tc2[n+N*j]);
@@ -3946,7 +4037,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<4>(it, it1, tc2[n+N*j]);
@@ -3956,7 +4047,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<5>(it, it1, tc2[n+N*j]);
@@ -3966,7 +4057,7 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<6>(it, it1, tc2[n+N*j]);
@@ -3976,14 +4067,14 @@ namespace getfem {
           for (size_type j = 0; j < J; ++j)
             for (size_type i = 0; i < I; ++i)
               for (size_type n = 0; n < N; ++n) {
-                auto it1 = tc1.begin() + M*i;
+                auto it1 = tc1.cbegin() + M*i;
                 for (int mm=0; mm < M1; ++mm)
                   dax__<8>(it, it1, tc2[n+N*j]);
                 dax__<7>(it, it1, tc2[n+N*j]);
               }
           break;
         default:
-          GMM_ASSERT1(false, "M=1 should not happen");
+          GMM_ASSERT1(false, "should not happen");
         }
       }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
