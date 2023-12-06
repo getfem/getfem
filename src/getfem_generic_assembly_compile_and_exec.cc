@@ -2452,14 +2452,42 @@ namespace getfem {
                     "(dot product or matrix multiplication)");
       size_type M = tc1.size() / J,
                 K = tc2.size() / J;
-      auto it = t.begin();
-      for (size_type k = 0; k < K; ++k)
-        for (size_type m = 0; m < M; ++m, ++it) {
-            *it = scalar_type(0);
-            for (size_type j = 0; j < J; ++j)
-              *it += tc1[m+M*j] * tc2[j+J*k];
-          }
-      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#if defined(GA_USES_BLAS)
+      if (M*J*K > 27) {
+        const BLAS_INT M_=BLAS_INT(M), J_=BLAS_INT(J), K_=BLAS_INT(K);
+        char notrans = 'N';
+        static const scalar_type one(1), zero(0);
+        gmm::dgemm_(&notrans, &notrans, &M_, &K_, &J_, &one,
+                    &(tc1[0]), &M_, &(tc2[0]), &J_, &zero, &(t[0]), &M_);
+      } else
+#endif
+      {
+        auto it = t.begin();
+        if (M==2 && J==2 && K == 2) {
+          *it++ = tc1[0]*tc2[0] + tc1[2]*tc2[1]; // k=0,m=0
+          *it++ = tc1[1]*tc2[0] + tc1[3]*tc2[1]; // k=0,m=1
+          *it++ = tc1[0]*tc2[2] + tc1[2]*tc2[3]; // k=1,m=0
+          *it++ = tc1[1]*tc2[2] + tc1[3]*tc2[3]; // k=1,m=1
+        } else if (M==3 && J==3 && K == 3) {
+          *it++ = tc1[0]*tc2[0] + tc1[3]*tc2[1] + tc1[6]*tc2[2]; // k=0,m=0
+          *it++ = tc1[1]*tc2[0] + tc1[4]*tc2[1] + tc1[7]*tc2[2]; // k=0,m=1
+          *it++ = tc1[2]*tc2[0] + tc1[5]*tc2[1] + tc1[8]*tc2[2]; // k=0,m=2
+          *it++ = tc1[0]*tc2[3] + tc1[3]*tc2[4] + tc1[6]*tc2[5]; // k=1,m=0
+          *it++ = tc1[1]*tc2[3] + tc1[4]*tc2[4] + tc1[7]*tc2[5]; // k=1,m=1
+          *it++ = tc1[2]*tc2[3] + tc1[5]*tc2[4] + tc1[8]*tc2[5]; // k=1,m=2
+          *it++ = tc1[0]*tc2[6] + tc1[3]*tc2[7] + tc1[6]*tc2[8]; // k=2,m=0
+          *it++ = tc1[1]*tc2[6] + tc1[4]*tc2[7] + tc1[7]*tc2[8]; // k=2,m=1
+          *it++ = tc1[2]*tc2[6] + tc1[5]*tc2[7] + tc1[8]*tc2[8]; // k=2,m=2
+        } else {
+          for (size_type k = 0; k < K; ++k)
+            for (size_type m = 0; m < M; ++m, ++it) {
+                *it = scalar_type(0);
+                for (size_type j = 0; j < J; ++j)
+                  *it += tc1[m+M*j] * tc2[j+J*k];
+              }
+        }
+        GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+      }
       return 0;
     }
     ga_instruction_matrix_mult(base_tensor &t_,
@@ -2899,100 +2927,100 @@ namespace getfem {
   template<int I> inline
   void reduc_elem_unrolled__(base_tensor::iterator &it,
                              base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                             size_type s1, size_type s2) {
-    *it = (*it1)*(*it2);
+                             const size_type s1, const size_type s2) {
+    *it = it1[0] * it2[0];
     for (int i=1; i < I; ++i)
-      *it += (*(it1+i*s1)) * (*(it2+i*s2));
+      *it += it1[i*s1] * it2[i*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<9>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
-    *it += (*(it1+4*s1)) * (*(it2+4*s2));
-    *it += (*(it1+5*s1)) * (*(it2+5*s2));
-    *it += (*(it1+6*s1)) * (*(it2+6*s2));
-    *it += (*(it1+7*s1)) * (*(it2+7*s2));
-    *it += (*(it1+8*s1)) * (*(it2+8*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2]
+        + it1[6*s1] * it2[6*s2]
+        + it1[7*s1] * it2[7*s2]
+        + it1[8*s1] * it2[8*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<8>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
-    *it += (*(it1+4*s1)) * (*(it2+4*s2));
-    *it += (*(it1+5*s1)) * (*(it2+5*s2));
-    *it += (*(it1+6*s1)) * (*(it2+6*s2));
-    *it += (*(it1+7*s1)) * (*(it2+7*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2]
+        + it1[6*s1] * it2[6*s2]
+        + it1[7*s1] * it2[7*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<7>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
-    *it += (*(it1+4*s1)) * (*(it2+4*s2));
-    *it += (*(it1+5*s1)) * (*(it2+5*s2));
-    *it += (*(it1+6*s1)) * (*(it2+6*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2]
+        + it1[6*s1] * it2[6*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<6>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
-    *it += (*(it1+4*s1)) * (*(it2+4*s2));
-    *it += (*(it1+5*s1)) * (*(it2+5*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<5>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
-    *it += (*(it1+4*s1)) * (*(it2+4*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<4>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
-    *it += (*(it1+3*s1)) * (*(it2+3*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<3>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
-    *it += (*(it1+2*s1)) * (*(it2+2*s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2];
   }
   template<> inline
   void reduc_elem_unrolled__<2>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type s1, size_type s2) {
-    *it = (*it1) * (*it2);
-    *it += (*(it1+s1)) * (*(it2+s2));
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]  * it2[0]
+        + it1[s1] * it2[s2];
   }
   template<> inline
   void reduc_elem_unrolled__<1>(base_tensor::iterator &it,
                                 base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                size_type /*s1*/, size_type /*s2*/)
-  { *it = (*it1)*(*it2); }
+                                const size_type /*s1*/, const size_type /*s2*/)
+  { *it = it1[0] * it2[0]; }
 
   // Performs Ani Bmi -> Cmn. Unrolled operation.
   template<int I>
@@ -3812,6 +3840,155 @@ namespace getfem {
       const size_type M = tc1.size() / I,
                       N = tc2.size() / J;
       auto it = t.begin();
+#if 1 // there could be a smarter way to implement this, but this hardcoded version is fast and robust
+      switch(M) {
+      case 1: GMM_ASSERT1(false, "M=1 should not happen");
+      case 2:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<2>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 3:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<3>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 4:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<4>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 5:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<5>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 6:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<6>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 7:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<7>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      case 8:
+        for (size_type j = 0; j < J; ++j)
+          for (size_type i = 0; i < I; ++i)
+            for (size_type n = 0; n < N; ++n) {
+              auto it1 = tc1.begin() + M*i;
+              dax__<8>(it, it1, tc2[n+N*j]);
+            }
+        break;
+      default:
+        const int M1 = int(M)/8;
+        const int M2 = int(M) - M1*8;
+        switch(M2) {
+        case 0:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 1:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<1>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 2:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<2>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 3:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<3>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 4:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<4>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 5:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<5>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 6:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<6>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        case 7:
+          for (size_type j = 0; j < J; ++j)
+            for (size_type i = 0; i < I; ++i)
+              for (size_type n = 0; n < N; ++n) {
+                auto it1 = tc1.begin() + M*i;
+                for (int mm=0; mm < M1; ++mm)
+                  dax__<8>(it, it1, tc2[n+N*j]);
+                dax__<7>(it, it1, tc2[n+N*j]);
+              }
+          break;
+        default:
+          GMM_ASSERT1(false, "M=1 should not happen");
+        }
+      }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#else // runtime performance of this implementation often affected by totally unrelated changes
+      // even if it actually compiles to the same assembly instructions
       for (size_type j = 0; j < J; ++j)
         for (size_type i = 0; i < I; ++i)
           for (size_type n = 0; n < N; ++n) {
@@ -3820,6 +3997,7 @@ namespace getfem {
               *it = tc1[m+M*i] * val;
           }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+#endif
       return 0;
     }
     ga_instruction_spec_tmult(base_tensor &t_,
