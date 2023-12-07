@@ -2091,6 +2091,187 @@ namespace getfem {
       : t(t_), c(c_), d(d_) {}
   };
 
+  template<int I> inline void dax__(base_tensor::iterator &it,
+                                    base_tensor::const_iterator &itx,
+                                    const scalar_type &a) {
+    constexpr int I1 = I/8;
+    constexpr int I2 = I - I1*8;
+    for (int i=0; i < I1; ++i)
+      dax__<8>(it, itx , a);
+    dax__<I2>(it, itx , a);
+  }
+  template<> inline void dax__<8>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<7>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<6>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<5>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<4>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<3>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<2>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<1>(base_tensor::iterator &it,
+                                  base_tensor::const_iterator &itx,
+                                  const scalar_type &a) {
+    *it++ = *itx++ * a;
+  }
+  template<> inline void dax__<0>(base_tensor::iterator &,
+                                  base_tensor::const_iterator &,
+                                  const scalar_type &) {}
+
+
+  template<int I> inline
+  void reduc_elem_unrolled__(base_tensor::iterator &it,
+                             base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                             const size_type s1, const size_type s2) {
+    *it = it1[0] * it2[0];
+    for (int i=1; i < I; ++i)
+      *it += it1[i*s1] * it2[i*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<9>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]       // (*it1)        * (*it2)
+        + it1[s1]   * it2[s2]      // (*(it1+s1))   * (*(it2+s2))
+        + it1[2*s1] * it2[2*s2]    // (*(it1+2*s1)) * (*(it2+2*s2))
+        + it1[3*s1] * it2[3*s2]    // (*(it1+3*s1)) * (*(it2+3*s2))
+        + it1[4*s1] * it2[4*s2]    // (*(it1+4*s1)) * (*(it2+4*s2))
+        + it1[5*s1] * it2[5*s2]    // (*(it1+5*s1)) * (*(it2+5*s2))
+        + it1[6*s1] * it2[6*s2]    // (*(it1+6*s1)) * (*(it2+6*s2))
+        + it1[7*s1] * it2[7*s2]    // (*(it1+7*s1)) * (*(it2+7*s2))
+        + it1[8*s1] * it2[8*s2];   // (*(it1+8*s1)) * (*(it2+8*s2));
+  }
+  template<> inline
+  void reduc_elem_unrolled__<8>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2]
+        + it1[6*s1] * it2[6*s2]
+        + it1[7*s1] * it2[7*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<7>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2]
+        + it1[6*s1] * it2[6*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<6>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2]
+        + it1[5*s1] * it2[5*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<5>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2]
+        + it1[4*s1] * it2[4*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<4>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2]
+        + it1[3*s1] * it2[3*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<3>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]    * it2[0]
+        + it1[s1]   * it2[s2]
+        + it1[2*s1] * it2[2*s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<2>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type s1, const size_type s2) {
+    *it = it1[0]  * it2[0]
+        + it1[s1] * it2[s2];
+  }
+  template<> inline
+  void reduc_elem_unrolled__<1>(base_tensor::iterator &it,
+                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
+                                const size_type /*s1*/, const size_type /*s2*/)
+  { *it = it1[0] * it2[0]; }
+
+
   struct ga_instruction_scalar_mult : public ga_instruction {
     base_tensor &t;
     const base_tensor &tc1;
@@ -2590,26 +2771,50 @@ namespace getfem {
     const size_type I;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction operation of size " << I);
-#if defined(GA_USES_BLAS)
-      BLAS_INT N = BLAS_INT(tc1.size()/I), I_ = BLAS_INT(I),
-               M = BLAS_INT(tc2.size()/I);
-      char notrans = 'N', trans = 'T';
-      static const scalar_type one(1), zero(0);
-      gmm::dgemm_(&notrans, &trans, &M, &N, &I_, &one,
-                  &(tc2[0]), &M, &(tc1[0]), &N, &zero, &(t[0]), &M);
-#else
       size_type N = tc1.size()/I,
                 M = tc2.size()/I;
       GA_DEBUG_ASSERT(t.size() == N*M, "Internal error");
-
-      auto it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + M;
-      for (auto it = t.begin(); it != t.end(); ++it) {
-        auto it11 = it1, it22 = it2;
-        scalar_type a = (*it11) * (*it22);
-        for (size_type i = 1; i < I; ++i)
-          { it11 += N; it22 += M; a += (*it11) * (*it22); }
-        *it = a;
-        ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
+#if defined(GA_USES_BLAS)
+      if (M*N*I > 27) {
+        BLAS_INT N_ = BLAS_INT(N), I_ = BLAS_INT(I), M_ = BLAS_INT(M);
+        char notrans = 'N', trans = 'T';
+        static const scalar_type one(1), zero(0);
+        gmm::dgemm_(&notrans, &trans, &M_, &N_, &I_, &one,
+                    &(tc2[0]), &M_, &(tc1[0]), &N_, &zero, &(t[0]), &M_);
+      } else
+#endif
+      {
+        auto it1=tc1.cbegin(), it2=tc2.cbegin(), it2end=it2+M;
+        if (I==7) {
+          for (auto it = t.begin(); it != t.end(); ++it) {
+            reduc_elem_unrolled__<7>(it, it1, it2, N, M);
+            if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
+          }
+        } else if (I==8) {
+          for (auto it = t.begin(); it != t.end(); ++it) {
+            reduc_elem_unrolled__<8>(it, it1, it2, N, M);
+            if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
+          }
+        } else if (I==9) {
+          for (auto it = t.begin(); it != t.end(); ++it) {
+            reduc_elem_unrolled__<9>(it, it1, it2, N, M);
+            if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
+          }
+        } else if (I==10) {
+          for (auto it = t.begin(); it != t.end(); ++it) {
+            reduc_elem_unrolled__<10>(it, it1, it2, N, M);
+            if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
+          }
+        } else {
+          for (auto it = t.begin(); it != t.end(); ++it) {
+            auto it11 = it1, it22 = it2;
+            scalar_type a = (*it11) * (*it22);
+            for (size_type i = 1; i < I; ++i)
+              { it11 += N; it22 += M; a += (*it11) * (*it22); }
+            *it = a;
+            if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
+          }
+        }
       }
       // auto it = t.begin(); // Unoptimized version.
       // for (size_type n = 0; n < N; ++n)
@@ -2618,7 +2823,6 @@ namespace getfem {
       //     for (size_type i = 0; i < I; ++i)
       //       *it += tc1[n+N*i] * tc2[m+M*i];
       //   }
-#endif
       return 0;
     }
     ga_instruction_contraction(base_tensor &t_,
@@ -2952,186 +3156,6 @@ namespace getfem {
 
 
 
-  template<int I> inline void dax__(base_tensor::iterator &it,
-                                    base_tensor::const_iterator &itx,
-                                    const scalar_type &a) {
-    constexpr int I1 = I/8;
-    constexpr int I2 = I - I1*8;
-    for (int i=0; i < I1; ++i)
-      dax__<8>(it, itx , a);
-    dax__<I2>(it, itx , a);
-  }
-  template<> inline void dax__<8>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<7>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<6>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<5>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<4>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<3>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<2>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<1>(base_tensor::iterator &it,
-                                  base_tensor::const_iterator &itx,
-                                  const scalar_type &a) {
-    *it++ = *itx++ * a;
-  }
-  template<> inline void dax__<0>(base_tensor::iterator &,
-                                  base_tensor::const_iterator &,
-                                  const scalar_type &) {}
-
-
-  template<int I> inline
-  void reduc_elem_unrolled__(base_tensor::iterator &it,
-                             base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                             const size_type s1, const size_type s2) {
-    *it = it1[0] * it2[0];
-    for (int i=1; i < I; ++i)
-      *it += it1[i*s1] * it2[i*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<9>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2]
-        + it1[4*s1] * it2[4*s2]
-        + it1[5*s1] * it2[5*s2]
-        + it1[6*s1] * it2[6*s2]
-        + it1[7*s1] * it2[7*s2]
-        + it1[8*s1] * it2[8*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<8>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2]
-        + it1[4*s1] * it2[4*s2]
-        + it1[5*s1] * it2[5*s2]
-        + it1[6*s1] * it2[6*s2]
-        + it1[7*s1] * it2[7*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<7>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2]
-        + it1[4*s1] * it2[4*s2]
-        + it1[5*s1] * it2[5*s2]
-        + it1[6*s1] * it2[6*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<6>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2]
-        + it1[4*s1] * it2[4*s2]
-        + it1[5*s1] * it2[5*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<5>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2]
-        + it1[4*s1] * it2[4*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<4>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2]
-        + it1[3*s1] * it2[3*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<3>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]    * it2[0]
-        + it1[s1]   * it2[s2]
-        + it1[2*s1] * it2[2*s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<2>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type s1, const size_type s2) {
-    *it = it1[0]  * it2[0]
-        + it1[s1] * it2[s2];
-  }
-  template<> inline
-  void reduc_elem_unrolled__<1>(base_tensor::iterator &it,
-                                base_tensor::const_iterator &it1, base_tensor::const_iterator &it2,
-                                const size_type /*s1*/, const size_type /*s2*/)
-  { *it = it1[0] * it2[0]; }
-
   // Performs Ani Bmi -> Cmn. Unrolled operation.
   template<int I>
   struct ga_instruction_contraction_unrolled
@@ -3143,10 +3167,10 @@ namespace getfem {
       size_type N = tc1.size()/I, M = tc2.size()/I;
       GA_DEBUG_ASSERT(t.size() == N*M, "Internal error, " << t.size()
                       << " != " << N << "*" << M);
-      base_tensor::const_iterator it1=tc1.cbegin(), it2=tc2.cbegin(), it2end=it2+M;
-      for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
+      auto it1=tc1.cbegin(), it2=tc2.cbegin(), it2end=it2+M;
+      for (auto it = t.begin(); it != t.end(); ++it) {
         reduc_elem_unrolled__<I>(it, it1, it2, N, M);
-        ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
+        if (++it2 == it2end) { it2 = tc2.cbegin(), ++it1; }
       }
       return 0;
     }
@@ -3487,26 +3511,8 @@ namespace getfem {
                      (t, tc1, tc2);
     case  6 : return std::make_shared<ga_instruction_contraction_unrolled< 6>>
                      (t, tc1, tc2);
-    case  7 : return std::make_shared<ga_instruction_contraction_unrolled< 7>>
-                     (t, tc1, tc2);
-    case  8 : return std::make_shared<ga_instruction_contraction_unrolled< 8>>
-                     (t, tc1, tc2);
-    case  9 : return std::make_shared<ga_instruction_contraction_unrolled< 9>>
-                     (t, tc1, tc2);
-    case 10 : return std::make_shared<ga_instruction_contraction_unrolled<10>>
-                     (t, tc1, tc2);
-    case 11 : return std::make_shared<ga_instruction_contraction_unrolled<11>>
-                     (t, tc1, tc2);
-    case 12 : return std::make_shared<ga_instruction_contraction_unrolled<12>>
-                     (t, tc1, tc2);
-    case 13 : return std::make_shared<ga_instruction_contraction_unrolled<13>>
-                     (t, tc1, tc2);
-    case 14 : return std::make_shared<ga_instruction_contraction_unrolled<14>>
-                     (t, tc1, tc2);
-    case 15 : return std::make_shared<ga_instruction_contraction_unrolled<15>>
-                     (t, tc1, tc2);
-    case 16 : return std::make_shared<ga_instruction_contraction_unrolled<16>>
-                     (t, tc1, tc2);
+    // above 6 it is decided inside ga_instruction_contraction::exec() whether
+    // an unrolled loop or dgemm is used
     default : return std::make_shared<ga_instruction_contraction>
                      (t, tc1, tc2, n);
     }
@@ -3830,7 +3836,7 @@ namespace getfem {
       base_tensor::const_iterator it2=tc2.cbegin(), it1=tc1.cbegin(), it1end=it1 + s1;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         *it = *(it2) * (*it1);
-        ++it1; if (it1 == it1end) { it1 = tc1.begin(), ++it2; }
+        if (++it1 == it1end) { it1 = tc1.cbegin(), ++it2; }
       }
       return 0;
     }
