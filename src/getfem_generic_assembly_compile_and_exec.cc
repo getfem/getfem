@@ -25,7 +25,9 @@
 #include "getfem/getfem_generic_assembly_compile_and_exec.h"
 #include "getfem/getfem_generic_assembly_functions_and_operators.h"
 
-//#define GA_USES_BLAS
+#if defined(GMM_USES_BLAS)
+#define GA_USES_BLAS
+#endif
 
 // #define GA_DEBUG_INFO(a) { cout << a << endl; }
 #define GA_DEBUG_INFO(a)
