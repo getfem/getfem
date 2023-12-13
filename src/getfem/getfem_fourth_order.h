@@ -35,7 +35,7 @@
    @date January 6, 2006.
    @brief assembly procedures and bricks for fourth order pdes.
 */
-#ifndef GETFEM_FOURTH_ORDER_H_
+#ifndef GETFEM_FOURTH_ORDER_H__
 #define GETFEM_FOURTH_ORDER_H__
 
 #include "getfem_models.h"

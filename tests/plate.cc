@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2020 Yves Renard, Michel Salaün.
+ Copyright (C) 2002-2020 Yves Renard, Michel SalaÃ¼n.
 
  This file is a part of GetFEM
 
@@ -65,8 +65,8 @@ struct plate_problem {
   getfem::mesh_fem mf_theta;
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
-  scalar_type lambda, mu;    /* Lamé coefficients.                           */
-  scalar_type E, nu;    /* Lamé coefficients.                           */
+  scalar_type lambda, mu;    /* LamÃ© coefficients.                           */
+  scalar_type E, nu;    /* LamÃ© coefficients.                           */
   scalar_type epsilon;       /* thickness of the plate.                      */
   scalar_type pressure;
   scalar_type residual;      /* max residual for the iterative solvers         */
@@ -75,7 +75,7 @@ struct plate_problem {
   int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
                              // sol_ref = 1 : homogeneous on the vertical edges
                              // sol_ref = 2 : homogeneous on the 4 vertical
-                             //       edges with solution u3 = sin²(x)*sin²(y)
+                             //       edges with solution u3 = sinÂ²(x)*sinÂ²(y)
   scalar_type eta;           // useful only if sol_ref == 2 :
                              // eta = 0 => Kirchhoff-Love
 			     // eta = small => Mindlin 
@@ -153,8 +153,8 @@ void plate_problem::init(void) {
     
   LX = PARAM.real_value("LX");
   LY = PARAM.real_value("LY");
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  mu = PARAM.real_value("MU", "LamÃ© coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "LamÃ© coefficient lambda");
   epsilon = PARAM.real_value("EPSILON", "thickness of the plate");
   pressure = PARAM.real_value("PRESSURE",
 			      "pressure on the top surface of the plate.");
@@ -171,7 +171,7 @@ void plate_problem::init(void) {
      cout << "bord en appuis simple\n" ; 
      cout << "nombre de terme pour calcul sol exacte : " << N_Four << " \n" ;
      // Calcul des coeeficients de Fourier de la solution exacte :
-     // Cas où le chargement est seulement vertical (pas de moment appliqué)
+     // Cas oÃ¹ le chargement est seulement vertical (pas de moment appliquÃ©)
      gmm::resize( theta1_Four, N_Four, N_Four) ;
      gmm::resize( theta2_Four, N_Four, N_Four) ;
      gmm::resize( u3_Four, N_Four, N_Four) ;
@@ -196,7 +196,7 @@ void plate_problem::init(void) {
 	   Jmn(2, 2) = A * A + B * B ;
 	   gmm::scale(Jmn,  - E*(epsilon/2.) / (1. + nu) ) ;
 	   
-	   // calcul du développement de Fourrier du chargement :
+	   // calcul du dÃ©veloppement de Fourrier du chargement :
 	   if ( ( (i + 1) % 2 == 1 ) && ( (j + 1) % 2 == 1) ) {
 	      Pmn =  16. * pressure / ( scalar_type(i + 1) * scalar_type(j + 1) * M_PI * M_PI) ; }
 	   else {
@@ -347,7 +347,7 @@ scalar_type plate_problem::u3_exact(base_node P) {
 	     }
        return (u3_local) ;
        break ; 
-  default : GMM_ASSERT1(false, "indice de solution de référence incorrect");
+  default : GMM_ASSERT1(false, "indice de solution de rÃ©fÃ©rence incorrect");
   }
 }
 
@@ -446,8 +446,8 @@ bool plate_problem::solve(plain_vector &Ut, plain_vector &U3, plain_vector &THET
 
   // Defining the surface source term.
   if (study_flag == 1 ){
-     cout << "Attention : l'intensité de la pression verticale " ;
-     cout << "a été choisie pour que le déplacement maximal soit unitaire." ;
+     cout << "Attention : l'intensitÃ© de la pression verticale " ;
+     cout << "a Ã©tÃ© choisie pour que le dÃ©placement maximal soit unitaire." ;
      cout << "Pour annuler cette option, faire STUDY_FLAG = 0\n" ;
      switch(sol_ref) {
            case 0 : 
