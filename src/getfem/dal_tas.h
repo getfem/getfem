@@ -81,7 +81,9 @@ namespace dal
 
     bool operator ==(const dnt_iterator &i) const { return i.id==id;}
     bool operator !=(const dnt_iterator &i) const { return i.id!=id;}
-    bool operator < (const dnt_iterator &i) const { return id <i.id;}
+    bool operator < (const dnt_iterator &i) const { return id < i.id;}
+    bool operator > (const dnt_iterator &i) const { return id > i.id;}
+    bool operator >=(const dnt_iterator &i) const { return id >= i.id;}
   };
   
   template<class T, unsigned char pks> dnt_iterator<T, pks> &
@@ -129,6 +131,10 @@ namespace dal
     { return i.id != id;}
     bool operator < (const dnt_const_iterator &i) const
     { return id < i.id;}
+    bool operator > (const dnt_const_iterator &i) const
+    { return id > i.id;}
+    bool operator >=(const dnt_const_iterator &i) const
+    { return id >= i.id;}
   };
 
   template<class T, unsigned char pks> class dynamic_tas

@@ -428,7 +428,7 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
 
   // derivative of elastic energy
   char s[500];
-  sprintf(s, "u=data(#1);"
+  snprintf(s, 499, "u=data(#1);"
 	  // "t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,: ,l,:,:,:,:,:)
 	  // ".u(k).u(l);"
 	  "t=comp(vGrad(#1)(k,:,:).vGrad(#1)(l,:,:).vGrad(#2).u(k).u(l));"

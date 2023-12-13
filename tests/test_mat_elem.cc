@@ -142,8 +142,8 @@ void lap_pb::init(void)
   switch (integration) {
   case 0 :
     switch (mesh_type) { 
-    case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
-    case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", int(N)); break;
+    case 0 : snprintf(meth, 499, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
+    case 1 : snprintf(meth, 499, "IM_EXACT_PARALLELEPIPED(%d)", int(N)); break;
     default : GMM_ASSERT1(false,
 			  "Exact integration not allowed in this context");
     }
@@ -151,80 +151,80 @@ void lap_pb::init(void)
   case 1 :
     switch (mesh_type) { 
     case 0 : 
-      sprintf(meth, "IM_NC(%d,%d)", int(N), int(2*K));
+      snprintf(meth, 499, "IM_NC(%d,%d)", int(N), int(2*K));
       break;
     case 1 : 
-      sprintf(meth, "IM_NC_PARALLELEPIPED(%d,%d)", int(N), int(2*K));
+      snprintf(meth, 499, "IM_NC_PARALLELEPIPED(%d,%d)", int(N), int(2*K));
       break;
     case 2 :
-      sprintf(meth, "IM_NC_PRISM(%d,%d)", int(N), int(2*K));
+      snprintf(meth, 499, "IM_NC_PRISM(%d,%d)", int(N), int(2*K));
       break;
     }
     break;
   case 2 :
     if (mesh_type == 1)
-      sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(KI));
+      snprintf(meth, 499, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(KI));
     else
       GMM_ASSERT1(false, "Product of 1D Gauss only for parallelepipeds");
     break;
   case 3 :
     if (mesh_type == 0) {
       if (N == 1)
-	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(%d), %d)",2,int(KI));
+	snprintf(meth, 499, "IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(%d), %d)",2,int(KI));
       else if (N == 2)
-	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(%d), %d)",
+	snprintf(meth, 499, "IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(%d), %d)",
 		2,int(KI));
       else
-	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+	snprintf(meth, 499, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
 		int(N), int(2*K), int(KI));
     }
     else
       GMM_ASSERT1(false, "Composite integration only for simplexes");
     break;
-  case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
-  case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
-  case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
-  case 14 : sprintf(meth, "IM_TRIANGLE(4)"); break;
-  case 15 : sprintf(meth, "IM_TRIANGLE(5)"); break;
-  case 16 : sprintf(meth, "IM_TRIANGLE(6)"); break;
-  case 17 : sprintf(meth, "IM_TRIANGLE(7)"); break;
-  case 21 : sprintf(meth, "IM_TETRAHEDRON(1)"); break;
-  case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
-  case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
-  case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
-  case 32 : sprintf(meth, "IM_QUAD(2)"); break;
-  case 33 : sprintf(meth, "IM_QUAD(3)"); break;
-  case 35 : sprintf(meth, "IM_QUAD(5)"); break;
+  case 11 : snprintf(meth, 499, "IM_TRIANGLE(1)"); break;
+  case 12 : snprintf(meth, 499, "IM_TRIANGLE(2)"); break;
+  case 13 : snprintf(meth, 499, "IM_TRIANGLE(3)"); break;
+  case 14 : snprintf(meth, 499, "IM_TRIANGLE(4)"); break;
+  case 15 : snprintf(meth, 499, "IM_TRIANGLE(5)"); break;
+  case 16 : snprintf(meth, 499, "IM_TRIANGLE(6)"); break;
+  case 17 : snprintf(meth, 499, "IM_TRIANGLE(7)"); break;
+  case 21 : snprintf(meth, 499, "IM_TETRAHEDRON(1)"); break;
+  case 22 : snprintf(meth, 499, "IM_TETRAHEDRON(2)"); break;
+  case 23 : snprintf(meth, 499, "IM_TETRAHEDRON(3)"); break;
+  case 25 : snprintf(meth, 499, "IM_TETRAHEDRON(5)"); break;
+  case 32 : snprintf(meth, 499, "IM_QUAD(2)"); break;
+  case 33 : snprintf(meth, 499, "IM_QUAD(3)"); break;
+  case 35 : snprintf(meth, 499, "IM_QUAD(5)"); break;
   default : GMM_ASSERT1(false, "Undefined integration method");
   }
   ppi = getfem::int_method_descriptor(meth);
   getfem::pfem pfprinc = 0;
   switch (mesh_type) {
   case 0 :
-    sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
+    snprintf(meth, 499, "FEM_PK(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mim.set_integration_method(nn, ppi);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
-    sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
+    snprintf(meth, 499, "FEM_PK(%d,%d)", int(N), 0);
     
     break;
   case 1 :
-    sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
+    snprintf(meth, 499, "FEM_QK(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
     mim.set_integration_method(nn, ppi);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth)); 
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
-    sprintf(meth, "FEM_QK(%d,%d)", int(N), 0);
+    snprintf(meth, 499, "FEM_QK(%d,%d)", int(N), 0);
     
     break;
   case 2 :
-    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), K);
+    snprintf(meth, 499, "FEM_PK_PRISM(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
     mim.set_integration_method(nn, ppi);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
-    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), 0);
+    snprintf(meth, 499, "FEM_PK_PRISM(%d,%d)", int(N), 0);
     
     break;
   }
@@ -234,19 +234,19 @@ void lap_pb::init(void)
   case 0 : break;
 
   case 1 :
-    sprintf(meth, "FEM_HERMITE(1)");
+    snprintf(meth, 499, "FEM_HERMITE(1)");
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;
     
   case 2 :
-    sprintf(meth, "FEM_PK_HIERARCHICAL(%d, %d)", int(N), int(K));
+    snprintf(meth, 499, "FEM_PK_HIERARCHICAL(%d, %d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;
 
   case 3 :
-    sprintf(meth, "FEM_PK_HIERARCHICAL_COMPOSITE(%d,%d,%d)", int(N), 1, int(K));
+    snprintf(meth, 499, "FEM_PK_HIERARCHICAL_COMPOSITE(%d,%d,%d)", int(N), 1, int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;

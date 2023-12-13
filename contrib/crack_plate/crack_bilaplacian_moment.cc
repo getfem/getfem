@@ -79,9 +79,9 @@ size_type is_dx_dof_type(getfem::pdof_description dof){
   size_type dx_dof = 0 ;
     for (unsigned r = 0; r < 2; ++r) {
       if (dof == getfem::derivative_dof(2,0)){
-         sprintf(s, "D_%c[%d]", "xyzuvw"[r], 2);
-         dx_dof = 1 ;
-	 }
+        snprintf(s, 199, "D_%c[%d]", "xyzuvw"[r], 2);
+        dx_dof = 1 ;
+      }
   }
 return dx_dof ;
 }
@@ -91,10 +91,10 @@ size_type is_dy_dof_type(getfem::pdof_description dof){
   size_type dy_dof = 0 ;
     for (unsigned r = 0; r < 2; ++r) {
       if (dof == getfem::derivative_dof(2,1)){
-         sprintf(s, "D_%c[%d]", "xyzuvw"[r], 2);
-         dy_dof = 1 ;
-	 cout << "passage dans is_dy_dof_type OK \n" ;
-	 }
+        snprintf(s, 199, "D_%c[%d]", "xyzuvw"[r], 2);
+        dy_dof = 1 ;
+        cout << "passage dans is_dy_dof_type OK \n" ;
+      }
     }
 return dy_dof ;
 }

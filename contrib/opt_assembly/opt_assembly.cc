@@ -389,8 +389,8 @@ static void test_new_assembly(int N, int NX, int pK) {
   
   getfem::mesh m;
   
-  char Ns[5]; sprintf(Ns, "%d", N);
-  char Ks[5]; sprintf(Ks, "%d", pK);
+  char Ns[5]; snprintf(Ns, 5, "%d", N);
+  char Ks[5]; snprintf(Ks, 5, "%d", pK);
   bgeot::pgeometric_trans pgt =
     bgeot::geometric_trans_descriptor
     ((std::string("GT_PK(") + Ns + ",1)").c_str());

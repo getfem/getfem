@@ -82,6 +82,10 @@ namespace dal {
     { return bool(*this) == bool(x); }
     bool operator<(const bit_reference& x) const
       { return bool(*this) < bool(x); }
+    bool operator>(const bit_reference& x) const
+      { return bool(*this) > bool(x); }
+    bool operator>=(const bit_reference& x) const
+      { return bool(*this) >= bool(x); }
     void flip(void) { if (bool(*this)) *this = false; else *this = true; }
   };
 
@@ -126,6 +130,8 @@ namespace dal {
     bool operator==(const bit_iterator& x) const { return ind == x.ind; }
     bool operator!=(const bit_iterator& x) const { return ind != x.ind; }
     bool operator<(bit_iterator x) const { return ind < x.ind; }
+    bool operator>(bit_iterator x) const { return ind > x.ind; }
+    bool operator>=(bit_iterator x) const { return ind >= x.ind; }
   };
 
   struct APIDECL bit_const_iterator {
@@ -170,6 +176,8 @@ namespace dal {
     bool operator==(const bit_const_iterator& x) const { return ind == x.ind; }
     bool operator!=(const bit_const_iterator& x) const { return ind != x.ind; }
     bool operator<(bit_const_iterator x) const { return ind < x.ind; }
+    bool operator>(bit_const_iterator x) const { return ind > x.ind; }
+    bool operator>=(bit_const_iterator x) const { return ind >= x.ind; }
   };
 
   ///Dynamic bit container. 

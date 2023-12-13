@@ -29,7 +29,7 @@ using namespace getfemint;
 static void fmt_pt_povray(std::ofstream &f, const getfem::base_node &pt) {
   char s[100];
   if (pt.size() == 0) GMM_THROW(getfemint_error, "empty point");
-  sprintf(s, "<%g,%g,%g>",pt[0],pt.size() > 1 ? pt[1] : 0., pt.size() > 2 ? pt[2] : 0.);
+  snprintf(s, 99, "<%g,%g,%g>",pt[0],pt.size() > 1 ? pt[1] : 0., pt.size() > 2 ? pt[2] : 0.);
   f << s;
 }
 

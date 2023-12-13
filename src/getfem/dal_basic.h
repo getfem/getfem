@@ -104,6 +104,8 @@ namespace dal
     bool operator ==(const dna_iterator &i) const { return (i.in==in);}
     bool operator !=(const dna_iterator &i) const { return (i.in!=in);}
     bool operator < (const dna_iterator &i) const { return ( in<i.in);}
+    bool operator >=(const dna_iterator &i) const { return ( in>=i.in);}
+    bool operator > (const dna_iterator &i) const { return ( in>i.in);}
   };
   
   /// Constant iterator class for dynamic array.
@@ -160,6 +162,10 @@ namespace dal
       { return (i.in != in); }
     bool operator < (const dna_const_iterator &i) const
       { return (in < i.in); }
+    bool operator >=(const dna_const_iterator &i) const
+      { return (i.in >= in); }
+    bool operator > (const dna_const_iterator &i) const
+      { return (in > i.in); }
   };
   
   /**  Dynamic Array. Defines the basic container of the library which is 

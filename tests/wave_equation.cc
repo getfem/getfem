@@ -332,7 +332,7 @@ bool wave_equation_problem::solve(void) {
 
     gmm::copy(model.real_variable("u"), U);
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
-      char s[100]; sprintf(s, "step%d", int(t/dt)+1);
+      char s[100]; snprintf(s, 99, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
 

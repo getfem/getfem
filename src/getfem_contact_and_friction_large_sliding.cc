@@ -2598,7 +2598,7 @@ namespace getfem {
 
     char ugroupname[50], wgroupname[50], transname[50];
     for (int i = 0; i < 10000; ++i) {
-      sprintf(ugroupname, "disp__group_raytracing_%d", i);
+      snprintf(ugroupname, 49, "disp__group_raytracing_%d", i);
       if (!(md.variable_group_exists(ugroupname))
           && !(md.variable_exists(ugroupname)))
         break;
@@ -2606,7 +2606,7 @@ namespace getfem {
     md.define_variable_group(ugroupname, std::vector<std::string>());
 
     for (int i = 0; i < 10000; ++i) {
-      sprintf(wgroupname, "w__group_raytracing_%d", i);
+      snprintf(wgroupname, 49, "w__group_raytracing_%d", i);
       if (!(md.variable_group_exists(wgroupname))
           && !(md.variable_exists(wgroupname)))
         break;
@@ -2614,7 +2614,7 @@ namespace getfem {
     md.define_variable_group(wgroupname, std::vector<std::string>());
 
     for (int i = 0; i < 10000; ++i) {
-      sprintf(transname, "trans__raytracing_%d", i);
+      snprintf(transname, 49, "trans__raytracing_%d", i);
       if (!(md.interpolate_transformation_exists(transname)))
         break;
     }
@@ -2935,7 +2935,7 @@ namespace getfem {
 
     char ugroupname[50], wgroupname[50], transname[50];
     for (int i = 0; i < 10000; ++i) {
-      sprintf(ugroupname, "disp__group_raytracing_%d", i);
+      snprintf(ugroupname, 49, "disp__group_raytracing_%d", i);
       if (!(md.variable_group_exists(ugroupname))
           && !(md.variable_exists(ugroupname)))
         break;
@@ -2943,7 +2943,7 @@ namespace getfem {
     md.define_variable_group(ugroupname, std::vector<std::string>());
 
     for (int i = 0; i < 10000; ++i) {
-      sprintf(wgroupname, "w__group_raytracing_%d", i);
+      snprintf(wgroupname, 49, "w__group_raytracing_%d", i);
       if (!(md.variable_group_exists(wgroupname))
           && !(md.variable_exists(wgroupname)))
         break;
@@ -2951,7 +2951,7 @@ namespace getfem {
     md.define_variable_group(wgroupname, std::vector<std::string>());
 
     for (int i = 0; i < 10000; ++i) {
-      sprintf(transname, "trans__raytracing_%d", i);
+      snprintf(transname, 49, "trans__raytracing_%d", i);
       if (!(md.interpolate_transformation_exists(transname)))
         break;
     }

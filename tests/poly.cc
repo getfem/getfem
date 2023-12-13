@@ -29,7 +29,7 @@ std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
   char s[1024];
   const char *xyz = "xyzabcdefghijklmnop";
   if (k == 0) {
-    sprintf(s, "P[%d]", int(mi.global_index()));
+    snprintf(s, 1023, "P[%d]", int(mi.global_index()));
     return s;
   } else {
     std::string str;
@@ -38,11 +38,11 @@ std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
 	 mi[k-1] != bgeot::short_type(-1); (mi[k-1])--) {
       //res = horner(mi, k-1, de + mi[k-1], it) + v * res;
       if (str.size())
-	sprintf(s, "%s + %c*(%s)",
+	snprintf(s, 1023, "%s + %c*(%s)",
 		horner_print(degree, mi,bgeot::short_type(k-1),bgeot::short_type(de+mi[k-1])).c_str(), xyz[k-1],
 		str.c_str());
       else 
-	sprintf(s, "%s", horner_print(degree, mi,bgeot::short_type(k-1),bgeot::short_type(de+mi[k-1])).c_str());
+	snprintf(s, 1023, "%s", horner_print(degree, mi,bgeot::short_type(k-1),bgeot::short_type(de+mi[k-1])).c_str());
       str = s;
     }
     mi[k-1] = 0;

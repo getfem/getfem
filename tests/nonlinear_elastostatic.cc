@@ -298,7 +298,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     getfem::standard_solve(model, iter);
 
     gmm::copy(model.real_variable("u"), U);
-    //char s[100]; sprintf(s, "step%d", step+1);
+    //char s[100]; snprintf(s, 100, "step%d", step+1);
 
     /* append the new displacement to the exported opendx file */
     exp.write_point_data(mf_u, U); //, s);

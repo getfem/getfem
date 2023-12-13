@@ -156,6 +156,16 @@ namespace gmm {
 //       return ((piter) == ((i.piter))
 // 	 && *((dnas_iterator_ *)(this)) < *((*((dnas_iterator_ *)(this)))));
 //     }
+//     bool operator > (const iterator &i) const
+//     { 
+//       return ((piter) == ((i.piter))
+// 	 && *((dnas_iterator_ *)(this)) > *((*((dnas_iterator_ *)(this)))));
+//     }
+//     bool operator >= (const iterator &i) const
+//     { 
+//       return ((piter) == ((i.piter))
+// 	 && *((dnas_iterator_ *)(this)) >= *((*((dnas_iterator_ *)(this)))));
+//     }
 
 //     tab_ref_index_iterator_(void) {}
 //     tab_ref_index_iterator_(const ITER &iter, const dnas_iterator_ &dnas_iter)
@@ -264,6 +274,10 @@ namespace gmm {
       bool operator !=(const iterator &i) const { return !(i == *this); }
       bool operator < (const iterator &i) const
       { return ((piter) == ((i.piter)) && iter_index < i.iter_index); }
+      bool operator > (const iterator &i) const
+      { return ((piter) == ((i.piter)) && iter_index > i.iter_index); }
+      bool operator >=(const iterator &i) const
+      { return ((piter) == ((i.piter)) && iter_index >= i.iter_index); }
 
       tab_ref_index_ref_iterator_(void) {}
       tab_ref_index_ref_iterator_(const ITER &iter, 
@@ -385,6 +399,10 @@ namespace gmm {
     { return  (*this - ii) != difference_type(0); }
     bool operator < (const iterator &ii) const
     { return (*this - ii) < difference_type(0); }
+    bool operator >=(const iterator &ii) const
+    { return (*this - ii) >= difference_type(0); }
+    bool operator > (const iterator &ii) const
+    { return (*this - ii) > difference_type(0); }
 
     tab_ref_reg_spaced_iterator_(void) {}
     tab_ref_reg_spaced_iterator_(const ITER &iter, size_type n, size_type ii)

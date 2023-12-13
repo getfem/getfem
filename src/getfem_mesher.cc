@@ -1291,7 +1291,7 @@ namespace getfem {
         // for (size_type i=0; i < t.size()/(N+1); ++i)
         //  m.add_convex_by_points(bgeot::simplex_geotrans(N,1),
         //                 dal::index_ref_iterator(pts.begin(), &t[i*(N+1)]));
-        // char s[50]; sprintf(s, "toto%02d.mesh", count);
+        // char s[50]; snprintf(s, 49, "toto%02d.mesh", count);
         // m.write_to_file(s);
 
         if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)

@@ -144,7 +144,7 @@ bool state_problem::cont(plain_vector &U) {
     gmm::copy(gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)), U);
     lambda = Y[nb_dof];
     char s[100];
-    sprintf(s, ".T_Y%d", (int) PARAM.int_value("IND_BRANCH", "Branch"));
+    snprintf(s, 99, ".T_Y%d", (int) PARAM.int_value("IND_BRANCH", "Branch"));
     gmm::vecload(datapath + bp_rootfilename + s, Y);
     gmm::copy(gmm::scaled(gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)),
 			  direction), T_U);
@@ -183,21 +183,21 @@ bool state_problem::cont(plain_vector &U) {
     sing_label = S.get_sing_label();
     if (sing_label.size() > 0) {
       if (sing_label == "limit point")
-	sprintf(s1, "Step %lu: %s", step + 1, sing_label.c_str());
+	snprintf(s1, 99, "Step %lu: %s", step + 1, sing_label.c_str());
       else if (sing_label == "smooth bifurcation point") {
 	gmm::copy(S.get_x_sing(),
 		  gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
 	Y[nb_dof] = S.get_gamma_sing();
-	sprintf(s1, "continuation_step_%lu", step + 1);
+	snprintf(s1, 99, "continuation_step_%lu", step + 1);
 	gmm::vecsave(datapath + s1 + "_bp.Y", Y);
 	for (size_type i = 0; i < S.nb_tangent_sing(); i++) {
 	  gmm::copy(S.get_tx_sing(i),
 		    gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
 	  Y[nb_dof] = S.get_tgamma_sing(i);
-	  sprintf(s2, "_bp.T_Y%lu", i + 1);
+	  snprintf(s2, 99, "_bp.T_Y%lu", i + 1);
 	  gmm::vecsave(datapath + s1 + s2, Y);
 	}
-	sprintf(s1, "Step %lu: %s, %u branch(es) located", step + 1,
+	snprintf(s1, 99, "Step %lu: %s, %u branch(es) located", step + 1,
 		sing_label.c_str(), (unsigned int) S.nb_tangent_sing());
       }
       sing_out.push_back(s1);

@@ -376,31 +376,31 @@ struct crack_problem {
 
 std::string name_of_dof(getfem::pdof_description dof) {
   char s[200];
-  sprintf(s, "UnknownDof[%p]", (void*)dof);
+  snprintf(s, 199, "UnknownDof[%p]", (void*)dof);
   for (dim_type d = 0; d < 4; ++d) {
     if (dof == getfem::lagrange_dof(d)) {
-      sprintf(s, "Lagrange[%d]", d); goto found;
+      snprintf(s, 199, "Lagrange[%d]", d); goto found;
     }
     if (dof == getfem::normal_derivative_dof(d)) {
-      sprintf(s, "D_n[%d]", d); goto found;
+      snprintf(s, 199, "D_n[%d]", d); goto found;
     }
     if (dof == getfem::global_dof(d)) {
-      sprintf(s, "GlobalDof[%d]", d);
+      snprintf(s, 199, "GlobalDof[%d]", d);
     }
     if (dof == getfem::mean_value_dof(d)) {
-      sprintf(s, "MeanValue[%d]", d);
+      snprintf(s, 199, "MeanValue[%d]", d);
     }
     if (getfem::dof_xfem_index(dof) != 0) {
-      sprintf(s, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
+      snprintf(s, 199, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
     }
     
     for (dim_type r = 0; r < d; ++r) {
       if (dof == getfem::derivative_dof(d, r)) {
-	sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
+	snprintf(s, 199, "D_%c[%d]", "xyzuvw"[r], d); goto found;
       }
       for (dim_type t = 0; t < d; ++t) {
 	if (dof == getfem::second_derivative_dof(d, r, t)) {
-	  sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
+	  snprintf(s, 199, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
 	  goto found;
 	}
       }

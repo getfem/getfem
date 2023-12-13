@@ -309,7 +309,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return index() == i.index();}
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return index()  < i.index();}
+    bool operator < (const iterator &i) const { return index()  <  i.index();}
+    bool operator > (const iterator &i) const { return index()  >  i.index();}
+    bool operator >=(const iterator &i) const { return index()  >= i.index();}
 
     skyline_sub_vector_iterator() {}
     skyline_sub_vector_iterator(const IT &it, const SUBI &s)

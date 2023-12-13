@@ -68,9 +68,9 @@
 # define SECURE_NONCHAR_FSCANF fscanf
 # define SECURE_STRNCPY(a, la, b, lb) strncpy(a, b, lb)
 # define SECURE_FOPEN(F, filename, mode) ((*(F)) = fopen(filename, mode))
-# define SECURE_SPRINTF1(S, l, st, p1) sprintf(S, st, p1)
-# define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf(S, st, p1, p2)
-# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf(S, st, p1, p2, p3, p4)
+# define SECURE_SPRINTF1(S, l, st, p1) snprintf(S, l, st, p1)
+# define SECURE_SPRINTF2(S, l, st, p1, p2) snprintf(S, l, st, p1, p2)
+# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) snprintf(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) strdup(s)
 #endif
 

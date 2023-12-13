@@ -271,7 +271,7 @@ namespace getfem {
 
     struct var_description {
 
-      const bool is_variable;
+      bool is_variable;
       const mesh_fem *mf;
       const im_data *imd;
       gmm::sub_interval I;
@@ -279,7 +279,7 @@ namespace getfem {
       bgeot::multi_index qdims;  // For data having a qdim different than the
                                  // qdim of the fem or im_data (dim per dof for
                                  // dof data) and for constant variables.
-      const bool is_internal;
+      bool is_internal;
 
       size_type qdim() const {
         size_type q = 1;

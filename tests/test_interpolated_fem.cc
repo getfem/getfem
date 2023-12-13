@@ -113,27 +113,27 @@ void lap_pb::init(void) {
   char meth[500];
   getfem::pintegration_method ppi;
   switch (integration) {
-  case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
-  case 1  : sprintf(meth, "IM_NC(%d, %d)", int(N), int(KI)); break;
-  case 2  : sprintf(meth, "IM_GAUSS1D(%d)", int(KI)); break;
-  case 3  : sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+  case 0  : snprintf(meth, 499, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
+  case 1  : snprintf(meth, 499, "IM_NC(%d, %d)", int(N), int(KI)); break;
+  case 2  : snprintf(meth, 499, "IM_GAUSS1D(%d)", int(KI)); break;
+  case 3  : snprintf(meth, 499, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
 		    int(N), int(2*K), int(KI)); break;
-  case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
-  case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
-  case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
-  case 14 : sprintf(meth, "IM_TRIANGLE(4)"); break;
-  case 15 : sprintf(meth, "IM_TRIANGLE(5)"); break;
-  case 16 : sprintf(meth, "IM_TRIANGLE(6)"); break;
-  case 17 : sprintf(meth, "IM_TRIANGLE(7)"); break;
-  case 21 : sprintf(meth, "IM_TETRAHEDRON(1)"); break;
-  case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
-  case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
-  case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
+  case 11 : snprintf(meth, 499, "IM_TRIANGLE(1)"); break;
+  case 12 : snprintf(meth, 499, "IM_TRIANGLE(2)"); break;
+  case 13 : snprintf(meth, 499, "IM_TRIANGLE(3)"); break;
+  case 14 : snprintf(meth, 499, "IM_TRIANGLE(4)"); break;
+  case 15 : snprintf(meth, 499, "IM_TRIANGLE(5)"); break;
+  case 16 : snprintf(meth, 499, "IM_TRIANGLE(6)"); break;
+  case 17 : snprintf(meth, 499, "IM_TRIANGLE(7)"); break;
+  case 21 : snprintf(meth, 499, "IM_TETRAHEDRON(1)"); break;
+  case 22 : snprintf(meth, 499, "IM_TETRAHEDRON(2)"); break;
+  case 23 : snprintf(meth, 499, "IM_TETRAHEDRON(3)"); break;
+  case 25 : snprintf(meth, 499, "IM_TETRAHEDRON(5)"); break;
   default : GMM_ASSERT1(false, "Undefined integration method");
   }
   ppi = getfem::int_method_descriptor(meth);
   
-  sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
+  snprintf(meth, 499, "FEM_PK(%d,%d)", int(N), int(K));
   nn = mesh1.convex_index(dim_type(N));
   mim1.set_integration_method(nn, ppi);
   mef1.set_finite_element(nn, getfem::fem_descriptor(meth));

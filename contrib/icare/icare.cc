@@ -1521,12 +1521,12 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     }
     if (PARAM.int_value("VTK_EXPORT")) {
       static int cnta=0;
-      char sa[128]; sprintf(sa, "SolIcare/DivUstar%d.vtk", cnta++);
+      char sa[128]; snprintf(sa, 127, "SolIcare/DivUstar%d.vtk", cnta++);
       getfem::vtk_export tata(sa, PARAM.int_value("VTK_EXPORT")==1);
       tata.exporting(mf_rhs); 
       tata.write_point_data(mf_rhs, DIV, "divergence");
 
-      char sb[128]; sprintf(sb, "SolIcare/Ustar%d.vtk", cnta++);
+      char sb[128]; snprintf(sb, 127, "SolIcare/Ustar%d.vtk", cnta++);
       getfem::vtk_export tbtb(sb, PARAM.int_value("VTK_EXPORT")==1);
       tbtb.exporting(mf_u); 
       tbtb.write_point_data(mf_u, USTAR, "Ustar");
@@ -1719,7 +1719,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
       }
     if (PARAM.int_value("VTK_EXPORT")) {
       static int cnta=0;
-      char sa[128]; sprintf(sa, "SolIcare/DivU%d.vtk", cnta++);
+      char sa[128]; snprintf(sa, 127, "SolIcare/DivU%d.vtk", cnta++);
       getfem::vtk_export tata(sa, PARAM.int_value("VTK_EXPORT")==1);
       tata.exporting(mf_rhs); 
       tata.write_point_data(mf_rhs, DIV, "divergence");
@@ -1815,7 +1815,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     t_export += dt_export;
     
     static int cnt = 0;
-    char s[128]; sprintf(s, "SolIcare/icare.U%d", cnt++);
+    char s[128]; snprintf(s, 127, "SolIcare/icare.U%d", cnt++);
     gmm::vecsave(s, Un0);
     exp->write_point_data(mf_u, Un0);
     exp->serie_add_object("velocity");
@@ -1825,12 +1825,12 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     exp->serie_add_object("pressure");
   
     static int cntp=0;
-    char sp[128]; sprintf(sp, "SolIcare/icare.P%d", cntp++);
+    char sp[128]; snprintf(sp, 127, "SolIcare/icare.P%d", cntp++);
     gmm::vecsave(sp, Pn0);
     
     if (PARAM.int_value("TIME_ORDER")==2){
       static int cntm1 = 0;
-      char sm1[128]; sprintf(sm1, "SolIcare/icare.Um%d", cntm1++);
+      char sm1[128]; snprintf(sm1, 127, "SolIcare/icare.Um%d", cntm1++);
       gmm::vecsave(sm1, Unm1);
       exp->write_point_data(mf_u, Unm1);
       exp->serie_add_object("velocity");
@@ -1852,27 +1852,27 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
     if (PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << datafilename + "U.vtk" << "..\n";
       static int cnta=0;
-      char sa[128]; sprintf(sa, "SolIcare/icareU%d.vtk", cnta++);
+      char sa[128]; snprintf(sa, 127, "SolIcare/icareU%d.vtk", cnta++);
       getfem::vtk_export tata( sa,PARAM.int_value("VTK_EXPORT")==1);
       tata.exporting(mf_u); 
       tata.write_point_data(mf_u, Un0, "vitesse");
       
       if (PARAM.int_value("TIME_ORDER")==2){
 	static int cntam1=0;
-	char sam1[128]; sprintf(sam1, "SolIcare/icareUm%d.vtk", cntam1++);
+	char sam1[128]; snprintf(sam1, 127, "SolIcare/icareUm%d.vtk", cntam1++);
 	getfem::vtk_export tamtam( sam1,PARAM.int_value("VTK_EXPORT")==1);
 	tamtam.exporting(mf_u); 
 	tamtam.write_point_data(mf_u, Unm1, "vitesse");
       }
       
       static int cnte=0;
-      char se[128]; sprintf(se, "SolIcare/icareP%d.vtk", cnte++);
+      char se[128]; snprintf(se, 127, "SolIcare/icareP%d.vtk", cnte++);
       getfem::vtk_export tete( se,PARAM.int_value("VTK_EXPORT")==1);
       tete.exporting(mf_p);
       tete.write_point_data(mf_p, Pn0, "pression");
 
       //static int cnti=0;
-      //char si[128]; sprintf(si, "SolIcare/icareRot%d.vtk", cnti++);
+      //char si[128]; snprintf(si, 127, "SolIcare/icareRot%d.vtk", cnti++);
       //getfem::vtk_export titi( si, PARAM.int_value("VTK_EXPORT")==1);
       //titi.exporting(mf_rhs);
       //titi.write_point_data(mf_rhs, Rot, "rotationnel");
@@ -1890,17 +1890,17 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
       // RotZ[i] = DU[i*N*N + 3] - DU[i*N*N + 1];
       //
       //static int cntt=0;
-      //char st[128]; sprintf(st, "SolIcare/icareRotX%d.vtk", cntt++);
+      //char st[128]; snprintf(st, 127, "SolIcare/icareRotX%d.vtk", cntt++);
       //getfem::vtk_export titi( st, PARAM.int_value("VTK_EXPORT")==1);
       //titi.exporting(mf_rhs);
       //titi.write_point_data(mf_rhs, RotX, "rotationnelX");
       //static int cntu=0;
-      //char su[128]; sprintf(su, "SolIcare/icareRotY%d.vtk", cntu++);
+      //char su[128]; snprintf(su, 127, "SolIcare/icareRotY%d.vtk", cntu++);
       //getfem::vtk_export tete( su, PARAM.int_value("VTK_EXPORT")==1);
       //tete.exporting(mf_rhs);
       //tete.write_point_data(mf_rhs, RotY, "rotationnelY");
       //static int cntv=0;
-      //char sv[128]; sprintf(sv, "SolIcare/icareRotZ%d.vtk", cntv++);
+      //char sv[128]; snprintf(sv, 127, "SolIcare/icareRotZ%d.vtk", cntv++);
       //getfem::vtk_export tyty( sv, PARAM.int_value("VTK_EXPORT")==1);
       //tyty.exporting(mf_rhs);
       //tyty.write_point_data(mf_rhs, RotZ, "rotationnelZ");

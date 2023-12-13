@@ -170,6 +170,10 @@ namespace gmm {
       { return (i.it != it); }
     bool operator < (const part_vector_iterator &i) const
       { return (it < i.it); }
+    bool operator > (const part_vector_iterator &i) const
+      { return (it > i.it); }
+    bool operator >=(const part_vector_iterator &i) const
+      { return (it >= i.it); }
   };
 
 

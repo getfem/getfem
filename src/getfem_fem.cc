@@ -1023,7 +1023,7 @@ namespace getfem {
     if (discontinuous && params.size() == 3) {
       scalar_type v = params[2].num();
       GMM_ASSERT1(v >= 0 && v <= 1, "Bad value for alpha: " << v);
-      sprintf(alpha, ",%g", v);
+      snprintf(alpha, 127, ",%g", v);
     }
     GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
                 double(n) == params[0].num() && double(k) == params[1].num(),
@@ -1087,7 +1087,7 @@ namespace getfem {
     if (params.size() == 3) {
       scalar_type v = params[2].num();
       GMM_ASSERT1(v >= 0 && v <= 1, "Bad value for alpha: " << v);
-      sprintf(alpha, ",%g", v);
+      snprintf(alpha, 127, ",%g", v);
     }
     GMM_ASSERT1(n > 1 && n < 100 && k >= 0 && k <= 150 &&
                 double(n) == params[0].num() && double(k) == params[1].num(),

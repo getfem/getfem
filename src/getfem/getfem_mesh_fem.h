@@ -86,7 +86,11 @@ namespace getfem {
     { return (it == i.it) && (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const
-    { return (it < i.it) && (ii < i.ii); }
+    { return (it < i.it) || ((it == i.it) && (ii < i.ii)); }
+    bool operator > (const iterator &i) const
+    { return (it > i.it) || ((it == i.it) && (ii > i.ii)); }
+    bool operator >= (const iterator &i) const
+    { return (it > i.it) || ((it == i.it) && (ii >= i.ii)); }
 
     tab_scal_to_vect_iterator() {}
     tab_scal_to_vect_iterator(const ITER &iter, dim_type n, dim_type i)
