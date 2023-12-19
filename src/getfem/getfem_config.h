@@ -160,7 +160,7 @@
 //    0 - Sequential
 //    1 - Only the resolution of linear systems are parallelized
 //    2 - Assembly procedures are also parallelized
-#ifndef GETFEM_PARA_LEVEL
+#if !defined(GETFEM_PARA_LEVEL)
 # define GETFEM_PARA_LEVEL 0
 #endif
 
@@ -168,7 +168,7 @@
 #define GETFEM_MPI_FINALIZE {}
 
 #if defined(GETFEM_HAVE_DMUMPS_C_H)
-# ifndef GMM_USES_MUMPS
+# if !defined(GMM_USES_MUMPS)
 #   define GMM_USES_MUMPS
 # endif
 #endif

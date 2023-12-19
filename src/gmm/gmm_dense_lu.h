@@ -87,10 +87,10 @@ namespace gmm {
     { return std::vector<size_type>::operator[](i); }
     size_type operator[] (size_type i) const
     { return std::vector<size_type>::operator[](i); }
-    void begin(void) const {}
-    void begin(void) {}
-    void end(void) const {}
-    void end(void) {}
+    void begin() const {}
+    void begin() {}
+    void end() const {}
+    void end() {}
     
   public:
     void set_to_int32() { is_int64 = false; }

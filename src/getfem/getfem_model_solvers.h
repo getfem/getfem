@@ -168,7 +168,7 @@ namespace getfem {
     }
   };
 
-#ifdef GMM_USES_MUMPS
+#if defined(GMM_USES_MUMPS)
   template <typename MAT, typename VECT>
   struct linear_solver_mumps : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -631,11 +631,11 @@ namespace getfem {
           <linear_solver_distributed_mumps<MATRIX, VECTOR>>();
 #else
     size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
-# ifdef GMM_USES_MUMPS
+# if defined(GMM_USES_MUMPS)
     max3d = 250000;
 # endif
     if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
-# ifdef GMM_USES_MUMPS
+# if defined(GMM_USES_MUMPS)
       if (md.is_symmetric())
         return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
       else
@@ -670,7 +670,7 @@ namespace getfem {
     else if (bgeot::casecmp(name, "dense_lu") == 0)
       return std::make_shared<linear_solver_dense_lu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "mumps") == 0) {
-#ifdef GMM_USES_MUMPS
+#if defined(GMM_USES_MUMPS)
 # if GETFEM_PARA_LEVEL <= 1
       return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
 # else

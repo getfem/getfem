@@ -1568,7 +1568,8 @@ namespace gmm {
       if (it2 == ite2 || i1 < it2.index()) {
         l2[i1] = *it1; ++i1; ++it1;
         if (it1 == ite1) return;
-        it2 = vect_begin(l2); ite2 = vect_end(l2);
+        it2 = vect_begin(l2);
+        ite2 = vect_end(l2);
       }
       if (ie1 > ite2.index()) {
         --ite1; l2[ie1 - 1] = *ite1;

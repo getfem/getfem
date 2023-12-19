@@ -295,7 +295,7 @@ namespace gmm {
 
   template <typename MAT, typename Ttol> inline
   void symmetric_qr_stop_criterion(const MAT &AA, size_type &p, size_type &q,
-                                Ttol tol) {
+                                   Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     R rmin = default_min(R()) * R(2);
@@ -547,16 +547,17 @@ namespace gmm {
   // if A has complex eigenvalues. Complexity about 10n^3, 25n^3 if
   // eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
-    void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-                               const MAT2 &Q_,
-                               tol_type_for_qr tol = default_tol_for_qr,
-                               bool compvect = true) {
+  void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
+                             const MAT2 &Q_,
+                             tol_type_for_qr tol = default_tol_for_qr,
+                             bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &Q = const_cast<MAT2 &>(Q_);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
 
     size_type n(mat_nrows(A)), q(0), q_old, p(0), ite(0), its(0);
-    dense_matrix<value_type> H(n,n);
+    dense_matrix<T> H(n,n);
     sub_interval SUBK(0,0);
 
     gmm::copy(A, H);
@@ -572,7 +573,7 @@ namespace gmm {
                                      sub_matrix(Q, SUBJ, SUBK),
                                      tol, (its == 10 || its == 20), compvect);
       q_old = q;
-      qr_stop_criterion(H, p, q, tol*2);
+      qr_stop_criterion(H, p, q, tol*R(2));
       if (q != q_old) its = 0;
       ++its; ++ite;
       GMM_ASSERT1(ite < n*100, "QR algorithm failed");
@@ -580,7 +581,6 @@ namespace gmm {
     if (compvect) block2x2_reduction(H, Q, tol);
     extract_eig(H, eigval, tol);
   }
-
 
   template <typename MAT1, typename VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval,
@@ -594,8 +594,8 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT1, typename MAT2>
-    void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
-                                     bool compute_z) {
+  void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
+                                   bool compute_z) {
     MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -631,7 +631,6 @@ namespace gmm {
       if (compute_z) col_rot(Z, c, s, k-1, k);
       if (k < n-1) { x = M(k, k-1); z = M(k+1, k-1); }
     }
-
   }
 
   template <typename VECT1, typename VECT2, typename MAT>
@@ -699,25 +698,23 @@ namespace gmm {
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
   void symmetric_qr_algorithm_old(const MAT1 &A, const VECT &eigval_,
-                              const MAT2 &eigvect_,
-                              tol_type_for_qr tol = default_tol_for_qr,
-                              bool compvect = true) {
+                                  const MAT2 &eigvect_,
+                                  tol_type_for_qr tol = default_tol_for_qr,
+                                  bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    if (compvect) gmm::copy(identity_matrix(), eigvect);
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
     dense_matrix<T> Tri(n, n);
     gmm::copy(A, Tri);
 
+    if (compvect) gmm::copy(identity_matrix(), eigvect);
     Householder_tridiagonalization(Tri, eigvect, compvect);
-
     symmetric_qr_stop_criterion(Tri, p, q, tol);
 
     while (q < n) {
-
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(Tri, SUBI),

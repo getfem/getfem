@@ -39,7 +39,7 @@
 
 #include "getfem/getfem_arch_config.h"
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#if defined(GETFEM_HAVE_FEENABLEEXCEPT)
 # include <fenv.h>
 # define FE_ENABLE_EXCEPT { feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW); }
 #else
@@ -50,9 +50,9 @@
 #include "gmm/gmm_kernel.h"
 #include "gmm/gmm_dense_lu.h"
 
-#ifdef GETFEM_HAVE_QDLIB
+#if defined(GETFEM_HAVE_QDLIB)
 // #  define NO_INLINE
-#  ifdef GETFEM_QDLIB_USE_QUAD
+#  if defined(GETFEM_QDLIB_USE_QUAD)
 #    include <qd/qd_real.h>
 #  else
 #    include <qd/dd_real.h>
@@ -83,7 +83,7 @@ namespace bgeot {
 # define LONG_SCALAR_EPS 1E-16
 # define LONG_SCAL(xx) long_scalar_type(xx)
 #else
-#  ifdef GETFEM_QDLIB_USE_QUAD
+#  if defined(GETFEM_QDLIB_USE_QUAD)
   typedef qd_real long_scalar_type;
   typedef qd_real opt_long_scalar_type;
   inline scalar_type to_scalar(const qd_real &a) { return to_double(a); }

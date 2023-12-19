@@ -245,7 +245,7 @@ namespace gmm {
 
   template <typename MAT1, typename MAT2>
   void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
-                                      bool compute_q) {
+                                      bool compute_Q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -267,8 +267,8 @@ namespace gmm {
       gmm::add(p, gmm::scaled(v, -vect_hp(v, p) / norm), w);
       rank_two_update(sub_matrix(A, SUBI), v, w);
       // it should be possible to compute only the upper or lower part
-
-      if (compute_q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
+      if (compute_Q)
+        col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
     }
   }
 
