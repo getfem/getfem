@@ -169,6 +169,7 @@ namespace gmm {
     void saxpy_(...); /*void daxpy_(...); */void caxpy_(...); void zaxpy_(...);
     BLAS_S sdot_ (...); BLAS_D ddot_ (...);
     BLAS_C cdotu_(...); BLAS_Z zdotu_(...);
+    // Hermitian product in {c,z}dotc is defined in reverse order than usually
     BLAS_C cdotc_(...); BLAS_Z zdotc_(...);
     BLAS_S snrm2_(...); BLAS_D dnrm2_(...);
     BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
@@ -300,37 +301,37 @@ namespace gmm {
                  dotc_p2, dotc_trans2, (BLAS_S), sdot_,  BLAS_S)
   dotc_interface(dotc_p1, dotc_trans1, (BLAS_D),
                  dotc_p2, dotc_trans2, (BLAS_D), ddot_,  BLAS_D)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_C),
-                 dotc_p2, dotc_trans2, (BLAS_C), cdotc_, BLAS_C)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_Z),
-                 dotc_p2, dotc_trans2, (BLAS_Z), zdotc_, BLAS_Z)
+  dotc_interface(dotc_p2, dotc_trans2, (BLAS_C),
+                 dotc_p1, dotc_trans1, (BLAS_C), cdotc_, BLAS_C)
+  dotc_interface(dotc_p2, dotc_trans2, (BLAS_Z),
+                 dotc_p1, dotc_trans1, (BLAS_Z), zdotc_, BLAS_Z)
 
   dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
                  dotc_p2,   dotc_trans2,   (BLAS_S), sdot_,  BLAS_S)
   dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
                  dotc_p2,   dotc_trans2,   (BLAS_D), ddot_,  BLAS_D)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
-                 dotc_p2,   dotc_trans2,   (BLAS_C), cdotc_, BLAS_C)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
-                 dotc_p2,   dotc_trans2,   (BLAS_Z), zdotc_, BLAS_Z)
+  dotc_interface(dotc_p2,   dotc_trans2,   (BLAS_C),
+                 dotc_p1_s, dotc_trans1_s, a*,       cdotc_, BLAS_C)
+  dotc_interface(dotc_p2,   dotc_trans2,   (BLAS_Z),
+                 dotc_p1_s, dotc_trans1_s, a*,       zdotc_, BLAS_Z)
 
   dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_S),
                  dotc_p2_s, dotc_trans2_s, b*,       sdot_,  BLAS_S)
   dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_D),
                  dotc_p2_s, dotc_trans2_s, b*,       ddot_,  BLAS_D)
-  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_C),
-                 dotc_p2_s, dotc_trans2_s, b*,       cdotc_, BLAS_C)
-  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_Z),
-                 dotc_p2_s, dotc_trans2_s, b*,       zdotc_, BLAS_Z)
+  dotc_interface(dotc_p2_s, dotc_trans2_s, b*,
+                 dotc_p1,   dotc_trans1,   (BLAS_C), cdotc_, BLAS_C)
+  dotc_interface(dotc_p2_s, dotc_trans2_s, b*,
+                 dotc_p1,   dotc_trans1,   (BLAS_Z), zdotc_, BLAS_Z)
 
   dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
                  dotc_p2_s, dotc_trans2_s, b*, sdot_,  BLAS_S)
   dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
                  dotc_p2_s, dotc_trans2_s, b*, ddot_,  BLAS_D)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
-                 dotc_p2_s, dotc_trans2_s, b*, cdotc_, BLAS_C)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
-                 dotc_p2_s, dotc_trans2_s, b*, zdotc_, BLAS_Z)
+  dotc_interface(dotc_p2_s, dotc_trans2_s, b*,
+                 dotc_p1_s, dotc_trans1_s, a*, cdotc_, BLAS_C)
+  dotc_interface(dotc_p2_s, dotc_trans2_s, b*,
+                 dotc_p1_s, dotc_trans1_s, a*, zdotc_, BLAS_Z)
 
   /* ********************************************************************* */
   /* add(x, y).                                                            */
