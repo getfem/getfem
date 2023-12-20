@@ -130,6 +130,8 @@ namespace gmm {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return info;
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
 
@@ -176,8 +178,11 @@ namespace gmm {
   template <typename DenseMatrix, typename VectorB, typename VectorX>
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return;
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     GMM_ASSERT1(!info, "Singular system, pivot = " << info);
@@ -253,8 +258,11 @@ namespace gmm {
   lu_inverse(const DenseMatrix& A_, bool doassert = true) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return T(1);
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
@@ -268,7 +276,8 @@ namespace gmm {
   lu_det(const DenseMatrixLU& LU, const Pvector &pvector) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
     T det(1);
-    for (size_type j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
+    const size_type J=std::min(mat_nrows(LU), mat_ncols(LU));
+    for (size_type j = 0; j < J; ++j)
       det *= LU(j,j);
     for(size_type i = 0; i < pvector.size(); ++i)
       if (i != size_type(pvector.get(i)-1)) { det = -det; }
@@ -279,8 +288,11 @@ namespace gmm {
   typename linalg_traits<DenseMatrix>::value_type
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return T(1);
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     return lu_det(B, ipvt);
