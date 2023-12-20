@@ -319,6 +319,9 @@ namespace gmm {
     skyline_sub_vector_iterator
       (const skyline_sub_vector_iterator<MIT, MIT, SUBI> &it)
       : itb(it.itb), si(it.si) {}
+    skyline_sub_vector_iterator &
+    operator =(const skyline_sub_vector_iterator<MIT, MIT, SUBI> &it)
+      { itb=it.itb; si=it.si; return *this; }
   };
 
   template <typename IT, typename SUBI>
