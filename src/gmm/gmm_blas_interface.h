@@ -48,8 +48,8 @@ namespace gmm {
 
   // Use ./configure --enable-blas-interface to activate this interface.
 
-#define GMMLAPACK_TRACE(f) 
-  // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
+#define GMMLAPACK_TRACE(f)
+// #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
 
 #if defined(WeirdNEC) || defined(GMM_USE_BLAS64_INTERFACE)
   #define BLAS_INT long
@@ -74,7 +74,7 @@ namespace gmm {
   /* vect_hp(scaled(std::vector<T>), scaled(std::vector<T>))               */
   /*                                                                       */
   /* add(std::vector<T>, std::vector<T>)                                   */
-  /* add(scaled(std::vector<T>, a), std::vector<T>)                        */ 
+  /* add(scaled(std::vector<T>, a), std::vector<T>)                        */
   /*                                                                       */
   /* mult(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)               */
   /* mult(transposed(dense_matrix<T>), dense_matrix<T>, dense_matrix<T>)   */
@@ -172,7 +172,7 @@ namespace gmm {
     BLAS_C cdotc_(...); BLAS_Z zdotc_(...);
     BLAS_S snrm2_(...); BLAS_D dnrm2_(...);
     BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
-    void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...); 
+    void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...);
   }
 
 #if 1
@@ -181,19 +181,19 @@ namespace gmm {
   /* vect_norm2(x).                                                        */
   /* ********************************************************************* */
 
-# define nrm2_interface(param1, trans1, blas_name, base_type)		   \
-  inline number_traits<base_type >::magnitude_type			   \
-  vect_norm2(param1(base_type)) {					   \
-    GMMLAPACK_TRACE("nrm2_interface");					   \
+# define nrm2_interface(param1, trans1, blas_name, base_type)              \
+  inline number_traits<base_type >::magnitude_type                         \
+  vect_norm2(param1(base_type)) {                                          \
+    GMMLAPACK_TRACE("nrm2_interface");                                     \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(x))); trans1(base_type);         \
-    return blas_name(&n, &x[0], &inc);					   \
+    return blas_name(&n, &x[0], &inc);                                     \
   }
 
 # define nrm2_p1(base_type) const std::vector<base_type > &x
 # define nrm2_trans1(base_type)
 
-  nrm2_interface(nrm2_p1, nrm2_trans1, snrm2_ , BLAS_S)
-  nrm2_interface(nrm2_p1, nrm2_trans1, dnrm2_ , BLAS_D)
+  nrm2_interface(nrm2_p1, nrm2_trans1, snrm2_,  BLAS_S)
+  nrm2_interface(nrm2_p1, nrm2_trans1, dnrm2_,  BLAS_D)
   nrm2_interface(nrm2_p1, nrm2_trans1, scnrm2_, BLAS_C)
   nrm2_interface(nrm2_p1, nrm2_trans1, dznrm2_, BLAS_Z)
 
@@ -201,7 +201,7 @@ namespace gmm {
   /* vect_sp(x, y).                                                        */
   /* ********************************************************************* */
 
-# define dot_interface(param1, trans1, mult1, param2, trans2, mult2,	   \
+# define dot_interface(param1, trans1, mult1, param2, trans2, mult2,       \
                          blas_name, base_type)                             \
   inline base_type vect_sp(param1(base_type), param2(base_type)) {         \
     GMMLAPACK_TRACE("dot_interface");                                      \
@@ -228,49 +228,49 @@ namespace gmm {
          const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
          base_type b(y_.r)
 
-  dot_interface(dot_p1, dot_trans1, (BLAS_S), dot_p2, dot_trans2, (BLAS_S),
-		sdot_ , BLAS_S)
-  dot_interface(dot_p1, dot_trans1, (BLAS_D), dot_p2, dot_trans2, (BLAS_D),
-		ddot_ , BLAS_D)
-  dot_interface(dot_p1, dot_trans1, (BLAS_C), dot_p2, dot_trans2, (BLAS_C),
-		cdotu_, BLAS_C)
-  dot_interface(dot_p1, dot_trans1, (BLAS_Z), dot_p2, dot_trans2, (BLAS_Z),
-		zdotu_, BLAS_Z)
-  
-  dot_interface(dot_p1_s, dot_trans1_s, a*, dot_p2, dot_trans2, (BLAS_S),
-		sdot_ ,BLAS_S)
-  dot_interface(dot_p1_s, dot_trans1_s, a*, dot_p2, dot_trans2, (BLAS_D),
-		ddot_ ,BLAS_D)
-  dot_interface(dot_p1_s, dot_trans1_s, a*, dot_p2, dot_trans2, (BLAS_C),
-		cdotu_,BLAS_C)
-  dot_interface(dot_p1_s, dot_trans1_s, a*, dot_p2, dot_trans2, (BLAS_Z),
-		zdotu_,BLAS_Z)
-  
-  dot_interface(dot_p1, dot_trans1, (BLAS_S), dot_p2_s, dot_trans2_s, b*,
-		sdot_ ,BLAS_S)
-  dot_interface(dot_p1, dot_trans1, (BLAS_D), dot_p2_s, dot_trans2_s, b*,
-		ddot_ ,BLAS_D)
-  dot_interface(dot_p1, dot_trans1, (BLAS_C), dot_p2_s, dot_trans2_s, b*,
-		cdotu_,BLAS_C)
-  dot_interface(dot_p1, dot_trans1, (BLAS_Z), dot_p2_s, dot_trans2_s, b*,
-		  zdotu_,BLAS_Z)
+  dot_interface(dot_p1, dot_trans1, (BLAS_S),
+                dot_p2, dot_trans2, (BLAS_S), sdot_,  BLAS_S)
+  dot_interface(dot_p1, dot_trans1, (BLAS_D),
+                dot_p2, dot_trans2, (BLAS_D), ddot_,  BLAS_D)
+  dot_interface(dot_p1, dot_trans1, (BLAS_C),
+                dot_p2, dot_trans2, (BLAS_C), cdotu_, BLAS_C)
+  dot_interface(dot_p1, dot_trans1, (BLAS_Z),
+                dot_p2, dot_trans2, (BLAS_Z), zdotu_, BLAS_Z)
 
-  dot_interface(dot_p1_s,dot_trans1_s,a*,dot_p2_s,dot_trans2_s,b*,sdot_ ,
-		BLAS_S)
-  dot_interface(dot_p1_s,dot_trans1_s,a*,dot_p2_s,dot_trans2_s,b*,ddot_ ,
-		BLAS_D)
-  dot_interface(dot_p1_s,dot_trans1_s,a*,dot_p2_s,dot_trans2_s,b*,cdotu_,
-		BLAS_C)
-  dot_interface(dot_p1_s,dot_trans1_s,a*,dot_p2_s,dot_trans2_s,b*,zdotu_,
-		BLAS_Z)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2,   dot_trans2,   (BLAS_S), sdot_,  BLAS_S)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2,   dot_trans2,   (BLAS_D), ddot_,  BLAS_D)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2,   dot_trans2,   (BLAS_C), cdotu_, BLAS_C)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2,   dot_trans2,   (BLAS_Z), zdotu_, BLAS_Z)
+
+  dot_interface(dot_p1,   dot_trans1,   (BLAS_S),
+                dot_p2_s, dot_trans2_s, b*,       sdot_,  BLAS_S)
+  dot_interface(dot_p1,   dot_trans1,   (BLAS_D),
+                dot_p2_s, dot_trans2_s, b*,       ddot_,  BLAS_D)
+  dot_interface(dot_p1,   dot_trans1,   (BLAS_C),
+                dot_p2_s, dot_trans2_s, b*,       cdotu_, BLAS_C)
+  dot_interface(dot_p1,   dot_trans1,   (BLAS_Z),
+                dot_p2_s, dot_trans2_s, b*,       zdotu_, BLAS_Z)
+
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2_s, dot_trans2_s, b*, sdot_,  BLAS_S)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2_s, dot_trans2_s, b*, ddot_,  BLAS_D)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2_s, dot_trans2_s, b*, cdotu_, BLAS_C)
+  dot_interface(dot_p1_s, dot_trans1_s, a*,
+                dot_p2_s, dot_trans2_s, b*, zdotu_, BLAS_Z)
 
 
   /* ********************************************************************* */
   /* vect_hp(x, y).                                                        */
   /* ********************************************************************* */
 
-# define dotc_interface(param1, trans1, mult1, param2, trans2, mult2,	   \
-			blas_name, base_type)				   \
+# define dotc_interface(param1, trans1, mult1, param2, trans2, mult2,      \
+                        blas_name, base_type)                              \
   inline base_type vect_hp(param1(base_type), param2(base_type)) {         \
     GMMLAPACK_TRACE("dotc_interface");                                     \
     trans1(base_type); trans2(base_type);                                  \
@@ -296,41 +296,41 @@ namespace gmm {
          const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
          base_type b(gmm::conj(y_.r))
 
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_S), dotc_p2, dotc_trans2,
-		 (BLAS_S),sdot_ ,BLAS_S)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_D), dotc_p2, dotc_trans2,
-		 (BLAS_D),ddot_ ,BLAS_D)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_C), dotc_p2, dotc_trans2,
-		 (BLAS_C),cdotc_,BLAS_C)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_Z), dotc_p2, dotc_trans2,
-		 (BLAS_Z),zdotc_,BLAS_Z)
-  
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*, dotc_p2, dotc_trans2,
-		 (BLAS_S),sdot_, BLAS_S)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*, dotc_p2, dotc_trans2,
-		 (BLAS_D),ddot_ , BLAS_D)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*, dotc_p2, dotc_trans2,
-		 (BLAS_C),cdotc_, BLAS_C)
-  dotc_interface(dotc_p1_s, dotc_trans1_s, a*, dotc_p2, dotc_trans2,
-		 (BLAS_Z),zdotc_, BLAS_Z)
-  
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_S), dotc_p2_s, dotc_trans2_s,
-		 b*,sdot_ , BLAS_S)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_D), dotc_p2_s, dotc_trans2_s,
-		 b*,ddot_ , BLAS_D)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_C), dotc_p2_s, dotc_trans2_s,
-		 b*,cdotc_, BLAS_C)
-  dotc_interface(dotc_p1, dotc_trans1, (BLAS_Z), dotc_p2_s, dotc_trans2_s,
-		   b*,zdotc_, BLAS_Z)
+  dotc_interface(dotc_p1, dotc_trans1, (BLAS_S),
+                 dotc_p2, dotc_trans2, (BLAS_S), sdot_,  BLAS_S)
+  dotc_interface(dotc_p1, dotc_trans1, (BLAS_D),
+                 dotc_p2, dotc_trans2, (BLAS_D), ddot_,  BLAS_D)
+  dotc_interface(dotc_p1, dotc_trans1, (BLAS_C),
+                 dotc_p2, dotc_trans2, (BLAS_C), cdotc_, BLAS_C)
+  dotc_interface(dotc_p1, dotc_trans1, (BLAS_Z),
+                 dotc_p2, dotc_trans2, (BLAS_Z), zdotc_, BLAS_Z)
 
-  dotc_interface(dotc_p1_s,dotc_trans1_s,a*,dotc_p2_s,dotc_trans2_s,b*,sdot_ ,
-		 BLAS_S)
-  dotc_interface(dotc_p1_s,dotc_trans1_s,a*,dotc_p2_s,dotc_trans2_s,b*,ddot_ ,
-		 BLAS_D)
-  dotc_interface(dotc_p1_s,dotc_trans1_s,a*,dotc_p2_s,dotc_trans2_s,b*,cdotc_,
-		 BLAS_C)
-  dotc_interface(dotc_p1_s,dotc_trans1_s,a*,dotc_p2_s,dotc_trans2_s,b*,zdotc_,
-		 BLAS_Z)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2,   dotc_trans2,   (BLAS_S), sdot_,  BLAS_S)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2,   dotc_trans2,   (BLAS_D), ddot_,  BLAS_D)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2,   dotc_trans2,   (BLAS_C), cdotc_, BLAS_C)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2,   dotc_trans2,   (BLAS_Z), zdotc_, BLAS_Z)
+
+  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_S),
+                 dotc_p2_s, dotc_trans2_s, b*,       sdot_,  BLAS_S)
+  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_D),
+                 dotc_p2_s, dotc_trans2_s, b*,       ddot_,  BLAS_D)
+  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_C),
+                 dotc_p2_s, dotc_trans2_s, b*,       cdotc_, BLAS_C)
+  dotc_interface(dotc_p1,   dotc_trans1,   (BLAS_Z),
+                 dotc_p2_s, dotc_trans2_s, b*,       zdotc_, BLAS_Z)
+
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2_s, dotc_trans2_s, b*, sdot_,  BLAS_S)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2_s, dotc_trans2_s, b*, ddot_,  BLAS_D)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2_s, dotc_trans2_s, b*, cdotc_, BLAS_C)
+  dotc_interface(dotc_p1_s, dotc_trans1_s, a*,
+                 dotc_p2_s, dotc_trans2_s, b*, zdotc_, BLAS_Z)
 
   /* ********************************************************************* */
   /* add(x, y).                                                            */
@@ -370,7 +370,9 @@ namespace gmm {
       case 22: add_fixed<22>(x, y); break;
       case 23: add_fixed<23>(x, y); break;
       case 24: add_fixed<24>(x, y); break;
-      default: GMM_ASSERT2(false, "add_for_short_vectors used with unsupported size"); break;
+      default:
+        GMM_ASSERT2(false, "add_for_short_vectors used with unsupported size");
+        break;
     }
   }
 
@@ -385,7 +387,7 @@ namespace gmm {
   {
     switch(n)
     {
-    case  1: add_fixed<1>(x, y, a);  break;
+      case  1: add_fixed<1>(x, y, a);  break;
       case  2: add_fixed<2>(x, y, a);  break;
       case  3: add_fixed<3>(x, y, a);  break;
       case  4: add_fixed<4>(x, y, a);  break;
@@ -409,7 +411,9 @@ namespace gmm {
       case 22: add_fixed<22>(x, y, a); break;
       case 23: add_fixed<23>(x, y, a); break;
       case 24: add_fixed<24>(x, y, a); break;
-      default: GMM_ASSERT2(false, "add_for_short_vectors used with unsupported size"); break;
+      default:
+        GMM_ASSERT2(false, "add_for_short_vectors used with unsupported size");
+        break;
     }
   }
 
@@ -445,19 +449,19 @@ namespace gmm {
   axpy_interface(axpy_p1, axpy_trans1, daxpy_, BLAS_D)
   axpy_interface(axpy_p1, axpy_trans1, caxpy_, BLAS_C)
   axpy_interface(axpy_p1, axpy_trans1, zaxpy_, BLAS_Z)
-  
+
   axpy2_interface(axpy_p1_s, axpy_trans1_s, saxpy_, BLAS_S)
   axpy2_interface(axpy_p1_s, axpy_trans1_s, daxpy_, BLAS_D)
   axpy2_interface(axpy_p1_s, axpy_trans1_s, caxpy_, BLAS_C)
   axpy2_interface(axpy_p1_s, axpy_trans1_s, zaxpy_, BLAS_Z)
-  
+
 
   /* ********************************************************************* */
   /* mult_add(A, x, z).                                                    */
   /* ********************************************************************* */
-  
+
 # define gemv_interface(param1, trans1, param2, trans2, blas_name,         \
-			base_type, orien)                                  \
+                        base_type, orien)                                  \
   inline void mult_add_spec(param1(base_type), param2(base_type),          \
               std::vector<base_type > &z, orien) {                         \
     GMMLAPACK_TRACE("gemv_interface");                                     \
@@ -485,7 +489,7 @@ namespace gmm {
          const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));     \
          const char t = 'C'
 
-  // second parameter 
+  // second parameter
 # define gemv_p2_n(base_type)  const std::vector<base_type > &x
 # define gemv_trans2_n(base_type) base_type alpha(1)
 # define gemv_p2_s(base_type)                                              \
@@ -495,90 +499,90 @@ namespace gmm {
          base_type alpha(x_.r)
 
   // Z <- AX + Z.
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, sgemv_,
-		 BLAS_S, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, dgemv_,
-		 BLAS_D, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, cgemv_,
-		 BLAS_C, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, zgemv_,
-		 BLAS_Z, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, col_major)
 
   // Z <- transposed(A)X + Z.
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, zgemv_,
-		 BLAS_Z, row_major)
-  
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
+
   // Z <- transposed(const A)X + Z.
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, zgemv_,
-		 BLAS_Z, row_major)
-  
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
+
   // Z <- conjugated(A)X + Z.
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, zgemv_,
-		 BLAS_Z, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_c, gem_trans1_c,
+                 gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
 
   // Z <- A scaled(X) + Z.
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, sgemv_,
-		 BLAS_S, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, dgemv_,
-		 BLAS_D, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, cgemv_,
-		 BLAS_C, col_major)
-  gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, zgemv_,
-		 BLAS_Z, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, col_major)
+  gemv_interface(gem_p1_n,  gem_trans1_n,
+                 gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, col_major)
 
   // Z <- transposed(A) scaled(X) + Z.
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, zgemv_,
-		 BLAS_Z, row_major)
-  
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_t,  gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
+
   // Z <- transposed(const A) scaled(X) + Z.
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, zgemv_,
-		 BLAS_Z, row_major)
-  
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_tc, gem_trans1_t,
+                 gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
+
   // Z <- conjugated(A) scaled(X) + Z.
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, sgemv_,
-		 BLAS_S, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, dgemv_,
-		 BLAS_D, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, cgemv_,
-		 BLAS_C, row_major)
-  gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, zgemv_,
-		 BLAS_Z, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface(gem_p1_c,  gem_trans1_c,
+                 gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
 
 
   /* ********************************************************************* */
   /* mult(A, x, y).                                                        */
   /* ********************************************************************* */
-  
+
 # define gemv_interface2(param1, trans1, param2, trans2, blas_name,        \
                          base_type, orien)                                 \
   inline void mult_spec(param1(base_type), param2(base_type),              \
@@ -594,84 +598,84 @@ namespace gmm {
   }
 
   // Y <- AX.
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, sgemv_,
-		  BLAS_S, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, dgemv_,
-		  BLAS_D, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, cgemv_,
-		  BLAS_C, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_n, gemv_trans2_n, zgemv_,
-		  BLAS_Z, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, col_major)
 
   // Y <- transposed(A)X.
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_n, gemv_trans2_n, zgemv_,
-		  BLAS_Z, row_major)
-  
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
+
   // Y <- transposed(const A)X.
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_n, gemv_trans2_n, zgemv_,
-		  BLAS_Z, row_major)
-  
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
+
   // Y <- conjugated(A)X.
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, zgemv_,
-		  BLAS_Z, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_n, gemv_trans2_n, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_n, gemv_trans2_n, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_n, gemv_trans2_n, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_n, gemv_trans2_n, zgemv_, BLAS_Z, row_major)
 
   // Y <- A scaled(X).
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, sgemv_,
-		  BLAS_S, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, dgemv_,
-		  BLAS_D, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, cgemv_,
-		  BLAS_C, col_major)
-  gemv_interface2(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, zgemv_,
-		  BLAS_Z, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, col_major)
+  gemv_interface2(gem_p1_n,  gem_trans1_n,
+                  gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, col_major)
 
   // Y <- transposed(A) scaled(X).
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_t, gem_trans1_t, gemv_p2_s, gemv_trans2_s, zgemv_,
-		  BLAS_Z, row_major)
-  
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_t,  gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
+
   // Y <- transposed(const A) scaled(X).
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_tc, gem_trans1_t, gemv_p2_s, gemv_trans2_s, zgemv_,
-		  BLAS_Z, row_major)
-  
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_tc, gem_trans1_t,
+                  gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
+
   // Y <- conjugated(A) scaled(X).
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, sgemv_,
-		  BLAS_S, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, dgemv_,
-		  BLAS_D, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, cgemv_,
-		  BLAS_C, row_major)
-  gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, zgemv_,
-		  BLAS_Z, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_s, gemv_trans2_s, sgemv_, BLAS_S, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_s, gemv_trans2_s, dgemv_, BLAS_D, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_s, gemv_trans2_s, cgemv_, BLAS_C, row_major)
+  gemv_interface2(gem_p1_c,  gem_trans1_c,
+                  gemv_p2_s, gemv_trans2_s, zgemv_, BLAS_Z, row_major)
 
 
   /* ********************************************************************* */
@@ -680,14 +684,14 @@ namespace gmm {
 
 # define ger_interface(blas_name, base_type)                               \
   inline void rank_one_update(const dense_matrix<base_type > &A,           \
-			      const std::vector<base_type > &V,	   	   \
-			      const std::vector<base_type > &W) {	   \
+                              const std::vector<base_type > &V,            \
+                              const std::vector<base_type > &W) {          \
     GMMLAPACK_TRACE("ger_interface");                                      \
     BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
     BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
     BLAS_INT incx = 1, incy = 1;                                           \
     base_type alpha(1);                                                    \
-    if (m && n)								   \
+    if (m && n)                                                            \
       blas_name(&m, &n, &alpha, &V[0], &incx, &W[0], &incy, &A(0,0), &lda);\
   }
 
@@ -697,15 +701,15 @@ namespace gmm {
   ger_interface(zgerc_, BLAS_Z)
 
 # define ger_interface_sn(blas_name, base_type)                            \
-  inline void rank_one_update(const dense_matrix<base_type > &A,	   \
-			      gemv_p2_s(base_type),			   \
-			      const std::vector<base_type > &W) {	   \
+  inline void rank_one_update(const dense_matrix<base_type > &A,           \
+                              gemv_p2_s(base_type),                        \
+                              const std::vector<base_type > &W) {          \
     GMMLAPACK_TRACE("ger_interface");                                      \
-    gemv_trans2_s(base_type); 						   \
+    gemv_trans2_s(base_type);                                              \
     BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
     BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
     BLAS_INT incx = 1, incy = 1;                                           \
-    if (m && n)								   \
+    if (m && n)                                                            \
       blas_name(&m, &n, &alpha, &x[0], &incx, &W[0], &incy, &A(0,0), &lda);\
   }
 
@@ -715,16 +719,16 @@ namespace gmm {
   ger_interface_sn(zgerc_, BLAS_Z)
 
 # define ger_interface_ns(blas_name, base_type)                            \
-  inline void rank_one_update(const dense_matrix<base_type > &A,	   \
-			      const std::vector<base_type > &V,		   \
-			      gemv_p2_s(base_type)) {			   \
+  inline void rank_one_update(const dense_matrix<base_type > &A,           \
+                              const std::vector<base_type > &V,            \
+                              gemv_p2_s(base_type)) {                      \
     GMMLAPACK_TRACE("ger_interface");                                      \
-    gemv_trans2_s(base_type); 						   \
+    gemv_trans2_s(base_type);                                              \
     BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
     BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
     BLAS_INT incx = 1, incy = 1;                                           \
-    base_type al2 = gmm::conj(alpha);					   \
-    if (m && n)								   \
+    base_type al2 = gmm::conj(alpha);                                      \
+    if (m && n)                                                            \
       blas_name(&m, &n, &al2, &V[0], &incx, &x[0], &incy, &A(0,0), &lda);  \
   }
 
@@ -750,7 +754,7 @@ namespace gmm {
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &t, &m, &n, &k, &alpha,                                \
-	          &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
+                  &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
     else gmm::clear(C);                                                    \
   }
 
@@ -758,14 +762,14 @@ namespace gmm {
   gemm_interface_nn(dgemm_, BLAS_D)
   gemm_interface_nn(cgemm_, BLAS_C)
   gemm_interface_nn(zgemm_, BLAS_Z)
-  
+
   /* ********************************************************************* */
   /* transposed(dense matrix) x dense matrix multiplication.               */
   /* ********************************************************************* */
 
 # define gemm_interface_tn(blas_name, base_type, is_const)                 \
   inline void mult_spec(                                                   \
-         const transposed_col_ref<is_const<base_type > *> &A_,\
+         const transposed_col_ref<is_const<base_type > *> &A_,             \
          const dense_matrix<base_type > &B,                                \
          dense_matrix<base_type > &C, rcmult) {                            \
     GMMLAPACK_TRACE("gemm_interface_tn");                                  \
@@ -778,7 +782,7 @@ namespace gmm {
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	          &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
+                  &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
     else gmm::clear(C);                                                    \
   }
 
@@ -797,7 +801,7 @@ namespace gmm {
 
 # define gemm_interface_nt(blas_name, base_type, is_const)                 \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
-		     const transposed_col_ref<is_const<base_type > *> &B_, \
+                     const transposed_col_ref<is_const<base_type > *> &B_, \
          dense_matrix<base_type > &C, r_mult) {                            \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     dense_matrix<base_type > &B                                            \
@@ -810,7 +814,7 @@ namespace gmm {
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -829,9 +833,9 @@ namespace gmm {
 
 # define gemm_interface_tt(blas_name, base_type, isA_const, isB_const)     \
   inline void mult_spec(                                                   \
-	       const transposed_col_ref<isA_const <base_type > *> &A_,	   \
-               const transposed_col_ref<isB_const <base_type > *> &B_,	   \
-	       dense_matrix<base_type > &C, r_mult) {			   \
+               const transposed_col_ref<isA_const <base_type > *> &A_,     \
+               const transposed_col_ref<isB_const <base_type > *> &B_,     \
+               dense_matrix<base_type > &C, r_mult) {                      \
     GMMLAPACK_TRACE("gemm_interface_tt");                                  \
     dense_matrix<base_type > &A                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
@@ -840,11 +844,11 @@ namespace gmm {
     const char t = 'T', u = 'T';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT n(BLAS_INT(mat_nrows(B)));                                    \
-    BLAS_INT lda = k, ldb = n, ldc = m;					   \
+    BLAS_INT lda = k, ldb = n, ldc = m;                                    \
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -881,11 +885,11 @@ namespace gmm {
     const char t = 'C', u = 'N';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
-    BLAS_INT lda = k, ldb = k, ldc = m;					   \
+    BLAS_INT lda = k, ldb = k, ldc = m;                                    \
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -912,7 +916,7 @@ namespace gmm {
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -941,7 +945,7 @@ namespace gmm {
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -949,7 +953,7 @@ namespace gmm {
   gemm_interface_cc(dgemm_, BLAS_D)
   gemm_interface_cc(cgemm_, BLAS_C)
   gemm_interface_cc(zgemm_, BLAS_Z)
-   
+
   /* ********************************************************************* */
   /* Tri solve.                                                            */
   /* ********************************************************************* */
@@ -968,84 +972,84 @@ namespace gmm {
 
   // X <- LOWER(A)^{-1}X.
   trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
   // X <- UPPER(A)^{-1}X.
   trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
   // X <- LOWER(transposed(A))^{-1}X.
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
   // X <- UPPER(transposed(A))^{-1}X.
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-		 ztrsv_, BLAS_Z)
+                 ztrsv_, BLAS_Z)
 
   // X <- LOWER(transposed(const A))^{-1}X.
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
   // X <- UPPER(transposed(const A))^{-1}X.
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-		 ztrsv_, BLAS_Z)
+                 ztrsv_, BLAS_Z)
 
   // X <- LOWER(conjugated(A))^{-1}X.
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
   // X <- UPPER(conjugated(A))^{-1}X.
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-		 strsv_, BLAS_S)
+                 strsv_, BLAS_S)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-		 dtrsv_, BLAS_D) 
+                 dtrsv_, BLAS_D)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-		 ctrsv_, BLAS_C) 
+                 ctrsv_, BLAS_C)
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-		 ztrsv_, BLAS_Z)
-  
+                 ztrsv_, BLAS_Z)
+
 #endif
 }
 

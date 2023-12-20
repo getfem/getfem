@@ -48,12 +48,12 @@ namespace gmm {
   template <typename MAT1>
   void qr_factor(const MAT1 &A_) {
     MAT1 &A = const_cast<MAT1 &>(A_);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
 
-    size_type m = mat_nrows(A), n = mat_ncols(A);
+    const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
 
-    std::vector<value_type> W(m), V(m);
+    std::vector<T> W(m), V(m);
 
     for (size_type j = 0; j < n; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
@@ -75,16 +75,18 @@ namespace gmm {
   void apply_house_right(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
-    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_ncols(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
     for (size_type j = 0; j < n; ++j) {
       V.resize(m-j);
-      for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
+      for (size_type i = j+1; i < m; ++i)
+        V[i-j] = QR(i, j);
       col_house_update(sub_matrix(A, sub_interval(0, mat_nrows(A)),
-                                  sub_interval(j, m-j)), V, W);
+                                     sub_interval(j, m-j)),
+                       V, W);
     }
   }
 
@@ -95,7 +97,7 @@ namespace gmm {
   void apply_house_left(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
-    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_nrows(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_ncols(A));
@@ -104,7 +106,8 @@ namespace gmm {
       V.resize(m-j);
       for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
       row_house_update(sub_matrix(A, sub_interval(j, m-j),
-                                  sub_interval(0, mat_ncols(A))), V, W);
+                                     sub_interval(0, mat_ncols(A))),
+                       V, W);
     }
   }
 
@@ -112,14 +115,14 @@ namespace gmm {
   template <typename MAT1, typename MAT2, typename MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) {
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
 
-    size_type m = mat_nrows(A), n = mat_ncols(A);
+    const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
     gmm::copy(A, Q);
 
-    std::vector<value_type> W(m);
-    dense_matrix<value_type> VV(m, n);
+    std::vector<T> W(m);
+    dense_matrix<T> VV(m, n);
 
     for (size_type j = 0; j < n; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
