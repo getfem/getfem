@@ -54,8 +54,11 @@ namespace gmm {
     GMM_ASSERT2(m >= n, "dimensions mismatch");
 
     std::vector<T> W(m), V(m);
-
-    for (size_type j = 0; j < n; ++j) {
+    // skip the last reflection for *real* square matrices (m-1 limit)
+    // lapack does the same in dlarfg.f but not in zlarfg.f
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       V.resize(m-j); W.resize(n-j);
 
@@ -80,7 +83,10 @@ namespace gmm {
     if (m == 0) return;
     std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
-    for (size_type j = 0; j < n; ++j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       V.resize(m-j);
       for (size_type i = j+1; i < m; ++i)
         V[i-j] = QR(i, j);
@@ -102,7 +108,10 @@ namespace gmm {
     if (m == 0) return;
     std::vector<T> V(m), W(mat_ncols(A));
     V[0] = T(1);
-    for (size_type j = 0; j < n; ++j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       V.resize(m-j);
       for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
       row_house_update(sub_matrix(A, sub_interval(j, m-j),
@@ -123,8 +132,11 @@ namespace gmm {
 
     std::vector<T> W(m);
     dense_matrix<T> VV(m, n);
-
-    for (size_type j = 0; j < n; ++j) {
+    // skip the last reflection for *real* square matrices (m-1 limit)
+    // lapack does the same in dlarfg.f but not in zlarfg.f
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
 
       for (size_type i = j; i < m; ++i) VV(i,j) = Q(i, j);
@@ -136,8 +148,10 @@ namespace gmm {
 
     gmm::copy(sub_matrix(Q, sub_interval(0, n), sub_interval(0, n)), R);
     gmm::copy(identity_matrix(), Q);
-
-    for (size_type j = n-1; j != size_type(-1); --j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jstart = (m==n && !is_complex(T())) ? m-2
+                                                        : n-1;
+    for (size_type j = jstart; j != size_type(-1); --j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       row_house_update(sub_matrix(Q, SUBI, SUBJ),
                        sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
