@@ -21,7 +21,7 @@
 
 /**@file laplacian.cc
    @brief Laplacian (Poisson) problem.
- 
+
    The laplace equation is solved on a regular mesh of the unit
    square, and is compared to the analytical solution.
 
@@ -88,12 +88,12 @@ struct laplacian_problem {
   std::vector<scalar_type> U, B;      /* main unknown, and right hand side  */
 
   std::vector<scalar_type> Ud; /* reduced sol. for gen. Dirichlet condition. */
-  col_sparse_matrix_type NS; /* Dirichlet NullSpace 
+  col_sparse_matrix_type NS; /* Dirichlet NullSpace
 			      * (used if gen_dirichlet is true)
 			      */
   std::string datafilename;
   bgeot::md_param PARAM;
-  
+
   void assembly(void);
   bool solve(void);
   void init(void);
@@ -106,7 +106,7 @@ struct laplacian_problem {
  * and integration methods and selects the boundaries.
  */
 void laplacian_problem::init(void) {
-  
+
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
@@ -117,7 +117,7 @@ void laplacian_problem::init(void) {
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
+  bgeot::pgeometric_trans pgt =
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
@@ -125,7 +125,7 @@ void laplacian_problem::init(void) {
 	    PARAM.int_value("NX", "Nomber of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
-  
+
   bgeot::base_matrix M(N,N);
   for (size_type i=0; i < N; ++i) {
     static const char *t[] = {"LX","LY","LZ"};
@@ -160,12 +160,12 @@ void laplacian_problem::init(void) {
 		<< "DATA_FEM_TYPE in the .param file");
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
-    mf_rhs.set_finite_element(mesh.convex_index(), 
+    mf_rhs.set_finite_element(mesh.convex_index(),
 			      getfem::fem_descriptor(data_fem_name));
   }
-  
+
   /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
+   *  since the only function that need to be interpolated on the mesh_fem
    * is f(x)=1 ... */
   mf_coef.set_finite_element(mesh.convex_index(),
 			     getfem::classical_fem(pgt,0));
@@ -198,27 +198,27 @@ void laplacian_problem::assembly(void) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
 
   gmm::resize(B, nb_dof); gmm::clear(B);
-  gmm::resize(U, nb_dof); gmm::clear(U); 
+  gmm::resize(U, nb_dof); gmm::clear(U);
   gmm::resize(SM, nb_dof, nb_dof); gmm::clear(SM);
-  
+
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_laplacian(SM, mim, mf_u, mf_coef, 
+  getfem::asm_stiffness_matrix_for_laplacian(SM, mim, mf_u, mf_coef,
      std::vector<scalar_type>(mf_coef.nb_dof(), 1.0));
-  
+
   cout << "Assembling source term" << endl;
   std::vector<scalar_type> F(nb_dof_rhs);
   getfem::interpolation_function(mf_rhs, F, sol_f);
   getfem::asm_source_term(B, mim, mf_u, mf_rhs, F);
-  
+
   cout << "Assembling Neumann condition" << endl;
   gmm::resize(F, nb_dof_rhs*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad);
   getfem::asm_normal_source_term(B, mim, mf_u, mf_rhs, F,
 				 NEUMANN_BOUNDARY_NUM);
 
-  cout << "take Dirichlet condition into account" << endl;  
-  if (!gen_dirichlet) {    
+  cout << "take Dirichlet condition into account" << endl;
+  if (!gen_dirichlet) {
     std::vector<scalar_type> D(nb_dof);
     getfem::interpolation_function(mf_u, D, sol_u);
     getfem::assembling_Dirichlet_condition(SM, B, mf_u,
@@ -226,7 +226,7 @@ void laplacian_problem::assembly(void) {
   } else {
     gmm::resize(F, nb_dof_rhs);
     getfem::interpolation_function(mf_rhs, F, sol_u);
-    
+
     gmm::resize(Ud, nb_dof);
     gmm::resize(NS, nb_dof, nb_dof);
     col_sparse_matrix_type H(nb_dof_rhs, nb_dof);
@@ -277,17 +277,17 @@ bool laplacian_problem::solve(void) {
     cout << "Time to compute preconditionner : "
 	 << gmm::uclock_sec() - time << " seconds\n";
 
-  
+
     //gmm::HarwellBoeing_IO::write("SM", SM);
 
     // gmm::cg(SM, U, B, P, iter);
     gmm::gmres(SM, U, B, P, 50, iter);
   } else {
-    double rcond; 
-    gmm::SuperLU_solve(SM, U, B, rcond); 
+    double rcond;
+    gmm::SuperLU_solve(SM, U, B, rcond);
     cout << "cond = " << 1/rcond << "\n";
   }
-  
+
   cout << "Total time to solve : "
        << gmm::uclock_sec() - time << " seconds\n";
 
@@ -310,7 +310,7 @@ void laplacian_problem::compute_error() {
   cout.precision(16);
   cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;     
+       << "Linfty error = " << gmm::vect_norminf(V) << endl;
 }
 
 /**************************************************************************/
@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
+  try {
     laplacian_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
@@ -333,8 +333,8 @@ int main(int argc, char *argv[]) {
     p.compute_error();
   }
   GMM_STANDARD_CATCH_ERROR;
-  
+
   GETFEM_MPI_FINALIZE;
 
-  return 0; 
+  return 0;
 }

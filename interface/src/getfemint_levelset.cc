@@ -21,7 +21,6 @@
 #include <getfemint_levelset.h>
 #include <getfemint_workspace.h>
 #include <getfem/getfem_generic_assembly.h>
-#include <getfem/getfem_arch_config.h>
 
 namespace getfemint {
 

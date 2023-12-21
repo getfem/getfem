@@ -72,15 +72,15 @@ struct pb_data {
   linalg_vector U, F;         /* Unknown and right hand side.             */
   int solver;
 
-  void assemble(void);
+  void assemble();
   void init(bgeot::md_param &params);
 
-  int solve_cg(void);
-  int solve_cg2(void);
-  int solve_superlu(void);
+  int solve_cg();
+  int solve_cg2();
+  int solve_superlu();
   int solve_schwarz(int);
 
-  int solve(void) {
+  int solve() {
     cout << "solving" << endl;
     switch (solver) {
     case 0 : return solve_cg();
@@ -190,7 +190,7 @@ void pb_data::init(bgeot::md_param &params) {
   }
 }
 
-void pb_data::assemble(void) {
+void pb_data::assemble() {
   size_type nb_dof = mef.nb_dof();
   std::cout << "number of dof : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
@@ -217,20 +217,20 @@ void pb_data::assemble(void) {
   getfem::assembling_Dirichlet_condition(RM, F, mef, 0, UD);
 }
 
-int pb_data::solve_cg(void) {
+int pb_data::solve_cg() {
   gmm::iteration iter(residual, 1, 1000000);
   gmm::ildlt_precond<general_sparse_matrix> P(RM);
   gmm::cg(RM, U, F, gmm::identity_matrix(), P, iter);
   return int(iter.get_iteration());
 }
 
-int pb_data::solve_superlu(void) {
+int pb_data::solve_superlu() {
   double rcond;
   SuperLU_solve(RM, U, F, rcond);
   return 1;
 }
 
-int pb_data::solve_cg2(void) {
+int pb_data::solve_cg2() {
   gmm::iteration iter(residual, 1, 1000000);
   gmm::cg(RM, U, F, gmm::identity_matrix(), gmm::identity_matrix(), iter);
   return int(iter.get_iteration());

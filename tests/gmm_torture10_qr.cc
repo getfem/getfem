@@ -32,7 +32,7 @@ using std::ends; using std::cin;
 using gmm::size_type;
 bool print_debug = false;
 
-// template <typename MAT, typename T> void print_for_matlab(const MAT &m, T) { 
+// template <typename MAT, typename T> void print_for_matlab(const MAT &m, T) {
 //   cout.precision(16);
 //   cout << "[ ";
 //   for (size_type i = 0; i < gmm::mat_nrows(m); ++i) {
@@ -43,7 +43,7 @@ bool print_debug = false;
 // }
 
 // template <typename MAT, typename T> void print_for_matlab(const MAT &m,
-// 						    std::complex<T>) { 
+//                                                     std::complex<T>) {
 //   cout.precision(16);
 //   cout << "[ ";
 //   for (size_type i = 0; i < gmm::mat_nrows(m); ++i) {
@@ -63,7 +63,7 @@ template <typename T> inline T real_or_complex(double a, double, T)
 template <typename T> inline
 std::complex<T> real_or_complex(double a, double b, std::complex<T>) {
   typedef typename gmm::number_traits<T>::magnitude_type R;
-  return std::complex<T>(R(a), R(b)); 
+  return std::complex<T>(R(a), R(b));
 }
 
 template <typename T> struct cmp_eval {
@@ -78,7 +78,7 @@ template <typename T> struct cmp_eval {
 
 template <typename T> void sort_eval(std::vector<T> &v) {
   std::sort(v.begin(), v.end(), cmp_eval<T>());
-} 
+}
 
 
 template <typename MAT1, typename MAT2>
@@ -102,10 +102,10 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
 
   if (print_debug) {
     static int nexpe = 0;
-    cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; 
+    cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n";
     gmm::set_warning_level(3);
   }
-    
+
   gmm::dense_matrix<T> dm1(m, n);
   gmm::copy(m1, dm1);
   if (m >= n) {
@@ -115,15 +115,15 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
 
     gmm::qr_factor(dm1);
     gmm::copy(dm1, m1);
-    
+
     gmm::apply_house_right(dm1, q);
     for (size_type j = 0; j < n; ++j)
       for (size_type i = j+1; i < m; ++i)
-	dm1(i, j) = T(0);
+        dm1(i, j) = T(0);
     gmm::mult(q, dm1, dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
-    if (!(error <= prec * R(10000))) 
+    if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -137,7 +137,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     error = gmm::mat_euclidean_norm(a);
     if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
-      
+
     gmm::copy(gmm::conjugated(qaux), q2);
     gmm::apply_house_left(m1, q2);
     gmm::mult(gmm::conjugated(q2), dm1, dm1aux);
@@ -145,7 +145,6 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     error = gmm::mat_euclidean_norm(dm1aux);
     if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
-
   }
   else {
     gmm::dense_matrix<T> q(k,n), qaux(k,n), q2(n,k), dm1aux(k,m), m1aux(k,m);
@@ -154,15 +153,15 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
 
     gmm::qr_factor(gmm::transposed(dm1));
     gmm::copy(dm1, m1);
-    
+
     gmm::apply_house_right(gmm::transposed(dm1), q);
     for (size_type i = 0; i < m; ++i)
       for (size_type j = i+1; j < n; ++j)
-	dm1(i, j) = T(0);
+        dm1(i, j) = T(0);
     gmm::mult(q, gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
-    if (!(error <= prec * R(10000))) 
+    if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -176,25 +175,25 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     error = gmm::mat_euclidean_norm(a);
     if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
-      
+
     gmm::copy(gmm::conjugated(qaux), q2);
     gmm::apply_house_left(gmm::transposed(m1), q2);
     gmm::mult(gmm::conjugated(q2), gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
-    if (!(error <= prec * R(10000))) 
+    if (!(error <= prec * R(10000)))
       GMM_ASSERT1(false, "Error too large: " << error);
 
   }
-  
+
   //
   // Test for implicit_qr_algorithm
   //
 
-  
+
 
   m = gmm::mat_nrows(m2);
-  gmm::dense_matrix<T> cq(m, m), cr(m, m), ca(m, m);  
+  gmm::dense_matrix<T> cq(m, m), cr(m, m), ca(m, m);
   std::vector<T> cv(m);
   std::vector<std::complex<R> > eigc(m), cvc(m);
 
@@ -205,18 +204,18 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   for (size_type i = 0; i < m; ++i) det2 *= eigc[i];
   if (gmm::abs(det1 - det2) > (gmm::abs(det1)+gmm::abs(det2))/R(50))
     GMM_ASSERT1(false, "Error in QR or det. det lu: " << det1
-	      << " det qr: " << det2);
+              << " det qr: " << det2);
   if (print_debug)
     cout << "det lu = " << det1 << "  det qr = " << det2 << endl;
 
   if (m > 0) do {
     gmm::fill_random(cq);
   } while (gmm::abs(gmm::lu_det(cq)) < sqrt(prec)
-	   || gmm::condition_number(cq) > R(1000));
+           || gmm::condition_number(cq) > R(1000));
   gmm::copy(cq, cr);
   gmm::lu_inverse(cr);
 
-  
+
 
   gmm::fill_random(cv);
   if (m >  0) cv[ 0] = real_or_complex(     0.0,  0.0, cv[0]);
@@ -237,12 +236,12 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   if (m > 15) cv[15] = real_or_complex(100000.0,  1.0, cv[0]);
   gmm::clear(m2);
   for (size_type l = 0; l < m; ++l) m2(l, l) = cv[l];
-  gmm::mult(cq, m2, ca); 
+  gmm::mult(cq, m2, ca);
   gmm::mult(ca, cr, ca);
-  
+
   implicit_qr_algorithm(ca, eigc, cq);
   gmm::copy(cv, cvc);
-  
+
   sort_eval(cvc);
   sort_eval(eigc);
   error = gmm::vect_dist2(cvc, eigc);
@@ -257,19 +256,18 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
       bb(i, j) = T(0);
   error = gmm::mat_maxnorm(bb);
   if (!(error <= sqrt(prec) * gmm::vect_norm2(cv) * R(10)))
-    GMM_ASSERT1(false, "Error in Schur vectors, error = "<< error); 
+    GMM_ASSERT1(false, "Error in Schur vectors, error = "<< error);
 
   //
   // Test for symmetric_qr_algorithm
   //
-
   m = gmm::mat_nrows(m2);
   std::vector<R> cvr(m), eigcr(m);
   if (m > 0) do {
     gmm::fill_random(cr);
   } while (gmm::abs(gmm::lu_det(cr)) < sqrt(prec)
-	   || gmm::condition_number(cr) > R(1000));
-  
+           || gmm::condition_number(cr) > R(1000));
+
   gmm::qr_factor(cr, cq, ca);
   gmm::fill_random(cvr);
 
@@ -294,19 +292,18 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   gmm::clear(m2);
   for (size_type l = 0; l < m; ++l) m2(l, l) = cvr[l];
 
-  gmm::mult(gmm::conjugated(cq), m2, ca); 
+  gmm::mult(gmm::conjugated(cq), m2, ca);
   gmm::mult(ca, cq, ca);
-  
+
   symmetric_qr_algorithm(ca, eigcr, cq);
 
   for (size_type l = 0; l < m; ++l) {
-     std::vector<T> vy(m);
-     gmm::mult(ca, gmm::mat_col(cq, l),
-	       gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
-     error = gmm::vect_norm2(vy);
-     if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr) * R(10))) 
-       GMM_ASSERT1(false, "Error too large: " << error);
-
+    std::vector<T> vy(m);
+    gmm::mult(ca, gmm::mat_col(cq, l),
+              gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
+    error = gmm::vect_norm2(vy);
+    if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr) * R(10)))
+      GMM_ASSERT1(false, "Error too large: " << error);
   }
 
   sort_eval(cvr);

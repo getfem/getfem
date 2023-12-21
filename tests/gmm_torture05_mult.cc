@@ -36,9 +36,9 @@ using std::ends; using std::cin;
 using gmm::size_type;
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
-	  typename VECT3, typename VECT4>
+          typename VECT3, typename VECT4>
 void test_procedure2(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_, 
-		    const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
+                     const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
   VECT1 &v1 = const_cast<VECT1 &>(v1_);
   VECT2 &v2 = const_cast<VECT2 &>(v2_);
   VECT3 &v3 = const_cast<VECT3 &>(v3_);
@@ -146,9 +146,9 @@ template<typename VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
 
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
-	  typename VECT3, typename VECT4>
+          typename VECT3, typename VECT4>
 bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_, 
-		    const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
+                    const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
   VECT1 &v1 = const_cast<VECT1 &>(v1_);
   VECT2 &v2 = const_cast<VECT2 &>(v2_);
   VECT3 &v3 = const_cast<VECT3 &>(v3_);
@@ -173,11 +173,11 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
   size_type mm = m / 2, nn = n / 2;
   gmm::sub_interval SUBI(0, mm), SUBJ(0, nn); 
   test_procedure2(gmm::sub_matrix(mm1, SUBI),
-		  gmm::sub_vector(v1, SUBI),
-		  gmm::sub_vector(v2, SUBI),
-		  gmm::sub_matrix(mm2, SUBI, SUBJ),
-		  gmm::sub_vector(v3, SUBJ),
-		  gmm::sub_vector(v4, SUBJ));
+                  gmm::sub_vector(v1, SUBI),
+                  gmm::sub_vector(v2, SUBI),
+                  gmm::sub_matrix(mm2, SUBI, SUBJ),
+                  gmm::sub_vector(v3, SUBJ),
+                  gmm::sub_vector(v4, SUBJ));
 
   gmm::add(gmm::scaled(mm1, T(-1)), m1);
   gmm::add(gmm::scaled(mm2, T(-1)), m2);
@@ -196,7 +196,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
   if (!(error <= prec))
     GMM_ASSERT1(false, "Error too large: " << error);
   gmm::mult(gmm::row_vector(gmm::conjugated(v3)), gmm::conjugated(m2),
-	    gmm::row_vector(v2));
+            gmm::row_vector(v2));
   gmm::add(gmm::conjugated(gmm::scaled(v5, T(-1))), v2);
   error = gmm::vect_norm2(v2);
   if (!(error <= prec))
@@ -211,19 +211,19 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     gmm::resize(m1, a+a2, b+b2);
     for (size_type i = 0; i < a+a2; ++i)
       for (size_type j = 0; j < b+b2; ++j) {
-	if (i < a && j < b) {
-	  if (m3(i, j) != m1(i, j))
-	    GMM_ASSERT1(false, "Error in resize");
-	}
-	else
-	  if (m1(i, j) != T(0))
-	    GMM_ASSERT1(false, "Error in resize");
+        if (i < a && j < b) {
+          if (m3(i, j) != m1(i, j))
+            GMM_ASSERT1(false, "Error in resize");
+        }
+        else
+          if (m1(i, j) != T(0))
+            GMM_ASSERT1(false, "Error in resize");
       }
     gmm::resize(m1, a2, b2);
     for (size_type i = 0; i < a2; ++i)
       for (size_type j = 0; j < b2; ++j)
-	if (m3(i, j) != m1(i, j))
-	    GMM_ASSERT1(false, "Error in resize");
+        if (m3(i, j) != m1(i, j))
+            GMM_ASSERT1(false, "Error in resize");
   }
 
   if (gmm::is_original_linalg(v1)) {
@@ -234,17 +234,17 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     gmm::resize(v1, a+a2);
     for (size_type i = 0; i < a+a2; ++i) {
       if (i < a) {
-	if (v1[i] != v6[i])
-	    GMM_ASSERT1(false, "Error in resize");
-	}
-	else
-	  if (v1[i] != T(0))
-	    GMM_ASSERT1(false, "Error in resize");
+        if (v1[i] != v6[i])
+            GMM_ASSERT1(false, "Error in resize");
+        }
+        else
+          if (v1[i] != T(0))
+            GMM_ASSERT1(false, "Error in resize");
     }
     gmm::resize(v1, a2);
     for (size_type i = 0; i < a2; ++i)
       if (v1[i] != v6[i])
-	GMM_ASSERT1(false, "Error in resize");
+        GMM_ASSERT1(false, "Error in resize");
   }
 
   test_mat_swap(m1, typename gmm::linalg_traits<MAT1>::is_reference());

@@ -52,9 +52,9 @@ namespace getfemint {
     size_type ncols(void) const { return gsp ? gsp->ncols() : ncols_; }
     void set_dimensions(size_type m, size_type n) { nrows_ = m; ncols_ = n; }
     gprecond_base() : nrows_(0), ncols_(0), type(IDENTITY), gsp(0) {}
-    const char *name() const { 
+    const char *name() const {
       const char *p[] = { "IDENTITY", "DIAG", "ILDLT", "ILDLTT", "ILU", "ILUT",
-			  "SUPERLU", "GSPARSE" };
+                          "SUPERLU", "GSPARSE" };
       return p[type];
     }
     virtual size_type memsize() const = 0;
@@ -63,7 +63,7 @@ namespace getfemint {
 
   template <typename T> struct gprecond : public gprecond_base {
     typedef gmm::csc_matrix_ref<const T*, const unsigned int *,
-				const unsigned int *> cscmat;
+                                const unsigned int *> cscmat;
     std::unique_ptr<gmm::diagonal_precond<cscmat> > diagonal;
     std::unique_ptr<gmm::ildlt_precond<cscmat> > ildlt;
     std::unique_ptr<gmm::ildltt_precond<cscmat> > ildltt;
@@ -81,10 +81,11 @@ namespace getfemint {
       case ILDLT:   sz += ildlt->memsize(); break;
       case ILDLTT:  sz += ildltt->memsize(); break;
       case SUPERLU:
-	sz += size_type(superlu->memsize()); break;
+        sz += size_type(superlu->memsize());
+        break;
       case SPMAT:   sz += gsp->memsize(); break;
       }
-      return sz; 
+      return sz;
     }
   };
 
@@ -116,34 +117,34 @@ namespace gmm {
 
   template <typename T, typename V1, typename V2>
   void mult_or_transposed_mult(const getfemint::gprecond<T>& precond,
-			       const V1 &v, V2 &w, bool do_mult) {
+                               const V1 &v, V2 &w, bool do_mult) {
     switch (precond.type) {
       case getfemint::gprecond_base::IDENTITY: gmm::copy(v,w); break;
       case getfemint::gprecond_base::DIAG:
-	gmm::mult(*precond.diagonal, v, w);
-	break;
-      case getfemint::gprecond_base::ILDLT: 
-        if (do_mult) gmm::mult(*precond.ildlt, v, w); 
+        gmm::mult(*precond.diagonal, v, w);
+        break;
+      case getfemint::gprecond_base::ILDLT:
+        if (do_mult) gmm::mult(*precond.ildlt, v, w);
         else gmm::transposed_mult(*precond.ildlt, v, w);
         break;
-      case getfemint::gprecond_base::ILDLTT: 
-        if (do_mult) gmm::mult(*precond.ildltt, v, w); 
+      case getfemint::gprecond_base::ILDLTT:
+        if (do_mult) gmm::mult(*precond.ildltt, v, w);
         else gmm::transposed_mult(*precond.ildltt, v, w);
         break;
-      case getfemint::gprecond_base::ILU: 
-        if (do_mult) gmm::mult(*precond.ilu, v, w); 
+      case getfemint::gprecond_base::ILU:
+        if (do_mult) gmm::mult(*precond.ilu, v, w);
         else gmm::transposed_mult(*precond.ilu, v, w);
         break;
-      case getfemint::gprecond_base::ILUT: 
-        if (do_mult) gmm::mult(*precond.ilut, v, w); 
+      case getfemint::gprecond_base::ILUT:
+        if (do_mult) gmm::mult(*precond.ilut, v, w);
         else gmm::transposed_mult(*precond.ilut, v, w);
         break;
       case getfemint::gprecond_base::SUPERLU:
-	if (do_mult) precond.superlu->solve(w,v);
-	else precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
-	break;
+        if (do_mult) precond.superlu->solve(w,v);
+        else precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
+        break;
       case getfemint::gprecond_base::SPMAT:
-	precond.gsp->mult_or_transposed_mult(v, w, !do_mult);
+        precond.gsp->mult_or_transposed_mult(v, w, !do_mult);
         break;
     }
   }
@@ -153,7 +154,7 @@ namespace gmm {
   }
   template <typename T, typename V1, typename V2>
   void transposed_mult(const getfemint::gprecond<T>& precond, const V1 &v,
-		       V2 &w) {
+                       V2 &w) {
     mult_or_transposed_mult(precond,v,w,false);
   }
 

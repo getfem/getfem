@@ -190,7 +190,6 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                  superlu_solver(gsp, in, out, scalar_type());
        );
 
-
     /*@FUNC @CELL{U, cond} = ('superlu', @tsp M, @vec b)
     Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
