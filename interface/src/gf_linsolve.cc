@@ -97,7 +97,7 @@ superlu_solver(gsparse &gsp,
     out.pop().from_scalar(rcond ? 1./rcond : 0.);
 }
 
-#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
+#if defined(GMM_USES_MUMPS)
 template <typename T> static void
 mumps_solver(gsparse &gsp,
              getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
@@ -204,7 +204,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                  superlu_solver(gsp, in, out, scalar_type());
        );
 
-#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
+#if defined(GMM_USES_MUMPS)
     /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)
     Solve `M.U = b` using the MUMPS solver.@*/
     sub_command

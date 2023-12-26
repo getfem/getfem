@@ -26,7 +26,7 @@
 /*                                                                        */
 /**************************************************************************/
 
-#define GMM_USES_SUPERLU
+#define GETFEM_USES_SUPERLU
 
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_regular_meshes.h"
@@ -77,7 +77,9 @@ struct pb_data {
 
   int solve_cg();
   int solve_cg2();
+#if defined(GETFEM_USES_SUPERLU)
   int solve_superlu();
+#endif
   int solve_schwarz(int);
 
   int solve() {
@@ -85,7 +87,9 @@ struct pb_data {
     switch (solver) {
     case 0 : return solve_cg();
     case 1 : return solve_cg2();
+#if defined(GETFEM_USES_SUPERLU)
     case 2 : return solve_superlu();
+#endif
     default : return solve_schwarz(solver);
     }
     return 0;
@@ -224,11 +228,13 @@ int pb_data::solve_cg() {
   return int(iter.get_iteration());
 }
 
+#if defined(GETFEM_USES_SUPERLU)
 int pb_data::solve_superlu() {
   double rcond;
   SuperLU_solve(RM, U, F, rcond);
   return 1;
 }
+#endif
 
 int pb_data::solve_cg2() {
   gmm::iteration iter(residual, 1, 1000000);
@@ -269,10 +275,12 @@ int pb_data::solve_schwarz(int version) {
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_gmres(), gmm::using_gmres());
     break;
+#if defined(GETFEM_USES_SUPERLU)
   case 5 : gmm::additive_schwarz(RM, U, F,
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_superlu(), gmm::using_cg());
     break;
+#endif
   }
   return 0;
 }

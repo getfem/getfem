@@ -333,8 +333,8 @@ namespace gmm {
 //       {
 
 //       MPI_Sendrecv(&(qbis[0]), gmm::vect_size(q), MPI_DOUBLE, next, tag1,
-//                  &(qter[0]), gmm::vect_size(q),MPI_DOUBLE,previous,tag1,
-//                  MPI_COMM_WORLD,&status);
+//                    &(qter[0]), gmm::vect_size(q),MPI_DOUBLE,previous,tag1,
+//                    MPI_COMM_WORLD,&status);
 //       gmm::copy(qter, qbis);
 //       add(qbis,q,q);
 //       }
