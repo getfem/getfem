@@ -22,8 +22,6 @@ EXTRA_DIST = \
 
 check_PROGRAMS = 
 
-CLEANFILES = 
-
 if BUILDPYTHON
 TESTS = plasticity_fin_strain_lin_hardening_plane_strain.py
 

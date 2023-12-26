@@ -256,6 +256,6 @@ libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
-CLEANFILES = ii_files/* *.o.d getfem/getfem_im_list.h 
+CLEANFILES = ii_files/* *.o.d getfem/getfem_im_list.h
 DISTCLEANFILES = getfem/getfem_arch_config.h gmm/gmm_arch_config.h
 

@@ -58,7 +58,7 @@ dnl set the optimization level
 dnl --------------------------
 
 AC_ARG_WITH(optimization,
-	    AC_HELP_STRING([--with-optimization=FLAG],[Set the optimization level (-O3 by default)]),
+	    AS_HELP_STRING([--with-optimization=FLAG],[Set the optimization level (-O3 by default)]),
 	    [with_optimization=$withval],
 	    [with_optimization='-O3']
 	    )	    
@@ -647,12 +647,12 @@ LIBS="$acx_blas_save_LIBS"
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_blas_ok" = xyes; then
-	echo "OK, You have working BLAS libs ! Using $BLAS_LIBS" ; HAVE_VENDOR_BLAS=1
+  echo "OK, You have working BLAS libs ! Using $BLAS_LIBS" ; HAVE_VENDOR_BLAS=1
 else
-        echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement" ; HAVE_VENDOR_BLAS=0
+  echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement" ; HAVE_VENDOR_BLAS=0
 fi
 
-dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ], [echo "YOU DONT HAVE BLAS! Using a cheap replacement" ; HAVE_VENDOR_BLAS=0])
+dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ],[echo "YOU DONT HAVE BLAS! Using a cheap replacement" ; HAVE_VENDOR_BLAS=0])
 LIBS="$LIBS $BLAS_LIBS"
 CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
 

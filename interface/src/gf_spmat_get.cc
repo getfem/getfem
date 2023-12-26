@@ -403,7 +403,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
        );
 
 
-#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
+#if defined(GMM_USES_MUMPS)
     /*@GET @CELL{mantissa_r, mantissa_i, exponent} = ('determinant')
       returns the matrix determinant calculated using MUMPS.@*/
     sub_command

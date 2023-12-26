@@ -23,7 +23,7 @@
 
 typedef int int_t;
 
-/* because SRC/util.h defines TRUE and FALSE ... */
+/* because slu_util.h defines TRUE and FALSE ... */
 #ifdef TRUE
 # undef TRUE
 #endif

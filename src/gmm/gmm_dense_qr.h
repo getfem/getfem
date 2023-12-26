@@ -573,14 +573,15 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    size_type n(mat_nrows(A)), q(0), q_old, p(0), ite(0), its(0);
+    size_type n(mat_nrows(A)), q(0), p(0);
     dense_matrix<T> H(n,n);
-    sub_interval SUBK(0,0);
-
     gmm::copy(A, H);
+
     Hessenberg_reduction(H, Q, compvect);
     qr_stop_criterion(H, p, q, tol);
 
+    size_type ite(0), its(0);
+    sub_interval SUBK(0,0);
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q));
       if (compvect) SUBK = SUBI;
@@ -589,7 +590,7 @@ namespace gmm {
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI),
                                      sub_matrix(Q, SUBJ, SUBK),
                                      tol, (its == 10 || its == 20), compvect);
-      q_old = q;
+      size_type q_old(q);
       qr_stop_criterion(H, p, q, tol*R(2));
       if (q != q_old) its = 0;
       ++its; ++ite;
@@ -723,7 +724,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    size_type n = mat_nrows(A), q = 0, p, ite = 0;
+    size_type n(mat_nrows(A)), q(0), p(0), ite(0);
     dense_matrix<T> Tri(n, n);
     gmm::copy(A, Tri);
 

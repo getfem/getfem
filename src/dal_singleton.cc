@@ -20,10 +20,6 @@
 ===========================================================================*/
 
 #include "getfem/dal_singleton.h"
-#include <algorithm>
-#include "gmm/gmm.h"
-#include "getfem/getfem_omp.h"
-
 
 namespace dal {
 
