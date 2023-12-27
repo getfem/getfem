@@ -247,9 +247,6 @@ SRC =                                      		\
 	getfem_continuation.cc
 #	getfem_enumeration_dof_para.cc
 
-getfem/getfem_im_list.h : ../cubature/getfem_im_list.h 
-	cp ../cubature/getfem_im_list.h getfem/getfem_im_list.h
-
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
