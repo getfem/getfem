@@ -1,0 +1,26 @@
+/* manually maintained template for cmake, equivalent to src/gmm/gmm_arch_config.h.in
+   used by autotools. */
+
+/* gcc style __PRETTY_FUNCTION__ macro */
+#cmakedefine GMM_HAVE_PRETTY_FUNCTION
+
+/* defined if GMM is linked to a blas library */
+#cmakedefine GMM_USES_BLAS
+
+/* defined if GMM is linked to a lapack library */
+#cmakedefine GMM_USES_LAPACK
+
+/* defined if GMM uses MPI */
+#cmakedefine GMM_USES_MPI
+
+/* defined if GMM is linked to the mumps library */
+#cmakedefine GMM_USES_MUMPS
+
+/* defined if GMM is linked to the superlu library */
+#cmakedefine GMM_USES_SUPERLU
+
+/* Use blas with 64 bits integers */
+#cmakedefine GMM_USE_BLAS64_INTERFACE
+
+/* GMM version */
+#define GMM_VERSION "@GMM_VERSION@"

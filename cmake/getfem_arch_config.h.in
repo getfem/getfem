@@ -1,0 +1,50 @@
+/* manually maintained template for cmake, equivalent to src/getfem/getfem_arch_config.h.in
+   used by autotools. */
+
+/* enable openblas to be multithreaded */
+#cmakedefine GETFEM_FORCE_SINGLE_THREAD_BLAS
+
+/* defined if GetFEM is built with OpenMP parallelization */
+#cmakedefine GETFEM_HAS_OPENMP
+
+/* glibc backtrace function */
+#cmakedefine GETFEM_HAVE_BACKTRACE
+
+/* defined if the cxxabi.h header file is available */
+#cmakedefine GETFEM_HAVE_CXXABI_H
+
+/* glibc floating point exceptions control */
+#cmakedefine GETFEM_HAVE_FEENABLEEXCEPT
+
+/* defined if the <libqhull_r/qhull_ra.h> header file is available */
+#cmakedefine GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H
+
+/* defined if the Metis library was found and is working */
+#cmakedefine GETFEM_HAVE_METIS
+
+/* defined if the Metis library found is older than version 4 */
+#cmakedefine GETFEM_HAVE_METIS_OLD_API
+
+/* defined if the qd library was found and is working */
+#cmakedefine GETFEM_HAVE_QDLIB
+
+/* GetFEM package name */
+#define GETFEM_PACKAGE_NAME "@GETFEM_PACKAGE_NAME@"
+
+/* GetFEM package string */
+#define GETFEM_PACKAGE_STRING "@GETFEM_PACKAGE_STRING@"
+
+/* GetFEM package tarname */
+#define GETFEM_PACKAGE_TARNAME "@GETFEM_PACKAGE_TARNAME@"
+
+/* Parallelization level (0|1|2) */
+#define GETFEM_PARA_LEVEL @GETFEM_PARA_LEVEL@
+
+/* defined if quad-doubles are to be used instead of double-double */
+#cmakedefine GETFEM_QDLIB_USE_QUAD
+
+/* Use rpc for getfem communication with matlab */
+#cmakedefine GETFEM_USE_RPC
+
+/* GetFEM version */
+#define GETFEM_VERSION "@GETFEM_VERSION@"
