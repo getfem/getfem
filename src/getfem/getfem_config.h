@@ -167,13 +167,6 @@
 #define GETFEM_MPI_INIT(argc, argv) {GMM_TRACE1("Running sequential Getfem");}
 #define GETFEM_MPI_FINALIZE {}
 
-#if defined(GETFEM_HAVE_DMUMPS_C_H)
-# if !defined(GMM_USES_MUMPS)
-#   define GMM_USES_MUMPS
-# endif
-#endif
-
-
 #if GMM_USES_MPI > 0
 # include <mpi.h>
 
@@ -190,28 +183,12 @@
 # undef GETFEM_MPI_FINALIZE 
 # define GETFEM_MPI_FINALIZE { MPI_Finalize(); }
 
-// GETFEM_PARA_SOLVER is the parallelisation solver used
-//    MUMPS       : use direct parallel solver MUMPS
-//    SCHWARZADD  : use a Schwarz additive method
-#define MUMPS_PARA_SOLVER 1
-#define SCHWARZADD_PARA_SOLVER 2
-
-# ifndef GETFEM_PARA_SOLVER
-#   define GETFEM_PARA_SOLVER MUMPS_PARA_SOLVER
-# endif
-
-# if GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-#  ifndef GMM_USES_MUMPS
-#    define GMM_USES_MUMPS
-#  endif
-# endif
-
 #endif
 
 
 #include "bgeot_tensor.h"
 #include "bgeot_poly.h"
-#include "getfem_superlu.h"
+
 
 /// GEneric Tool for Finite Element Methods.
 namespace getfem {
@@ -221,6 +198,17 @@ namespace getfem {
   using gmm::vref;
 
 #if GETFEM_PARA_LEVEL > 1
+
+// GETFEM_PARA_SOLVER is the parallelisation solver used
+//    MUMPS       : use direct parallel solver MUMPS
+//    SCHWARZADD  : use a Schwarz additive method
+# define MUMPS_PARA_SOLVER 1
+# define SCHWARZADD_PARA_SOLVER 2
+
+# ifndef GETFEM_PARA_SOLVER
+#   define GETFEM_PARA_SOLVER MUMPS_PARA_SOLVER
+# endif
+
   template <typename T> inline T MPI_SUM_SCALAR(T a) {
     T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a), MPI_SUM, MPI_COMM_WORLD);
     return b;

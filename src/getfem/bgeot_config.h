@@ -37,6 +37,7 @@
 #ifndef BGEOT_CONFIG_H__
 #define BGEOT_CONFIG_H__
 
+#include "gmm/gmm_arch_config.h"
 #include "getfem/getfem_arch_config.h"
 
 #if defined(GETFEM_HAVE_FEENABLEEXCEPT)

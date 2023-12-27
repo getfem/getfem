@@ -34,7 +34,11 @@ int main(int argc, char *argv[]) {
   int ret=0;
 
 #if defined(GMM_USES_MUMPS)
-  
+  std::string lsolver("mumps");
+#else
+  std::string lsolver("superlu");
+#endif
+
   gmm::set_traces_level(1);
 
   bgeot::md_param PARAM;
@@ -140,16 +144,16 @@ int main(int argc, char *argv[]) {
   std::cout<<"SOLVING MODEL 1 (without internal variables)"<<std::endl;
   gmm::iteration iter(1E-9, 1, 30);
   if (DIFFICULTY % 10000 > 999)
-    getfem::standard_solve(md1, iter, getfem::rselect_linear_solver(md1, "mumps"), ls1B);
+    getfem::standard_solve(md1, iter, getfem::rselect_linear_solver(md1, lsolver), ls1B);
   else
-    getfem::standard_solve(md1, iter, getfem::rselect_linear_solver(md1, "mumps"), ls1A);
+    getfem::standard_solve(md1, iter, getfem::rselect_linear_solver(md1, lsolver), ls1A);
 
   std::cout<<"SOLVING MODEL 2 (with internal variables)"<<std::endl;
   iter.init();
   if (DIFFICULTY % 10000 > 999)
-    getfem::standard_solve(md2, iter, getfem::rselect_linear_solver(md2, "mumps"), ls2B);
+    getfem::standard_solve(md2, iter, getfem::rselect_linear_solver(md2, lsolver), ls2B);
   else
-    getfem::standard_solve(md2, iter, getfem::rselect_linear_solver(md2, "mumps"), ls2A);
+    getfem::standard_solve(md2, iter, getfem::rselect_linear_solver(md2, lsolver), ls2A);
 
   if (debug) {
     std::cout<<std::endl<<"u1:"<<std::endl;
@@ -184,8 +188,6 @@ int main(int argc, char *argv[]) {
 
   std::cout<<"Test with difficulty "<<DIFFICULTY<<" returned "<<ret<<std::endl;
 
-#endif
-  
   GETFEM_MPI_FINALIZE;
   return ret;
 }

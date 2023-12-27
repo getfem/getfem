@@ -647,9 +647,13 @@ int main(int argc, char *argv[]) {
       plain_vector BE(nb_dof), BS(nb_dof);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i) {
         BE[i] = scalar_type(1);
+#if defined(GMM_USES_SUPERLU)
         // TODO: store LU decomp.
         double rcond;
         gmm::SuperLU_solve(EO, BS, BE, rcond);
+#else
+        gmm::MUMPS_solve(EO, BS, BE);
+#endif
         gmm::mult(gmm::transposed(T1), BS, gmm::mat_row(E1, i));
         BE[i] = scalar_type(0);
       }

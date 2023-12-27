@@ -39,7 +39,7 @@
 #include <gmm/gmm_precond_ildltt.h>
 #include <gmm/gmm_precond_ilu.h>
 #include <gmm/gmm_precond_ilut.h>
-#include <getfem/getfem_superlu.h>
+#include <gmm/gmm_superlu_interface.h>
 #include <getfemint_gsparse.h>
 
 namespace getfemint {
@@ -69,7 +69,9 @@ namespace getfemint {
     std::unique_ptr<gmm::ildltt_precond<cscmat> > ildltt;
     std::unique_ptr<gmm::ilu_precond<cscmat> > ilu;
     std::unique_ptr<gmm::ilut_precond<cscmat> > ilut;
+#if defined(GMM_USES_SUPERLU)
     std::unique_ptr<gmm::SuperLU_factor<T> > superlu;
+#endif
 
     virtual size_type memsize() const {
       size_type sz = sizeof(*this);
@@ -81,7 +83,11 @@ namespace getfemint {
       case ILDLT:   sz += ildlt->memsize(); break;
       case ILDLTT:  sz += ildltt->memsize(); break;
       case SUPERLU:
+#if defined(GMM_USES_SUPERLU)
         sz += size_type(superlu->memsize());
+#else
+        GMM_ASSERT1(false, "GetFEM built without SuperLU support");
+#endif
         break;
       case SPMAT:   sz += gsp->memsize(); break;
       }
@@ -140,8 +146,12 @@ namespace gmm {
         else gmm::transposed_mult(*precond.ilut, v, w);
         break;
       case getfemint::gprecond_base::SUPERLU:
+#if defined(GMM_USES_SUPERLU)
         if (do_mult) precond.superlu->solve(w,v);
         else precond.superlu->solve(w,v,gmm::SuperLU_factor<T>::LU_TRANSP);
+#else
+        GMM_ASSERT1(false, "GetFEM built without SuperLU support");
+#endif
         break;
       case getfemint::gprecond_base::SPMAT:
         precond.gsp->mult_or_transposed_mult(v, w, !do_mult);

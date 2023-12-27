@@ -795,18 +795,16 @@ getfem_env(PyObject *self, PyObject *args) {
     word_out = PyUnicode_FromString("http://home.gna.org/getfem/");
   } else if (strcmp(word_in,"license") == 0) {
     word_out = PyUnicode_FromString("GNU LGPL v3");
-  } else if (strcmp(word_in,"package") == 0) {
-    word_out = PyUnicode_FromString(GETFEM_PACKAGE);
-  } else if (strcmp(word_in,"package_name") == 0) {
+  } else if (strcmp(word_in,"package") == 0 ||
+             strcmp(word_in,"package_name") == 0) {
     word_out = PyUnicode_FromString(GETFEM_PACKAGE_NAME);
   } else if (strcmp(word_in,"package_string") == 0) {
     word_out = PyUnicode_FromString(GETFEM_PACKAGE_STRING);
-  } else if(strcmp(word_in,"package_tarname") == 0) {
+  } else if (strcmp(word_in,"package_tarname") == 0) {
     word_out = PyUnicode_FromString(GETFEM_PACKAGE_TARNAME);
-  } else if(strcmp(word_in,"package_version") == 0 ||
-            strcmp(word_in,"release") == 0) {
-    word_out = PyUnicode_FromString(GETFEM_PACKAGE_VERSION);
-  } else if(strcmp(word_in,"version") == 0) {
+  } else if (strcmp(word_in,"package_version") == 0 ||
+             strcmp(word_in,"release") == 0 ||
+             strcmp(word_in,"version") == 0) {
     word_out = PyUnicode_FromString(GETFEM_VERSION);
   } else {
     word_out = PyUnicode_FromString("");

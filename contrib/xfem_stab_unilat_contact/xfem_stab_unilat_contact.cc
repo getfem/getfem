@@ -950,14 +950,17 @@ struct matrix_G {
   const sparse_matrix &S;
   mutable plain_vector W1, W2;
 
+#if defined(GMM_USES_SUPERLU)
   gmm::SuperLU_factor<scalar_type> SLUF;
+#endif
   matrix_G(const sparse_matrix &BB, const sparse_matrix &SS)
     : B(BB), S(SS), W1(gmm::mat_nrows(SS)), W2(gmm::mat_nrows(SS)) {
+#if defined(GMM_USES_SUPERLU)
     SLUF.build_with(SS);
+#endif
   }
 
 };
-
 
 
 template <typename vector1, typename vector2>
@@ -965,7 +968,11 @@ void mult(const matrix_G &G, const vector1 &X, vector2 &Y) {
   gmm::mult(gmm::transposed(G.B), X, G.W1);
   // gmm::iteration it(1E-6, 0);
   // gmm::cg(G.S, G.W2, G.W1,  gmm::identity_matrix(), it);
+#if defined(GMM_USES_SUPERLU)
   G.SLUF.solve(G.W2, G.W1);
+#else
+  gmm::MUMPS_solve(G.S, G.W2, G.W1);
+#endif
   gmm::mult(G.B, G.W2, Y);
 }
 

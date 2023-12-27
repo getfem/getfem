@@ -35,7 +35,6 @@
 #include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_derivatives.h"
-#include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
@@ -284,7 +283,9 @@ bool laplacian_problem::solve(void) {
     gmm::gmres(SM, U, B, P, 50, iter);
   } else {
     double rcond;
+#if defined(GMM_USES_SUPERLU)
     gmm::SuperLU_solve(SM, U, B, rcond);
+#endif
     cout << "cond = " << 1/rcond << "\n";
   }
 

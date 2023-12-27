@@ -33,7 +33,7 @@
 #define GFI_ARRAY
 
 #include <sys/types.h>
-#ifdef USE_RPC
+#ifdef GETFEM_USE_RPC
 # include <rpc/types.h>
 #else
 # ifndef __u_char_defined

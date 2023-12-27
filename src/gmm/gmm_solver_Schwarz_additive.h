@@ -39,7 +39,11 @@
 #define GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
 
 #include "gmm_kernel.h"
+#if defined(GMM_USES_SUPERLU)
 #include "gmm_superlu_interface.h"
+#else
+#include "gmm_MUMPS_interface.h"
+#endif
 #include "gmm_solver_cg.h"
 #include "gmm_solver_gmres.h"
 #include "gmm_solver_bicgstab.h"
@@ -568,8 +572,12 @@ namespace gmm {
       x.resize(gmm::mat_ncols(M.vB[i]));
       gmm::mult(M.vM[i], p, v);
       gmm::mult(gmm::transposed(M.vB[i]), v, w);
+#if defined(GMM_USES_SUPERLU)
       double rcond;
-      SuperLU_solve(M.vMloc[i], x, w, rcond);
+      gmm::SuperLU_solve(M.vMloc[i], x, w, rcond);
+#else
+      gmm::MUMPS_solve(M.vMloc[i], x, w);
+#endif
       // gmm::iteration iter(1E-10, 0, 100000);
       //gmm::gmres(M.vMloc[i], x, w, gmm::identity_matrix(), 50, iter);
       gmm::mult_add(M.vB[i], x, q);

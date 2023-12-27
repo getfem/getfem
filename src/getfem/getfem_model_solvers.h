@@ -40,6 +40,7 @@
 #ifndef GETFEM_MODEL_SOLVERS_H__
 #define GETFEM_MODEL_SOLVERS_H__
 #include "getfem_models.h"
+#include "gmm/gmm_superlu_interface.h"
 #include "gmm/gmm_MUMPS_interface.h"
 #include "gmm/gmm_iter.h"
 #include "gmm/gmm_iter_solvers.h"
@@ -141,6 +142,7 @@ namespace getfem {
     }
   };
 
+#if defined(GMM_USES_SUPERLU)
   template <typename MAT, typename VECT>
   struct linear_solver_superlu
     : public abstract_linear_solver<MAT, VECT> {
@@ -150,11 +152,12 @@ namespace getfem {
       /*gmm::HarwellBoeing_IO::write("test.hb", M);
       std::fstream f("bbb", std::ios::out);
       for (unsigned i=0; i < gmm::vect_size(b); ++i) f << b[i] << "\n";*/
-      int info = SuperLU_solve(M, x, b, rcond);
+      int info = gmm::SuperLU_solve(M, x, b, rcond);
       iter.enforce_converged(info == 0);
       if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
     }
   };
+#endif
 
   template <typename MAT, typename VECT>
   struct linear_solver_dense_lu : public abstract_linear_solver<MAT, VECT> {
@@ -640,8 +643,11 @@ namespace getfem {
         return std::make_shared<linear_solver_mumps_sym<MATRIX, VECTOR>>();
       else
         return std::make_shared<linear_solver_mumps<MATRIX, VECTOR>>();
-# else
+# elif defined(GMM_USES_SUPERLU)
       return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
+# else
+      static_assert(false,
+                    "At least one direct solver (MUMPS or SuperLU) is required");
 # endif
     }
     else {
@@ -665,8 +671,13 @@ namespace getfem {
   std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>>
   select_linear_solver(const model &md, const std::string &name) {
     std::shared_ptr<abstract_linear_solver<MATRIX, VECTOR>> p;
-    if (bgeot::casecmp(name, "superlu") == 0)
+    if (bgeot::casecmp(name, "superlu") == 0) {
+#if defined(GMM_USES_SUPERLU)
       return std::make_shared<linear_solver_superlu<MATRIX, VECTOR>>();
+#else
+      GMM_ASSERT1(false, "SuperLU is not interfaced");
+#endif
+    }
     else if (bgeot::casecmp(name, "dense_lu") == 0)
       return std::make_shared<linear_solver_dense_lu<MATRIX, VECTOR>>();
     else if (bgeot::casecmp(name, "mumps") == 0) {
@@ -723,10 +734,10 @@ namespace getfem {
   add a special traitement on the problem, etc ...  This is in
   fact a model for your own solver.
 
-  For small problems, a direct solver is used
-  (getfem::SuperLU_solve), for larger problems, a conjugate
-  gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
-  used (preconditioned with an incomplete factorization).
+  For small problems, a direct solver is used (gmm::SuperLU_solve),
+  for larger problems, a conjugate gradient gmm::cg (if the problem is
+  coercive) or a gmm::gmres is used (preconditioned with an incomplete
+  factorization).
 
   When MPI/METIS is enabled, a partition is done via METIS, and a parallel
   solver can be used.

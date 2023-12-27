@@ -56,7 +56,6 @@ enum {
   NEUMANN_BOUNDARY_NUM};
 
 #if GETFEM_PARA_LEVEL > 1
-#ifdef GMM_USES_MPI
   template <typename VECT> inline void MPI_SUM_VECTOR2(VECT &V) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V));
@@ -65,7 +64,8 @@ enum {
                   MPI_SUM, MPI_COMM_WORLD);
     gmm::copy(W, V);
   }
-#endif
+#else
+  template <typename VECT> inline void MPI_SUM_VECTOR2(VECT &) {}
 #endif
 
 struct problem_definition;
@@ -994,8 +994,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   }
   K2(nbdof_p,nbdof_p) = 0.0;
 
-  gmm::SuperLU_factor<double> SLUsys2, SLUsys3,SLUsys1;
+#if !defined(GMM_USES_MUMPS)
+  gmm::SuperLU_factor<double> SLUsys2;
   SLUsys2.build_with(K2);
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // dynamic problem
@@ -1139,6 +1141,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 //gmm::copy(X1,gmm::sub_vector(USTAR,gmm::sub_slice(0,nbdof_u,2)));
 //gmm::copy(X2,gmm::sub_vector(USTAR,gmm::sub_slice(1,nbdof_u,2)));
 
+#if !defined(GMM_USES_MUMPS)
+  gmm::SuperLU_factor<double> SLUsys3;
+#endif
   for (scalar_type t = Tinitial + dt; t <= T; t += dt) {
 
     //******* Construction of the Matrix for the 3rd system (to obtain velocity) **********//
@@ -1173,7 +1178,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       //gmm::add(gmm::scaled(A2u,-1.0),A2v);
       //cout <<"A2 "<< gmm::mat_norminf(A2v) << endl;
 
+#if !defined(GMM_USES_MUMPS)
       SLUsys3.build_with(A2u);
+#endif
     }
 
     if (time_order == 2 && t == Tinitial+2*dt) { // computed once
@@ -1204,7 +1211,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       gmm::copy(gmm::sub_matrix(A2,SUB_CT_Vu,SUB_CT_Vu),A2u);
       //gmm::copy(gmm::sub_matrix(A2,SUB_CT_Vv,SUB_CT_Vv),A2v);
 
+#if !defined(GMM_USES_MUMPS)
       SLUsys3.build_with(A2u);
+#endif
     }
 
     //******* The matrix of the 3rd system is constructed and factorized
@@ -1262,9 +1271,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       gmm::add(gmm::scaled(Un0, 2.0/dt),gmm::scaled(Unm1,-0.5/dt),Ytmp);
       gmm::mult(M, Ytmp, gmm::sub_vector(Y, I1));
     }
-#if GETFEM_PARA_LEVEL > 1
     MPI_SUM_VECTOR2(Y);
-#endif
 
     // Volumic source term -- inutile d'assambler car F = 0
     //pdef->source_term(*this, t, F);
@@ -1304,18 +1311,14 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       plain_vector VV(mf_mult.nb_dof());
       gmm::clear(VV);
       getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpidirrg); // a optimiser indept time
-#if GETFEM_PARA_LEVEL > 1
       MPI_SUM_VECTOR2(VV);
-#endif
       gmm::copy(gmm::sub_vector(VV, SUB_CT_DIR), gmm::sub_vector(Y, I3));
     }
     {
       plain_vector VV(mf_mult.nb_dof());
       gmm::clear(VV);
       getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpidircylrg); // a optimiser  indept time
-#if GETFEM_PARA_LEVEL > 1
       MPI_SUM_VECTOR2(VV);
-#endif
       gmm::copy(gmm::sub_vector(VV, SUB_CT_DIR_CYL), gmm::sub_vector(Y, I3C));
     }
 
@@ -1337,9 +1340,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       } else {
          asm_improved_non_reflective_bc(VV, mim, mf_u, Un0, mf_mult, dt, nu, mpinonrefrg);
       }
-#if GETFEM_PARA_LEVEL > 1
       MPI_SUM_VECTOR2(VV);
-#endif
       gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
     }
 
@@ -1347,9 +1348,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::clear(YY);
     gmm::mult(gmm::transposed(B), gmm::scaled(Pn0, -1.0), YY);
 
-#if GETFEM_PARA_LEVEL > 1
     MPI_SUM_VECTOR2(YY);
-#endif
 
     gmm::add(YY, gmm::sub_vector(Y, I1));
 
@@ -1357,9 +1356,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::mult(gmm::transposed(Bbc), Pn0, YY);
 
 
-#if GETFEM_PARA_LEVEL > 1
     MPI_SUM_VECTOR2(YY);
-#endif
+
     gmm::add(YY, gmm::sub_vector(Y, I1));
 
     gmm::clear(A1u);
@@ -1381,11 +1379,11 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
       MUMPS_distributed_matrix_solve(A1,X,Y);
-#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
-      MUMPS_solve(A1,X,Y);
+#elif defined(GMM_USES_MUMPS)
+      gmm::MUMPS_solve(A1,X,Y);
       //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
       //MUMPS_solve(A1,X,Y);
-#elif (GETFEM_PARA_LEVEL==0)
+#else
       // SuperLU_solve(A1, X, Y, rcond);
 
       //gmm::copy(gmm::sub_vector(Y,SUB_CT_Vu),Yu);
@@ -1395,6 +1393,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       //SuperLU_solve(A1u, Xv, Yv, rcond);
 
       // Factorisation LU
+      gmm::SuperLU_factor<double> SLUsys1;
       SLUsys1.build_with(A1u);
       //SLUsys1.solve(Xu,Yu);
       //SLUsys1.solve(Xv,Yv);
@@ -1513,11 +1512,11 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
       MUMPS_distributed_matrix_solve(K2,X,Z);
-#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
+#elif defined(GMM_USES_MUMPS)
       MUMPS_solve(K2,X,Z);
       //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
       //MUMPS_solve(K2,X,Z);
-#elif (GETFEM_PARA_LEVEL==0)
+#else
       //SuperLU_solve(K2,X,Z,rcond);
       if (time_order == 1 || t == Tinitial+dt) { //time_order = 1 or first iterations with time_order = 2
         SLUsys2.solve(X, Z);
@@ -1575,11 +1574,11 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
       MUMPS_distributed_matrix_solve(A2,X,Y);
-#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
+#elif defined(GMM_USES_MUMPS)
       MUMPS_solve(A2,X,Y);
       //#elif (GETFEM_PARA_LEVEL==0 && defined(GMM_USES_MUMPS))
       //MUMPS_solve(A2,X,Y);
-#elif (GETFEM_PARA_LEVEL==0)
+#else
       //SuperLU_solve(A2, X, Y, rcond);
       //SLUsys3.solve(X, Y);
 

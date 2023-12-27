@@ -1,0 +1,49 @@
+/* manually created getfem_arch_config.h.in template to be used by autotools.  */
+
+/* enable openblas to be multithreaded */
+#undef GETFEM_FORCE_SINGLE_THREAD_BLAS
+
+/* defined if GetFEM is built with OpenMP parallelization */
+#undef GETFEM_HAS_OPENMP
+
+/* glibc backtrace function */
+#undef GETFEM_HAVE_BACKTRACE
+
+/* defined if the cxxabi.h header file is available */
+#undef GETFEM_HAVE_CXXABI_H
+
+/* glibc floating point exceptions control */
+#undef GETFEM_HAVE_FEENABLEEXCEPT
+
+/* defined if the <libqhull_r/qhull_ra.h> header file is available */
+#undef GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H
+
+/* defined if the Metis library was found and is working */
+#undef GETFEM_HAVE_METIS
+
+/* defined if the Metis library found is older than version 4 */
+#undef GETFEM_HAVE_METIS_OLD_API
+
+/* defined if the qd library was found and is working */
+#undef GETFEM_HAVE_QDLIB
+
+/* GetFEM package name */
+#undef GETFEM_PACKAGE_NAME
+
+/* GetFEM package string */
+#undef GETFEM_PACKAGE_STRING
+
+/* GetFEM package tarname */
+#undef GETFEM_PACKAGE_TARNAME
+
+/* Parallelization level (0|1|2) */
+#undef GETFEM_PARA_LEVEL
+
+/* defined if quad-doubles are to be used instead of double-double */
+#undef GETFEM_QDLIB_USE_QUAD
+
+/* Use rpc for getfem communication with matlab */
+#undef GETFEM_USE_RPC
+
+/* GetFEM version */
+#undef GETFEM_VERSION

@@ -26,15 +26,14 @@
 /*                                                                        */
 /**************************************************************************/
 
-#define GETFEM_USES_SUPERLU
-
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_export.h"
 #include "gmm/gmm.h"
-#ifdef GMM_USES_MPI
+#if defined(GMM_USES_MPI)
 #include <mpi.h>
 #endif
+
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
@@ -77,7 +76,7 @@ struct pb_data {
 
   int solve_cg();
   int solve_cg2();
-#if defined(GETFEM_USES_SUPERLU)
+#if defined(GMM_USES_SUPERLU)
   int solve_superlu();
 #endif
   int solve_schwarz(int);
@@ -87,7 +86,7 @@ struct pb_data {
     switch (solver) {
     case 0 : return solve_cg();
     case 1 : return solve_cg2();
-#if defined(GETFEM_USES_SUPERLU)
+#if defined(GMM_USES_SUPERLU)
     case 2 : return solve_superlu();
 #endif
     default : return solve_schwarz(solver);
@@ -105,7 +104,7 @@ void pb_data::init(bgeot::md_param &params) {
   /***********************************************************************/
   /*  READING PARAMETER FILE.                                            */
   /***********************************************************************/
-  
+
   /* parametres physiques */
   N = int(params.int_value("N", "Dimension"));
   mu = params.real_value("MU", "Stiffness parameter mu");
@@ -114,7 +113,7 @@ void pb_data::init(bgeot::md_param &params) {
   lambda = params.real_value("LAMBDA", "lambda");
   D.resize(N); gmm::clear(D);
   D[N-1] = params.real_value("D", "Dirichlet condition");
-  
+
   /* parametres numeriques */
   LX = params.real_value("LX", "Size in X");
   LY = params.real_value("LY", "Size in Y");
@@ -126,9 +125,9 @@ void pb_data::init(bgeot::md_param &params) {
   overlap = params.real_value("OVERLAP", "overlap");
   K = int(params.int_value("K", "Degree"));
   solver = int(params.int_value("SOLVER", "solver"));
-  subdomsize = params.real_value("SUBDOMSIZE", "sub-domains size");  
+  subdomsize = params.real_value("SUBDOMSIZE", "sub-domains size");
   std::string meshname(params.string_value("MESHNAME",
-			     "mesh file name"));
+                       "mesh file name"));
   std::cout << "\n\n";
 
   /***********************************************************************/
@@ -144,38 +143,38 @@ void pb_data::init(bgeot::md_param &params) {
     base_node org(N); gmm::clear(org);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
-    for (int i = 0; i < N; i++) { 
+    for (int i = 0; i < N; i++) {
       vtab[i] = bgeot::base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
     }
     getfem::parallelepiped_regular_simplex_mesh(mesh, dim_type(N), org,
-						&(vtab[0]), &(ref[0]));
+                                                &(vtab[0]), &(ref[0]));
   }
 
   if (USECOARSE) { // coarse mesh
     base_node org(N); gmm::clear(org);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NXCOARSE);
-    for (int i = 0; i < N; i++) { 
+    for (int i = 0; i < N; i++) {
       vtab[i] = bgeot::base_small_vector(N); gmm::clear(vtab[i]);
-      (vtab[i])[i] = 
-	((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
+      (vtab[i])[i] = ((i == 0) ? LX
+                               : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
     }
     getfem::parallelepiped_regular_simplex_mesh(mesh_coarse, dim_type(N), org,
-						&(vtab[0]), &(ref[0]));
+                                                &(vtab[0]), &(ref[0]));
   }
-  
+
   mesh.trans_of_convex(0);
   mesh.optimize_structure();
 
   dal::bit_vector nn = mesh.convex_index(dim_type(N));
   char method[500];
-  
+
   snprintf(method, 499, "FEM_PK(%d, %d)", N, K);
   mim.set_integration_method(nn, bgeot::dim_type(2*K));
   mef.set_finite_element(nn, getfem::fem_descriptor(method));
   mef_coarse.set_finite_element(mesh_coarse.convex_index(dim_type(N)),
-				getfem::fem_descriptor(method));
+                                getfem::fem_descriptor(method));
   mef_data.set_finite_element(nn, getfem::fem_descriptor(method));
   mef.set_qdim(dim_type(N));
   mef_coarse.set_qdim(dim_type(N));
@@ -186,9 +185,10 @@ void pb_data::init(bgeot::md_param &params) {
     int k = mesh.structure_of_convex(j)->nb_faces();
     for (short_type i = 0; i < k; i++) {
       if (mesh.is_convex_having_neighbor(j, i)) {
-	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
-	gmm::scale(un, 1/gmm::vect_norm2(un));
-	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);
+        gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
+        gmm::scale(un, 1/gmm::vect_norm2(un));
+        if (gmm::abs(un[N-1] - 1.0) < 1.0E-3)
+          mesh.region(0).add(j, i);
       }
     }
   }
@@ -198,7 +198,7 @@ void pb_data::assemble() {
   size_type nb_dof = mef.nb_dof();
   std::cout << "number of dof : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
- 
+
   F.resize(nb_dof); gmm::clear(F);
   U.resize(nb_dof); gmm::clear(U);
   gmm::resize(RM, nb_dof, nb_dof);
@@ -214,7 +214,7 @@ void pb_data::assemble() {
   linalg_vector STF(N * nb_dof_data);
   interpolation_function(mef_data, STF, vol_force);
   getfem::asm_source_term(F, mim, mef, mef_data, STF);
-  
+
   linalg_vector UD(nb_dof);
   for (size_type j = 0; j < nb_dof/N; j++)
     for (size_type k = 0; k < size_type(N); k++) UD[j*N + k] = D[k];
@@ -228,10 +228,10 @@ int pb_data::solve_cg() {
   return int(iter.get_iteration());
 }
 
-#if defined(GETFEM_USES_SUPERLU)
+#if defined(GMM_USES_SUPERLU)
 int pb_data::solve_superlu() {
   double rcond;
-  SuperLU_solve(RM, U, F, rcond);
+  gmm::SuperLU_solve(RM, U, F, rcond);
   return 1;
 }
 #endif
@@ -255,7 +255,7 @@ int pb_data::solve_schwarz(int version) {
   size_type nsd = vB.size();
 
   cout << "Nomber of sub-domains = " << nsd + (USECOARSE != 0) << endl;
-  
+
   if (USECOARSE) {
     vB.resize(nsd+1);
     cout << "interpolation coarse mesh\n";
@@ -264,21 +264,21 @@ int pb_data::solve_schwarz(int version) {
     getfem::interpolation(mef_coarse, mef, vB[nsd], true);
     ++nsd;
   }
-  
+
   gmm::iteration iter(residual, 1, 1000000);
   switch (version) {
   case 3 : gmm::additive_schwarz(RM, U, F,
-	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
-	      gmm::using_cg(), gmm::using_cg());
+           gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
+           gmm::using_cg(), gmm::using_cg());
     break;
   case 4 : gmm::additive_schwarz(RM, U, F,
-	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
-	      gmm::using_gmres(), gmm::using_gmres());
+           gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
+           gmm::using_gmres(), gmm::using_gmres());
     break;
-#if defined(GETFEM_USES_SUPERLU)
+#if defined(GMM_USES_SUPERLU)
   case 5 : gmm::additive_schwarz(RM, U, F,
-	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
-	      gmm::using_superlu(), gmm::using_cg());
+           gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
+           gmm::using_superlu(), gmm::using_cg());
     break;
 #endif
   }
@@ -287,19 +287,19 @@ int pb_data::solve_schwarz(int version) {
 
 
 int main(int argc, char *argv[]) {
-#ifdef GMM_USES_MPI
+#if defined(GMM_USES_MPI)
     MPI_Init(&argc,&argv);
 #endif
- 
+
   try {
     bgeot::md_param params;
     pb_data p;
-    
+
     std::cout << "initialization ...\n";
     params.read_command_line(argc, argv);
     p.init(params);
     p.mesh.stat();
-    
+
     p.assemble();
 
     double rutime = gmm::uclock_sec();
@@ -311,7 +311,7 @@ int main(int argc, char *argv[]) {
     cout << "final residual : " << gmm::vect_norm2(p.F) << endl;
   }
   GMM_STANDARD_CATCH_ERROR;
-#ifdef GMM_USES_MPI
+#if defined(GMM_USES_MPI)
    MPI_Finalize();
 #endif
   return 0;

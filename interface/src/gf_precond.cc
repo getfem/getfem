@@ -68,6 +68,7 @@ precond_ilut(gsparse &M, int additional_fillin, double threshold, mexargs_out& o
   p.ilut = std::make_unique<gmm::ilut_precond<typename gprecond<T>::cscmat>>(M.csc(T()), additional_fillin, threshold);
 }
 
+#if defined(GMM_USES_SUPERLU)
 template <typename T> static void
 precond_superlu(gsparse &M, mexargs_out& out, T) {
   gprecond<T> &p = precond_new(out, T());
@@ -75,6 +76,7 @@ precond_superlu(gsparse &M, mexargs_out& out, T) {
   p.superlu = std::make_unique<gmm::SuperLU_factor<T>>();
   p.superlu.get()->build_with(M.csc(T()));
 }
+#endif
 
 static void precond_spmat(gsparse *gsp, mexargs_out& out) {
   if (gsp->is_complex()) {
@@ -213,6 +215,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 					 out, scalar_type());
        );
 
+#if defined(GMM_USES_SUPERLU)
     /*@INIT PC = ('superlu', @tsp m)
       Uses SuperLU to build an exact factorization of the sparse matrix `m`.
       This preconditioner is only available if the getfem-interface was
@@ -224,6 +227,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (M->is_complex()) precond_superlu(*M, out, complex_type());
        else                 precond_superlu(*M, out, scalar_type());
        );
+#endif
 
     /*@INIT PC = ('spmat', @tsp m)
       Preconditioner given explicitely by a sparse matrix.@*/

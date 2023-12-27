@@ -24,7 +24,7 @@
 #include <getfemint.h>
 #include <gmm/gmm_iter_solvers.h>
 #include <getfemint_misc.h>
-#include <getfem/getfem_superlu.h>
+#include <gmm/gmm_superlu_interface.h>
 #include <gmm/gmm_MUMPS_interface.h>
 
 using namespace getfemint;
@@ -85,6 +85,7 @@ void iterative_gmm_solver(iterative_gmm_solver_type stype,
   else                  iterative_gmm_solver(stype, gsp, in, out, scalar_type());
 }
 
+#if defined(GMM_USES_SUPERLU)
 template <typename T> static void
 superlu_solver(gsparse &gsp,
                getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
@@ -96,6 +97,7 @@ superlu_solver(gsparse &gsp,
   if (out.remaining())
     out.pop().from_scalar(rcond ? 1./rcond : 0.);
 }
+#endif
 
 #if defined(GMM_USES_MUMPS)
 template <typename T> static void
@@ -178,6 +180,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
+#if defined(GMM_USES_SUPERLU)
     /*@FUNC @CELL{U, cond} = ('lu', @tsp M, @vec b)
       Alias for ::LINSOLVE('superlu',...)@*/
     sub_command
@@ -203,6 +206,7 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
        else                  superlu_solver(gsp, in, out, scalar_type());
        );
+#endif
 
 #if defined(GMM_USES_MUMPS)
     /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)

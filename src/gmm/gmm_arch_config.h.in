@@ -1,0 +1,25 @@
+/* manually created gmm_arch_config.h.in template to be used by autotools.  */
+
+/* gcc style __PRETTY_FUNCTION__ macro */
+#undef GMM_HAVE_PRETTY_FUNCTION
+
+/* defined if GMM is linked to a blas library */
+#undef GMM_USES_BLAS
+
+/* defined if GMM is linked to a lapack library */
+#undef GMM_USES_LAPACK
+
+/* defined if GMM uses MPI */
+#undef GMM_USES_MPI
+
+/* defined if GMM is linked to the mumps library */
+#undef GMM_USES_MUMPS
+
+/* defined if GMM is linked to the superlu library */
+#undef GMM_USES_SUPERLU
+
+/* Use blas with 64 bits integers */
+#undef GMM_USE_BLAS64_INTERFACE
+
+/* GMM version */
+#undef GMM_VERSION

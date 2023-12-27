@@ -23,7 +23,6 @@ sub numerique { $a <=> $b; }
 $nb_iter = 1;                # number of iterations on each test
 $islocal = 0;
 $with_qd = 0;                # test also with dd_real and qd_real
-$with_lapack = 0;            # link with lapack
 $srcdir = $ENV{srcdir};      # source directory
 $tests_to_be_done = "";
 $fix_base_type = -1;
@@ -36,9 +35,6 @@ while(@ARGV) {               # read optional parameters
   }
   elsif ($param eq "with-qd") {
     $with_qd = 1;
-  }
-  elsif ($param eq "with-lapack") {
-    $with_lapack = 1;
   }
   elsif ($param eq "float") {
     $fix_base_type = 0;
@@ -75,7 +71,6 @@ while(@ARGV) {               # read optional parameters
     print "valid parameters are:\n";
     print ". the number of iterations on each test\n";
     print ". with-qd : test also with dd_real and qd_real\n";
-    print ". with-lapack : link with lapack\n";
     print ". double, float, complex_double or complex_float";
     print " to fix the base type\n";
     print ". source name of a test procedure\n";
@@ -92,11 +87,6 @@ if ($srcdir eq "") {
 }
 if ($tests_to_be_done eq "") {
   $tests_to_be_done = `ls $srcdir/gmm_torture*.cc`;  # list of tests
-}
-
-if ($with_qd && $with_lapack) {
-  print "Options with_qd and with_lapack are not compatible\n";
-  exit(1);
 }
 
 $nb_test = 0;                # number of test procedures
@@ -116,7 +106,6 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     if ($nb_iter == 1) { print "Testing  $org_name"; }
     else { print "Test $iter for $org_name"; }
-    if ($with_lapack) { print " linked with lapack"; }
     if ($with_qd) { print " with qd types"; }
     print "\n";
 
@@ -131,14 +120,12 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     print TMPF "\n\n";
 
-    if ($with_lapack) {
-      print TMPF "#include<gmm_lapack_interface.h>\n\n";
-    }
-
     if ($with_qd) {
       print TMPF "#include <qd/dd.h>\n";
       print TMPF "#include <qd/qd.h>\n";
       print TMPF "#include <qd/fpu.h>\n\n";
+    } else {
+      print TMPF "#include <gmm/gmm_lapack_interface.h>\n\n";
     }
 
     $reading_param = 1;
@@ -164,10 +151,6 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     # $TYPES[4] = "long double";
     # $TYPES[5] = "std::complex<long double> ";
     $NB_TYPES = 4.0;
-
-    if ($with_lapack) {
-      $NB_TYPES = 4.0;
-    }
 
     if ($with_qd) {
       $TYPES[0] = "dd_real";
@@ -214,14 +197,14 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "    try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand(); $b = rand();
-      if ($with_lapack) { $a = $b = 1.0; }
+      #$a = $b = 1.0;
       $sizepp = $sizep + int(50.0*rand());
       $step = $sizep; if ($step == 0) { ++$step; }
       $step = int(1.0*int($sizepp/$step - 1)*rand()) + 1;
 
       if (($param[$j] == 1) || ($param[$j] == 2)) { # vectors
 	$lt = $VECTOR_TYPES[0];
-	if ($param[$j] == 2 && $with_lapack==0) {
+	if ($param[$j] == 2) {
 	  $lt = $VECTOR_TYPES[int($NB_VECTOR_TYPES * rand())];
 	}
 	if ($a < 0.1) {
@@ -265,9 +248,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	$sn = $s; if ($b < 0.3) { $sn = $s + int(50.0*rand()); }
 	$param_name[$j] = "param$j";
 	$lt = $MATRIX_TYPES[0];
-	if ($with_lapack==0) {
-	  $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand())];
-	}
+        $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand())];
 	$li = "      $lt param$j($sm, $sn);";
 	
 	if ($a < 0.3 || $b < 0.3) {
@@ -356,12 +337,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $compile_options=`sh ../gmm-config --build-flags`;
     chomp($compile_options);
     $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
-    $compile_libs="-lm";
-
-    if ($with_lapack) {
-      $compile_libs="-llapack -lblas -lg2c $compile_libs";
-      $compile_options="$compile_options -DGMM_USES_LAPACK"
-    }
+    $compile_libs=`sh ../gmm-config --libs`;
     if ($with_qd) { $compile_libs="-lqd $compile_libs"; }
 #   print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
     print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;

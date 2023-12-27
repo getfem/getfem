@@ -24,8 +24,6 @@
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
-#include "getfem/getfem_superlu.h"
-
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 template <typename T> std::ostream &operator <<
@@ -1084,8 +1082,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     gmm::scale(b, -1.);
     plain_vector X(b);
     scalar_type condest;
-    SuperLU_solve(A, X, gmm::scaled(b, scalar_type(-1)), condest, 1);
+#if defined(GMM_USES_MUMPS)
+    gmm::MUMPS_solve(A, X, gmm::scaled(b, scalar_type(-1)));
+#else
+    gmm::SuperLU_solve(A, X, gmm::scaled(b, scalar_type(-1)), condest, 1);
     cout << "cond super LU = " << 1./condest << "\n";
+#endif
     cout << "X = " << gmm::sub_vector(X, gmm::sub_interval(0, 10)) << "\n";
     cout << "U = " << gmm::sub_vector(U, gmm::sub_interval(0, 10)) << "\n";
 
@@ -1159,10 +1161,15 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       b2[ind_sing[i]] = 0.;
     }
 
-    SuperLU_solve(A, X1, b1, condest, 1);
+#if defined(GMM_USES_MUMPS)
+    gmm::MUMPS_solve(A, X1, b1);
+    gmm::MUMPS_solve(A, X2, b2);
+#else
+    gmm::SuperLU_solve(A, X1, b1, condest, 1);
     cout << "solving for s1 OK, cond = " << 1./condest << "\n";
-    SuperLU_solve(A, X2, b2, condest, 1);
+    gmm::SuperLU_solve(A, X2, b2, condest, 1);
     cout << "solving for s2 OK, cond = " << 1./condest << "\n";
+#endif
     cout << "X1[ind_sing[0]] = " << X1[ind_sing[0]] << "\n";
     cout << "X1 = " << gmm::sub_vector(X1, gmm::sub_interval(0, 10)) << "\n";
     scalar_type max1 = 0., max2 = 0.;
