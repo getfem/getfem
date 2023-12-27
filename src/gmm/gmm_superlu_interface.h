@@ -43,12 +43,15 @@
 
 typedef int int_t;
 
-/* because SRC/util.h defines TRUE and FALSE ... */
+/* because slu_util.h defines TRUE, FALSE, EMPTY ... */
 #ifdef TRUE
 # undef TRUE
 #endif
 #ifdef FALSE
 # undef FALSE
+#endif
+#ifdef EMPTY
+# undef EMPTY
 #endif
 
 #include "superlu/slu_Cnames.h"
@@ -118,17 +121,17 @@ namespace gmm {
 
   /*  interface for gssv */
 
-#define DECL_GSSV(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
+#define DECL_GSSV(NAMESPACE,FNAME,KEYTYPE) \
   inline void SuperLU_gssv(superlu_options_t *options, SuperMatrix *A, int *p, \
   int *q, SuperMatrix *L, SuperMatrix *U, SuperMatrix *B,               \
   SuperLUStat_t *stats, int *info, KEYTYPE) {                           \
   NAMESPACE::FNAME(options, A, p, q, L, U, B, stats, info);             \
   }
 
-  DECL_GSSV(SuperLU_S,sgssv,float,float)
-  DECL_GSSV(SuperLU_C,cgssv,float,std::complex<float>)
-  DECL_GSSV(SuperLU_D,dgssv,double,double)
-  DECL_GSSV(SuperLU_Z,zgssv,double,std::complex<double>)
+  DECL_GSSV(SuperLU_S,sgssv,float)
+  DECL_GSSV(SuperLU_C,cgssv,std::complex<float>)
+  DECL_GSSV(SuperLU_D,dgssv,double)
+  DECL_GSSV(SuperLU_Z,zgssv,std::complex<double>)
 
   /*  interface for gssvx */
 
@@ -158,9 +161,8 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT, typename VECTX, typename VECTB>
-  int SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+  int SuperLU_solve(const MAT &A, const VECTX &X, const VECTB &B,
                     double& rcond_, int permc_spec = 3) {
-    VECTX &X = const_cast<VECTX &>(X_);
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
      *   permc_spec = 0: use the natural ordering
@@ -171,13 +173,14 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1, info = 0;
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A)), nrhs = 1, info = 0;
 
-    csc_matrix<T> csc_A(m, n); gmm::copy(A, csc_A);
+    csc_matrix<T> csc_A(m, n);
+    gmm::copy(A, csc_A);
     std::vector<T> rhs(m), sol(m);
     gmm::copy(B, rhs);
 
-    int nz = nnz(csc_A);
+    int nz = int(nnz(csc_A));
     if ((2 * nz / n) >= m)
       GMM_WARNING2("CAUTION : it seems that SuperLU has a problem"
                    " for nearly dense sparse matrices");
@@ -196,8 +199,9 @@ namespace gmm {
     StatInit(&stat);
 
     SuperMatrix SA, SL, SU, SB, SX; // SuperLU format.
-    Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
-                          (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
+    Create_CompCol_Matrix(&SA, m, n, nz, (T *)(&csc_A.pr[0]),
+                          (int *)(&csc_A.ir[0]),
+                          (int *)(&csc_A.jc[0]));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
     memset(&SL,0,sizeof SL);
@@ -226,19 +230,22 @@ namespace gmm {
                   &berr[0] /* relative backward error             */,
                   &stat, &info, T());
     rcond_ = rcond;
-    Destroy_SuperMatrix_Store(&SB);
-    Destroy_SuperMatrix_Store(&SX);
-    Destroy_SuperMatrix_Store(&SA);
-    Destroy_SuperNode_Matrix(&SL);
-    Destroy_CompCol_Matrix(&SU);
+    if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+    if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+    if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+    if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+    if (SU.Store) Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
+    GMM_ASSERT1(info != -333333333, "SuperLU was cancelled."); // user interruption (for matlab interface)
+
     GMM_ASSERT1(info >= 0, "SuperLU solve failed: info =" << info);
     if (info > 0) GMM_WARNING1("SuperLU solve failed: info =" << info);
-    gmm::copy(sol, X);
+    gmm::copy(sol, const_cast<VECTX &>(X));
     return info;
   }
 
-  template <class T> class SuperLU_factor {
+  template <class T>
+  class SuperLU_factor {
     typedef typename number_traits<T>::magnitude_type R;
 
     csc_matrix<T> csc_A;
@@ -256,14 +263,22 @@ namespace gmm {
 
   public :
     enum { LU_NOTRANSP, LU_TRANSP, LU_CONJUGATED };
-    void free_supermatrix(void);
+    void free_supermatrix() {
+      if (is_init) {
+        if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+        if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+        if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+        if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+        if (SU.Store) Destroy_CompCol_Matrix(&SU);
+      }
+    }
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3);
     template <typename VECTX, typename VECTB>
     /* transp = LU_NOTRANSP   -> solves Ax = B
        transp = LU_TRANSP     -> solves A'x = B
        transp = LU_CONJUGATED -> solves conj(A)X = B */
     void solve(const VECTX &X_, const VECTB &B, int transp=LU_NOTRANSP) const;
-    SuperLU_factor(void) { is_init = false; }
+    SuperLU_factor() { is_init = false; }
     SuperLU_factor(const SuperLU_factor& other) {
       GMM_ASSERT2(!(other.is_init),
                   "copy of initialized SuperLU_factor is forbidden");
@@ -279,17 +294,6 @@ namespace gmm {
   };
 
 
-  template <class T> void SuperLU_factor<T>::free_supermatrix(void) {
-    if (is_init) {
-      if (SB.Store) Destroy_SuperMatrix_Store(&SB);
-      if (SX.Store) Destroy_SuperMatrix_Store(&SX);
-      if (SA.Store) Destroy_SuperMatrix_Store(&SA);
-      if (SL.Store) Destroy_SuperNode_Matrix(&SL);
-      if (SU.Store) Destroy_CompCol_Matrix(&SU);
-    }
-  }
-
-
   template <class T> template <class MAT>
   void SuperLU_factor<T>::build_with(const MAT &A, int permc_spec) {
     /*
@@ -300,12 +304,12 @@ namespace gmm {
      *   permc_spec = 3: use approximate minimum degree column ordering
      */
     free_supermatrix();
-    int n = mat_nrows(A), m = mat_ncols(A), info = 0;
+    int n = int(mat_nrows(A)), m = int(mat_ncols(A)), info = 0;
     csc_A.init_with(A);
 
     rhs.resize(m); sol.resize(m);
     gmm::clear(rhs);
-    int nz = nnz(csc_A);
+    int nz = int(nnz(csc_A));
 
     set_default_options(&options);
     options.ColPerm = NATURAL;
@@ -318,9 +322,9 @@ namespace gmm {
     }
     StatInit(&stat);
 
-    Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
-                          (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
-
+    Create_CompCol_Matrix(&SA, m, n, nz, (T *)(&csc_A.pr[0]),
+                          (int *)(&csc_A.ir[0]),
+                          (int *)(&csc_A.jc[0]));
     Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
     memset(&SL,0,sizeof SL);
@@ -352,14 +356,14 @@ namespace gmm {
     Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
     StatFree(&stat);
 
+    GMM_ASSERT1(info != -333333333, "SuperLU was cancelled.");
     GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
     is_init = true;
   }
 
   template <class T> template <typename VECTX, typename VECTB>
-  void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B,
+  void SuperLU_factor<T>::solve(const VECTX &X, const VECTB &B,
                                 int transp) const {
-    VECTX &X = const_cast<VECTX &>(X_);
     gmm::copy(B, rhs);
     options.Fact = FACTORED;
     options.IterRefine = NOREFINE;
@@ -389,7 +393,7 @@ namespace gmm {
                   &stat, &info, T());
     StatFree(&stat);
     GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
-    gmm::copy(sol, X);
+    gmm::copy(sol, const_cast<VECTX &>(X));
   }
 
   template <typename T, typename V1, typename V2> inline
@@ -404,6 +408,15 @@ namespace gmm {
 
 }
 
+#ifdef TRUE
+# undef TRUE
+#endif
+#ifdef FALSE
+# undef FALSE
+#endif
+#ifdef EMPTY
+# undef EMPTY
+#endif
 
 #endif // GMM_SUPERLU_INTERFACE_H
 
