@@ -901,6 +901,7 @@ CPPFLAGS="$CPPFLAGS $MUMPSINC"
 save_LIBS="$LIBS";
 if test "x$require_mumps" = "xno"; then
   found_mumps="no"
+  MUMPS_LIBS=""
   echo "Building with MUMPS explicitly disabled";
 else
  AC_SEARCH_LIBS(smumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
