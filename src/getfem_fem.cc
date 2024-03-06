@@ -2210,8 +2210,8 @@ namespace getfem {
   }
 
   // Brezzi-Douglas-Marini Element on simplices, dimension d and degree k=1 or 2
-  // The orientation of the normal component dof is selected in comparaison to
-  // a the fixed direction (pi, pi^2, pi^3) arbitrarily chosen.
+  // The orientation of the normal component dof is selected in comparison to
+  // the fixed direction (pi, pi^2, pi^3) arbitrarily chosen.
   // The definition of RTk is
   // BDMk = (Pk)^d
  

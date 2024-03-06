@@ -42,8 +42,8 @@ using namespace getfemint;
 struct sub_gf_globfunc : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::pxy_function &ggf) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::pxy_function &ggf) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_globfunc> psub_command;
@@ -52,21 +52,21 @@ typedef std::shared_ptr<sub_gf_globfunc> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_globfunc {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::pxy_function &ggf)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_globfunc {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::pxy_function &ggf)                           \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
 void gf_global_function(getfemint::mexargs_in& m_in,
-			getfemint::mexargs_out& m_out) {
+                        getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -104,9 +104,9 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        std::string sgrad = "[0;0]";
        std::string shess = "[0,0;0,0]";
        if (in.remaining() && in.front().is_string())
-	 sgrad = in.pop().to_string();
+         sgrad = in.pop().to_string();
        if (in.remaining() && in.front().is_string())
-	 shess = in.pop().to_string();
+         shess = in.pop().to_string();
        ggf = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
        );
 
@@ -143,14 +143,14 @@ void gf_global_function(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, ggf);
   }
   else bad_cmd(init_cmd);
 
   m_out.pop().from_object_id(store_global_function_object(ggf),
-			     GLOBAL_FUNCTION_CLASS_ID);
+                             GLOBAL_FUNCTION_CLASS_ID);
 }
 
 

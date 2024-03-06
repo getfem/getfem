@@ -38,7 +38,7 @@ option(ENABLE_MUMPS "Enable MUMPS support" ON)     # might be turned off by cmak
 # Configure option for enabling/disabling multithreaded BLAS (requires the dl library)
 option(ENABLE_MULTITHREADED_BLAS "Enable multithreaded blas support" OFF)
 
-option(BUILD_SHARED_LIBS "Build libraries as SHARED, equivalent to BUILD_LYBRARY_TYPE=SHARED" ON)
+option(BUILD_SHARED_LIBS "Build libraries as SHARED, equivalent to BUILD_LIBRARY_TYPE=SHARED" ON)
 set(BUILD_LIBRARY_TYPE "SHARED" CACHE STRING
     "Type of library to build, choose among SHARED, STATIC, STATIC_BUNDLE_DEPS")
 set_property(CACHE BUILD_LIBRARY_TYPE PROPERTY STRINGS
