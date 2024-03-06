@@ -37,6 +37,7 @@ option(ENABLE_SUPERLU "Enable SuperLU support" ON) # might be turned off by cmak
 option(ENABLE_MUMPS "Enable MUMPS support" ON)     # might be turned off by cmake if MUMPS is not found
 # Configure option for enabling/disabling multithreaded BLAS (requires the dl library)
 option(ENABLE_MULTITHREADED_BLAS "Enable multithreaded blas support" OFF)
+option(GENERATE_GETFEM_IM_LIST_H "Run perl script that (re-)generates header file with integration methods" ON)
 
 option(BUILD_SHARED_LIBS "Build libraries as SHARED, equivalent to BUILD_LIBRARY_TYPE=SHARED" ON)
 set(BUILD_LIBRARY_TYPE "SHARED" CACHE STRING
@@ -662,11 +663,13 @@ message(STATUS "GetFEM version ${GETFEM_VERSION}")
 configure_file(cmake/gmm_arch_config.h.in ${CMAKE_BINARY_DIR}/gmm/gmm_arch_config.h)
 configure_file(cmake/getfem_arch_config.h.in ${CMAKE_BINARY_DIR}/getfem/getfem_arch_config.h)
 
+if(GENERATE_GETFEM_IM_LIST_H)
 add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/src/getfem/getfem_im_list.h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/getfem/
   COMMAND perl ${CMAKE_SOURCE_DIR}/cubature/make_getfem_im_list ${CMAKE_SOURCE_DIR}/cubature
   COMMENT "Generating getfem_im_list.h")
+endif()
 
 install(TARGETS libgetfem
         FILE_SET header_set1
