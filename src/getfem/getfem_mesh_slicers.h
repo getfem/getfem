@@ -324,14 +324,7 @@ namespace getfem {
     slicer_volume(int orient_) : orient(orient_) {}
 
     /** Utility function */
-    static scalar_type trinom(scalar_type a, scalar_type b, scalar_type c) {
-      scalar_type delta = b*b - 4*a*c;
-      if (delta < 0.) return 1./EPS;
-      delta = sqrt(delta);
-      scalar_type s1 = (-b - delta) / (2*a);
-      scalar_type s2 = (-b + delta) / (2*a);
-      if (gmm::abs(s1-.5) < gmm::abs(s2-.5)) return s1; else return s2;
-    }
+    static scalar_type trinom(scalar_type a, scalar_type b, scalar_type c);
     void split_simplex(mesh_slicer &ms,
                        slice_simplex s, /* s is NOT a reference, it is on
                                          * purpose(push_back in the function)*/
@@ -346,22 +339,9 @@ namespace getfem {
   */
   class slicer_half_space : public slicer_volume {
     const base_node x0, n; /* normal directed from inside toward outside */
-    void test_point(const base_node& P, bool& in, bool& bound) const {
-      scalar_type s = gmm::vect_sp(P-x0,n);
-      in = (s <= 0); bound = (s*s <= EPS); // gmm::vect_norm2_sqr(P-x0)); No!
-      // do not try to be smart with the boundary check .. easily broken with
-      // slicer_mesh_with_mesh
-    }
+    void test_point(const base_node& P, bool& in, bool& bound) const;
     scalar_type edge_intersect(size_type iA, size_type iB,
-                               const mesh_slicer::cs_nodes_ct& nodes) const {
-      const base_node& A=nodes[iA].pt;
-      const base_node& B=nodes[iB].pt;
-      scalar_type s1 = 0., s2 = 0.;
-      for (unsigned i=0; i < A.size(); ++i)
-        { s1 += (A[i] - B[i])*n[i]; s2 += (A[i]-x0[i])*n[i]; }
-      if (gmm::abs(s1) < EPS) return 1./EPS;
-      else return s2/s1;
-    }
+                               const mesh_slicer::cs_nodes_ct& nodes) const;
   public:
     slicer_half_space(base_node x0_, base_node n_, int orient_) : 
       slicer_volume(orient_), x0(x0_), n(n_/gmm::vect_norm2(n_)) {
@@ -375,22 +355,9 @@ namespace getfem {
   class slicer_sphere : public slicer_volume {
     base_node x0;
     scalar_type R;
-    void test_point(const base_node& P, bool& in, bool& bound) const {
-      scalar_type R2 = gmm::vect_dist2_sqr(P,x0);
-      bound = (R2 >= (1-EPS)*R*R && R2 <= (1+EPS)*R*R);
-      in = R2 <= R*R;
-    }
+    void test_point(const base_node& P, bool& in, bool& bound) const;
     scalar_type edge_intersect(size_type iA, size_type iB,
-                               const mesh_slicer::cs_nodes_ct& nodes) const {
-      const base_node& A=nodes[iA].pt;
-      const base_node& B=nodes[iB].pt;
-      scalar_type a,b,c; // a*x^2 + b*x + c = 0
-      a = gmm::vect_norm2_sqr(B-A);
-      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
-      b = 2*gmm::vect_sp(A-x0,B-A);
-      c = gmm::vect_norm2_sqr(A-x0)-R*R;
-      return slicer_volume::trinom(a,b,c);
-    }
+                               const mesh_slicer::cs_nodes_ct& nodes) const;
   public:
     /* orient = -1 => select interior, 
        orient = 0  => select boundary 
@@ -406,35 +373,9 @@ namespace getfem {
   class slicer_cylinder : public slicer_volume {
     base_node x0, d;
     scalar_type R;
-    void test_point(const base_node& P, bool& in, bool& bound) const {
-      base_node N = P;
-      if (2 == N.size()) { /* Add Z coorinate if mesh is 2D */
-        N.push_back(0.0);
-      }
-      N = N-x0;
-      scalar_type axpos = gmm::vect_sp(d, N);
-      scalar_type dist2 = gmm::vect_norm2_sqr(N) - gmm::sqr(axpos);
-      bound = gmm::abs(dist2-R*R) < EPS;
-      in = dist2 < R*R;
-    }
+    void test_point(const base_node& P, bool& in, bool& bound) const;
     scalar_type edge_intersect(size_type iA, size_type iB,
-                               const mesh_slicer::cs_nodes_ct& nodes) const {
-      base_node F=nodes[iA].pt;
-      base_node D=nodes[iB].pt-nodes[iA].pt;
-      if (2 == F.size()) {
-        F.push_back(0.0);
-        D.push_back(0.0);
-      }
-      F = F - x0;
-      scalar_type Fd = gmm::vect_sp(F,d);
-      scalar_type Dd = gmm::vect_sp(D,d);
-      scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd);
-      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
-      assert(a> -EPS);
-      scalar_type b = 2*(gmm::vect_sp(F,D) - Fd*Dd);
-      scalar_type c = gmm::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
-      return slicer_volume::trinom(a,b,c);
-    }
+                               const mesh_slicer::cs_nodes_ct& nodes) const;
   public:
     slicer_cylinder(base_node x0_, base_node x1_,scalar_type R_,int orient_) : 
       slicer_volume(orient_), x0(x0_), d(x1_-x0_), R(R_) {
@@ -454,13 +395,7 @@ namespace getfem {
     void prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes,
                  const dal::bit_vector& nodes_index);
     scalar_type edge_intersect(size_type iA, size_type iB,
-                               const mesh_slicer::cs_nodes_ct&) const {
-      assert(iA < Uval.size() && iB < Uval.size());
-      if (((Uval[iA] < val) && (Uval[iB] > val)) ||
-          ((Uval[iA] > val) && (Uval[iB] < val)))
-        return (val-Uval[iA])/(Uval[iB]-Uval[iA]);
-      else return 1./EPS;
-    }
+                               const mesh_slicer::cs_nodes_ct&) const;
   public:
     /* orient = -1: u(x) <= val, 0: u(x) == val, +1: u(x) >= val */
     slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU_,

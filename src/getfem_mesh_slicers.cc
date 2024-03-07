@@ -170,7 +170,19 @@ namespace getfem {
   //    return true;
   //}
 
-  /* 
+  scalar_type slicer_volume::trinom(scalar_type a, scalar_type b, scalar_type c) {
+    scalar_type delta = b * b - 4 * a * c;
+    if (delta < 0.) return 1. / EPS;
+    delta = sqrt(delta);
+    scalar_type s1 = (-b - delta) / (2 * a);
+    scalar_type s2 = (-b + delta) / (2 * a);
+    if (gmm::abs(s1 - 0.5) < gmm::abs(s2 - 0.5))
+      return s1;
+    else
+      return s2;
+  }
+
+  /*
      intersects the simplex with the slice, and (recursively)
      decomposes it into sub-simplices, which are added to the list
      'splxs'. If orient == 0, then it is the faces of sub-simplices
@@ -405,6 +417,17 @@ namespace getfem {
       //      << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i]
       //      << ", pt_bin[i]=" << pt_bin[i] << endl;
     }
+  }
+
+  scalar_type
+  slicer_isovalues::edge_intersect(size_type iA, size_type iB,
+                                   const mesh_slicer::cs_nodes_ct&) const {
+    assert(iA < Uval.size() && iB < Uval.size());
+    if (((Uval[iA] < val) && (Uval[iB] > val)) ||
+        ((Uval[iA] > val) && (Uval[iB] < val)))
+      return (val-Uval[iA])/(Uval[iB]-Uval[iA]);
+    else
+      return 1./EPS;
   }
 
 
@@ -950,5 +973,82 @@ namespace getfem {
       }
       apply_slicers();
     }
+  }
+
+  void
+  slicer_half_space::test_point(const base_node& P, bool& in, bool& bound) const {
+    scalar_type s = gmm::vect_sp(P - x0, n);
+    in = (s <= 0); bound = (s * s <= EPS); // gmm::vect_norm2_sqr(P-x0)); No!
+    // do not try to be smart with the boundary check .. easily broken with
+    // slicer_mesh_with_mesh
+  }
+
+  scalar_type
+  slicer_half_space::edge_intersect(size_type iA, size_type iB,
+                                    const mesh_slicer::cs_nodes_ct& nodes) const {
+    const base_node& A = nodes[iA].pt;
+    const base_node& B = nodes[iB].pt;
+    scalar_type s1 = 0., s2 = 0.;
+    for (unsigned i = 0; i < A.size(); ++i) {
+      s1 += (A[i] - B[i]) * n[i]; s2 += (A[i] - x0[i]) * n[i];
+    }
+    if (gmm::abs(s1) < EPS)
+      return 1. / EPS;
+    else
+      return s2 / s1;
+  }
+
+  void
+  slicer_sphere::test_point(const base_node& P, bool& in, bool& bound) const {
+    scalar_type R2 = gmm::vect_dist2_sqr(P,x0);
+    bound = (R2 >= (1-EPS)*R*R && R2 <= (1+EPS)*R*R);
+    in = R2 <= R*R;
+  }
+
+  scalar_type
+  slicer_sphere::edge_intersect(size_type iA, size_type iB,
+                                const mesh_slicer::cs_nodes_ct& nodes) const {
+    const base_node& A=nodes[iA].pt;
+    const base_node& B=nodes[iB].pt;
+    scalar_type a,b,c; // a*x^2 + b*x + c = 0
+    a = gmm::vect_norm2_sqr(B-A);
+    if (a < EPS)
+      return pt_bin.is_in(iA) ? 0. : 1./EPS;
+    b = 2*gmm::vect_sp(A-x0,B-A);
+    c = gmm::vect_norm2_sqr(A-x0)-R*R;
+    return slicer_volume::trinom(a,b,c);
+  }
+
+  void
+  slicer_cylinder::test_point(const base_node& P, bool& in, bool& bound) const {
+    base_node N = P;
+    if (2 == N.size()) /* Add Z coorinate if mesh is 2D */
+      N.push_back(0.0);
+    N = N-x0;
+    scalar_type axpos = gmm::vect_sp(d, N);
+    scalar_type dist2 = gmm::vect_norm2_sqr(N) - gmm::sqr(axpos);
+    bound = gmm::abs(dist2-R*R) < EPS;
+    in = dist2 < R*R;
+  }
+
+  scalar_type
+  slicer_cylinder::edge_intersect(size_type iA, size_type iB,
+                                  const mesh_slicer::cs_nodes_ct& nodes) const {
+    base_node F=nodes[iA].pt;
+    base_node D=nodes[iB].pt-nodes[iA].pt;
+    if (2 == F.size()) {
+      F.push_back(0.0);
+      D.push_back(0.0);
+    }
+    F = F - x0;
+    scalar_type Fd = gmm::vect_sp(F,d);
+    scalar_type Dd = gmm::vect_sp(D,d);
+    scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd);
+    if (a < EPS)
+      return pt_bin.is_in(iA) ? 0. : 1./EPS;
+    assert(a> -EPS);
+    scalar_type b = 2*(gmm::vect_sp(F,D) - Fd*Dd);
+    scalar_type c = gmm::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
+    return slicer_volume::trinom(a,b,c);
   }
 }
