@@ -739,7 +739,11 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
         result = Py_None; Py_INCREF(Py_None);
       } else if (out) {
         int i, err = 0;
+#if defined(_MSC_VER)
+        PyObject **d = (PyObject **)malloc(out_cnt*sizeof(PyObject*));
+#else
         PyObject *d[out_cnt];
+#endif
         for (i = 0; i < out_cnt; ++i) {
           if (!err && !(d[i] = gfi_array_to_PyObject(out[i], in__init__)))
             err = 1;
@@ -753,6 +757,9 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
             for (i = 0; i < out_cnt; ++i) PyTuple_SET_ITEM(result,i,d[i]);
           } else result = d[0];
         }
+#if defined(_MSC_VER)
+        free(d);
+#endif
       }
     }
   }
