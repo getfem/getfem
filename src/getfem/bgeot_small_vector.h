@@ -147,11 +147,16 @@ namespace bgeot {
   };
 
   /* common class for all mini_vec, provides access to the common static allocator */
-  struct APIDECL static_block_allocator {
+  class APIDECL static_block_allocator {
     /* must be a pointer ... sgi CC is not able to order correctly the
        destructors of static variables */
     static block_allocator *palloc;
-    static_block_allocator() { if (!palloc) palloc=&dal::singleton<block_allocator,1000>::instance(); } //new block_allocator(); }
+  public:
+    static_block_allocator();
+    void memstats();
+    block_allocator& allocator() const;
+    bool allocator_destroyed() const;
+    void destroy();
   };
 
 #ifdef GETFEM_HAS_OPENMP
@@ -329,8 +334,6 @@ namespace bgeot {
     const_pointer const_base() const {
       SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id));
     }
-    block_allocator& allocator() const { return *palloc; }
-    bool allocator_destroyed() const { return palloc == 0; }
     node_id allocate(size_type n) {
       return node_id(allocator().allocate(gmm::uint32_type(n*sizeof(value_type)))); SVEC_ASSERT(refcnt() == 1);
     }

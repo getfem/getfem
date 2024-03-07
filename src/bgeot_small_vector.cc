@@ -23,6 +23,22 @@
 namespace bgeot { 
   block_allocator *static_block_allocator::palloc = 0;
 
+  static_block_allocator::static_block_allocator() {
+    if (!palloc) palloc = &dal::singleton<block_allocator, 1000>::instance();
+  }
+  void static_block_allocator::memstats() {
+      if (palloc) palloc->memstats();
+  }
+  block_allocator& static_block_allocator::allocator() const {
+    return *palloc;
+  }
+  bool static_block_allocator::allocator_destroyed() const {
+    return palloc == 0;
+  }
+  void static_block_allocator::destroy() {
+    palloc = 0;
+  }
+
   block_allocator::block_allocator() {
     for (size_type i=0; i < OBJ_SIZE_LIMIT; ++i) 
       first_unfilled[i] = i ? size_type(-1) : 0; 
@@ -32,7 +48,7 @@ namespace bgeot {
   block_allocator::~block_allocator() {
     for (size_type i=0; i < blocks.size(); ++i) 
       if (!blocks[i].empty()) blocks[i].clear();
-    static_block_allocator::palloc = 0;
+    static_block_allocator().destroy();
   }
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return 0;
