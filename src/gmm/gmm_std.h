@@ -60,9 +60,6 @@
 # define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf_s(S, l, st, p1, p2)
 # define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf_s(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) _strdup(s)
-# ifndef _SCL_SECURE_NO_DEPRECATE
-#   error Add the option /D_SCL_SECURE_NO_DEPRECATE to the compilation command
-# endif
 #else
 # define SECURE_NONCHAR_SSCANF sscanf
 # define SECURE_NONCHAR_FSCANF fscanf
@@ -311,6 +308,12 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #else
 # define IS_DEPRECATED
 # define ALWAYS_INLINE
+#endif
+
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+# define NOINLINE __declspec(noinline)
+#elif defined(__GNUC__) && !defined(__ICC)
+# define NOINLINE __attribute__((noinline))
 #endif
 
 }
