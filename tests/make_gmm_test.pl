@@ -336,8 +336,12 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $compilo=`sh ../gmm-config --cxx` || die('cannot execute ../gmm-config --cxx'); chomp($compilo);
     $compile_options=`sh ../gmm-config --build-flags`;
     chomp($compile_options);
+    $compile_options=$compile_options . " " . `sh ../gmm-config --cflags`;
+    chomp($compile_options);
     $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
-    $compile_libs=`sh ../gmm-config --libs`;
+    $compile_libs=`sh ../gmm-config --build-libs`;
+    chomp($compile_libs);
+    $compile_libs=$compile_libs . " " . `sh ../gmm-config --libs`;
     if ($with_qd) { $compile_libs="-lqd $compile_libs"; }
 #   print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
     print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;
