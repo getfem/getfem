@@ -646,7 +646,7 @@ else()
   message("Building with Qhull explicitly disabled")
 endif()
 
-if(ENABLE_MULTITHREADED_BLAS)
+if(NOT ENABLE_MULTITHREADED_BLAS)
   find_library(DL_LIB NAMES dl)
   set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
     check_library_exists(dl dlsym "" HAVE_DLSYM)
@@ -655,9 +655,9 @@ if(ENABLE_MULTITHREADED_BLAS)
     target_link_libraries(libgetfem PRIVATE ${DL_LIB})
   else()
     message(FATAL_ERROR
-            "Could not find dlsym function required for enabling multithreaded BLAS")
+            "Could not find dlsym function required for forcing singlethreaded BLAS")
   endif()
-else() # single threaded blas by default
+  # single threaded blas by default
   set(GETFEM_FORCE_SINGLE_THREAD_BLAS 1)
 endif()
 
