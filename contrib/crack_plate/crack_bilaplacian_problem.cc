@@ -1081,10 +1081,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     plain_vector b = model.real_rhs();
     gmm::scale(b, -1.);
     plain_vector X(b);
-    scalar_type condest;
 #if defined(GMM_USES_MUMPS)
     gmm::MUMPS_solve(A, X, gmm::scaled(b, scalar_type(-1)));
 #else
+    scalar_type condest;
     gmm::SuperLU_solve(A, X, gmm::scaled(b, scalar_type(-1)), condest, 1);
     cout << "cond super LU = " << 1./condest << "\n";
 #endif
