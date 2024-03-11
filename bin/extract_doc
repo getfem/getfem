@@ -30,6 +30,7 @@ import string
 import os
 import textwrap
 import sys
+import glob
 
 class ParseError(Exception):
     def __init__(self, value):
@@ -483,14 +484,9 @@ option = sys.argv[2]
 # List the filenames and extract object and command names.
 #
 
-fl = os.popen('(cd ' + directory + '; ls gf_*.cc)');
-lines = fl.readlines();
-a = fl.close()
-if (a) : # Windows
-    fl = os.popen('((cd ' + directory + ') & (ls gf_*.cc))');
-    lines = fl.readlines();
-    a = fl.close()
-
+directory=os.path.abspath(directory)
+os.chdir(directory)
+lines = glob.glob('gf_*.cc')
 
 objects = set()
 objects.add('eltm');
@@ -519,19 +515,12 @@ commands = sorted(commands, key=cmp_to_key(cmpobj))
 
 if (option == 'pseudo_loc'):
 
-    fl = os.popen('cd ' + directory + ' && ls gf_*.cc')
-
-    for l in fl:
-        l = l.strip()
+    for l in glob.glob('gf_*.cc'):
         sys.stdout.write(l+' ')
         
 elif (option == 'pseudo_gen'):
 
-    directory_abs=os.path.abspath(directory)
-    fl = os.popen('ls ' + directory_abs+'/gf_*.cc')
-
-    for l in fl:
-        l = l.strip()
+    for l in glob.glob(directory+'/gf_*.cc'):
         sys.stdout.write(l+' ')
 
 elif (option == 'mobj_dirs'):
@@ -541,19 +530,14 @@ elif (option == 'mobj_dirs'):
         sys.stdout.write('@gf'+oname+' ')
 
 elif (option == 'cubature'):
-    directory_abs=os.path.abspath(directory+'/../../cubature')
-    fl = os.popen('ls ' + directory_abs+'/*.IM')
 
-    for l in fl:
-        l = l.strip()
+    for l in glob.glob(os.path.abspath(directory+'/../../cubature/*.IM')):
         sys.stdout.write(l+' ')
 
 elif (option == 'cubature_loc'):
-    directory_abs=os.path.abspath(directory+'/../../cubature')
-    fl = os.popen('cd ' + directory_abs + ' && ls *.IM')
 
-    for l in fl:
-        l = l.strip()
+    os.chdir(os.path.abspath(directory+'/../../cubature'))
+    for l in glob.glob('*.IM'):
         sys.stdout.write(l+' ')
 
 
