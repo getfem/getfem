@@ -461,7 +461,7 @@ if(ENABLE_SUPERLU)
 endif()
 if(ENABLE_MUMPS)
   target_include_directories(libgetfem PRIVATE ${MUMPS_INCLUDE_PATH})
-  target_link_libraries(libgetfem PRIVATE "${MUMPS_LIBS}")
+  target_link_libraries(libgetfem PUBLIC "${MUMPS_LIBS}")
 endif()
 
 if(NOT GETFEM_PARA_LEVEL MATCHES "^(0|1|2)$")
@@ -570,6 +570,9 @@ if(ENABLE_PYTHON)
     target_include_directories(libgetfemint PRIVATE ${CMAKE_BINARY_DIR})
     target_include_directories(libgetfemint PRIVATE ${CMAKE_SOURCE_DIR}/src)
     target_include_directories(libgetfemint PRIVATE ${CMAKE_SOURCE_DIR}/interface/src)
+    if(ENABLE_MUMPS)
+      target_include_directories(libgetfemint PRIVATE ${MUMPS_INCLUDE_PATH})
+    endif()
 
     find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
@@ -589,6 +592,7 @@ if(ENABLE_PYTHON)
                         $<TARGET_OBJECTS:libgetfemint>)
     target_include_directories(_getfem PRIVATE ${CMAKE_BINARY_DIR}/getfem)
     target_include_directories(_getfem PRIVATE ${CMAKE_SOURCE_DIR}/interface/src)
+    target_include_directories(_getfem PRIVATE ${Python3_NumPy_INCLUDE_DIRS})
     target_link_libraries(_getfem PRIVATE libgetfem)
 
     # find the installation directory for python libraries (ported from autotools)
@@ -600,6 +604,7 @@ print(sysconfig.get_path('purelib', scheme, vars={'base': '${CMAKE_INSTALL_PREFI
     message("Python3_SITEARCH = ${Python3_SITEARCH} (not used)")
     message("Python3_SITELIB = ${Python3_SITELIB} (not used)")
     message("PYTHON_SITE_PACKAGES = ${PYTHON_SITE_PACKAGES} (used)")
+    message("Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS} (used)")
   endif()
 endif()
 
@@ -625,7 +630,7 @@ endif()
 # in the cmake build, BLAS and Lapack are hard requirements
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
-target_link_libraries(libgetfem PRIVATE ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+target_link_libraries(libgetfem PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 set(GMM_USES_BLAS 1)
 set(GMM_USES_LAPACK 1)
 
