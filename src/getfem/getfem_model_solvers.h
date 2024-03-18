@@ -255,7 +255,7 @@ namespace getfem {
   struct quadratic_newton_line_search : public abstract_newton_line_search {
     double R0_, R1_;
 
-    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min;
+    double alpha, first_res;
     virtual void init_search(double r, size_t git, double R0 = 0.0) {
       GMM_ASSERT1(R0 != 0.0, "You have to specify R0");
       glob_it = git;
