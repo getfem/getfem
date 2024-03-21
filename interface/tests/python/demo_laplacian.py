@@ -34,10 +34,8 @@ import getfem as gf
 plot_result = False;
 
 if plot_result:
-  import vtk
-  from matplotlib.pyplot import figure
-  import matplotlib.pyplot as plt
   import meshio
+  import matplotlib.pyplot as plt
   from matplotlib import ticker
 
 ## Parameters
@@ -141,21 +139,21 @@ print('Error in H1 norm : ', H1error)
 
 # Export data
 sl4 = gf.Slice(("none",), mfu, 1)
-sl4.export_to_vtk('laplacian.vtk', "ascii", mfu, Ue,'Exact_solution', mfu, U,'Computed_solution')
+sl4.export_to_vtu('laplacian.vtu', "ascii", mfu, Ue, 'Exact_solution', mfu, U,'Computed_solution')
 print('You can view the solution with (for example):')
-print('Paraview laplacian.vtk')
+print('paraview laplacian.vtu')
 
 
 if plot_result:
-  reader = meshio.read('laplacian.vtk')
+  reader = meshio.read('laplacian.vtu')
   points = reader.points
   cells = reader.cells[0].data
   point_data = reader.point_data["Computed_solution"]
-  fig = figure(figsize=(7, 7))
+  fig = plt.figure(figsize=(7, 7))
   axes2 = fig.add_subplot(aspect="auto",projection='3d')
   axes2.triplot(points[:, 0], points[:, 1], cells, color="gray")
   contour = axes2.plot_trisurf(points[:, 0], points[:, 1],
-                            point_data[:,0], cmap="jet")
+                            point_data, cmap="jet")
   fig.colorbar(contour)
   axes2.view_init(30, 100)
   fig.tight_layout()
@@ -165,12 +163,6 @@ if plot_result:
   axes2.set_title("uref")
   fig.savefig("uref.pdf")
   plt.show()
-
-
-
-
-
-
 
 
 if (H1error > 1e-3):
