@@ -182,21 +182,18 @@ namespace gmm {
   /* vect_norm2(x).                                                        */
   /* ********************************************************************* */
 
-# define nrm2_interface(param1, trans1, blas_name, base_type)              \
-  inline number_traits<base_type >::magnitude_type                         \
-  vect_norm2(param1(base_type)) {                                          \
-    GMMLAPACK_TRACE("nrm2_interface");                                     \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(x))); trans1(base_type);         \
-    return blas_name(&n, &x[0], &inc);                                     \
+# define nrm2_interface(blas_name, base_type)             \
+  inline number_traits<base_type >::magnitude_type        \
+  vect_norm2(const std::vector<base_type > &x) {          \
+    GMMLAPACK_TRACE("nrm2_interface");                    \
+    BLAS_INT inc(1), n(BLAS_INT(vect_size(x)));           \
+    return blas_name(&n, &x[0], &inc);                    \
   }
 
-# define nrm2_p1(base_type) const std::vector<base_type > &x
-# define nrm2_trans1(base_type)
-
-  nrm2_interface(nrm2_p1, nrm2_trans1, snrm2_,  BLAS_S)
-  nrm2_interface(nrm2_p1, nrm2_trans1, dnrm2_,  BLAS_D)
-  nrm2_interface(nrm2_p1, nrm2_trans1, scnrm2_, BLAS_C)
-  nrm2_interface(nrm2_p1, nrm2_trans1, dznrm2_, BLAS_Z)
+  nrm2_interface(snrm2_,  BLAS_S)
+  nrm2_interface(dnrm2_,  BLAS_D)
+  nrm2_interface(scnrm2_, BLAS_C)
+  nrm2_interface(dznrm2_, BLAS_Z)
 
   /* ********************************************************************* */
   /* vect_sp(x, y).                                                        */
