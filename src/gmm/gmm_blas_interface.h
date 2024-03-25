@@ -199,69 +199,51 @@ namespace gmm {
   /* vect_sp(x, y).                                                        */
   /* ********************************************************************* */
 
-# define dot_interface(param1, trans1, mult1, param2, trans2, mult2,       \
-                         blas_name, base_type)                             \
-  inline base_type vect_sp(param1(base_type), param2(base_type)) {         \
+# define dot_interface(blas_name, base_type)                               \
+  inline base_type vect_sp(const std::vector<base_type > &x,               \
+                           const std::vector<base_type > &y) {             \
     GMMLAPACK_TRACE("dot_interface");                                      \
-    trans1(base_type); trans2(base_type);                                  \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
-    return mult1 mult2 blas_name(&n, &x[0], &inc, &y[0], &inc);            \
+    return blas_name(&n, &x[0], &inc, &y[0], &inc);                        \
+  }                                                                        \
+  inline base_type vect_sp                                                 \
+   (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,   \
+    const std::vector<base_type> &y) {                                     \
+    GMMLAPACK_TRACE("dot_interface");                                      \
+    std::vector<base_type > &x =                                           \
+      const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));         \
+    base_type a(x_.r);                                                     \
+    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    return a* blas_name(&n, &x[0], &inc, &y[0], &inc);                     \
+  }                                                                        \
+  inline base_type vect_sp                                                 \
+    (const std::vector<base_type> &x,                                      \
+     const scaled_vector_const_ref<std::vector<base_type>,base_type> &y_) {\
+    GMMLAPACK_TRACE("dot_interface");                                      \
+    std::vector<base_type > &y =                                           \
+      const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));         \
+    base_type b(y_.r);                                                     \
+    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    return b* blas_name(&n, &x[0], &inc, &y[0], &inc);                     \
+  }                                                                        \
+  inline base_type vect_sp                                                 \
+    (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,  \
+     const scaled_vector_const_ref<std::vector<base_type>,base_type> &y_) {\
+    GMMLAPACK_TRACE("dot_interface");                                      \
+    std::vector<base_type > &x =                                           \
+      const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));         \
+    base_type a(x_.r);                                                     \
+    std::vector<base_type > &y =                                           \
+      const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));         \
+    base_type b(y_.r);                                                     \
+    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    return a* b* blas_name(&n, &x[0], &inc, &y[0], &inc);                  \
   }
 
-# define dot_p1(base_type) const std::vector<base_type > &x
-# define dot_trans1(base_type)
-# define dot_p1_s(base_type)                                               \
-    const scaled_vector_const_ref<std::vector<base_type >, base_type > &x_
-# define dot_trans1_s(base_type)                                           \
-         std::vector<base_type > &x =                                      \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
-         base_type a(x_.r)
-
-# define dot_p2(base_type) const std::vector<base_type > &y
-# define dot_trans2(base_type)
-# define dot_p2_s(base_type)                                               \
-    const scaled_vector_const_ref<std::vector<base_type >, base_type > &y_
-# define dot_trans2_s(base_type)                                           \
-         std::vector<base_type > &y =                                      \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
-         base_type b(y_.r)
-
-  dot_interface(dot_p1, dot_trans1, (BLAS_S),
-                dot_p2, dot_trans2, (BLAS_S), sdot_,  BLAS_S)
-  dot_interface(dot_p1, dot_trans1, (BLAS_D),
-                dot_p2, dot_trans2, (BLAS_D), ddot_,  BLAS_D)
-  dot_interface(dot_p1, dot_trans1, (BLAS_C),
-                dot_p2, dot_trans2, (BLAS_C), cdotu_, BLAS_C)
-  dot_interface(dot_p1, dot_trans1, (BLAS_Z),
-                dot_p2, dot_trans2, (BLAS_Z), zdotu_, BLAS_Z)
-
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2,   dot_trans2,   (BLAS_S), sdot_,  BLAS_S)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2,   dot_trans2,   (BLAS_D), ddot_,  BLAS_D)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2,   dot_trans2,   (BLAS_C), cdotu_, BLAS_C)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2,   dot_trans2,   (BLAS_Z), zdotu_, BLAS_Z)
-
-  dot_interface(dot_p1,   dot_trans1,   (BLAS_S),
-                dot_p2_s, dot_trans2_s, b*,       sdot_,  BLAS_S)
-  dot_interface(dot_p1,   dot_trans1,   (BLAS_D),
-                dot_p2_s, dot_trans2_s, b*,       ddot_,  BLAS_D)
-  dot_interface(dot_p1,   dot_trans1,   (BLAS_C),
-                dot_p2_s, dot_trans2_s, b*,       cdotu_, BLAS_C)
-  dot_interface(dot_p1,   dot_trans1,   (BLAS_Z),
-                dot_p2_s, dot_trans2_s, b*,       zdotu_, BLAS_Z)
-
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2_s, dot_trans2_s, b*, sdot_,  BLAS_S)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2_s, dot_trans2_s, b*, ddot_,  BLAS_D)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2_s, dot_trans2_s, b*, cdotu_, BLAS_C)
-  dot_interface(dot_p1_s, dot_trans1_s, a*,
-                dot_p2_s, dot_trans2_s, b*, zdotu_, BLAS_Z)
-
+  dot_interface(sdot_,  BLAS_S)
+  dot_interface(ddot_,  BLAS_D)
+  dot_interface(cdotu_, BLAS_C)
+  dot_interface(zdotu_, BLAS_Z)
 
   /* ********************************************************************* */
   /* vect_hp(x, y).                                                        */
