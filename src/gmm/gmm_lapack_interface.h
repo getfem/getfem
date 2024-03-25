@@ -152,10 +152,8 @@ namespace gmm {
 
 # define getri_interface(lapack_name, base_type) inline                    \
   void lu_inverse(const dense_matrix<base_type> &LU,                       \
-            const lapack_ipvt &ipvt, const dense_matrix<base_type> &A_) {  \
+                  const lapack_ipvt &ipvt, dense_matrix<base_type> &A) {   \
     GMMLAPACK_TRACE("getri_interface");                                    \
-    dense_matrix<base_type >&                                              \
-    A = const_cast<dense_matrix<base_type > &>(A_);                        \
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
     base_type work1;                                                       \
     if (n) {                                                               \
@@ -200,8 +198,8 @@ namespace gmm {
     //  geqrf_interface(zgeqrf_, BLAS_Z)
 
 # define geqrf_interface2(lapack_name1, lapack_name2, base_type) inline    \
-  void qr_factor(const dense_matrix<base_type > &A,                        \
-       dense_matrix<base_type > &Q, dense_matrix<base_type > &R) {         \
+  void qr_factor(const dense_matrix<base_type> &A,                         \
+                 dense_matrix<base_type> &Q, dense_matrix<base_type> &R) { \
     GMMLAPACK_TRACE("geqrf_interface2");                                   \
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));         \
     BLAS_INT info(0), lwork(-1);                                           \
@@ -234,8 +232,8 @@ namespace gmm {
 
 # define gees_interface(lapack_name, base_type)                            \
   template <typename VECT> inline void implicit_qr_algorithm(              \
-         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
-         dense_matrix<base_type> &Q,                                      \
+         const dense_matrix<base_type> &A, VECT &eigval_,                  \
+         dense_matrix<base_type> &Q,                                       \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface");                                     \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
@@ -252,13 +250,13 @@ namespace gmm {
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
                 &eigv2[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],&info);\
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
-    extract_eig(H, const_cast<VECT &>(eigval_), tol);                      \
+    extract_eig(H, eigval_, tol);                                          \
   }
 
 # define gees_interface2(lapack_name, base_type)                           \
   template <typename VECT> inline void implicit_qr_algorithm(              \
-         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
-         dense_matrix<base_type > &Q,                                      \
+         const dense_matrix<base_type> &A, VECT &eigval_,                  \
+         dense_matrix<base_type> &Q,                                       \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface2");                                    \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
@@ -275,7 +273,7 @@ namespace gmm {
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work[0], &lwork, &rwork[0], &rwork[0],&info);\
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
-    extract_eig(H, const_cast<VECT &>(eigval_), tol);                      \
+    extract_eig(H, eigval_, tol);                                          \
   }
 
   gees_interface(sgees_, BLAS_S)
@@ -289,8 +287,8 @@ namespace gmm {
 
 # define geev_interface(lapack_name, base_type, side)                      \
   template <typename VECT> inline void geev_interface_ ## side(            \
-         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
-         dense_matrix<base_type > &Q) {                                    \
+         const dense_matrix<base_type> &A, VECT &eigval_,                  \
+         dense_matrix<base_type> &Q) {                                     \
     GMMLAPACK_TRACE("geev_interface");                                     \
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
     base_type work1;                                                       \
@@ -305,14 +303,14 @@ namespace gmm {
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
                 &Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);        \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
-    gmm::copy(eigvr, gmm::real_part(const_cast<VECT &>(eigval_)));         \
-    gmm::copy(eigvi, gmm::imag_part(const_cast<VECT &>(eigval_)));         \
+    gmm::copy(eigvr, gmm::real_part(eigval_));                             \
+    gmm::copy(eigvi, gmm::imag_part(eigval_));                             \
   }
 
 # define geev_interface2(lapack_name, base_type, side)                     \
   template <typename VECT> inline void geev_interface_ ## side(            \
-         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
-         dense_matrix<base_type > &Q) {                                    \
+         const dense_matrix<base_type> &A, VECT &eigval_,                  \
+         dense_matrix<base_type> &Q) {                                     \
     GMMLAPACK_TRACE("geev_interface");                                     \
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
     base_type work1;                                                       \
@@ -328,7 +326,7 @@ namespace gmm {
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
                 &Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);        \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
-    gmm::copy(eigv, const_cast<VECT &>(eigval_));                          \
+    gmm::copy(eigv, eigval_);                                              \
   }
 
   geev_interface(sgeev_, BLAS_S, right)

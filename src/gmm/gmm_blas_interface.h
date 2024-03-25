@@ -210,8 +210,7 @@ namespace gmm {
    (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,   \
     const std::vector<base_type> &y) {                                     \
     GMMLAPACK_TRACE("dot_interface");                                      \
-    std::vector<base_type > &x =                                           \
-      const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));         \
+    const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type a(x_.r);                                                     \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
     return a* blas_name(&n, &x[0], &inc, &y[0], &inc);                     \
@@ -220,8 +219,7 @@ namespace gmm {
     (const std::vector<base_type> &x,                                      \
      const scaled_vector_const_ref<std::vector<base_type>,base_type> &y_) {\
     GMMLAPACK_TRACE("dot_interface");                                      \
-    std::vector<base_type > &y =                                           \
-      const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));         \
+    const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type b(y_.r);                                                     \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
     return b* blas_name(&n, &x[0], &inc, &y[0], &inc);                     \
@@ -230,11 +228,9 @@ namespace gmm {
     (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,  \
      const scaled_vector_const_ref<std::vector<base_type>,base_type> &y_) {\
     GMMLAPACK_TRACE("dot_interface");                                      \
-    std::vector<base_type > &x =                                           \
-      const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));         \
+    const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type a(x_.r);                                                     \
-    std::vector<base_type > &y =                                           \
-      const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));         \
+    const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type b(y_.r);                                                     \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
     return a* b* blas_name(&n, &x[0], &inc, &y[0], &inc);                  \
@@ -263,8 +259,7 @@ namespace gmm {
 # define dotc_p1_s(base_type)                                              \
     const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_
 # define dotc_trans1_s(base_type)                                          \
-         std::vector<base_type > &x =                                      \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
+         const std::vector<base_type> &x = *(linalg_origin(x_));           \
          base_type a(x_.r)
 
 # define dotc_p2(base_type) const std::vector<base_type> &y
@@ -272,8 +267,7 @@ namespace gmm {
 # define dotc_p2_s(base_type)                                              \
     const scaled_vector_const_ref<std::vector<base_type>,base_type> &y_
 # define dotc_trans2_s(base_type)                                          \
-         std::vector<base_type > &y =                                      \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
+         const std::vector<base_type> &y = *(linalg_origin(y_));           \
          base_type b(gmm::conj(y_.r))
 
   dotc_interface(dotc_p1, dotc_trans1, (BLAS_S),
@@ -421,8 +415,7 @@ namespace gmm {
 # define axpy_p1_s(base_type)                                              \
     const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_
 # define axpy_trans1_s(base_type)                                          \
-         std::vector<base_type > &x =                                      \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
+         const std::vector<base_type> &x = *(linalg_origin(x_));           \
          base_type a(x_.r)
 
   axpy_interface(axpy_p1, axpy_trans1, saxpy_, BLAS_S)
@@ -458,15 +451,15 @@ namespace gmm {
 # define gem_trans1_n(base_type) const char t = 'N'
 # define gem_p1_t(base_type)                                               \
          const transposed_col_ref<dense_matrix<base_type> *> &A_
-# define gem_trans1_t(base_type) dense_matrix<base_type > &A =             \
-         const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));     \
+# define gem_trans1_t(base_type) const dense_matrix<base_type> &A =        \
+           *(linalg_origin(A_));                                           \
          const char t = 'T'
 # define gem_p1_tc(base_type)                                              \
-         const transposed_col_ref<const dense_matrix<base_type > *> &A_
+         const transposed_col_ref<const dense_matrix<base_type> *> &A_
 # define gem_p1_c(base_type)                                               \
          const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &A_
-# define gem_trans1_c(base_type) dense_matrix<base_type > &A =             \
-         const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));     \
+# define gem_trans1_c(base_type) const dense_matrix<base_type> &A =        \
+           *(linalg_origin(A_));                                           \
          const char t = 'C'
 
   // second parameter
@@ -474,8 +467,8 @@ namespace gmm {
 # define gemv_trans2_n(base_type) base_type alpha(1)
 # define gemv_p2_s(base_type)                                              \
     const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_
-# define gemv_trans2_s(base_type) std::vector<base_type > &x =             \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
+# define gemv_trans2_s(base_type) const std::vector<base_type> &x =        \
+           (*(linalg_origin(x_)));                                         \
          base_type alpha(x_.r)
 
   // Z <- AX + Z.
@@ -753,8 +746,7 @@ namespace gmm {
          const dense_matrix<base_type> &B,                                 \
          dense_matrix<base_type> &C, rcmult) {                             \
     GMMLAPACK_TRACE("gemm_interface_tn");                                  \
-    dense_matrix<base_type > &A                                            \
-         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));   \
+    const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const char t = 'T', u = 'N';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
@@ -784,8 +776,7 @@ namespace gmm {
                      const transposed_col_ref<is_const<base_type> *> &B_,  \
          dense_matrix<base_type> &C, r_mult) {                             \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
-    dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
+    const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'N', u = 'T';                                           \
     BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
     BLAS_INT k(BLAS_INT(mat_ncols(A)));                                    \
@@ -817,10 +808,8 @@ namespace gmm {
                const transposed_col_ref<isB_const <base_type> *> &B_,      \
                dense_matrix<base_type> &C, r_mult) {                       \
     GMMLAPACK_TRACE("gemm_interface_tt");                                  \
-    dense_matrix<base_type > &A                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
-    dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
+    const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
+    const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'T', u = 'T';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT n(BLAS_INT(mat_nrows(B)));                                    \
@@ -860,8 +849,7 @@ namespace gmm {
       const dense_matrix<base_type> &B,                                    \
       dense_matrix<base_type> &C, rcmult) {                                \
     GMMLAPACK_TRACE("gemm_interface_cn");                                  \
-    dense_matrix<base_type > &A                                            \
-          = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));  \
+    const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const char t = 'C', u = 'N';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
@@ -887,8 +875,7 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &B_, \
       dense_matrix<base_type> &C, c_mult, row_major) {                     \
     GMMLAPACK_TRACE("gemm_interface_nc");                                  \
-    dense_matrix<base_type > &B                                            \
-         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));   \
+    const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'N', u = 'C';                                           \
     BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
     BLAS_INT k(BLAS_INT(mat_ncols(A)));                                    \
@@ -915,10 +902,8 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &B_, \
       dense_matrix<base_type> &C, r_mult) {                                \
     GMMLAPACK_TRACE("gemm_interface_cc");                                  \
-    dense_matrix<base_type > &A                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
-    dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
+    const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
+    const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'C', u = 'C';                                           \
     BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
     BLAS_INT lda = k, n(BLAS_INT(mat_nrows(B))), ldb = n, ldc = m;         \
