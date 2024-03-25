@@ -102,12 +102,12 @@ namespace gmm {
   /* ********************************************************************** */
   
 # define getrf_interface(lapack_name, base_type) inline                      \
-    size_type lu_factor(dense_matrix<base_type > &A, lapack_ipvt &ipvt){     \
+    size_type lu_factor(dense_matrix<base_type> &A, lapack_ipvt &ipvt){      \
     GMMLAPACK_TRACE("getrf_interface");                                      \
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A)), lda(m); \
     BLAS_INT info(-1);                                                       \
     if (m && n) lapack_name(&m, &n, &A(0,0), &lda, ipvt.pfirst(), &info);    \
-    if ((sizeof(BLAS_INT) == 4) ||                                            \
+    if ((sizeof(BLAS_INT) == 4) ||                                           \
         ((info & 0xFFFFFFFF00000000L) && !(info & 0x00000000FFFFFFFFL)))     \
       /* For compatibility with lapack version with 32 bit integer. */	     \
       ipvt.set_to_int32();						     \
@@ -125,7 +125,7 @@ namespace gmm {
 
 # define getrs_interface(f_name, trans1, lapack_name, base_type) inline    \
   void f_name(const dense_matrix<base_type> &A,                            \
-              const lapack_ipvt &ipvt, std::vector<base_type > &x,         \
+              const lapack_ipvt &ipvt, std::vector<base_type> &x,          \
               const std::vector<base_type> &b) {                           \
     GMMLAPACK_TRACE("getrs_interface");                                    \
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), nrhs(1);                 \
@@ -177,16 +177,16 @@ namespace gmm {
   /* ********************************************************************** */
 
 # define geqrf_interface(lapack_name1, base_type) inline                   \
-  void qr_factor(dense_matrix<base_type > &A){                             \
+  void qr_factor(dense_matrix<base_type> &A){                              \
     GMMLAPACK_TRACE("geqrf_interface");                                    \
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));         \
     BLAS_INT info(0), lwork(-1);                                           \
     base_type work1;                                                       \
     if (m && n) {                                                          \
-      std::vector<base_type > tau(n);                                      \
+      std::vector<base_type> tau(n);                                       \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
       lwork = BLAS_INT(gmm::real(work1));                                  \
-      std::vector<base_type > work(lwork);                                 \
+      std::vector<base_type> work(lwork);                                  \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info); \
       GMM_ASSERT1(!info, "QR factorization failed");                       \
     }                                                                      \
@@ -208,10 +208,10 @@ namespace gmm {
     base_type work1;                                                       \
     if (m && n) {                                                          \
       std::copy(A.begin(), A.end(), Q.begin());                            \
-      std::vector<base_type > tau(n);                                      \
+      std::vector<base_type> tau(n);                                       \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info); \
       lwork = BLAS_INT(gmm::real(work1));                                  \
-      std::vector<base_type > work(lwork);                                 \
+      std::vector<base_type> work(lwork);                                  \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info); \
       GMM_ASSERT1(!info, "QR factorization failed");                       \
       base_type *p = &R(0,0), *q = &Q(0,0);                                \
@@ -235,20 +235,20 @@ namespace gmm {
 # define gees_interface(lapack_name, base_type)                            \
   template <typename VECT> inline void implicit_qr_algorithm(              \
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
-         dense_matrix<base_type > &Q,                                      \
+         dense_matrix<base_type> &Q,                                      \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface");                                     \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     BLAS_INT n=BLAS_INT(mat_nrows(A)), info(0), lwork(-1), sdim;           \
     base_type work1;                                                       \
     if (!n) return;                                                        \
-    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    dense_matrix<base_type> H(n,n); gmm::copy(A, H);                       \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
     std::vector<double> rwork(n), eigv1(n), eigv2(n);                      \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
                 &eigv2[0], &Q(0,0), &n, &work1, &lwork, &rwork[0], &info); \
     lwork = BLAS_INT(gmm::real(work1));                                    \
-    std::vector<base_type > work(lwork);                                   \
+    std::vector<base_type> work(lwork);                                    \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
                 &eigv2[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],&info);\
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
@@ -265,13 +265,13 @@ namespace gmm {
     BLAS_INT n=BLAS_INT(mat_nrows(A)), info(0), lwork(-1), sdim;           \
     base_type work1;                                                       \
     if (!n) return;                                                        \
-    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    dense_matrix<base_type> H(n,n); gmm::copy(A, H);                       \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
     std::vector<double> rwork(n), eigvv(n*2);                              \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work1, &lwork, &rwork[0], &rwork[0], &info); \
     lwork = BLAS_INT(gmm::real(work1));                                    \
-    std::vector<base_type > work(lwork);                                   \
+    std::vector<base_type> work(lwork);                                    \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work[0], &lwork, &rwork[0], &rwork[0],&info);\
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
@@ -295,13 +295,13 @@ namespace gmm {
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
     base_type work1;                                                       \
     if (!n) return;                                                        \
-    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    dense_matrix<base_type> H(n,n); gmm::copy(A, H);                       \
     jobv_ ## side                                                          \
-    std::vector<base_type > eigvr(n), eigvi(n);                            \
+    std::vector<base_type> eigvr(n), eigvi(n);                             \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
                 &Q(0,0), &n, &Q(0,0), &n, &work1, &lwork, &info);          \
     lwork = BLAS_INT(gmm::real(work1));                                    \
-    std::vector<base_type > work(lwork);                                   \
+    std::vector<base_type> work(lwork);                                    \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
                 &Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);        \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
@@ -317,14 +317,14 @@ namespace gmm {
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
     base_type work1;                                                       \
     if (!n) return;                                                        \
-    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    dense_matrix<base_type> H(n,n); gmm::copy(A, H);                       \
     jobv_ ## side                                                          \
     std::vector<base_type::value_type> rwork(2*n);                         \
     std::vector<base_type> eigv(n);                                        \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
                 &Q(0,0), &n, &work1, &lwork, &rwork[0], &info);            \
     lwork = BLAS_INT(gmm::real(work1));                                    \
-    std::vector<base_type > work(lwork);                                   \
+    std::vector<base_type> work(lwork);                                    \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
                 &Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);        \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
