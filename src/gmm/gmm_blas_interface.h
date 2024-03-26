@@ -152,6 +152,13 @@ namespace gmm {
 # define BLAS_C std::complex<float>
 # define BLAS_Z std::complex<double>
 
+// Hack due to BLAS ABI mess
+#if defined(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT)
+# define BLAS_CPLX_FUNC_CALL(blasname, res, ...) blasname(&res, __VA_ARGS__)
+#else
+# define BLAS_CPLX_FUNC_CALL(blasname, res, ...) res = blasname(__VA_ARGS__)
+#endif
+
   /* ********************************************************************* */
   /* BLAS functions used.                                                  */
   /* ********************************************************************* */
@@ -252,7 +259,7 @@ namespace gmm {
     GMMLAPACK_TRACE(msg);                                                  \
     base_type res;                                                         \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
-    blas_name(&res, &n, &y[0], &inc, &x[0], &inc);                         \
+    BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return res;                                                            \
   }                                                                        \
   inline base_type funcname                                                \
@@ -262,7 +269,7 @@ namespace gmm {
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type res, a(x_.r);                                                \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
-    blas_name(&res, &n, &y[0], &inc, &x[0], &inc);                         \
+    BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return a*res;                                                          \
   }                                                                        \
   inline base_type funcname                                                \
@@ -272,7 +279,7 @@ namespace gmm {
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type res, b(bdef);                                                \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
-    blas_name(&res, &n, &y[0], &inc, &x[0], &inc);                         \
+    BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return b*res;                                                          \
   }                                                                        \
   inline base_type funcname                                                \
@@ -283,7 +290,7 @@ namespace gmm {
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type res, a(x_.r), b(bdef);                                       \
     BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
-    blas_name(&res, &n, &y[0], &inc, &x[0], &inc);                         \
+    BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return a*b*res;                                                        \
   }
 

@@ -688,6 +688,32 @@ if test x$useblas64support = xYES; then
   AC_DEFINE(GMM_USE_BLAS64_INTERFACE,,[Use blas with 64 bits integers])
 fi
 
+# check fortran ABI with regard to complex function in BLAS
+# by defult assume a fortran ABI where complex real/double functions return by value
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <complex>
+#if defined(GMM_USE_BLAS64_INTERFACE)
+  #define INT long
+#else
+  #define INT int
+#endif
+extern "C" {
+void cdotu_(std::complex<float>*, const INT*, const std::complex<float>*, const INT*,
+            const std::complex<float>*, const INT*);
+}
+int main() {
+    const INT one=1;
+    std::complex<float> x(1.,2.), y(1.,-2.), result;
+    cdotu_(&result, &one, &x, &one, &y, &one);
+    return (fabs(result.real()-5.) < 1e-8) ? 0 : 1;
+}
+  ]])],[ acx_blas_fortan_abi=Intel ], [ acx_blas_fortan_abi=GNU ], [])
+
+if test x$acx_blas_fortan_abi = xIntel; then
+  echo "BLAS found to have the Intel fortran ABI, i.e. returning complex function value by argument";
+  AC_DEFINE(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT,,[defined if the BLAS fortran ABI does not return complex values directly (e.g. Intel's MKL)])
+fi
+
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then

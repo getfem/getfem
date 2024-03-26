@@ -22,5 +22,8 @@
 /* Use blas with 64 bits integers */
 #cmakedefine GMM_USE_BLAS64_INTERFACE
 
+/* defined if the BLAS fortran ABI does not return complex values directly (e.g. Intel's MKL) */
+#cmakedefine GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT
+
 /* GMM version */
 #define GMM_VERSION "@GMM_VERSION@"
