@@ -105,13 +105,9 @@ namespace gmm {
     size_type lu_factor(dense_matrix<base_type> &A, lapack_ipvt &ipvt){      \
     GMMLAPACK_TRACE("getrf_interface");                                      \
     BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A)), lda(m); \
-    BLAS_INT info(-1);                                                       \
-    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, ipvt.pfirst(), &info);    \
-    if ((sizeof(BLAS_INT) == 4) ||                                           \
-        ((info & 0xFFFFFFFF00000000L) && !(info & 0x00000000FFFFFFFFL)))     \
-      /* For compatibility with lapack version with 32 bit integer. */	     \
-      ipvt.set_to_int32();						     \
-    return size_type(int(info & 0x00000000FFFFFFFFL));			     \
+    BLAS_INT info=BLAS_INT(-1);                                              \
+    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);         \
+    return size_type(abs(info));                                             \
   }
 
   getrf_interface(sgetrf_, BLAS_S)
@@ -131,7 +127,7 @@ namespace gmm {
     BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), nrhs(1);                 \
     gmm::copy(b, x); trans1;                                               \
     if (n)                                                                 \
-      lapack_name(&t,&n,&nrhs,&(A(0,0)),&n,ipvt.pfirst(),&x[0],&n,&info);  \
+      lapack_name(&t,&n,&nrhs,&(A(0,0)),&n,&ipvt[0],&x[0],&n,&info);       \
   }
   
 # define getrs_trans_n const char t = 'N'
@@ -158,10 +154,10 @@ namespace gmm {
     base_type work1;                                                       \
     if (n) {                                                               \
       gmm::copy(LU, A);                                                    \
-      lapack_name(&n, &A(0,0), &n, ipvt.pfirst(), &work1, &lwork, &info);  \
+      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
       lwork = int(gmm::real(work1));                                       \
       std::vector<base_type> work(lwork);                                  \
-      lapack_name(&n, &A(0,0), &n, ipvt.pfirst(), &work[0], &lwork,&info); \
+      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);     \
     }                                                                      \
   }
 
