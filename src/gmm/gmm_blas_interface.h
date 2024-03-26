@@ -183,7 +183,6 @@ namespace gmm {
     void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...);
   }
 
-#if 1
 
   /* ********************************************************************* */
   /* vect_norm2(x).                                                        */
@@ -1009,7 +1008,6 @@ namespace gmm {
   trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
                  ztrsv_, BLAS_Z)
 
-#endif
 }
 
 #endif // GMM_BLAS_INTERFACE_H

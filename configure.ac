@@ -547,7 +547,7 @@ fi
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
 echo "BLAS_LIBS=$BLAS_LIBS"
-# First, check BLAS_LIBS environment variable
+# First, check BLAS_LIBS environment variable (can also be set using the --with-blas=<lib> option)
 if test "x$BLAS_LIBS" = xbuiltin; then
   echo "Using builtin blas lib";
   BLAS_LIBS=""
@@ -664,25 +664,6 @@ AC_ARG_ENABLE(blas64-support,
           yes | "") useblas64support=YES;;
           no) useblas64support=NO;;
           esac], [useblas64support=NO])
-
-if test x$useblas64support = xNO && test x$usematlab = xYES; then
-  # 32 or 64 bits blas interface
-  AC_RUN_IFELSE([AC_LANG_SOURCE([[
-  #include <stdlib.h>
-  int main() {
-    int a; long b;
-    int *pa; long *pb; void *pc;
-
-    if (sizeof(long) > sizeof(int)) {
-      a = 0x3E0024; b = 0;
-      pb = &b; pc = (void *)(pb); pa = (int *)(pc); *pa = a;
-      if (int(b) != a) exit(1);
-      *pa = 0x3E0024;
-      if (int(b) != a) exit(1);
-      if (b != long(a)) exit(1);
-    } 
-  } ]])],[useblas64support=YES],[],[])
-fi
 
 if test x$useblas64support = xYES; then
   AC_DEFINE(GMM_USE_BLAS64_INTERFACE,,[Use blas with 64 bits integers])
