@@ -45,20 +45,17 @@ GETFEM_STATIC_LIB = ../../../src/.libs/libgetfem.a @LIBS@
 if BUILDMEX
 if USE_MINGW_MEX
 
-#command extremely sensitive to any modification! fragile! keep the order of the files
-# (gfm_mex.c must be first, libstdc++.a must be last)
+#command extremely sensitive to any modification! fragile! keep the order of
+# the files (gfm_mex.c must be first, libstdc++.a must be last)
 
 gf_matlab@MATLAB_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
-	matlab -nodesktop -nosplash -nojvm -r "mex -v -output gf_matlab -g ./gfm_mex.c ./gfm_common.c -largeArrayDims -I. -I.. ./../gfi_array.c ../.libs/libgetfemint.a ../../../src/.libs/libgetfem.a ../../../superlu/.libs/libsuperlu.a /msys/local/lib/libsmumps.a /msys/local/lib/libcmumps.a /msys/local/lib/libdmumps.a /msys/local/lib/libzmumps.a /msys/local/lib/libmumps_common.a /msys/local/lib/libmpiseq.a /msys/local/lib/libpord.a /msys/local/lib/liblapack.a /msys/local/lib/libblas.a /msys/local/lib/libqhull.a /Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libgfortran.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libstdc++.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libquadmath.a; exit(0);"
+	matlab -nodesktop -nosplash -nojvm -r "mex -v -output gf_matlab -g ./gfm_mex.c ./gfm_common.c -largeArrayDims -I. -I.. ./../gfi_array.c ../.libs/libgetfemint.a ../../../src/.libs/libgetfem.a $(SUPERLU_LIBS) /msys/local/lib/libsmumps.a /msys/local/lib/libcmumps.a /msys/local/lib/libdmumps.a /msys/local/lib/libzmumps.a /msys/local/lib/libmumps_common.a /msys/local/lib/libmpiseq.a /msys/local/lib/libpord.a /msys/local/lib/liblapack.a /msys/local/lib/libblas.a /msys/local/lib/libqhull.a /Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libgfortran.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libstdc++.a c:/Mingw64/lib/gcc/x86_64-w64-mingw32/4.9.1/libquadmath.a; exit(0);"
 
 
 #	$(GNUMEX) $(GNUMEXOPTS) -output gf_matlab -g @srcdir@/gfm_mex.c \
 #	@srcdir@/gfm_common.c -I@srcdir@ \
 #	@srcdir@/../gfi_array.c ../.libs/libgetfemint.a $(GETFEM_STATIC_LIB) @STDCPP_STATICLIBS@
 
-
-#        /c/MinGW/lib/libstdc++.a
-#	cmd /c "$mexbat -v -f c:/gnumex/mexopts.bat gfm_mex.c -output gfm_rpc_mexint gfi*.o gf_*.o matlabint*.o c:\\msys\\1.0\\home\\j\\getfem++-1.5\\src\\.libs\\libgetfem.a getfem_matlab.o c:\\mingw\\lib\\libstdc++.a -Ic:\\msys\\1.0\\home\\j\\mingw_liboncrpc-4.0"
 else !USE_MINGW_MEX
 if BUILDMEXRPC
 gf_matlab@MATLAB_COM_EXT@: ../gfi_rpc_clnt.c gfm_rpc_mexint.c gfm_common.c ../gfi_rpc_xdr.c ../gfi_array.c
@@ -67,10 +64,6 @@ gf_matlab@MATLAB_COM_EXT@: ../gfi_rpc_clnt.c gfm_rpc_mexint.c gfm_common.c ../gf
 	@srcdir@/gfm_rpc_mexint.c @srcdir@/gfm_common.c @srcdir@/../gfi_rpc_clnt.c \
         @srcdir@/../gfi_rpc_xdr.c @srcdir@/../gfi_array.c || (rm $@; false)
 else !BUILDMEXRPC
-# 2006/02/06 I remove the @STDCPP_STATICLIBS@ at the end (added to
-# avoid crashes in exception throw code when parts of getfem where
-# compiled with ifc (i.e. mumps)) of the command line, as it 
-# break the linking with g++-3.3 and matlab R14/R13 on debian (at least) ..
 gf_matlab@MATLAB_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
 	$(MEX) -largeArrayDims -output gf_matlab -g CDEBUGFLAGS="$(CFLAGS)" LD="$(CXX)" \
 	-I@srcdir@ -I@srcdir@/.. -DMATLAB_RELEASE=@MATLAB_RELEASE@ \
