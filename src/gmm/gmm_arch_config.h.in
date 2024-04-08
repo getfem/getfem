@@ -9,6 +9,9 @@
 /* defined if GMM is linked to a lapack library */
 #undef GMM_USES_LAPACK
 
+/* defined if GMM is linked to a lapack library */
+#undef GMM_MATLAB_INTERFACE
+
 /* defined if GMM uses MPI */
 #undef GMM_USES_MPI
 

@@ -93,7 +93,7 @@ template <class T> void test_logm(T) {
 int main(void)
 {
 
-#if defined(GMM_USES_LAPACK)
+#if defined(GMM_USES_LAPACK) && !defined(GMM_MATLAB_INTERFACE)
   srand(1459);
 
   test_sqrtm(float());

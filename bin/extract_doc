@@ -484,9 +484,11 @@ option = sys.argv[2]
 # List the filenames and extract object and command names.
 #
 
+current_dir=os.getcwd()
 directory=os.path.abspath(directory)
 os.chdir(directory)
 lines = glob.glob('gf_*.cc')
+os.chdir(current_dir)
 
 objects = set()
 objects.add('eltm');
@@ -656,6 +658,7 @@ elif (option == 'matlab-com'):
     oname = 'gf' + oname
     # Create directory
     path = '@'+oname
+    print("Path:", path)
     if (not os.path.isdir(path)):
       os.mkdir(path)
     

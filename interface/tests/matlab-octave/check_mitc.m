@@ -117,5 +117,7 @@ end
 gf_model_get(md, 'solve', 'noisy');
 U = gf_model_get(md, 'variable', 'u');
 
+disp(sprintf('Error: %g', abs(min(U) + 0.1828)));
+
 gfassert('abs(min(U) + 0.1828) < 0.001');
 

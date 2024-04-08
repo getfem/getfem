@@ -266,6 +266,7 @@ if test "$usematlab" != NO; then
 #    MATLAB_RELEASE=`grep "full_ver="$(which $MEX) | sed 's/[[^0-9]]//g'` # double brackets are for escaping reasons.
      MATLAB_RELEASE=`matlab -nosplash -nojvm -r "a=version;display(a);exit" | grep "(R2" | sed -n '1p' | sed 's/^.*R//g' | sed 's/).*$//'`
      echo "Matlab release is : R$MATLAB_RELEASE"
+     AC_DEFINE(GMM_MATLAB_INTERFACE,,[Matlab interface will be built])
   fi
 fi
 AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
@@ -277,8 +278,6 @@ AC_SUBST(MATLAB_COM_EXT)
 AC_SUBST(MEX)
 
 AM_CONDITIONAL(USE_MINGW_MEX, test x"$MATLAB_COM_EXT" = x".dll")
-
-
 
 dnl ----------------------------
 dnl RPCs -- matlab interface communication with a separated getfem process

@@ -42,8 +42,7 @@
 #include "gmm_dense_lu.h"
 #include "gmm_dense_qr.h"
 
-
-#if defined(GMM_USES_LAPACK)
+#if defined(GMM_USES_LAPACK) && !defined(GMM_MATLAB_INTERFACE)
 
 namespace gmm {
 
@@ -465,11 +464,42 @@ namespace gmm {
 namespace gmm
 {
 template <typename MAT>
-void schur(const MAT &A_, MAT &S, MAT &Q)
+void schur(const MAT &, MAT &, MAT &)
 {
   GMM_ASSERT1(false, "Use of function schur(A,S,Q) requires GetFEM "
               "to be built with Lapack");
 }
+
+inline void svd(dense_matrix<BLAS_S> &, dense_matrix<BLAS_S> &,
+         dense_matrix<BLAS_S> &, std::vector<BLAS_S> &)
+{
+  GMM_ASSERT1(false, "Use of function svd(X,U,Vtransposed,sigma) requires GetFEM "
+              "to be built with Lapack");
+}
+
+inline void svd(dense_matrix<BLAS_D> &, dense_matrix<BLAS_D> &,
+         dense_matrix<BLAS_D> &, std::vector<BLAS_D> &)
+{
+  GMM_ASSERT1(false, "Use of function svd(X,U,Vtransposed,sigma) requires GetFEM "
+              "to be built with Lapack");
+}
+
+inline void svd(dense_matrix<BLAS_C> &, dense_matrix<BLAS_C> &,
+         dense_matrix<BLAS_C> &, std::vector<BLAS_S> &)
+{
+  GMM_ASSERT1(false, "Use of function svd(X,U,Vtransposed,sigma) requires GetFEM "
+              "to be built with Lapack");
+}
+
+inline void svd(dense_matrix<BLAS_Z> &, dense_matrix<BLAS_Z> &,
+         dense_matrix<BLAS_Z> &, std::vector<BLAS_D> &)
+{
+  GMM_ASSERT1(false, "Use of function svd(X,U,Vtransposed,sigma) requires GetFEM "
+              "to be built with Lapack");
+}
+
+
+  
 
 }// namespace gmm
 
