@@ -1713,7 +1713,7 @@ namespace getfem {
             if (t_type != GA_NAME)
               ga_throw_error(expr, pos,
                              "First argument of Interpolate should the "
-                             "interpolate transformtion name ");
+                             "interpolate transformation name ");
             tree.current_node->interpolate_name_der
               = std::string(&((*expr)[token_pos]), token_length);
             t_type = ga_get_token(*expr, pos, token_pos, token_length);

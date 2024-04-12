@@ -1873,20 +1873,20 @@ namespace getfem {
   struct ga_instruction_transpose : public ga_instruction { // To be optimized
     base_tensor &t;
     const base_tensor &tc1;
-    size_type n1, n2, nn;
+    size_type J, K, I;
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: transpose");
       GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
 
-      size_type n0 = tc1.size() / (n1*n2*nn);
+      size_type L = tc1.size() / (J*K*I);
       auto it = t.begin();
-      for (size_type i = 0; i < nn; ++i) {
-        size_type s1 = i*n1*n2*n0;
-        for (size_type j = 0; j < n1; ++j) {
-          size_type s2 = s1 + j*n0;
-          for (size_type k = 0; k < n2; ++k) {
-            size_type s3 = s2 + k*n1*n0;
-            for (size_type l = 0; l < n0; ++l, ++it)
+      for (size_type i = 0; i < I; ++i) {
+        size_type s1 = i*J*K*L;
+        for (size_type j = 0; j < J; ++j) {
+          size_type s2 = s1 + j*L;
+          for (size_type k = 0; k < K; ++k) {
+            size_type s3 = s2 + k*J*L;
+            for (size_type l = 0; l < L; ++l, ++it)
               *it = tc1[s3+l];
           }
         }
@@ -1895,8 +1895,8 @@ namespace getfem {
       return 0;
     }
     ga_instruction_transpose(base_tensor &t_, const base_tensor &tc1_,
-                             size_type n1_, size_type n2_, size_type nn_)
-      : t(t_), tc1(tc1_), n1(n1_), n2(n2_), nn(nn_) {}
+                             size_type J_, size_type K_, size_type I_)
+      : t(t_), tc1(tc1_), J(J_), K(K_), I(I_) {}
   };
 
   struct ga_instruction_swap_indices : public ga_instruction {// To be optimized

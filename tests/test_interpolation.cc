@@ -242,8 +242,7 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0.;  
-  for (int i=0; i<3; ++i) { /* pour amortir/cout de la construction du maillage, et de divers trucs
-			       (ça a un gros impact) */
+  for (int i=0; i<3; ++i) { /* To mitigate the cost of mesh generation etc. (has a significant impact). */
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
@@ -269,8 +268,7 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0;
-  for (int i=0; i<3; ++i) { /* pour amortir/cout de la construction du maillage, et de divers trucs
-			       (ça a un gros impact) */
+  for (int i=0; i<3; ++i) { /* To mitigate the cost of mesh generation etc. (has a significant impact). */
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
