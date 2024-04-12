@@ -60,6 +60,9 @@
 # define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf_s(S, l, st, p1, p2)
 # define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf_s(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) _strdup(s)
+# ifndef _CRT_SECURE_NO_DEPRECATE
+#  error Add _CRT_SECURE_NO_DEPRECATE to your compilation options, Microsoft is overstrict (e.g. bans fopen) without offering portable alternatives
+# endif
 #else
 # define SECURE_NONCHAR_SSCANF sscanf
 # define SECURE_NONCHAR_FSCANF fscanf
