@@ -60,7 +60,7 @@ set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 
 
 # General tests and configurations
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "Set C++ standard version (default: 14))
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 check_include_file_cxx("cxxabi.h" GETFEM_HAVE_CXXABI_H)
 check_cxx_source_compiles(
