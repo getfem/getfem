@@ -16,8 +16,8 @@ dnl Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 AC_DEFUN([AC_CHECK_CXX_FLAG],
 [AC_MSG_CHECKING([whether ${CXX} accepts $1])
 
-echo 'int main(){}' > conftest.c
-if test -z "`${CXX} $1 -o conftest conftest.c 2>&1`"; then
+echo 'int main(){}' > conftest.cc
+if test -z "`${CXX} $1 -o conftest conftest.cc 2>&1`"; then
   $2="${$2} $1"
   echo "yes"
 else
