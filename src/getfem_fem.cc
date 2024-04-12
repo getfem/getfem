@@ -4426,8 +4426,8 @@ namespace getfem {
     THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_last = nullptr;
     THREAD_SAFE_STATIC short_type k_last = short_type(-1);
     THREAD_SAFE_STATIC pfem fem_last = nullptr;
-    THREAD_SAFE_STATIC char complete_last = 0;
-    THREAD_SAFE_STATIC char discont_last = 0;
+    THREAD_SAFE_STATIC bool complete_last = 0;
+    THREAD_SAFE_STATIC bool discont_last = 0;
     THREAD_SAFE_STATIC scalar_type alpha_last = 0;
 
     bool found = false;

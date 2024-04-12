@@ -130,9 +130,7 @@ namespace bgeot {
     template<class CONT> inline const T& operator ()(const CONT &c) const {
       typename CONT::const_iterator it = c.begin();
       multi_index::const_iterator q = coeff_.begin(), e = coeff_.end();
-#ifndef NDEBUG
       multi_index::const_iterator qv = sizes_.begin();
-#endif
       size_type d = 0;
       for ( ; q != e; ++q, ++it) {
         d += (*q) * (*it);
