@@ -167,7 +167,7 @@
 #define GETFEM_MPI_INIT(argc, argv) {GMM_TRACE1("Running sequential Getfem");}
 #define GETFEM_MPI_FINALIZE {}
 
-#if GMM_USES_MPI > 0
+#if defined(GMM_USES_MPI)
 # include <mpi.h>
 
 # undef GMM_TRACE_MSG_MPI

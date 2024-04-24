@@ -38,7 +38,7 @@
 #include "getfem/bgeot_mesh_structure.h"
 #include "getfem/getfem_config.h"
 
-#if GETFEM_HAVE_METIS_OLD_API
+#if defined(GETFEM_HAVE_METIS_OLD_API)
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
                                     int *, int *, int *, int *, int *);
 extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
@@ -47,7 +47,7 @@ extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, 
                                       int *, int *, float *, int *, int *, int *);
 extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
                                            int *, int *, int *, int *, int *);
-#elif GETFEM_HAVE_METIS
+#elif defined(GETFEM_HAVE_METIS)
 # include <metis.h>
 #endif
 
@@ -471,9 +471,9 @@ h
   cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
 
   int nparts = 1;
-#if GETFEM_HAVE_METIS
+#if defined(GETFEM_HAVE_METIS)
   nparts = int(size_of_crack/(ratio_size*h));
-# ifdef GETFEM_HAVE_METIS_OLD_API
+# if defined(GETFEM_HAVE_METIS_OLD_API)
   std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
   int wgtflag = 2, numflag = 0, edgecut;
   // float ubvec[1] = {1.03f};
@@ -885,9 +885,9 @@ int main(int argc, char *argv[]) {
       cout<<"ratio size between mesh and coarse mesh= "<< ratio_size <<endl;
 
       int nparts = 1;
-#if GETFEM_HAVE_METIS
+#if defined(GETFEM_HAVE_METIS)
       nparts = int(size_of_crack/(ratio_size*h));
-# ifdef GETFEM_HAVE_METIS_OLD_API
+# if defined(GETFEM_HAVE_METIS_OLD_API)
       std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
       int wgtflag = 2, numflag = 0, edgecut;
       int options[5] = {0,0,0,0,0};

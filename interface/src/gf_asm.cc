@@ -33,7 +33,7 @@
 #include <getfemint_misc.h>
 #include <getfemint_gsparse.h>
 
-#if GETFEM_HAVE_METIS_OLD_API
+#if defined(GETFEM_HAVE_METIS_OLD_API)
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
                                     int *, int *, int *, int *, int *);
 extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *,
@@ -46,7 +46,7 @@ extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *,
                                            int *, int *, int *, int *, int *,
                                            int *, int *);
 
-#elif GETFEM_HAVE_METIS
+#elif defined(GETFEM_HAVE_METIS)
 # include <metis.h>
 #endif
 

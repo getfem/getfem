@@ -334,7 +334,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #     define APIDECL
 #  endif
 #   if defined(IMPORTED_FROM_SHARED_LIB)
-#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#	  error INTENTIONAL COMPILATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPATIBLE
 #   endif
 #endif
 
@@ -345,7 +345,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #     define APIDECL
 #  endif
 #   if defined(EXPORTED_TO_SHARED_LIB)
-#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#	  error INTENTIONAL COMPILATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPATIBLE
 #   endif
 #endif
 

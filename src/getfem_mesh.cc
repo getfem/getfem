@@ -25,10 +25,10 @@
 #include "getfem/getfem_mesh.h"
 #include "getfem/getfem_integration.h"
 
-#if GETFEM_HAVE_METIS_OLD_API
+#if defined(GETFEM_HAVE_METIS_OLD_API)
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
                                     int *, int *, int *, int *, int *);
-#elif GETFEM_HAVE_METIS
+#elif defined(GETFEM_HAVE_METIS)
 #  include <metis.h>
 #endif
 
