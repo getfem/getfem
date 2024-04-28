@@ -119,7 +119,7 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC tl = ('warning level', @int level)
+    /*@FUNC tl = ('warning level' [, @int level])
       Filter the less important warnings displayed by getfem.
 
       0 means no warnings, default level is 3. if no level is given,
