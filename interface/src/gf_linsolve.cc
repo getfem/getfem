@@ -106,7 +106,13 @@ mumps_solver(gsparse &gsp,
   garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
   gsp.to_csc();
-  gmm::MUMPS_solve(gsp.csc(T()),x,b);
+# if GETFEM_PARA_LEVEL > 1
+  double t_ref = MPI_Wtime();
+  gmm::MUMPS_distributed_matrix_solve(gsp.csc(T()), x, b);
+  if (getfem::MPI_IS_MASTER()) cout << "MUMPS solve time " << MPI_Wtime()-t_ref << endl;
+# else
+  gmm::MUMPS_solve(gsp.csc(T()), x, b);
+# endif
 }
 #endif
 
