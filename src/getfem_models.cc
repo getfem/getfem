@@ -2337,7 +2337,7 @@ namespace getfem {
     GMM_ASSERT1(version != BUILD_WITH_INTERNAL,
                 "Invalid assembly version BUILD_WITH_INTERNAL");
     int nbp=1;
-#if GETFEM_PARA_LEVEL > 1
+#if GETFEM_PARA_LEVEL > 0
     double t_ref = MPI_Wtime();
     int rk=0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rk);
@@ -2878,8 +2878,7 @@ namespace getfem {
        MPI_BCAST0_SCALAR(approx_external_load_);
     }
 
-    #if GETFEM_PARA_LEVEL > 1
-    // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    #if GETFEM_PARA_LEVEL > 0
     if (MPI_IS_MASTER()) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
     #endif
 
