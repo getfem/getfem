@@ -83,11 +83,11 @@ namespace getfem {
                           a mesh (to provide feedback) */
 
 
-    //cashing iterators for partitions
+    //caching iterators for partitions
     mutable omp_distribute<const_iterator> itbegin;
     mutable omp_distribute<const_iterator> itend;
 
-    //flags for all the cashes
+    //flags for all the caches
     mutable omp_distribute<bool> index_updated;
     mutable omp_distribute<bool> partitions_updated;
     mutable bool serial_index_updated;
