@@ -253,38 +253,46 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@INIT MF = ('bspline_uniform', @tmesh m, @int NX[, @int NY,] @int order[, @str bcX_low[, @str bcY_low[, @str bcX_high][, @str bcY_high]]])
+    /*@INIT MF = ('bspline_uniform', @tmesh m, @int NX[, @int NY[, @int NZ]], @int order[, @str bcX_low[, @str bcY_low[, @str bcZ_low]][, @str bcX_high[, @str bcY_high[, @str bcZ_high]]]])
       Create a @tmf on mesh `m`, whose base functions are global functions
-      corresponding to bspline basis of order `order`, in an NX x NY grid
-      (just NX in 1s) that spans the entire bounding box of `m`.
+      corresponding to bspline basis of order `order`, in an NX x NY x NZ
+      grid (just NX in 1D or NX x NY in 2D) that spans the entire bounding
+      box of `m`.
       Optionally boundary conditions at the edges of the domain can be
-      defined with `bcX_low`, `bcY_low`, `bcX_high`, abd `bcY_high` set to
-      'free' (default) or 'periodic' or 'symmetry'. @*/
+      defined with `bcX_low`, `bcY_low`, `bcZ_low`, `bcX_high`, `bcY_high`,
+      and `bcZ_high` set to 'free' (default) or 'periodic' or 'symmetry'. @*/
     sub_command
-      ("bspline_uniform", 3, 8, 0, 1,
+      ("bspline_uniform", 3, 11, 0, 1,
        mm = extract_mesh_object(in.pop());
        dim_type dim = mm->dim();
-       if (dim > 2)
-         THROW_ERROR("Uniform bspline only supported for dim = 1 or 2");
+       if (dim > 3)
+         THROW_ERROR("Uniform bspline only supported for dim = 1,2,3");
        size_type NX = in.pop().to_integer(1,1000);
        size_type NY = (dim >= 2) ? in.pop().to_integer(1,1000) : 0;
-       if (dim == 2 && (!in.remaining() || !in.front().is_integer()))
-         THROW_ERROR("In 2d, 3 integers are expected for NX,NY,order");
+       size_type NZ = (dim == 3) ? in.pop().to_integer(1,1000) : 0;
+       if (!in.remaining() || !in.front().is_integer())
+         THROW_ERROR("One integer was expected for bspline order");
        size_type order = in.pop().to_integer(3,5);
        std::string bcx_low("free");
        std::string bcy_low("free");
+       std::string bcz_low("free");
        std::string bcx_high("");
        std::string bcy_high("");
+       std::string bcz_high("");
        if (in.remaining())             bcx_low = in.pop().to_string();
-       if (dim == 2 && in.remaining()) bcy_low = in.pop().to_string();
+       if (dim >= 2 && in.remaining()) bcy_low = in.pop().to_string();
+       if (dim == 3 && in.remaining()) bcz_low = in.pop().to_string();
        if (in.remaining())             bcx_high = in.pop().to_string();
-       if (dim == 2 && in.remaining()) bcy_high = in.pop().to_string();
-       if (dim == 1 && in.remaining())
-         THROW_ERROR("Too many arguments for 1d bspline");
+       if (dim >= 2 && in.remaining()) bcy_high = in.pop().to_string();
+       if (dim == 3 && in.remaining()) bcz_high = in.pop().to_string();
+       if (in.remaining())
+         THROW_ERROR("Too many arguments for bspline mesh_fem");
        getfem::bspline_boundary bcX_low(getfem::bspline_boundary::FREE);
        getfem::bspline_boundary bcY_low(getfem::bspline_boundary::FREE);
+       getfem::bspline_boundary bcZ_low(getfem::bspline_boundary::FREE);
        getfem::bspline_boundary bcX_high(getfem::bspline_boundary::FREE);
        getfem::bspline_boundary bcY_high(getfem::bspline_boundary::FREE);
+       getfem::bspline_boundary bcZ_high(getfem::bspline_boundary::FREE);
        if (bcx_low == "periodic")
          bcX_high = bcX_low = getfem::bspline_boundary::PERIODIC;
        else if (bcx_low == "symmetry")
@@ -298,6 +306,13 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
          bcY_high = bcY_low = getfem::bspline_boundary::SYMMETRY;
        else if (bcy_low != "free")
          THROW_ERROR("Unknown boundary condition " << bcy_low);
+
+       if (bcz_low == "periodic")
+         bcZ_high = bcZ_low = getfem::bspline_boundary::PERIODIC;
+       else if (bcz_low == "symmetry")
+         bcZ_high = bcZ_low = getfem::bspline_boundary::SYMMETRY;
+       else if (bcz_low != "free")
+         THROW_ERROR("Unknown boundary condition " << bcz_low);
 
        if (!bcx_high.empty()) {
          if (bcx_high == "periodic")
@@ -321,14 +336,29 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
            THROW_ERROR("Unknown boundary condition " << bcy_high);
        }
 
+       if (!bcz_high.empty()) {
+         if (bcz_high == "periodic")
+           bcZ_high = getfem::bspline_boundary::PERIODIC;
+         else if (bcz_high == "symmetry")
+           bcZ_high = getfem::bspline_boundary::SYMMETRY;
+         else if (bcz_high == "free")
+           bcZ_high = getfem::bspline_boundary::FREE;
+         else
+           THROW_ERROR("Unknown boundary condition " << bcz_high);
+       }
+
        auto mfgf = std::make_shared<getfem::mesh_fem_global_function>(*mm);
        mfgf->set_qdim(1.);
        if (dim == 1)
          define_uniform_bspline_basis_functions_for_mesh_fem
            (*mfgf, NX, order, bcX_low, bcX_high);
-       else
+       else if (dim == 2)
          define_uniform_bspline_basis_functions_for_mesh_fem
            (*mfgf, NX, NY, order, bcX_low, bcY_low, bcX_high, bcY_high);
+       else
+         define_uniform_bspline_basis_functions_for_mesh_fem
+           (*mfgf, NX, NY, NZ, order, bcX_low, bcY_low, bcZ_low,
+                                      bcX_high, bcY_high, bcZ_high);
        mmf = mfgf;
        );
 

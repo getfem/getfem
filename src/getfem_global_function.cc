@@ -1455,6 +1455,186 @@ namespace getfem {
   };
 
 
+  class global_function_xyz_bspline_
+    : public global_function_simple, public context_dependencies {
+    scalar_type xmin, ymin, zmin, xmax, ymax, zmax, xscale, yscale, zscale;
+    std::function<scalar_type(scalar_type)>
+      fx, fy, fz, fx_der, fy_der, fz_der, fx_der2, fy_der2, fz_der2;
+  public:
+    void update_from_context() const {}
+
+    virtual scalar_type val(const base_node &pt) const
+    {
+      return fx(xscale*(pt[0]-xmin))
+             * fy(yscale*(pt[1]-ymin))
+               * fz(zscale*(pt[2]-zmin));
+    }
+    virtual void grad(const base_node &pt, base_small_vector &g) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin),
+                  dy = yscale*(pt[1]-ymin),
+                  dz = zscale*(pt[2]-zmin);
+      g.resize(dim_);
+      g[0] = xscale * fx_der(dx) * fy(dy) * fz(dz);
+      g[1] = fx(dx) * yscale * fy_der(dy) * fz(dz);
+      g[2] = fx(dx) * fy(dy) * zscale * fz_der(dz);
+    }
+    virtual void hess(const base_node &pt, base_matrix &h) const
+    {
+      scalar_type dx = xscale*(pt[0]-xmin),
+                  dy = yscale*(pt[1]-ymin),
+                  dz = zscale*(pt[2]-zmin);
+      h.resize(dim_, dim_);
+      gmm::clear(h);
+      h(0,0) = xscale*xscale * fx_der2(dx) * fy(dy) * fz(dz);
+      h(1,1) = fx(dx) * yscale*yscale * fy_der2(dy) * fz(dz);
+      h(2,2) = fx(dx) * fy(dy) * zscale*zscale * fz_der2(dz);
+      h(0,1) = h(1,0) = xscale * fx_der(dx) * yscale * fy_der(dy) * fz(dz);
+      h(0,2) = h(2,0) = xscale * fx_der(dx) * fy(dy) * zscale * fz_der(dz);
+      h(1,2) = h(2,1) = fx(dx) * yscale * fy_der(dy) * zscale * fz_der(dz);
+    }
+
+    virtual bool is_in_support(const base_node &pt) const {
+      scalar_type dx = pt[0]-(xmin+xmax)/2,
+                  dy = pt[1]-(ymin+ymax)/2,
+                  dz = pt[2]-(zmin+zmax)/2;
+      return (gmm::abs(dx)+1e-9 < gmm::abs(xmax-xmin)/2) &&
+             (gmm::abs(dy)+1e-9 < gmm::abs(ymax-ymin)/2) &&
+             (gmm::abs(dz)+1e-9 < gmm::abs(zmax-zmin)/2);
+    }
+
+    virtual void bounding_box(base_node &bmin, base_node &bmax) const {
+      GMM_ASSERT1(bmin.size() == dim_ && bmax.size() == dim_,
+                  "Wrong dimensions");
+      bmin[0] = std::min(xmin,xmax);
+      bmin[1] = std::min(ymin,ymax);
+      bmin[2] = std::min(zmin,zmax);
+      bmax[0] = std::max(xmin,xmax);
+      bmax[1] = std::max(ymin,ymax);
+      bmax[2] = std::max(zmin,zmax);
+    }
+
+    global_function_xyz_bspline_(const scalar_type &xmin_, const scalar_type &xmax_,
+                                 const scalar_type &ymin_, const scalar_type &ymax_,
+                                 const scalar_type &zmin_, const scalar_type &zmax_,
+                                 const size_type &order,
+                                 const size_type &xtype,
+                                 const size_type &ytype,
+                                 const size_type &ztype)
+    : global_function_simple(3), xmin(xmin_), ymin(ymin_), zmin(zmin_),
+                                 xmax(xmax_), ymax(ymax_), zmax(zmax_),
+      xscale(scalar_type(xtype)/(xmax-xmin)),
+      yscale(scalar_type(ytype)/(ymax-ymin)),
+      zscale(scalar_type(ztype)/(zmax-zmin))
+    {
+      GMM_ASSERT1(order >= 3 && order <= 5, "Wrong input");
+      GMM_ASSERT1(xtype >= 1 && xtype <= order &&
+                  ytype >= 1 && ytype <= order &&
+                  ztype >= 1 && ztype <= order, "Wrong input");
+      if (order == 3) {
+
+        if (xtype == 1) {
+          fx = bsp3_01;   fx_der = bsp3_01_der;   fx_der2 = bsp3_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp3_02;   fx_der = bsp3_02_der;   fx_der2 = bsp3_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp3_03;   fx_der = bsp3_03_der;   fx_der2 = bsp3_03_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp3_01;   fy_der = bsp3_01_der;   fy_der2 = bsp3_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp3_02;   fy_der = bsp3_02_der;   fy_der2 = bsp3_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp3_03;   fy_der = bsp3_03_der;   fy_der2 = bsp3_03_der2;
+        }
+
+        if (ztype == 1) {
+          fz = bsp3_01;   fz_der = bsp3_01_der;   fz_der2 = bsp3_01_der2;
+        } else if (ztype == 2) {
+          fz = bsp3_02;   fz_der = bsp3_02_der;   fz_der2 = bsp3_02_der2;
+        } else if (ztype == 3) {
+          fz = bsp3_03;   fz_der = bsp3_03_der;   fz_der2 = bsp3_03_der2;
+        }
+
+      } else if (order == 4) {
+
+        if (xtype == 1) {
+          fx = bsp4_01;   fx_der = bsp4_01_der;   fx_der2 = bsp4_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp4_02;   fx_der = bsp4_02_der;   fx_der2 = bsp4_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp4_03;   fx_der = bsp4_03_der;   fx_der2 = bsp4_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp4_04;   fx_der = bsp4_04_der;   fx_der2 = bsp4_04_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp4_01;   fy_der = bsp4_01_der;   fy_der2 = bsp4_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp4_02;   fy_der = bsp4_02_der;   fy_der2 = bsp4_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp4_03;   fy_der = bsp4_03_der;   fy_der2 = bsp4_03_der2;
+        } else if (ytype == 4) {
+          fy = bsp4_04;   fy_der = bsp4_04_der;   fy_der2 = bsp4_04_der2;
+        }
+
+        if (ztype == 1) {
+          fz = bsp4_01;   fz_der = bsp4_01_der;   fz_der2 = bsp4_01_der2;
+        } else if (ztype == 2) {
+          fz = bsp4_02;   fz_der = bsp4_02_der;   fz_der2 = bsp4_02_der2;
+        } else if (ztype == 3) {
+          fz = bsp4_03;   fz_der = bsp4_03_der;   fz_der2 = bsp4_03_der2;
+        } else if (ztype == 4) {
+          fz = bsp4_04;   fz_der = bsp4_04_der;   fz_der2 = bsp4_04_der2;
+        }
+
+      } else if (order == 5) {
+
+        if (xtype == 1) {
+          fx = bsp5_01;   fx_der = bsp5_01_der;   fx_der2 = bsp5_01_der2;
+        } else if (xtype == 2) {
+          fx = bsp5_02;   fx_der = bsp5_02_der;   fx_der2 = bsp5_02_der2;
+        } else if (xtype == 3) {
+          fx = bsp5_03;   fx_der = bsp5_03_der;   fx_der2 = bsp5_03_der2;
+        } else if (xtype == 4) {
+          fx = bsp5_04;   fx_der = bsp5_04_der;   fx_der2 = bsp5_04_der2;
+        } else if (xtype == 5) {
+          fx = bsp5_05;   fx_der = bsp5_05_der;   fx_der2 = bsp5_05_der2;
+        }
+
+        if (ytype == 1) {
+          fy = bsp5_01;   fy_der = bsp5_01_der;   fy_der2 = bsp5_01_der2;
+        } else if (ytype == 2) {
+          fy = bsp5_02;   fy_der = bsp5_02_der;   fy_der2 = bsp5_02_der2;
+        } else if (ytype == 3) {
+          fy = bsp5_03;   fy_der = bsp5_03_der;   fy_der2 = bsp5_03_der2;
+        } else if (ytype == 4) {
+          fy = bsp5_04;   fy_der = bsp5_04_der;   fy_der2 = bsp5_04_der2;
+        } else if (ytype == 5) {
+          fy = bsp5_05;   fy_der = bsp5_05_der;   fy_der2 = bsp5_05_der2;
+        }
+
+        if (ztype == 1) {
+          fz = bsp5_01;   fz_der = bsp5_01_der;   fz_der2 = bsp5_01_der2;
+        } else if (ztype == 2) {
+          fz = bsp5_02;   fz_der = bsp5_02_der;   fz_der2 = bsp5_02_der2;
+        } else if (ztype == 3) {
+          fz = bsp5_03;   fz_der = bsp5_03_der;   fz_der2 = bsp5_03_der2;
+        } else if (ztype == 4) {
+          fz = bsp5_04;   fz_der = bsp5_04_der;   fz_der2 = bsp5_04_der2;
+        } else if (ztype == 5) {
+          fz = bsp5_05;   fz_der = bsp5_05_der;   fz_der2 = bsp5_05_der2;
+        }
+
+      }
+    }
+
+    virtual ~global_function_xyz_bspline_()
+    { DAL_STORED_OBJECT_DEBUG_DESTROYED(this, "Global function xyz bspline"); }
+  };
+
+
   pglobal_function
   global_function_bspline(const scalar_type xmin, const scalar_type xmax,
                           const size_type order, const size_type xtype) {
@@ -1471,6 +1651,18 @@ namespace getfem {
                            (xmin, xmax, ymin, ymax, order, xtype, ytype);
   }
 
+  pglobal_function
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const scalar_type ymin, const scalar_type ymax,
+                          const scalar_type zmin, const scalar_type zmax,
+                          const size_type order,
+                          const size_type xtype,
+                          const size_type ytype,
+                          const size_type ztype) {
+    return std::make_shared<global_function_xyz_bspline_>
+                           (xmin, xmax, ymin, ymax, zmin, zmax, order,
+                            xtype, ytype, ztype);
+  }
 
 
 

@@ -110,6 +110,36 @@ namespace getfem {
     (mf, NX, NY, order, bcX_low, bcY_low, bcX_low, bcY_low, mim);
   }
 
+
+  /** This function will generate bspline basis functions in an
+      NX x NY x NZ rectilinear grid. The generated basis spans the
+      entire bounding box of the 3d mesh linked by mf. The generated
+      bspline basis functions are then set as the basis of mf.
+      In case mim is provided, this integration method will be used to
+      determine the support of he basis functions more precisely.
+  */
+  void define_uniform_bspline_basis_functions_for_mesh_fem
+  (mesh_fem_global_function &mf,
+   size_type NX, size_type NY, size_type NZ, size_type order,
+   bspline_boundary bcX_low=bspline_boundary::FREE,
+   bspline_boundary bcY_low=bspline_boundary::FREE,
+   bspline_boundary bcZ_low=bspline_boundary::FREE,
+   bspline_boundary bcX_high=bspline_boundary::FREE,
+   bspline_boundary bcY_high=bspline_boundary::FREE,
+   bspline_boundary bcZ_high=bspline_boundary::FREE,
+   const mesh_im &mim=dummy_mesh_im());
+
+  inline void define_uniform_bspline_basis_functions_for_mesh_fem
+  (mesh_fem_global_function &mf,
+   size_type NX, size_type NY, size_type NZ, size_type order,
+   bspline_boundary bcX_low, bspline_boundary bcY_low,
+   bspline_boundary bcZ_low, const mesh_im &mim=dummy_mesh_im()) {
+    define_uniform_bspline_basis_functions_for_mesh_fem
+    (mf, NX, NY, NZ, order, bcX_low, bcY_low, bcZ_low,
+                            bcX_low, bcY_low, bcZ_low, mim);
+  }
+
+
 }  /* end of namespace getfem.                                            */
 
 #endif

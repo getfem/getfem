@@ -331,6 +331,13 @@ namespace getfem {
                           const size_type order,
                           const size_type xtype, const size_type ytype);
 
+  pglobal_function
+  global_function_bspline(const scalar_type xmin, const scalar_type xmax,
+                          const scalar_type ymin, const scalar_type ymax,
+                          const scalar_type zmin, const scalar_type zmax,
+                          const size_type order,
+                          const size_type xtype, const size_type ytype,
+                          const size_type ztype);
 }  /* end of namespace getfem.                                            */
 
 #endif
