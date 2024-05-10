@@ -318,6 +318,112 @@ namespace getfem {
     mf.set_functions(funcs, mim);
   }
 
+  void define_uniform_bspline_basis_functions_for_mesh_fem
+  (mesh_fem_global_function &mf,
+   size_type NX, size_type NY, size_type NZ, size_type order,
+   bspline_boundary bcX_low,
+   bspline_boundary bcY_low,
+   bspline_boundary bcZ_low,
+   bspline_boundary bcX_high,
+   bspline_boundary bcY_high,
+   bspline_boundary bcZ_high, const mesh_im &mim) {
+
+    GMM_ASSERT1(mf.linked_mesh().dim() == 3,
+                "This function expects a mesh_fem defined in 3d");
+
+    base_node Pmin, Pmax;
+    mf.linked_mesh().bounding_box(Pmin, Pmax);
+    const scalar_type x0=Pmin[0], x1=Pmax[0],
+                      y0=Pmin[1], y1=Pmax[1],
+                      z0=Pmin[2], z1=Pmax[2];
+
+    std::vector<scalar_type> xmin, xmax, xshift;
+    std::vector<size_type> xtype;
+    params_for_uniform_1d_bspline_basis_functions
+      (x0, x1, NX, order, bcX_low, bcX_high, // input
+       xmin, xmax, xshift, xtype);           // output
+    std::vector<scalar_type> ymin, ymax, yshift;
+    std::vector<size_type> ytype;
+    params_for_uniform_1d_bspline_basis_functions
+      (y0, y1, NY, order, bcY_low, bcY_high, // input
+       ymin, ymax, yshift, ytype);           // output
+    std::vector<scalar_type> zmin, zmax, zshift;
+    std::vector<size_type> ztype;
+    params_for_uniform_1d_bspline_basis_functions
+      (z0, z1, NZ, order, bcZ_low, bcZ_high, // input
+       zmin, zmax, zshift, ztype);           // output
+
+    std::vector<pglobal_function> funcs(0);
+    for (size_type i=0; i < xtype.size(); ++i) {
+      for (size_type j=0; j < ytype.size(); ++j) {
+        for (size_type k=0; k < ztype.size(); ++k) {
+
+          bool has_xshift = gmm::abs(xshift[i]) >= 1e-10;
+          bool has_yshift = gmm::abs(yshift[j]) >= 1e-10;
+          bool has_zshift = gmm::abs(zshift[k]) >= 1e-10;
+          if (not(has_xshift) && not(has_yshift) && not(has_yshift))
+            funcs.push_back(global_function_bspline
+                            (xmin[i], xmax[i],
+                             ymin[j], ymax[j],
+                             zmin[k], zmax[k],
+                             order, xtype[i], ytype[j], ztype[k])) ;
+          else {
+            std::vector<pglobal_function> sum;
+            sum.push_back(global_function_bspline
+                          (xmin[i], xmax[i],
+                           ymin[j], ymax[j],
+                           zmin[k], zmax[k],
+                           order, xtype[i], ytype[j], ztype[k]));
+            if (has_xshift) // xshift
+              sum.push_back(global_function_bspline
+                            (xmin[i]+xshift[i], xmax[i]+xshift[i],
+                             ymin[j], ymax[j],
+                             zmin[k], zmax[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_yshift) // yshift
+              sum.push_back(global_function_bspline
+                            (xmin[i], xmax[i],
+                             ymin[j]+yshift[j], ymax[j]+yshift[j],
+                             zmin[k], zmax[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_zshift) // zshift
+              sum.push_back(global_function_bspline
+                            (xmin[i], xmax[i],
+                             ymin[j], ymax[j],
+                             zmin[k]+zshift[k], zmax[k]+zshift[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_xshift && has_yshift) // xshift + yshift
+              sum.push_back(global_function_bspline
+                            (xmin[i]+xshift[i], xmax[i]+xshift[i],
+                             ymin[j]+yshift[j], ymax[j]+yshift[j],
+                             zmin[k], zmax[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_yshift && has_zshift) // yshift + zshift
+              sum.push_back(global_function_bspline
+                            (xmin[i], xmax[i],
+                             ymin[j]+yshift[j], ymax[j]+yshift[j],
+                             zmin[k]+zshift[k], zmax[k]+zshift[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_zshift && has_xshift) // zshift + xshift
+              sum.push_back(global_function_bspline
+                            (xmin[i]+xshift[i], xmax[i]+xshift[i],
+                             ymin[j], ymax[j],
+                             zmin[k]+zshift[k], zmax[k]+zshift[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            if (has_xshift && has_yshift && has_zshift) // xshift + yshift + zshift
+              sum.push_back(global_function_bspline
+                            (xmin[i]+xshift[i], xmax[i]+xshift[i],
+                             ymin[j]+yshift[j], ymax[j]+yshift[j],
+                             zmin[k]+zshift[k], zmax[k]+zshift[k],
+                             order, xtype[i], ytype[j], ztype[k]));
+            funcs.push_back(std::make_shared<getfem::global_function_sum>(sum));
+          }
+        } // k
+      } // j
+    } // i
+    mf.set_functions(funcs, mim);
+  }
+
 }
 
 /* end of namespace getfem  */
