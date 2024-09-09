@@ -41,6 +41,7 @@
 
 #include "gmm_kernel.h"
 
+
 typedef int int_t;
 
 /* because slu_util.h defines TRUE, FALSE, EMPTY ... */
@@ -71,7 +72,11 @@ namespace SuperLU_Z {
 #include "superlu/slu_zdefs.h"
 }
 
-
+#if (SUPERLU_MAJOR_VERSION > 6)
+#  define SuperLuComplexFloat std::conplex<float>
+#else
+#  define SuperLuComplexFloat SuperLU_C::complex
+#endif
 
 namespace gmm {
 
@@ -91,7 +96,7 @@ namespace gmm {
 
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
                                     std::complex<float> *a, int *ir, int *jc) {
-    SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (std::complex<float> *)(a),
+    SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (SuperLuComplexFloat *)(a),
                                       ir, jc, SLU_NC, SLU_C, SLU_GE);
   }
 
@@ -110,7 +115,7 @@ namespace gmm {
   { SuperLU_D::dCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_D, SLU_GE); }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
                                   std::complex<float> *a, int k) {
-    SuperLU_C::cCreate_Dense_Matrix(A, m, n, (std::complex<float> *)(a),
+    SuperLU_C::cCreate_Dense_Matrix(A, m, n, (SuperLuComplexFloat *)(a),
                                     k, SLU_DN, SLU_C, SLU_GE);
   }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
@@ -136,16 +141,18 @@ namespace gmm {
   /*  interface for gssvx */
 
 #define DECL_GSSVX(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
-    inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,         \
-                               int *perm_c, int *perm_r, int *etree, char *equed,  \
-                               FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,         \
-                               SuperMatrix *U, void *work, int lwork,              \
-                               SuperMatrix *B, SuperMatrix *X,                     \
-                               FLOATTYPE *recip_pivot_growth,                      \
-                               FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr, \
-                               SuperLUStat_t *stats, int *info, KEYTYPE) {         \
-    mem_usage_t mem_usage;                                                         \
-    GlobalLU_t Glu;                                                                \
+  inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A, \
+                             int *perm_c, int *perm_r, int *etree,       \
+                             char *equed,                                \
+                             FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L, \
+                             SuperMatrix *U, void *work, int lwork,      \
+                             SuperMatrix *B, SuperMatrix *X,             \
+                             FLOATTYPE *recip_pivot_growth,              \
+                             FLOATTYPE *rcond, FLOATTYPE *ferr,          \
+                             FLOATTYPE *berr,                            \
+                             SuperLUStat_t *stats, int *info, KEYTYPE) { \
+    mem_usage_t mem_usage;                                               \
+    GlobalLU_t Glu;                                                      \
     NAMESPACE::FNAME(options, A, perm_c, perm_r, etree, equed, R, C, L,  \
                      U, work, lwork, B, X, recip_pivot_growth, rcond,    \
                      ferr, berr, &Glu, &mem_usage, stats, info);         \
@@ -336,19 +343,20 @@ namespace gmm {
     R recip_pivot_gross, rcond;
     perm_r.resize(m); perm_c.resize(n);
     memory_used = SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0],
-                                &etree[0] /* output */, &equed /* output        */,
-                                &Rscale[0] /* row scale factors (output)        */,
-                                &Cscale[0] /* col scale factors (output)        */,
-                                &SL /* fact L (output)*/, &SU /* fact U (output)*/,
-                                NULL /* work                                    */,
-                                0 /* lwork: superlu auto allocates (input)      */,
-                                &SB /* rhs */, &SX /* solution                  */,
-                                &recip_pivot_gross /* reciprocal pivot growth   */
-                                /* factor max_j( norm(A_j)/norm(U_j) ).         */,
-                                &rcond /*estimate of the reciprocal condition   */
-                                /* number of the matrix A after equilibration   */,
-                                &ferr[0] /* estimated forward error             */,
-                                &berr[0] /* relative backward error             */,
+                                &etree[0] /* output */, &equed /* output     */,
+                                &Rscale[0] /* row scale factors (output)     */,
+                                &Cscale[0] /* col scale factors (output)     */,
+                                &SL /* fact L (output)*/,
+                                &SU /* fact U (output)*/,
+                                NULL /* work                                 */,
+                                0 /* lwork: superlu auto allocates (input)   */,
+                                &SB /* rhs */, &SX /* solution               */,
+                                &recip_pivot_gross /* reciprocal pivot growth*/
+                                /* factor max_j( norm(A_j)/norm(U_j) ).      */,
+                                &rcond /*estimate of the reciprocal condition*/
+                                /* number of the matrix A after equilibration*/,
+                                &ferr[0] /* estimated forward error          */,
+                                &berr[0] /* relative backward error          */,
                                 &stat, &info, T());
 
     Destroy_SuperMatrix_Store(&SB);
