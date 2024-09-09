@@ -91,7 +91,7 @@ namespace gmm {
 
   inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
                                     std::complex<float> *a, int *ir, int *jc) {
-    SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (SuperLU_C::complex *)(a),
+    SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (std::complex<float> *)(a),
                                       ir, jc, SLU_NC, SLU_C, SLU_GE);
   }
 
@@ -110,7 +110,7 @@ namespace gmm {
   { SuperLU_D::dCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_D, SLU_GE); }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
                                   std::complex<float> *a, int k) {
-    SuperLU_C::cCreate_Dense_Matrix(A, m, n, (SuperLU_C::complex *)(a),
+    SuperLU_C::cCreate_Dense_Matrix(A, m, n, (std::complex<float> *)(a),
                                     k, SLU_DN, SLU_C, SLU_GE);
   }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
@@ -128,10 +128,10 @@ namespace gmm {
   NAMESPACE::FNAME(options, A, p, q, L, U, B, stats, info);             \
   }
 
-  DECL_GSSV(SuperLU_S,sgssv,float)
-  DECL_GSSV(SuperLU_C,cgssv,std::complex<float>)
-  DECL_GSSV(SuperLU_D,dgssv,double)
-  DECL_GSSV(SuperLU_Z,zgssv,std::complex<double>)
+  DECL_GSSV(SuperLU_S,sgssv, float)
+  DECL_GSSV(SuperLU_C,cgssv, std::complex<float>)
+  DECL_GSSV(SuperLU_D,dgssv, double)
+  DECL_GSSV(SuperLU_Z,zgssv, std::complex<double>)
 
   /*  interface for gssvx */
 
@@ -152,10 +152,10 @@ namespace gmm {
     return mem_usage.for_lu; /* bytes used by the factor storage */      \
   }
 
-  DECL_GSSVX(SuperLU_S,sgssvx,float,float)
-  DECL_GSSVX(SuperLU_C,cgssvx,float,std::complex<float>)
-  DECL_GSSVX(SuperLU_D,dgssvx,double,double)
-  DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>)
+  DECL_GSSVX(SuperLU_S, sgssvx,  float, float)
+  DECL_GSSVX(SuperLU_C, cgssvx,  float, std::complex<float>)
+  DECL_GSSVX(SuperLU_D, dgssvx, double, double)
+  DECL_GSSVX(SuperLU_Z, zgssvx, double, std::complex<double>)
 
   /* ********************************************************************* */
   /*   SuperLU solve interface                                             */
