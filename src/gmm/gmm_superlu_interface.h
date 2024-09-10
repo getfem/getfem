@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2003-2020 Yves Renard
+ Copyright (C) 2003-2024 Yves Renard
 
  This file is a part of GetFEM
 
@@ -73,7 +73,7 @@ namespace SuperLU_Z {
 }
 
 #if (SUPERLU_MAJOR_VERSION > 6)
-#  define SuperLuComplexFloat std::conplex<float>
+#  define SuperLuComplexFloat SuperLU_C::singlecomplex
 #else
 #  define SuperLuComplexFloat SuperLU_C::complex
 #endif
@@ -111,7 +111,8 @@ namespace gmm {
 
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, float *a, int k)
   { SuperLU_S::sCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_S, SLU_GE); }
-  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, double *a, int k)
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, double *a,
+                                  int k)
   { SuperLU_D::dCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_D, SLU_GE); }
   inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
                                   std::complex<float> *a, int k) {
@@ -346,13 +347,13 @@ namespace gmm {
                                 &etree[0] /* output */, &equed /* output     */,
                                 &Rscale[0] /* row scale factors (output)     */,
                                 &Cscale[0] /* col scale factors (output)     */,
-                                &SL /* fact L (output)*/,
-                                &SU /* fact U (output)*/,
+                                &SL /* fact L (output)                       */,
+                                &SU /* fact U (output)                       */,
                                 NULL /* work                                 */,
                                 0 /* lwork: superlu auto allocates (input)   */,
                                 &SB /* rhs */, &SX /* solution               */,
                                 &recip_pivot_gross /* reciprocal pivot growth*/
-                                /* factor max_j( norm(A_j)/norm(U_j) ).      */,
+                                /* factor max_j(norm(A_j)/norm(U_j)).        */,
                                 &rcond /*estimate of the reciprocal condition*/
                                 /* number of the matrix A after equilibration*/,
                                 &ferr[0] /* estimated forward error          */,
