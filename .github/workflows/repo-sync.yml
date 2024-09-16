@@ -1,0 +1,29 @@
+on:
+  schedule:
+    - cron:  '0 0 * * *'
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    steps:
+    - name: master-sync
+      uses: wei/git-sync@v2
+      with:
+        source_repo: "https://git.savannah.nongnu.org/git/getfem.git"
+        source_branch: "refs/heads/master"
+        destination_repo: "git@github.com:getfem-doc/getfem.git"
+        destination_branch: "refs/heads/master"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: tag-sync
+      uses: wei/git-sync@v2
+      with:
+        source_repo: "https://git.savannah.nongnu.org/git/getfem.git"
+        source_branch: "refs/tags/*"
+        destination_repo: "git@github.com:getfem-doc/getfem.git"
+        destination_branch: "refs/tags/*"
+        ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
