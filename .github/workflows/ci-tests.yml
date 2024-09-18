@@ -12,11 +12,11 @@ jobs:
   script:
     runs-on: ubuntu-24.04
     steps:
-      - name: Setup SSH
-        uses: MrSquaare/ssh-setup-action@v3
+      - name: checkout
+        uses: actions/checkout@v4
         with:
-          host: github.com
-          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          fetch-depth: 0
+          token: ${{ secrets.PERSONAL_ACCESSTOKEN }}
       - name: install
         run: |
           sudo apt update
