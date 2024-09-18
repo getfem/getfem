@@ -50,3 +50,4 @@ jobs:
           ./configure --prefix=/home/runner/work/venv --with-pic
           make -j8 install
           make -j8 check
+          cat interface/tests/python/test-suite.log
