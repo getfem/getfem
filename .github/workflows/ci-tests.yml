@@ -39,12 +39,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends sphinx-intl
           sudo apt-get install -y --no-install-recommends texlive
           sudo apt-get install -y --no-install-recommends xzdec
-      - name: update
-        env:
-          SPHINXINTL_TRANSIFEX_ORGANIZATION_NAME: tkoyama010
-          SPHINXINTL_TRANSIFEX_USERNAME: api
-          SPHINXINTL_TRANSIFEX_PROJECT_NAME: getfem-doc
-          TX_TOKEN: ${{ secrets.TX_TOKEN }}
+      - name: check
         run: |
           python3 -m venv /home/runner/work/venv
           source /home/runner/work/venv/bin/activate
