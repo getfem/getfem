@@ -76,7 +76,7 @@ nbd = mfls.nbdof()
 
 if True:
   sl = gf.Slice(('none',), mls, 2);
-  U = rand(1,nbd);
+  U = np.random.rand(1,nbd);
   sl.export_to_pos('slU.pos',mfls,U,'U')
   mfls.export_to_pos('U.pos',U,'U')
   cm.export_to_pos('cm.pos')
