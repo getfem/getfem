@@ -92,8 +92,10 @@ AX_PROG_CC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 AX_PROG_FC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 
 if  test "x$usempi" = "xyes"; then
-AC_CHECK_LIB(mpi_cxx, _init,
-             [AC_DEFINE(GMM_USES_MPI,,[defined if GMM uses MPI])],)
+  AC_DEFINE(GMM_USES_MPI,,[defined if GMM uses MPI])
+  # mpi_cxx is not present in all mpi installations,
+  # but when it is present it needs to be linked
+  AC_CHECK_LIB(mpi_cxx, _init, [LIBS="$LIBS -lmpi_cxx"])
 fi
 
 AC_PROG_CXXCPP
@@ -930,47 +932,49 @@ if test "x$require_mumps" = "xno"; then
   MUMPS_LIBS=""
   echo "Building with MUMPS explicitly disabled";
 else
- AC_SEARCH_LIBS(smumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
-   [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([The function smumps_c couldn't be found in the provided MUMPS libraries.]);
-    fi;
-    found_mumps="no"]
- )
- AC_SEARCH_LIBS(dmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
-   [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
-    fi;
-    found_mumps="no"]
- )
- AC_SEARCH_LIBS(cmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
-   [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([The function cmumps_c couldn't be found in the provided MUMPS libraries.]);
-    fi;
-    found_mumps="no"]
- )
- AC_SEARCH_LIBS(zmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
-   [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([The function zmumps_c couldn't be found in the provided MUMPS libraries.]);
-    fi;
-    found_mumps="no"]
- )
  AC_CHECK_HEADERS([smumps_c.h dmumps_c.h cmumps_c.h zmumps_c.h],
-   [found_mumps="yes"],
+   [found_mumps="1"],
    [if test "x$require_mumps" = "xyes"; then
      AC_MSG_ERROR([header file dmumps_c.h not found.]);
     fi;
-    found_mumps="no"]
+    found_mumps="0"]
+ )
+ AC_SEARCH_LIBS(smumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+   [found_mumps=$found_mumps"2"],
+   [if test "x$require_mumps" = "xyes"; then
+     AC_MSG_ERROR([The function smumps_c couldn't be found in the provided MUMPS libraries.]);
+    fi;
+    found_mumps=$found_mumps"0"]
+ )
+ AC_SEARCH_LIBS(dmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+   [found_mumps=$found_mumps"3"],
+   [if test "x$require_mumps" = "xyes"; then
+     AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
+    fi;
+    found_mumps=$found_mumps"0"]
+ )
+ AC_SEARCH_LIBS(cmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+   [found_mumps=$found_mumps"4"],
+   [if test "x$require_mumps" = "xyes"; then
+     AC_MSG_ERROR([The function cmumps_c couldn't be found in the provided MUMPS libraries.]);
+    fi;
+    found_mumps=$found_mumps"0"]
+ )
+ AC_SEARCH_LIBS(zmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+   [found_mumps=$found_mumps"5"],
+   [if test "x$require_mumps" = "xyes"; then
+     AC_MSG_ERROR([The function zmumps_c couldn't be found in the provided MUMPS libraries.]);
+    fi;
+    found_mumps=$found_mumps"0"]
  )
 
- if test "x$found_mumps" = "xyes"; then
+ if test x"$found_mumps" = x"12345"; then
+   found_mumps="yes"
    echo "Building with MUMPS (use --enable-mumps=no to disable it)"
    AC_DEFINE(GMM_USES_MUMPS,,[defined if GMM is linked to the mumps library])
    LIBS="$MUMPS_LIBS $save_LIBS"
  else
+   found_mumps="no"
    MUMPS_LIBS=""
    LIBS="$save_LIBS"
  fi;
