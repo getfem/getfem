@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2004-2022 Julien Pommier.
+ Copyright (C) 2004-2024 Julien Pommier.
 
  This file is a part of GetFEM++
 
@@ -23,6 +23,11 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 #include <Python.h>
 #include "numpy/arrayobject.h"
