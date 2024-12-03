@@ -1,0 +1,23 @@
+.. include:: ../replaces.txt
+
+**************************
+  What's New in |gf| 5.4.3
+**************************
+
+|gf| 5.4.3 is a patch version.
+
+Released version, 2024/12/28.
+
+The main changes are:
+
+   * Basic cmake build support
+     
+   * Some fixes and improvements in the autoconf build system
+     
+   * Morley element in 3D added
+
+   * A 3D version of bspline basis functions on uniform rectilinear grid
+
+   * Enable accessing parallel MUMPS in the scripting API linsolve function
+
+   * Allow integration point variables for GWFL assembly in the scripting interface
