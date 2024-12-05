@@ -55,22 +55,45 @@ typedef int int_t;
 # undef EMPTY
 #endif
 
-#include "superlu/slu_Cnames.h"
-#include "superlu/supermatrix.h"
-#include "superlu/slu_util.h"
+#if defined(GMM_NO_SUPERLU_SUBDIR)
 
-namespace SuperLU_S {
-#include "superlu/slu_sdefs.h"
-}
-namespace SuperLU_D {
-#include "superlu/slu_ddefs.h"
-}
-namespace SuperLU_C {
-#include "superlu/slu_cdefs.h"
-}
-namespace SuperLU_Z {
-#include "superlu/slu_zdefs.h"
-}
+  #include "slu_Cnames.h"
+  #include "supermatrix.h"
+  #include "slu_util.h"
+
+  namespace SuperLU_S {
+  #include "slu_sdefs.h"
+  }
+  namespace SuperLU_D {
+  #include "slu_ddefs.h"
+  }
+  namespace SuperLU_C {
+  #include "slu_cdefs.h"
+  }
+  namespace SuperLU_Z {
+  #include "slu_zdefs.h"
+  }
+
+#else
+
+  #include "superlu/slu_Cnames.h"
+  #include "superlu/supermatrix.h"
+  #include "superlu/slu_util.h"
+
+  namespace SuperLU_S {
+  #include "superlu/slu_sdefs.h"
+  }
+  namespace SuperLU_D {
+  #include "superlu/slu_ddefs.h"
+  }
+  namespace SuperLU_C {
+  #include "superlu/slu_cdefs.h"
+  }
+  namespace SuperLU_Z {
+  #include "superlu/slu_zdefs.h"
+  }
+
+#endif
 
 #if (SUPERLU_MAJOR_VERSION > 6)
 #  define SuperLuComplexFloat SuperLU_C::singlecomplex
