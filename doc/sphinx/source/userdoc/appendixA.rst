@@ -1121,7 +1121,7 @@ This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal t
 identity). In particular, it can be used for non-conforming discretization of
 fourth order problems, despite the fact that it is not :math:`{\cal C}^1`.
 
-  .. list-table:: Morley element on a triangle ``"FEM_MORLEY"``
+  .. list-table:: Morley element on a triangle ``"FEM_MORLEY(2)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 

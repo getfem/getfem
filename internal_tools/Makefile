@@ -23,7 +23,8 @@
 all : simplexification_refelt
 
 
-
+morley_base : morley_base.cc
+	g++ -O3 -I ../src/getfem -I ../src/ -I ../src/gmm morley_base.cc -o morley_base ../src/.libs/libgetfem.a -lblas -lm
 
 simplexification_refelt.o : simplexification_refelt.cc
 	g++ -O3 -I ../src -I ../gcc/src simplexification_refelt.cc -c

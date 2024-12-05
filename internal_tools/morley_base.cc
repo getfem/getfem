@@ -25,6 +25,9 @@
 #include <gmm.h>
 #include <getfem_config.h>
 
+using std::cout;
+using std::endl;
+
 
 using bgeot::size_type;
 
@@ -147,6 +150,66 @@ void morley2(void) {
 }
 
 
+void morley3(void) {
+  bgeot::base_poly one(3, 0), x(3, 1, 0), y(3, 1, 1), z(3, 1, 2); one.one();
+  bgeot::base_poly base[10];
+  // base for P5
+  base[ 0] = one;
+  base[ 1] = x;
+  base[ 2] = y;
+  base[ 3] = z;
+  base[ 4] = x*x;
+  base[ 5] = y*y;
+  base[ 6] = z*z;
+  base[ 7] = x*y;
+  base[ 8] = x*z;
+  base[ 9] = y*z;
+
+  bgeot::base_matrix M(10, 10);
+
+  for (int i = 0; i < 10; ++i) {
+    bgeot::base_poly p = base[i], qx = p, qy = p, qz = p;
+    qx.derivative(0); qy.derivative(1); qz.derivative(2); 
+    M(0, i) = p.eval(bgeot::base_node(0.5, 0.0, 0.0).begin());
+    M(1, i) = p.eval(bgeot::base_node(0.0, 0.5, 0.0).begin());
+    M(2, i) = p.eval(bgeot::base_node(0.0, 0.0, 0.5).begin());
+    M(3, i) = p.eval(bgeot::base_node(0.5, 0.5, 0.0).begin());
+    M(4, i) = p.eval(bgeot::base_node(0.5, 0.0, 0.5).begin());
+    M(5, i) = p.eval(bgeot::base_node(0.0, 0.5, 0.5).begin());
+
+    M(6, i) = (qx.eval(bgeot::base_node(1./3., 1./3., 1./3.).begin())
+               + qy.eval(bgeot::base_node(1./3., 1./3., 1./3.).begin())
+               + qz.eval(bgeot::base_node(1./3., 1./3., 1./3).begin())) / ::sqrt(3.0);
+
+    M(7, i) = -qx.eval(bgeot::base_node(0.0, 1./3., 1./3.).begin());
+    M(8, i) = -qy.eval(bgeot::base_node(1./3., 0.0, 1./3.).begin());
+    M(9, i) = -qz.eval(bgeot::base_node(1./3., 1./3., 0.0).begin());
+  }
+
+  gmm::clean(M, 1E-10);
+  cout << "M = " << M << endl;
+
+  gmm::lu_inverse(M);
+
+  gmm::clean(M, 1E-10);
+  cout << "inv M = " << M << endl;
+
+  cout.precision(13);
+ 
+  cout << "Morley in dimension 3: \n";
+ 
+  for (int i = 0; i < 10; ++i) {
+    bgeot::base_poly p(3,2);
+    for (int j = 0; j < 10; ++j)
+      if (gmm::abs(M(j, i)) > 1E-8) p += base[j]*M(j, i);
+
+    cout << "base_[" << i << "]="; spec_print(cout, p);
+    cout << ";\n";
+  }
+
+ 
+}
+
 
 
 
@@ -155,5 +218,6 @@ void morley2(void) {
 
 int main(void) {
   morley2();
+  // morley3();
   return 0;
 }

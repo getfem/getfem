@@ -34,6 +34,7 @@ EXTRA_DIST= 						\
 	check_mixed_mesh.py    				\
 	demo_crack.py 					\
 	demo_fictitious_domains.py 			\
+	demo_bilaplacian.py 				\
 	demo_laplacian.py 				\
 	demo_parallel_laplacian.py 			\
 	demo_laplacian_HHO.py 				\
