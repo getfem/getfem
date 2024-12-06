@@ -339,47 +339,6 @@ AC_SUBST(GETFEM_SERVER)
 AM_CONDITIONAL(BUILDMEXRPC, test x$matlab_rpc = xyes)
 
 
-dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
-dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
-dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
-STDCPP_STATICLIBS=""
-
-if test $usematlab = xYES; then
-  dnl ------------------------------------
-  dnl COMPILER SETTINGS
-  compiler_type=dontcare
-  case $CXX in
-   *g++* | c++)
-	case $host in
-	x86_64-*)
-	       echo "Compiling on an x86_64 architecture..."
-	       ;;
-        *-darwin*)
-               echo "Compiling on Darwin (MacOS)"
-		;;
-	*)
-		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
-		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
-		;;
-	esac
-	;;
-   *icc | *icpc)
-	dnl a small remark: with icpc 8.0, the getfem_server will crash 
-	dnl at the first exception throwed (except with -g)
-	dnl the fix is to pass the -static flag at the linker
-	dnl unfortunately, the lovely libtool assumes that icpc won't
-	dnl understand it, and removes it. I hate libtool.
-	dnl so I added the -Wl,-static -- it works for now.
-	GFSERVERFLAGS="-Wl,-static -static"
-	;;
-   *)
-	;;
-  esac
-fi
-AC_SUBST(GFSERVERFLAGS)
-AC_SUBST(STDCPP_STATICLIBS)
-
-
 
 
 
@@ -434,6 +393,50 @@ AC_SUBST(OCTAVE_COM_EXT)
 AC_SUBST(MKOCTFILE)
 
 AM_CONDITIONAL(USE_MINGW_OCTAVE, test x"$OCTAVE_COM_EXT" = x".dll")
+
+
+dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
+dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
+dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
+STDCPP_STATICLIBS=""
+
+if test x$usematlab = xYES || test x$useoctave = xYES; then
+  dnl ------------------------------------
+  dnl COMPILER SETTINGS
+  compiler_type=dontcare
+  case $CXX in
+   *g++* | c++)
+	case $host in
+	x86_64-*)
+	       echo "Compiling on an x86_64 architecture..."
+	       ;;
+        *-darwin*)
+               echo "Compiling on Darwin (MacOS)"
+               STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+	       ;;
+	*)
+		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
+		;;
+	esac
+	;;
+   *icc | *icpc)
+	dnl a small remark: with icpc 8.0, the getfem_server will crash 
+	dnl at the first exception throwed (except with -g)
+	dnl the fix is to pass the -static flag at the linker
+	dnl unfortunately, the lovely libtool assumes that icpc won't
+	dnl understand it, and removes it. I hate libtool.
+	dnl so I added the -Wl,-static -- it works for now.
+	GFSERVERFLAGS="-Wl,-static -static"
+	;;
+   *)
+	;;
+  esac
+fi
+AC_SUBST(GFSERVERFLAGS)
+AC_SUBST(STDCPP_STATICLIBS)
+
+
 
 dnl ----------------------------------------------
 dnl python 
