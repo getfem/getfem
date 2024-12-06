@@ -36,6 +36,7 @@ FIGS=getfemlistargyris.fig                   \
      getfemlistintmethodtriangle6.fig        \
      getfemlistintmethodtriangle7.fig        \
      getfemlistmorley.fig                    \
+     getfemlistmorley3D.fig                  \
      getfemlistnedelec.fig                   \
      getfemlistprismP1.fig                   \
      getfemlistprismP2P1.fig                 \

@@ -35,6 +35,8 @@ mfu=gfMeshFem(m);
 mfd=gfMeshFem(m);
 set(mim, 'integ',gfInteg('IM_TRIANGLE(13)'));
 set(mfu, 'fem',gfFem('FEM_ARGYRIS'));
+% set(mfu, 'fem',gfFem('FEM_HERMITE(2)'));
+% set(mfu, 'fem',gfFem('FEM_MORLEY(2)'));
 set(mfd, 'fem',gfFem('FEM_PK(2,5)'));
 
 % set(mim, 'integ', gfInteg('IM_GAUSS_PARALLELEPIPED(2,10)'));

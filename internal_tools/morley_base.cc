@@ -217,7 +217,7 @@ void morley3(void) {
 
 
 int main(void) {
-  morley2();
-  // morley3();
+  // morley2();
+  morley3();
   return 0;
 }
