@@ -122,13 +122,16 @@ void sigint_callback(int sig)
   assert(handle_getfem_callback() == 1);
 }
 
-extern "C" int sci_gf_scilab(char * fname) 
+StrCtx* pvApiCtx;
+
+
+extern "C" int sci_gf_scilab(char * fname, StrCtx *_pvApiCtx) 
 {
   gfi_output     * out  = NULL;
   gfi_array_list * in   = NULL;
   gfi_array_list * outl = NULL;
   int ** ptr_param = NULL;
-  int sci_x;
+  int *sci_x;
   unsigned int i;
   SciErr _SciErr;
 #ifdef DEBUG_TIMER
@@ -140,10 +143,10 @@ extern "C" int sci_gf_scilab(char * fname)
 #endif
   set_cancel_flag(0);
   set_superlu_callback(is_cancel_flag_set);
-  
-#ifdef DEBUG
+
+  pvApiCtx = _pvApiCtx;
+   
   sciprint("sci_gf_scilab: Rhs = %d Lhs = %d\n", Rhs, Lhs);
-#endif
 
   ptr_param = (int **)MALLOC((Rhs+1)*sizeof(int *));
   for(i=1;i<=Rhs;i++)

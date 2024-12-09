@@ -719,7 +719,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
   return 0;
 }
 
-int gfi_array_to_sci_array(gfi_array *t, int ivar) 
+int *gfi_array_to_sci_array(gfi_array *t, int ivar) 
 {
   // Revoir cette partie. Surtout la partie GFI_CELL ...
   // Ajouter des fonctions
@@ -989,8 +989,9 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
 	char * tmp_string = (char *)MALLOC((t->storage.gfi_storage_u.data_char.data_char_len+1)*sizeof(char));
 	memcpy(tmp_string,t->storage.gfi_storage_u.data_char.data_char_val,t->storage.gfi_storage_u.data_char.data_char_len*sizeof(char));
 	tmp_string[t->storage.gfi_storage_u.data_char.data_char_len] = '\0';
+        const char *ptmp_string = tmp_string;
 
-	_SciErr = createMatrixOfString(pvApiCtx,ivar, 1, 1, &tmp_string); CHECK_ERROR_API_SCILAB;
+	_SciErr = createMatrixOfString(pvApiCtx,ivar, 1, 1, &ptmp_string); CHECK_ERROR_API_SCILAB;
 #ifdef DEBUG
 	sciprint("ivar = %d string = |%s| len = %d\n",ivar, tmp_string,t->storage.gfi_storage_u.data_char.data_char_len);
 #endif

@@ -857,7 +857,7 @@ else
   AC_CHECK_HEADERS(
     [slu_Cnames.h slu_cdefs.h slu_ddefs.h slu_sdefs.h lu_zdefs.h \
      slu_dcomplex.h slu_scomplex.h],
-    [found_superlu="yes";AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is linked to the superlu library])],
+    [found_superlu="yes";AC_DEFINE(GMM_NO_SUPERLU_SUBDIR,,[defined if GMM is linked to the superlu library])],
     [ if test "x$require_superlu" = "xyes"; then
         AC_MSG_ERROR([Header files of SuperLU not found.]);
       else
@@ -869,7 +869,7 @@ else
   if test x$found_superlu = xyes; then
     save_LIBS="$LIBS";
     AC_CHECK_LIB([superlu], [dCreate_CompCol_Matrix],
-                 [AC_DEFINE(GMM_NO_SUPERLU_SUBDIR,,[defined if GMM is linked to the superlu library])],
+                 [AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is linked to the superlu library])],
                  [if test "x$require_superlu" = "xyes"; then
                     AC_MSG_ERROR([SuperLU library not found]);
                   else
