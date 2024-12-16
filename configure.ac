@@ -869,7 +869,7 @@ else
       [if test "x$require_superlu" = "xyes"; then
          AC_MSG_ERROR([SuperLU library not found]);
        fi;
-       found_mumps="no"]
+       found_superlu="no"]
     )
     if test "x$found_superlu" = "xyes"; then
       echo "Building with SuperLU (use --enable-superlu=no to disable it)"
