@@ -23,18 +23,13 @@ EXTRA_DIST = \
 check_PROGRAMS = 
 
 if BUILDPYTHON
-TESTS1 = plasticity_fin_strain_lin_hardening_plane_strain.py
+if LAPACK
+TESTS = plasticity_fin_strain_lin_hardening_plane_strain.py
 endif
-if !BUILDMEX  # For the moment, the Matlab interface deactivate Lapack
-              # needed by this test
-TESTS = $(TESTS1)
-endif
-
-if BUILDPYTHON
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
 	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
 LOG_COMPILER = $(PYTHON)
 endif
 
-CLEANFILES = *.vtk results/* __pycache__/*
+CLEANFILES = *.vtu results/* __pycache__/*

@@ -4175,12 +4175,12 @@ namespace getfem {
     if (n == 2) {
       base_.resize(6);
 
-      std::stringstream s2("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
-                        "(x + y - x^2 - 2*x*y + y^2)/2;"
-                        "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
+      std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
+                          "(x + y - x^2 - 2*x*y + y^2)/2;"
+                          "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
 
       for (unsigned k = 0; k < 6; ++k)
-        base_[k] = read_base_poly(2, s2);
+        base_[k] = read_base_poly(2, s);
 
       add_node(lagrange_dof(2), base_node(0.0, 0.0));
       add_node(lagrange_dof(2), base_node(1.0, 0.0));
@@ -4191,7 +4191,7 @@ namespace getfem {
     } else {
       base_.resize(10);
 
-      std::stringstream s3
+      std::stringstream s
         ("5/3 - 16/9*x - 28/9*y - 28/9*z + 8/9*x^2 + 8/3*x*y + 8/3*x*z"
          " - 4/9*y^2 + 20/3*y*z - 4/9*z^2;"
          "5/3 - 28/9*x - 16/9*y - 28/9*z - 4/9*x^2 + 8/3*x*y + 20/3*x*z"
@@ -4214,7 +4214,7 @@ namespace getfem {
          " - 1/6*y^2 - 1/2*y*z + 11/6*z^2;");
       
       for (unsigned k = 0; k < 10; ++k)
-        base_[k] = read_base_poly(3, s3);
+        base_[k] = read_base_poly(3, s);
 
       add_node(lagrange_dof(3), base_node(0.5, 0.0, 0.0));
       add_node(lagrange_dof(3), base_node(0.0, 0.5, 0.0));

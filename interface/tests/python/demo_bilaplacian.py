@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2004-2020 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2024 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM
 #
@@ -49,7 +49,7 @@ useKL=1 # use the Kirchhoff-Love plate model, or just a pure
 D=1.    # Flexion modulus
 NU=0.3  # Poisson ratio (0 <= NU <= 1) for KL version
 
-if (N == 2):
+if N == 2:
   mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(10)'))
   mfu = gf.MeshFem(m, 1)
   mfd = gf.MeshFem(m, 1)
@@ -67,76 +67,63 @@ else:
 
 ftot    = m.outer_faces()
 
-# FORCE_BOUNDARY_NUM=1;
-# MOMENTUM_BOUNDARY_NUM=2;
-SIMPLE_SUPPORT_BOUNDARY_NUM=3;
-CLAMPED_BOUNDARY_NUM=4;
+# FORCE_BOUNDARY_NUM=1
+# MOMENTUM_BOUNDARY_NUM=2
+SIMPLE_SUPPORT_BOUNDARY_NUM=3
+CLAMPED_BOUNDARY_NUM=4
 
 m.set_region(SIMPLE_SUPPORT_BOUNDARY_NUM, ftot)
 m.set_region(CLAMPED_BOUNDARY_NUM, ftot)
 
-if (N == 2):
-  sol_u=mfd.eval('((x**2)*((1-x)**2) + (y**2)*((1-y)**2))', globals(),locals());
+if N == 2:
+  sol_u = mfd.eval('((x**2)*((1-x)**2) + (y**2)*((1-y)**2))', globals(),locals())
   F = 48
 else:
-  sol_u=mfd.eval('((x**2)*((1-x)**2) + (y**2)*((1-y)**2) + (z**2)*((1-z)**2))', globals(),locals());
+  sol_u = mfd.eval('((x**2)*((1-x)**2) + (y**2)*((1-y)**2) + (z**2)*((1-z)**2))', globals(),locals())
   F = 72
 
-md=gf.Model('real');
-md.add_fem_variable('u', mfu);
+md = gf.Model('real')
+md.add_fem_variable('u', mfu)
 
 if useKL:
-  md.add_initialized_data('D', D);
-  md.add_initialized_data('nu', NU);
-  md.add_Kirchhoff_Love_plate_brick(mim, 'u', 'D', 'nu');
-  # M = np.zeros((N, N, mfd.nbdof()));
-else :
-  md.add_initialized_data('D', D);
-  md.add_bilaplacian_brick(mim, 'u', 'D');
-  # M = np.zeros((1, mfd.nbdof()));
+  md.add_initialized_data('D', D)
+  md.add_initialized_data('nu', NU)
+  md.add_Kirchhoff_Love_plate_brick(mim, 'u', 'D', 'nu')
+  # M = np.zeros((N, N, mfd.nbdof()))
+else:
+  md.add_initialized_data('D', D)
+  md.add_bilaplacian_brick(mim, 'u', 'D')
+  # M = np.zeros((1, mfd.nbdof()))
 
 
-md.add_initialized_fem_data('VolumicData', mfd, mfd.eval('%g' % F));
-md.add_source_term_brick(mim, 'u', 'VolumicData');
+md.add_initialized_fem_data('VolumicData', mfd, mfd.eval('%g' % F))
+md.add_source_term_brick(mim, 'u', 'VolumicData')
 
-#md.add_initialized_fem_data('M', mfd, M);
-#md.add_normal_derivative_source_term_brick(mim, 'u', 'M', MOMENTUM_BOUNDARY_NUM);
+#md.add_initialized_fem_data('M', mfd, M)
+#md.add_normal_derivative_source_term_brick(mim, 'u', 'M', MOMENTUM_BOUNDARY_NUM)
 
-#if (useKL): 
-#  H = np.zeros((N, N, mfd.nbdof()));
-#  FF = np.zeros((N, mfd.nbdof()));
-#  md.add_initialized_fem_data('H', mfd, H);
-#  md.add_initialized_fem_data('F', mfd, FF);
-#  md.add_Kirchhoff_Love_Neumann_term_brick(mim, 'u', 'H', 'F', FORCE_BOUNDARY_NUM);
+#if useKL:
+#  H = np.zeros((N, N, mfd.nbdof()))
+#  FF = np.zeros((N, mfd.nbdof()))
+#  md.add_initialized_fem_data('H', mfd, H)
+#  md.add_initialized_fem_data('F', mfd, FF)
+#  md.add_Kirchhoff_Love_Neumann_term_brick(mim, 'u', 'H', 'F', FORCE_BOUNDARY_NUM)
 #else:
-#  FF = np.zeros((1, N, mfd.nbdof()));
-#  md.add_initialized_fem_data('F', mfd, FF);
-#  md.add_normal_source_term_brick(mim, 'u', 'F', FORCE_BOUNDARY_NUM);
+#  FF = np.zeros((1, N, mfd.nbdof()))
+#  md.add_initialized_fem_data('F', mfd, FF)
+#  md.add_normal_source_term_brick(mim, 'u', 'F', FORCE_BOUNDARY_NUM)
 
 md.add_initialized_fem_data('SOL_U', mfd, sol_u)
-md.add_normal_derivative_Dirichlet_condition_with_penalization(mim, 'u', 1e10, CLAMPED_BOUNDARY_NUM);
-md.add_Dirichlet_condition_with_penalization(mim, 'u', 1e10, SIMPLE_SUPPORT_BOUNDARY_NUM, 'SOL_U');
+md.add_normal_derivative_Dirichlet_condition_with_penalization(mim, 'u', 1e10, CLAMPED_BOUNDARY_NUM)
+md.add_Dirichlet_condition_with_penalization(mim, 'u', 1e10, SIMPLE_SUPPORT_BOUNDARY_NUM, 'SOL_U')
 
-md.solve('noisy');
-U = md.variable('u');
+md.solve('noisy')
+U = md.variable('u')
 
 Ud = gf.compute(mfu,U,'interpolate on',mfd)
-err= Ud - sol_u;
-print(gf.compute_L2_norm(mfd, err, mim));
+err= Ud - sol_u
+print(gf.compute_L2_norm(mfd, err, mim))
 
 mfd.export_to_pos('laplacian.pos', Ud, 'computed solution', err, 'error', sol_u, 'exact solution')
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

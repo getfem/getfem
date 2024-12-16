@@ -13,6 +13,8 @@ The main changes are:
    * Basic cmake build support
      
    * Some fixes and improvements in the autoconf build system
+
+   * Support for the reentrant version of the qhull library dependency
      
    * Morley element in 3D added
 

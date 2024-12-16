@@ -55,7 +55,7 @@ typedef int int_t;
 # undef EMPTY
 #endif
 
-#if defined(GMM_NO_SUPERLU_SUBDIR)
+#if defined(GMM_NO_SUPERLU_INCLUDE_SUBDIR)
 
   #include "slu_Cnames.h"
   #include "supermatrix.h"

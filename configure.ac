@@ -740,6 +740,8 @@ if test x"$acx_blas_ok" = xyes; then
     LIBS="$LAPACK_LIBS $LIBS"
   fi
 fi
+AM_CONDITIONAL(LAPACK, test x$acx_lapack_ok = xyes)
+
 
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
@@ -825,7 +827,7 @@ AC_ARG_WITH(superlu,
 
 SUPERLUINC=""
 AC_ARG_WITH(superlu-include-dir,
- [AS_HELP_STRING([--with-superlu-include-dir],[directory in which the superlu/sl*.h headers can be found])],
+ [AS_HELP_STRING([--with-superlu-include-dir],[directory in which the superlu/sl*.h or just sl*.h headers can be found])],
  [ if test x$require_superlu = xno; then
      AC_MSG_ERROR([Inconsistent options for --enable-superlu, --with-superlu and --with-superlu-include-dir.]);
    else
@@ -847,34 +849,28 @@ else
     [superlu/slu_Cnames.h superlu/slu_cdefs.h superlu/slu_ddefs.h superlu/slu_sdefs.h superlu/slu_zdefs.h \
      superlu/slu_dcomplex.h superlu/slu_scomplex.h],
     [found_superlu="yes"],
-    [ if test "x$require_superlu" = "xyes"; then
-        AC_MSG_ERROR([Header files of SuperLU not found.]);
-      else
-        found_superlu="no"
-      fi;
-    ])
+    [found_superlu="no"])
   if test x$found_superlu = xno; then
-  AC_CHECK_HEADERS(
-    [slu_Cnames.h slu_cdefs.h slu_ddefs.h slu_sdefs.h lu_zdefs.h \
-     slu_dcomplex.h slu_scomplex.h],
-    [found_superlu="yes";AC_DEFINE(GMM_NO_SUPERLU_SUBDIR,,[defined if GMM is linked to the superlu library])],
-    [ if test "x$require_superlu" = "xyes"; then
-        AC_MSG_ERROR([Header files of SuperLU not found.]);
-      else
-        found_superlu="no"
-      fi;
-    ])
-  fi;
-  
+    AC_CHECK_HEADERS(
+      [slu_Cnames.h slu_cdefs.h slu_ddefs.h slu_sdefs.h lu_zdefs.h slu_dcomplex.h slu_scomplex.h],
+      [found_superlu="yes";
+       AC_DEFINE(GMM_NO_SUPERLU_INCLUDE_SUBDIR,,[defined if SuperLU headers are not in a superlu subdirectory])],
+      [found_superlu="no"])
+  fi
+
+  if test x$found_superlu = xno && test "x$require_superlu" = "xyes"; then
+    AC_MSG_ERROR([Header files of SuperLU not found]);
+  fi
+
   if test x$found_superlu = xyes; then
     save_LIBS="$LIBS";
-    AC_CHECK_LIB([superlu], [dCreate_CompCol_Matrix],
-                 [AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is linked to the superlu library])],
-                 [if test "x$require_superlu" = "xyes"; then
-                    AC_MSG_ERROR([SuperLU library not found]);
-                  else
-                    found_superlu="no"
-                  fi;])
+    AC_SEARCH_LIBS(dCreate_CompCol_Matrix, [`echo $SUPERLU_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+      [AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is to be linked to the SuperLU library])],
+      [if test "x$require_superlu" = "xyes"; then
+         AC_MSG_ERROR([SuperLU library not found]);
+       fi;
+       found_mumps="no"]
+    )
     if test "x$found_superlu" = "xyes"; then
       echo "Building with SuperLU (use --enable-superlu=no to disable it)"
       LIBS="$SUPERLU_LIBS $save_LIBS"
@@ -951,7 +947,7 @@ else
  AC_CHECK_HEADERS([smumps_c.h dmumps_c.h cmumps_c.h zmumps_c.h],
    [found_mumps="1"],
    [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([header file dmumps_c.h not found.]);
+     AC_MSG_ERROR([header file dmumps_c.h not found]);
     fi;
     found_mumps="0"]
  )
@@ -1321,7 +1317,7 @@ fi;
 if test "x$found_mumps" = "xyes"; then
   echo "- Mumps found. A direct solver for large sparse linear systems."
 else
-  if test "x$require_superlu" = "xno"; then
+  if test "x$require_mumps" = "xno"; then
     echo "- Not using the MUMPS library for large sparse linear systems."
   else
     echo "- Mumps not found. Not using the MUMPS library for large sparse linear systems."
