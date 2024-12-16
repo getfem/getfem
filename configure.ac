@@ -1335,6 +1335,7 @@ else
   echo "  A generic BLAS implementation will be used, however you should "
   echo "  consider installing a faster BLAS, such as ATLAS"
 fi;
+
 echo "  You can give the location of your prefered blas library with either"
 echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo '  for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'

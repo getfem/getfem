@@ -49,8 +49,8 @@ extern "C" {
 //#define DEBUG
 //#define DEBUG2
 
-extern "C" int handle_getfem_callback();
-extern "C" void set_superlu_callback(int (*cb)());
+// extern "C" int handle_getfem_callback();
+// extern "C" void set_superlu_callback(int (*cb)());
 
 gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
 {
@@ -119,7 +119,7 @@ void sigint_callback(int sig)
 	  "If you want to abort immediatly the current operation, hit CTRL-C again\n" \
 	  "In that case, you will have to restart getfem_scilab:\n", s);
   set_cancel_flag(1);
-  assert(handle_getfem_callback() == 1);
+  //assert(handle_getfem_callback() == 1);
 }
 
 StrCtx* pvApiCtx;
@@ -142,7 +142,7 @@ extern "C" int sci_gf_scilab(char * fname, StrCtx *_pvApiCtx)
   ScilabStream scicerr(std::cerr);
 #endif
   set_cancel_flag(0);
-  set_superlu_callback(is_cancel_flag_set);
+  // set_superlu_callback(is_cancel_flag_set);
 
   pvApiCtx = _pvApiCtx;
    
