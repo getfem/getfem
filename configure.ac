@@ -672,14 +672,12 @@ LIBS="$acx_blas_save_LIBS"
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_blas_ok" = xyes; then
-  echo "OK, You have working BLAS libs ! Using $BLAS_LIBS" ; HAVE_VENDOR_BLAS=1
+  echo "OK, You have working BLAS libs ! Using $BLAS_LIBS"
+  AC_DEFINE(GMM_USES_BLAS,,[defined if GMM is linked to a blas library])
+  LIBS="$LIBS $BLAS_LIBS"
 else
-  echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement" ; HAVE_VENDOR_BLAS=0
+  echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement"
 fi
-
-dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ],[echo "YOU DONT HAVE BLAS! Using a cheap replacement" ; HAVE_VENDOR_BLAS=0])
-LIBS="$LIBS $BLAS_LIBS"
-AC_DEFINE(GMM_USES_BLAS,,[defined if GMM is linked to a blas library])
 
 useblas64support=NO
 AC_ARG_ENABLE(blas64-support,
@@ -1327,15 +1325,15 @@ fi;
 if test x"$acx_lapack_ok" = xyes; then
   echo "- Lapack library found: $LAPACK_LIBS"
 else
-  echo "- Lapack library not found: generic (less effective) algorithms will be used"
+  echo "- Lapack library not found: generic (less efficient) algorithms will be used"
 fi
 
-if test "x$HAVE_VENDOR_BLAS" = "x0"; then
+if test x"$acx_blas_ok" = xyes; then
+  echo "- BLAS library found. Link options: $BLAS_LIBS"
+else
   echo "- *** No usable blas library was found ***"
   echo "  A generic BLAS implementation will be used, however you should "
   echo "  consider installing a faster BLAS, such as ATLAS"
-else
-  echo "- BLAS library found. Link options: $BLAS_LIBS"
 fi;
 echo "  You can give the location of your prefered blas library with either"
 echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"

@@ -400,20 +400,29 @@ namespace getfem {
       if (nm == 0)
         t[0] += J;
       else {
+#if defined(GMM_USES_BLAS)
         BLAS_INT n0 = BLAS_INT(es_end[0] - es_beg[0]);
+        BLAS_INT one = BLAS_INT(1);
+#else
+        size_type n0 = size_type(es_end[0] - es_beg[0]);
+#endif
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */
         k = nm-1; Vtab[k] = J;
-        BLAS_INT one = BLAS_INT(1);
         scalar_type V;
         do {
           for (V = Vtab[k]; k; --k)
             Vtab[k-1] = V = *pts[k] * V;
           GMM_ASSERT1(pt+n0 <= t.end(), "Internal error");
+#if defined(GMM_USES_BLAS)
           gmm::daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
                       (double*)&(*pt), &one);
-          pt+=n0;
+          pt += n0;
+#else
+          for (k=0; k < n0; ++k)
+            *pt++ += V*pts0[k];
+#endif
           for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
             pts[k] = es_beg[k];
         } while (k != nm);

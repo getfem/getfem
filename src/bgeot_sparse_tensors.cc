@@ -927,17 +927,33 @@ namespace bgeot {
   }
 
   static bool do_reduction2v(bgeot::multi_tensor_iterator &mti) {
-    BLAS_INT n = mti.vectorized_size();
+    size_type n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0) {
-      BLAS_INT incx = s[1], incy = s[0];
+#if defined(GMM_USES_BLAS)
+      BLAS_INT nn = n, incx = s[1], incy = s[0];
+#else
+      dim_type incx = dim_type(s[1]), incy = dim_type(s[0]);
+#endif
       /*mti.print();
         scalar_type *b[3];
         for (int i=0; i < 3; ++i)       b[i] = &mti.p(i);*/
       do {
         /*cout << "vectorized_ reduction2a : n=" << n << ", s = " << s << " mti.p=" << &mti.p(0)-b[0] << ","
           << &mti.p(1)-b[1] << "," << &mti.p(2)-b[2] << "\n";*/
-        gmm::daxpy_(&n, &mti.p(2), &mti.p(1), &incx, &mti.p(0), &incy);
+#if defined(GMM_USES_BLAS)
+        gmm::daxpy_(&nn, &mti.p(2), &mti.p(1), &incx, &mti.p(0), &incy);
+#else
+        double a = mti.p(2);
+        scalar_type* itx = &mti.p(1);
+        scalar_type* ity = &mti.p(0);
+        *ity += a * (*itx);
+        for (size_type i=1; i < n; ++i) {
+          itx += incx;
+          ity += incy;
+          *ity += a * (*itx);
+        }
+#endif
       } while (mti.vnext());
       return true;
     } else
@@ -966,13 +982,28 @@ namespace bgeot {
   }
 
   static bool do_reduction3v(bgeot::multi_tensor_iterator &mti) {
-    BLAS_INT n = mti.vectorized_size();
+    size_type n = mti.vectorized_size();
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0 && s[3] == 0) {
-      BLAS_INT incx = s[1], incy = s[0];
+#if defined(GMM_USES_BLAS)
+      BLAS_INT nn = n, incx = s[1], incy = s[0];
+#else
+      dim_type incx = dim_type(s[1]), incy = dim_type(s[0]);
+#endif
       do {
-        double v = mti.p(2)*mti.p(3);
-        gmm::daxpy_(&n, &v, &mti.p(1), &incx, &mti.p(0), &incy);
+        double a = mti.p(2)*mti.p(3);
+#if defined(GMM_USES_BLAS)
+        gmm::daxpy_(&nn, &a, &mti.p(1), &incx, &mti.p(0), &incy);
+#else
+        scalar_type* itx = &mti.p(1);
+        scalar_type* ity = &mti.p(0);
+        *ity += a * (*itx);
+        for (size_type i=1; i < n; ++i) {
+          itx += incx;
+          ity += incy;
+          *ity += a * (*itx);
+        }
+#endif
       } while (mti.vnext());
       return true;
     } else
