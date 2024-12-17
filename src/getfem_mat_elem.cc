@@ -386,18 +386,20 @@ namespace getfem {
       es_end.resize(0); es_end.resize(pme->size());
       Vtab.resize(pme->size());
       size_type nm = 0;
-      if (first) memset(&(*t.begin()), 0, t.size()*sizeof(*t.begin())); //std::fill(t.begin(), t.end(), 0.0);
+      if (first)
+        memset(&(*t.begin()), 0, t.size()*sizeof(*t.begin())); //std::fill(t.begin(), t.end(), 0.0);
       for (k = 0, nm = 0; k < pme->size(); ++k) {
         if (elmt_stored[k].size() != 1) {
           es_beg[nm] = elmt_stored[k].begin();
           es_end[nm] = elmt_stored[k].end();
           pts[nm] = elmt_stored[k].begin();
           ++nm;
-        } else J *= elmt_stored[k][0];
+        } else
+          J *= elmt_stored[k][0];
       }
-      if (nm == 0) {
+      if (nm == 0)
         t[0] += J;
-      } else {
+      else {
         BLAS_INT n0 = BLAS_INT(es_end[0] - es_beg[0]);
         base_tensor::const_iterator pts0 = pts[0];
 
@@ -409,8 +411,8 @@ namespace getfem {
           for (V = Vtab[k]; k; --k)
             Vtab[k-1] = V = *pts[k] * V;
           GMM_ASSERT1(pt+n0 <= t.end(), "Internal error");
-	  gmm::daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
-		      (double*)&(*pt), &one);
+          gmm::daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
+                      (double*)&(*pt), &one);
           pt+=n0;
           for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
             pts[k] = es_beg[k];
@@ -422,7 +424,8 @@ namespace getfem {
 
     void pre_tensors_for_linear_trans(bool volumic) const {
 
-      if ((volumic && volume_computed) || (!volumic && faces_computed)) return;
+      if ((volumic && volume_computed) || (!volumic && faces_computed))
+        return;
       // scalar_type exectime = ftool::uclock_sec();
 
       bgeot::multi_index sizes = pme->sizes(0), mi(sizes.size());
@@ -538,7 +541,7 @@ namespace getfem {
       dim_type P = dim_type(dim), N = dim_type(G.nrows());
       short_type NP = short_type(pgt->nb_points());
       fem_interpolation_context ctx(pgp, 0, 0, G, elt,
-				    short_type(ir-1));
+                                    short_type(ir-1));
 
       GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
@@ -645,7 +648,7 @@ namespace getfem {
                                  bool prefer_comp_on_real_element) {
     dal::pstatic_stored_object_key
       pk = std::make_shared<emelem_comp_key_>(pm, pi, pg,
-					      prefer_comp_on_real_element);
+                                              prefer_comp_on_real_element);
     dal::pstatic_stored_object o = dal::search_stored_object(pk);
     if (o) return std::dynamic_pointer_cast<const mat_elem_computation>(o);
     pmat_elem_computation

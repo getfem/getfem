@@ -95,11 +95,11 @@ namespace gmm {
     void sgeesx_(...); void dgeesx_(...); void cgeesx_(...); void zgeesx_(...);
     void sgesvd_(...); void dgesvd_(...); void cgesvd_(...); void zgesvd_(...);
   }
-  
+
   /* ********************************************************************** */
   /* LU decomposition.                                                      */
   /* ********************************************************************** */
-  
+
 # define getrf_interface(lapack_name, base_type) inline                      \
     size_type lu_factor(dense_matrix<base_type> &A, lapack_ipvt &ipvt){      \
     GMMLAPACK_TRACE("getrf_interface");                                      \
@@ -128,7 +128,7 @@ namespace gmm {
     if (n)                                                                 \
       lapack_name(&t,&n,&nrhs,&(A(0,0)),&n,&ipvt[0],&x[0],&n,&info);       \
   }
-  
+
 # define getrs_trans_n const char t = 'N'
 # define getrs_trans_t const char t = 'T'
 
@@ -184,7 +184,7 @@ namespace gmm {
       GMM_ASSERT1(!info, "QR factorization failed");                       \
     }                                                                      \
   }
-    
+
   geqrf_interface(sgeqrf_, BLAS_S)
   geqrf_interface(dgeqrf_, BLAS_D)
     // For complex values, housholder vectors are not the same as in
@@ -220,7 +220,7 @@ namespace gmm {
   geqrf_interface2(dgeqrf_, dorgqr_, BLAS_D)
   geqrf_interface2(cgeqrf_, cungqr_, BLAS_C)
   geqrf_interface2(zgeqrf_, zungqr_, BLAS_Z)
-  
+
   /* ********************************************************************** */
   /* QR algorithm for eigenvalues search.                                   */
   /* ********************************************************************** */
@@ -332,8 +332,8 @@ namespace gmm {
   geev_interface(sgeev_, BLAS_S, left)
   geev_interface(dgeev_, BLAS_D, left)
   geev_interface2(cgeev_, BLAS_C, left)
-  geev_interface2(zgeev_, BLAS_Z, left) 
-    
+  geev_interface2(zgeev_, BLAS_Z, left)
+
 
   /* ********************************************************************** */
   /* SCHUR algorithm:                                                       */
@@ -402,7 +402,7 @@ namespace gmm {
   /* Interface to SVD. Does not correspond to a Gmm++ functionnality.       */
   /* Author : Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>        */
   /* ********************************************************************** */
-    
+
 # define gesvd_interface(lapack_name, base_type) inline                 \
   void svd(dense_matrix<base_type> &X,                                  \
            dense_matrix<base_type> &U,                                  \
@@ -442,7 +442,7 @@ namespace gmm {
                 &m, &Vtransposed(0,0), &n, &work[0], &lwork,            \
                 &rwork[0], &info);                                      \
   }
-  
+
   gesvd_interface(sgesvd_, BLAS_S)
   gesvd_interface(dgesvd_, BLAS_D)
   cgesvd_interface(cgesvd_, BLAS_C, BLAS_S)
@@ -453,9 +453,6 @@ namespace gmm {
    MAT X(X_);
    svd(X, U, Vtransposed, sigma);
   }
-    
-
-
 
 }
 
@@ -467,14 +464,14 @@ template <typename MAT>
 void schur(const MAT &, MAT &, MAT &)
 {
   GMM_ASSERT1(false, "Use of function schur(A,S,Q) requires GetFEM "
-              "to be built with Lapack");
+                     "to be built with Lapack");
 }
 
 inline void svd(dense_matrix<BLAS_S> &, dense_matrix<BLAS_S> &,
          dense_matrix<BLAS_S> &, std::vector<BLAS_S> &)
 {
   GMM_ASSERT1(false, "Use of function svd(X,U,Vtransposed,sigma) requires GetFEM "
-              "to be built with Lapack");
+                     "to be built with Lapack");
 }
 
 inline void svd(dense_matrix<BLAS_D> &, dense_matrix<BLAS_D> &,

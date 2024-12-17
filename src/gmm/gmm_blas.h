@@ -65,7 +65,8 @@ namespace gmm {
   { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
   ///@endcond
-  /** count the number of non-zero entries of a vector or matrix. */  template <typename L> inline size_type nnz(const L& l)
+  /** count the number of non-zero entries of a vector or matrix. */
+  template <typename L> inline size_type nnz(const L& l)
   { return nnz(l, typename linalg_traits<L>::linalg_type()); }
 
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
@@ -1273,8 +1274,8 @@ namespace gmm {
       @param l2 contains on output, l2+l1.
   */
   template <typename L1, typename L2> inline
-    void add(const L1& l1, L2& l2) {
-      add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
+  void add(const L1& l1, L2& l2) {
+    add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
   }
   ///@cond
 
