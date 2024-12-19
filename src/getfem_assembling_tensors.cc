@@ -331,7 +331,7 @@ namespace getfem {
   /* called (if possible, i.e. if not an exact integration) for each
   integration point during mat_elem->compute() */
   struct computed_tensor_integration_callback
-    : public mat_elem_integration_callback {
+  : public mat_elem_integration_callback {
       bgeot::tensor_reduction red;
       bool was_called;
       std::vector<TDIter> tensor_bases; /* each tref of 'red' has a   */
@@ -347,10 +347,18 @@ namespace getfem {
           tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
         }
         red.do_reduction();
+#if defined(GMM_USES_BLAS)
         BLAS_INT one = BLAS_INT(1), n = BLAS_INT(red.out_data.size());
         assert(n);
-	gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
-		    &one, (double*)&(t[0]), &one);
+        gmm::daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
+                    &one, (double*)&(t[0]), &one);
+#else
+        size_type n = red.out_data.size();
+        assert(n);
+        for (size_type k=0; k < n; ++k)
+          t[k] += c * red.out_data[k];
+        // gmm::add(gmm::scaled(red.out_data, c), t.as_vector())
+#endif
       }
       void resize_t(bgeot::base_tensor &t) {
         bgeot::multi_index r;

@@ -21,6 +21,9 @@
 /* defined if GMM is linked to the superlu library */
 #undef GMM_USES_SUPERLU
 
+/* defined if superlu header files are not under a subdirectory called "superlu" */
+#undef GMM_NO_SUPERLU_INCLUDE_SUBDIR
+
 /* Use blas with 64 bits integers */
 #undef GMM_USE_BLAS64_INTERFACE
 

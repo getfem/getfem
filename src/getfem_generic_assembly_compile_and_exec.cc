@@ -1286,7 +1286,7 @@ namespace getfem {
     base_tensor &t;
     const base_small_vector &vec;
     const ga_instruction_set::interpolate_info &inin;
-    
+
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: copy small vector");
       GMM_ASSERT1(!(inin.has_ctx) || inin.ctx.is_convex_num_valid(),
@@ -1301,7 +1301,7 @@ namespace getfem {
      const ga_instruction_set::interpolate_info &inin_)
       : t(t_), vec(vec_), inin(inin_)  {}
   };
-  
+
   struct ga_instruction_interpolate : public ga_instruction {
     base_tensor &t;
     const mesh **m;
@@ -2336,7 +2336,7 @@ namespace getfem {
             it[mm] = it1[0]   *it2[n2]   - it1[n1]  *it2[0];
           }
         }
-      } 
+      }
       return 0;
     }
     ga_instruction_cross_product_tf(base_tensor &t_,
@@ -2365,7 +2365,7 @@ namespace getfem {
 
 
 
-  
+
   struct ga_instruction_dotmult : public ga_instruction {
     base_tensor &t;
     const base_tensor &tc1, &tc2;
@@ -5822,7 +5822,7 @@ namespace getfem {
       ga_clear_node_list(pnode->children[i], node_list);
   }
 
-  // workspace argument  is not const because of declaration of temporary
+  // workspace argument is not const because of declaration of temporary
   // unreduced variables
   static void ga_compile_node(const pga_tree_node pnode,
                               ga_workspace &workspace,
@@ -6187,7 +6187,7 @@ namespace getfem {
         } else {
           const mesh_fem *mf = workspace.associated_mf(pnode->name), *mfo=mf;
           const im_data *imd = workspace.associated_im_data(pnode->name);
-          
+
           if (is_elementary) {
             mf = workspace.associated_mf(pnode->elementary_target);
             GMM_ASSERT1(mf && mfo,
@@ -6197,7 +6197,7 @@ namespace getfem {
                         << " has to be defined on the same mesh as the "
                         << "integration method or interpolation used");
           }
-          
+
           if (imd) {
             GMM_ASSERT1(pnode->node_type == GA_NODE_VAL,
                         "Only values can be extracted on im_data (no " <<
@@ -6209,7 +6209,7 @@ namespace getfem {
             rmi.instructions.push_back(std::move(pgai));
           } else {
             GMM_ASSERT1(mf, "Internal error");
-            
+
             GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                         "The finite element of variable " <<
                         (is_elementary ? pnode->elementary_target : pnode->name)
@@ -6230,7 +6230,7 @@ namespace getfem {
                  workspace.qdim(pnode->name) / mfo->get_qdim(), qmult2);
               rmi.elt_instructions.push_back(std::move(pgai));
             }
-            
+
             // An instruction for pfp update
             if (mf->is_uniform()) {
               if (rmi.pfps.count(mf) == 0) {
@@ -6334,7 +6334,7 @@ namespace getfem {
             default : GMM_ASSERT1(false, "Internal error");
             }
             if (pgai) rmi.instructions.push_back(std::move(pgai));
-            
+
             // The eval instruction
             switch (pnode->node_type) {
             case GA_NODE_VAL: // --> t(target_dim*Qmult)
@@ -6658,7 +6658,7 @@ namespace getfem {
                       << " has to be defined on the same mesh as the "
                       << "integration method or interpolation used");
         }
-        
+
         if (mf) {
           GMM_ASSERT1(&(mf->linked_mesh()) == &(m),
                       "The finite element of variable " <<

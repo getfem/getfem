@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- python -*-
 #
-# Copyright (C) 2004-2022 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2025 Yves Renard, Julien Pommier.
 #                                                       
 # This file is a part of GetFEM                                         
 #                                                                         
@@ -1872,7 +1872,7 @@ elif (option == 'python-com' or option == 'python-com-par'):
 #
 # Python GetFEM interface
 #
-# Copyright (C) 2004-2022 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2025 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM
 #

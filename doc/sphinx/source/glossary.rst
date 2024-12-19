@@ -1,8 +1,6 @@
 
 .. include:: replaces.txt
 
-.. _glossary:
-
 ********
 Glossary
 ********

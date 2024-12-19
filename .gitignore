@@ -309,6 +309,7 @@ Makefile
 /interface/tests/*/*.vtk
 /interface/tests/*/*.pos
 /interface/tests/*/*.dx
+/internal_tools/morley_base
 /tests/*.vtk
 /tests/*.pos
 /tests/*.dx

@@ -1114,14 +1114,14 @@ Morley element
    :align: center
    :scale: 60
 
-   triangle Morley element, :math:`P_2`, 6 d.o.f., :math:`C^0`
+   triangle Morley element, :math:`P_2`, 6 d.o.f., discontinuous
 
 
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
 identity). In particular, it can be used for non-conforming discretization of
 fourth order problems, despite the fact that it is not :math:`{\cal C}^1`.
 
-  .. list-table:: Morley element on a triangle ``"FEM_MORLEY"``
+  .. list-table:: Morley element on a triangle ``"FEM_MORLEY(2)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 
@@ -1635,6 +1635,42 @@ the corresponding vertex. Idem on the other vertices.
        - :math:`3`
        - :math:`20`
        - :math:`C^0`
+       - No :math:`(Q = 1)`
+       - No
+       - Yes
+
+
+Morley element
+++++++++++++++
+
+.. _ud-fig-triangle_morley3D:
+.. figure:: images/getfemlistmorley3D.png
+   :align: center
+   :scale: 60
+
+   Tetrahedron Morley element, :math:`P_2`, 10 d.o.f., discontinuous
+
+
+This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
+identity). It has one Lagrange degree of freedom per edge and one normal derivative degree of freedom per face. In particular, it can be used for non-conforming discretization of
+fourth order problems, despite the fact that it is not :math:`{\cal C}^1` neither :math:`{\cal C}^0`.
+
+  .. list-table:: Morley element on a tetrahedron ``"FEM_MORLEY(3)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
+
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vector
+       - :math:`\tau`-equivalent
+       - Polynomial
+
+     * - :math:`2`
+       - :math:`3`
+       - :math:`10`
+       - discontinuous
        - No :math:`(Q = 1)`
        - No
        - Yes

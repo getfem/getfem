@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2002-2020 Michel FourniÈ, Julien Pommier,
+ Copyright (C) 2002-2020 Michel Fourni√©, Julien Pommier,
 
  This file is a part of GetFEM
 
@@ -972,7 +972,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   }
 
-  //Prise en compte de faÁon faible
+  //Prise en compte de fa√ßon faible
   plain_vector HP(nbdof_p);
   { plain_vector A(nbdof_p);
     getfem::generic_assembly assem;
@@ -987,7 +987,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   //K2(nbdof_p,nbdof_p) = 0.0;
   */
 
-  //Prise en compte de faÁon forte
+  //Prise en compte de fa√ßon forte
   for (unsigned i=0; i <= nbdof_p; ++i) {
     K2(nbdof_p,i) = K2(i,nbdof_p) = 1.0; // mean value of the pressure = 0
     //K2(nbdof_p, 0) = K2(0, nbdof_p) = 1.0; // set the first pressure dof to 0
@@ -1029,7 +1029,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   std::ofstream coeffTP("coeffTP.data");
   std::ofstream ptPartData("ptPart.data");
 
-  // Recherche d'un point de rÈference pour le calcul des coeff de trainÈe ...
+  // Recherche d'un point de r√©ference pour le calcul des coeff de train√©e ...
 
   scalar_type BoxXmin =  PARAM.real_value("BOXXmin", "Particular Point xMin");
   scalar_type BoxXmax =  PARAM.real_value("BOXXmax", "Particular Point xMax");
@@ -1063,7 +1063,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       bgeot::base_node BN =  mf_u.point_of_basic_dof(i);
       if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1] ) {
         cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
-        // Attention c'est vectoriel => en sortie i <-> pt sur la derniËre composante de la vitesse
+        // Attention c'est vectoriel => en sortie i <-> pt sur la derni√®re composante de la vitesse
         // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
         // D'ou la modif dans ptPartU[2]
         ptPartU[0] = BN[0];
@@ -1092,7 +1092,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       bgeot :: base_node BN =  mf_u.point_of_basic_dof(i);
       if (BN[0]==ptPartP[0] && BN[1]==ptPartP[1]&& BN[2]==ptPartP[2] ) {
         cout << "Point Part in Box -- i on mf_u= " << i <<",x="<<BN[0]<<",y="<<BN[1]<<",z="<<BN[2]<< endl;
-        // Attention c'est vectoriel => en sortie i <-> pt sur la derniËre composante de la vitesse
+        // Attention c'est vectoriel => en sortie i <-> pt sur la derni√®re composante de la vitesse
         // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
         // D'ou la modif dans ptPartU[3]
         ptPartU[0] = BN[0];
@@ -1134,7 +1134,6 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   gmm :: sub_interval SUB_CT_V(0,nbdof_u);
   gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 
-// idéees
 //gmm::copy(gmm::sub_vector(F1generic,SUB_CT_V1full),F1full);
 //gmm::copy(gmm::sub_vector(X1full,SUB_CT_V),X1);
 //gmm::copy(gmm::sub_vector(X2full,SUB_CT_V),X2);
@@ -1203,7 +1202,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A2, I1, I4));
 
       // Factorization LU
-      //SLUsys3.build_with(A2); // pb en (u,v) couplé
+      //SLUsys3.build_with(A2);
 
       gmm::clear(A2u);
       //gmm::clear(A2v);
@@ -1334,7 +1333,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     {
       plain_vector VV(mf_mult.nb_dof());
       gmm::clear(VV);
-      // getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg); // CL PÈriodiques
+      // getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg); // CL P√©riodiques
       if (non_reflective_bc == 0) {
          asm_basic_non_reflective_bc(VV, mim, mf_u, Un0, mf_mult, dt, mpinonrefrg);
       } else {
@@ -1381,7 +1380,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       MUMPS_distributed_matrix_solve(A1,X,Y);
 #elif defined(GMM_USES_MUMPS)
       gmm::MUMPS_solve(A1,X,Y);
-      //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
+      //#elif (GETFEM_PARA_LEVEL==0 && defined(GMM_USES_MUMPS))
       //MUMPS_solve(A1,X,Y);
 #else
       // SuperLU_solve(A1, X, Y, rcond);
@@ -1422,7 +1421,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
       //??//  gmm::copy(gmm::sub_vector(X, I3C), lambda);
 
-      // Relation de compatibilitÈ int_domaine div(ustar)=0 //
+      // Relation de compatibilit√© int_domaine div(ustar)=0 //
       scalar_type delta_in;
       sparse_matrix Bbc_flux_in(nbdof_p, nbdof_u);
       asm_B_boundary(Bbc_flux_in, mim, mf_u, mf_p,mf_u.linked_mesh().get_mpi_sub_region(DIRICHLET_BOUNDARY_NUM));
@@ -1514,7 +1513,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       MUMPS_distributed_matrix_solve(K2,X,Z);
 #elif defined(GMM_USES_MUMPS)
       MUMPS_solve(K2,X,Z);
-      //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
+      //#elif (GETFEM_PARA_LEVEL==0 && defined(GMM_USES_MUMPS))
       //MUMPS_solve(K2,X,Z);
 #else
       //SuperLU_solve(K2,X,Z,rcond);
@@ -1602,7 +1601,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       //gmm:: clear(Un1);
       gmm::copy(gmm::sub_vector(X, I1), Un1);
 
-      // Relation de compatibilitÈ int_domaine div(ustar)=0 //
+      // Relation de compatibilit√© int_domaine div(ustar)=0 //
       scalar_type delta;
       gmm :: resize(lambda,  nbdof_nonref);
       gmm:: clear(lambda);
@@ -1670,7 +1669,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     do_export(t);
 
     //
-    // SORTIES : Coefficient de Trainé (Cd) et de Portance (Cl)
+    // SORTIES : Coefficient de Train√©e (Cd) et de Portance (Cl)
     //
     if (N == 2) {
       std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);

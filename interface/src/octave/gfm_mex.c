@@ -28,8 +28,8 @@
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
-void set_superlu_callback(int (*cb)());
-int handle_getfem_callback();
+// void set_superlu_callback(int (*cb)());
+// int handle_getfem_callback();
 
 /* main file for the giant gf_matlab mex-file */
 /*
@@ -89,7 +89,7 @@ void sigint_callback(int sig) {
 	  "If you want to abort immediatly the current operation, hit CTRL-C again\n" \
 	  "In that case, you will have to restart getfem_octave, using 'clear functions' for example:\n", s);
   set_cancel_flag(1);
-  assert(handle_getfem_callback() == 1);
+  // assert(handle_getfem_callback() == 1);
 }
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
@@ -97,7 +97,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   gfi_array_list *in;
 
   set_cancel_flag(0);
-  set_superlu_callback(is_cancel_flag_set);
+  // set_superlu_callback(is_cancel_flag_set);
 
   if (nrhs == 0 || !mxIsChar(prhs[0])) {
     mexErrMsgTxt("missing function name");

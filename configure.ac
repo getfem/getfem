@@ -27,10 +27,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT([getfem],[5.4.2])
+AC_INIT([getfem],[5.4.3])
 MAJOR_VERSION="5"
 MINOR_VERSION="4"
-PATCH_VERSION="2"
+PATCH_VERSION="3"
 AC_DEFINE_UNQUOTED(GETFEM_PACKAGE_NAME,"${PACKAGE_NAME}",[GetFEM package name])
 AC_DEFINE_UNQUOTED(GETFEM_PACKAGE_STRING,"${PACKAGE_STRING}",[GetFEM package string])
 AC_DEFINE_UNQUOTED(GETFEM_PACKAGE_TARNAME,"${PACKAGE_TARNAME}",[GetFEM package tarname])
@@ -92,8 +92,10 @@ AX_PROG_CC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 AX_PROG_FC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 
 if  test "x$usempi" = "xyes"; then
-AC_CHECK_LIB(mpi_cxx, _init,
-             [AC_DEFINE(GMM_USES_MPI,,[defined if GMM uses MPI])],)
+  AC_DEFINE(GMM_USES_MPI,,[defined if GMM uses MPI])
+  # mpi_cxx is not present in all mpi installations,
+  # but when it is present it needs to be linked
+  AC_CHECK_LIB(mpi_cxx, _init, [LIBS="$LIBS -lmpi_cxx"])
 fi
 
 AC_PROG_CXXCPP
@@ -337,47 +339,6 @@ AC_SUBST(GETFEM_SERVER)
 AM_CONDITIONAL(BUILDMEXRPC, test x$matlab_rpc = xyes)
 
 
-dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
-dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
-dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
-STDCPP_STATICLIBS=""
-
-if test $usematlab = xYES; then
-  dnl ------------------------------------
-  dnl COMPILER SETTINGS
-  compiler_type=dontcare
-  case $CXX in
-   *g++* | c++)
-	case $host in
-	x86_64-*)
-	       echo "Compiling on an x86_64 architecture..."
-	       ;;
-        *-darwin*)
-               echo "Compiling on Darwin (MacOS)"
-		;;
-	*)
-		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
-		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
-		;;
-	esac
-	;;
-   *icc | *icpc)
-	dnl a small remark: with icpc 8.0, the getfem_server will crash 
-	dnl at the first exception throwed (except with -g)
-	dnl the fix is to pass the -static flag at the linker
-	dnl unfortunately, the lovely libtool assumes that icpc won't
-	dnl understand it, and removes it. I hate libtool.
-	dnl so I added the -Wl,-static -- it works for now.
-	GFSERVERFLAGS="-Wl,-static -static"
-	;;
-   *)
-	;;
-  esac
-fi
-AC_SUBST(GFSERVERFLAGS)
-AC_SUBST(STDCPP_STATICLIBS)
-
-
 
 
 
@@ -432,6 +393,50 @@ AC_SUBST(OCTAVE_COM_EXT)
 AC_SUBST(MKOCTFILE)
 
 AM_CONDITIONAL(USE_MINGW_OCTAVE, test x"$OCTAVE_COM_EXT" = x".dll")
+
+
+dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
+dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
+dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
+STDCPP_STATICLIBS=""
+
+if test x$usematlab = xYES || test x$useoctave = xYES; then
+  dnl ------------------------------------
+  dnl COMPILER SETTINGS
+  compiler_type=dontcare
+  case $CXX in
+   *g++* | c++)
+	case $host in
+	x86_64-*)
+	       echo "Compiling on an x86_64 architecture..."
+	       ;;
+        *-darwin*)
+               echo "Compiling on Darwin (MacOS)"
+               STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+	       ;;
+	*)
+		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
+		;;
+	esac
+	;;
+   *icc | *icpc)
+	dnl a small remark: with icpc 8.0, the getfem_server will crash 
+	dnl at the first exception throwed (except with -g)
+	dnl the fix is to pass the -static flag at the linker
+	dnl unfortunately, the lovely libtool assumes that icpc won't
+	dnl understand it, and removes it. I hate libtool.
+	dnl so I added the -Wl,-static -- it works for now.
+	GFSERVERFLAGS="-Wl,-static -static"
+	;;
+   *)
+	;;
+  esac
+fi
+AC_SUBST(GFSERVERFLAGS)
+AC_SUBST(STDCPP_STATICLIBS)
+
+
 
 dnl ----------------------------------------------
 dnl python 
@@ -667,14 +672,12 @@ LIBS="$acx_blas_save_LIBS"
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_blas_ok" = xyes; then
-  echo "OK, You have working BLAS libs ! Using $BLAS_LIBS" ; HAVE_VENDOR_BLAS=1
+  echo "OK, You have working BLAS libs ! Using $BLAS_LIBS"
+  AC_DEFINE(GMM_USES_BLAS,,[defined if GMM is linked to a blas library])
+  LIBS="$LIBS $BLAS_LIBS"
 else
-  echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement" ; HAVE_VENDOR_BLAS=0
+  echo " *** YOU DONT HAVE BLAS! *** Using a cheap replacement"
 fi
-
-dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ],[echo "YOU DONT HAVE BLAS! Using a cheap replacement" ; HAVE_VENDOR_BLAS=0])
-LIBS="$LIBS $BLAS_LIBS"
-AC_DEFINE(GMM_USES_BLAS,,[defined if GMM is linked to a blas library])
 
 useblas64support=NO
 AC_ARG_ENABLE(blas64-support,
@@ -735,6 +738,8 @@ if test x"$acx_blas_ok" = xyes; then
     LIBS="$LAPACK_LIBS $LIBS"
   fi
 fi
+AM_CONDITIONAL(LAPACK, test x$acx_lapack_ok = xyes)
+
 
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
@@ -820,7 +825,7 @@ AC_ARG_WITH(superlu,
 
 SUPERLUINC=""
 AC_ARG_WITH(superlu-include-dir,
- [AS_HELP_STRING([--with-superlu-include-dir],[directory in which the superlu/sl*.h headers can be found])],
+ [AS_HELP_STRING([--with-superlu-include-dir],[directory in which the superlu/sl*.h or just sl*.h headers can be found])],
  [ if test x$require_superlu = xno; then
      AC_MSG_ERROR([Inconsistent options for --enable-superlu, --with-superlu and --with-superlu-include-dir.]);
    else
@@ -842,21 +847,28 @@ else
     [superlu/slu_Cnames.h superlu/slu_cdefs.h superlu/slu_ddefs.h superlu/slu_sdefs.h superlu/slu_zdefs.h \
      superlu/slu_dcomplex.h superlu/slu_scomplex.h],
     [found_superlu="yes"],
-    [ if test "x$require_superlu" = "xyes"; then
-        AC_MSG_ERROR([Header files of SuperLU not found.]);
-      else
-        found_superlu="no"
-      fi;
-    ])
+    [found_superlu="no"])
+  if test x$found_superlu = xno; then
+    AC_CHECK_HEADERS(
+      [slu_Cnames.h slu_cdefs.h slu_ddefs.h slu_sdefs.h lu_zdefs.h slu_dcomplex.h slu_scomplex.h],
+      [found_superlu="yes";
+       AC_DEFINE(GMM_NO_SUPERLU_INCLUDE_SUBDIR,,[defined if SuperLU headers are not in a superlu subdirectory])],
+      [found_superlu="no"])
+  fi
+
+  if test x$found_superlu = xno && test "x$require_superlu" = "xyes"; then
+    AC_MSG_ERROR([Header files of SuperLU not found]);
+  fi
+
   if test x$found_superlu = xyes; then
     save_LIBS="$LIBS";
-    AC_CHECK_LIB([superlu], [dCreate_CompCol_Matrix],
-                 [AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is linked to the superlu library])],
-                 [if test "x$require_superlu" = "xyes"; then
-                    AC_MSG_ERROR([SuperLU library not found]);
-                  else
-                    found_superlu="no"
-                  fi;])
+    AC_SEARCH_LIBS(dCreate_CompCol_Matrix, [`echo $SUPERLU_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+      [AC_DEFINE(GMM_USES_SUPERLU,,[defined if GMM is to be linked to the SuperLU library])],
+      [if test "x$require_superlu" = "xyes"; then
+         AC_MSG_ERROR([SuperLU library not found]);
+       fi;
+       found_superlu="no"]
+    )
     if test "x$found_superlu" = "xyes"; then
       echo "Building with SuperLU (use --enable-superlu=no to disable it)"
       LIBS="$SUPERLU_LIBS $save_LIBS"
@@ -930,47 +942,49 @@ if test "x$require_mumps" = "xno"; then
   MUMPS_LIBS=""
   echo "Building with MUMPS explicitly disabled";
 else
+ AC_CHECK_HEADERS([smumps_c.h dmumps_c.h cmumps_c.h zmumps_c.h],
+   [found_mumps="1"],
+   [if test "x$require_mumps" = "xyes"; then
+     AC_MSG_ERROR([header file dmumps_c.h not found]);
+    fi;
+    found_mumps="0"]
+ )
  AC_SEARCH_LIBS(smumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
+   [found_mumps=$found_mumps"2"],
    [if test "x$require_mumps" = "xyes"; then
      AC_MSG_ERROR([The function smumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
-    found_mumps="no"]
+    found_mumps=$found_mumps"0"]
  )
  AC_SEARCH_LIBS(dmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
+   [found_mumps=$found_mumps"3"],
    [if test "x$require_mumps" = "xyes"; then
      AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
-    found_mumps="no"]
+    found_mumps=$found_mumps"0"]
  )
  AC_SEARCH_LIBS(cmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
+   [found_mumps=$found_mumps"4"],
    [if test "x$require_mumps" = "xyes"; then
      AC_MSG_ERROR([The function cmumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
-    found_mumps="no"]
+    found_mumps=$found_mumps"0"]
  )
  AC_SEARCH_LIBS(zmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
-   [found_mumps="yes"],
+   [found_mumps=$found_mumps"5"],
    [if test "x$require_mumps" = "xyes"; then
      AC_MSG_ERROR([The function zmumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
-    found_mumps="no"]
- )
- AC_CHECK_HEADERS([smumps_c.h dmumps_c.h cmumps_c.h zmumps_c.h],
-   [found_mumps="yes"],
-   [if test "x$require_mumps" = "xyes"; then
-     AC_MSG_ERROR([header file dmumps_c.h not found.]);
-    fi;
-    found_mumps="no"]
+    found_mumps=$found_mumps"0"]
  )
 
- if test "x$found_mumps" = "xyes"; then
+ if test x"$found_mumps" = x"12345"; then
+   found_mumps="yes"
    echo "Building with MUMPS (use --enable-mumps=no to disable it)"
    AC_DEFINE(GMM_USES_MUMPS,,[defined if GMM is linked to the mumps library])
    LIBS="$MUMPS_LIBS $save_LIBS"
  else
+   found_mumps="no"
    MUMPS_LIBS=""
    LIBS="$save_LIBS"
  fi;
@@ -1301,7 +1315,7 @@ fi;
 if test "x$found_mumps" = "xyes"; then
   echo "- Mumps found. A direct solver for large sparse linear systems."
 else
-  if test "x$require_superlu" = "xno"; then
+  if test "x$require_mumps" = "xno"; then
     echo "- Not using the MUMPS library for large sparse linear systems."
   else
     echo "- Mumps not found. Not using the MUMPS library for large sparse linear systems."
@@ -1311,16 +1325,17 @@ fi;
 if test x"$acx_lapack_ok" = xyes; then
   echo "- Lapack library found: $LAPACK_LIBS"
 else
-  echo "- Lapack library not found: generic (less effective) algorithms will be used"
+  echo "- Lapack library not found: generic (less efficient) algorithms will be used"
 fi
 
-if test "x$HAVE_VENDOR_BLAS" = "x0"; then
+if test x"$acx_blas_ok" = xyes; then
+  echo "- BLAS library found. Link options: $BLAS_LIBS"
+else
   echo "- *** No usable blas library was found ***"
   echo "  A generic BLAS implementation will be used, however you should "
   echo "  consider installing a faster BLAS, such as ATLAS"
-else
-  echo "- BLAS library found. Link options: $BLAS_LIBS"
 fi;
+
 echo "  You can give the location of your prefered blas library with either"
 echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo '  for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'

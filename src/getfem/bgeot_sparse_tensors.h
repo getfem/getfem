@@ -35,10 +35,10 @@
    @brief Sparse tensors, used during the assembly.
 
    "sparse" tensors: these are not handled like sparse matrices
-   
+
    As an example, let say that we have a tensor t(i,j,k,l) of
-   dimensions 4x2x3x3, with t(i,j,k,l!=k) == 0. 
-   
+   dimensions 4x2x3x3, with t(i,j,k,l!=k) == 0.
+
    Then the tensor shape will be represented by a set of 3 objects of type
      'tensor_mask':
    mask1: {i}, "1111"
@@ -47,13 +47,13 @@
                  "010"
                  "001"
    They contain a binary tensor indicating the non-null elements.
-   
+
    The set of these three masks define the shape of the tensor
    (class tensor_shape)
 
    If we add information about the location of the non-null elements
    (by mean of strides), then we have an object of type 'tensor_ref'
-   
+
    Iteration on the data of one or more tensor should be done via the
    'multi_tensor_iterator', which can iterate over common non-null
    elements of a set of tensors.
@@ -97,23 +97,23 @@ namespace bgeot {
 
   typedef scalar_type * TDIter;
 
-  std::ostream& operator<<(std::ostream& o, const tensor_ranges& r); 
-  
+  std::ostream& operator<<(std::ostream& o, const tensor_ranges& r);
+
   /* stupid && inefficient loop structure */
   struct tensor_ranges_loop {
     tensor_ranges sz;
     tensor_ranges cnt;
     bool finished_;
   public:
-    tensor_ranges_loop(const tensor_ranges& t) : sz(t), cnt(t.size()), finished_(t.size() == 0) { 
-      std::fill(cnt.begin(), cnt.end(), 0); 
+    tensor_ranges_loop(const tensor_ranges& t) : sz(t), cnt(t.size()), finished_(t.size() == 0) {
+      std::fill(cnt.begin(), cnt.end(), 0);
     }
     index_type index(dim_type i) { return cnt[i]; }
     bool finished() const { return finished_; }
-    bool next() { 
+    bool next() {
       index_type i = 0;
       while (++cnt[i] >= sz[i]) {
-	cnt[i] = 0; i++; if (i >= sz.size()) { finished_ = true; break; }
+        cnt[i] = 0; i++; if (i >= sz.size()) { finished_ = true; break; }
       }
       return finished_;
     }
@@ -131,15 +131,15 @@ namespace bgeot {
     tensor_mask() { set_card(0); }
     explicit tensor_mask(const tensor_ranges& r_, const index_set& idxs_) {
       assign(r_,idxs_);
-    }    
+    }
     /* constructeur par fusion */
     explicit tensor_mask(const tensor_mask& tm1, const tensor_mask& tm2, bool and_op);
-    explicit tensor_mask(const std::vector<const tensor_mask*>& tm);    
-    explicit tensor_mask(const std::vector<const tensor_mask*> tm1, 
-			 const std::vector<const tensor_mask*> tm2, bool and_op);
+    explicit tensor_mask(const std::vector<const tensor_mask*>& tm);
+    explicit tensor_mask(const std::vector<const tensor_mask*> tm1,
+                         const std::vector<const tensor_mask*> tm2, bool and_op);
     void swap(tensor_mask &tm) {
       r.swap(tm.r); idxs.swap(tm.idxs);
-      m.swap(tm.m); s.swap(tm.s); 
+      m.swap(tm.m); s.swap(tm.s);
       std::swap(card_, tm.card_);
       std::swap(card_uptodate, tm.card_uptodate);
     }
@@ -147,16 +147,16 @@ namespace bgeot {
       r = r_; idxs = idxs_; eval_strides(); m.assign(size(),false);
       set_card(0);
     }
-    void assign(const tensor_mask& tm) { 
-      r = tm.r; 
-      idxs = tm.idxs; 
-      m = tm.m; 
+    void assign(const tensor_mask& tm) {
+      r = tm.r;
+      idxs = tm.idxs;
+      m = tm.m;
       s = tm.s;
       card_ = tm.card_; card_uptodate = tm.card_uptodate;
     }
     void assign(const std::vector<const tensor_mask* >& tm);
     void assign(const tensor_mask& tm1, const tensor_mask& tm2, bool and_op);
-    
+
     void clear() { r.resize(0); idxs.resize(0); m.clear(); s.resize(0); set_card(0); }
     const tensor_ranges& ranges() const { return r; }
     const index_set& indexes() const { return idxs; }
@@ -165,32 +165,32 @@ namespace bgeot {
     void eval_strides() {
       s.resize(r.size()+1); s[0]=1;
       for (index_type i=0; i < r.size(); ++i) {
-	s[i+1]=s[i]*r[i];
+        s[i+1]=s[i]*r[i];
       }
     }
     index_type ndim() const { return index_type(r.size()); }
     index_type size() const { return s[r.size()]; }
     void set_card(index_type c) const { card_ = c; card_uptodate = true; }
     void unset_card() const { card_uptodate = false; }
-    index_type card(bool just_look=false) const {       
+    index_type card(bool just_look=false) const {
       if (!card_uptodate || just_look) {
         index_type c = index_type(std::count_if(m.begin(), m.end(),
                                   [](const auto &x) {return x == true;}));
-	if (just_look) return c;
-	card_ = c;
+        if (just_look) return c;
+        card_ = c;
       }
       return card_;
     }
     index_type pos(tensor_ranges& global_r) const {
       index_type p = 0;
-      for (index_type i=0; i < r.size(); ++i) 
-	p+= s[i]*global_r[idxs[i]];
+      for (index_type i=0; i < r.size(); ++i)
+        p+= s[i]*global_r[idxs[i]];
       return p;
     }
     index_type lpos(tensor_ranges& local_r) const {
       index_type p = 0;
-      for (index_type i=0; i < r.size(); ++i) 
-	p+= s[i]*local_r[i];
+      for (index_type i=0; i < r.size(); ++i)
+        p+= s[i]*local_r[i];
       return p;
     }
     bool operator()(tensor_ranges& global_r) const {
@@ -212,7 +212,7 @@ namespace bgeot {
       eval_strides();
     }
     explicit tensor_mask(index_type range, Slice slice) {
-      set_slice(slice.dim, range, slice.i0); 
+      set_slice(slice.dim, range, slice.i0);
     }
 
     struct Diagonal {
@@ -225,7 +225,7 @@ namespace bgeot {
       assert(n);
       r.resize(2); r[0] = r[1] = n;
       idxs.resize(2); idxs[0] = dim_type(i0); idxs[1] = dim_type(i1);
-      m.assign(n*n, false); 
+      m.assign(n*n, false);
       for (index_type i=0; i < n; ++i) m[n*i+i]=true;
       set_card(n);
       eval_strides();
@@ -239,7 +239,7 @@ namespace bgeot {
       idxs.resize(2); idxs[0] = dim_type(i0); idxs[1] = dim_type(i1);
       m.assign(n*n,false); unset_card();
       for (index_type i=0; i < n; ++i)
-	for (index_type j=i; j < n; ++j) m[i*n+j]=true;
+        for (index_type j=i; j < n; ++j) m[i*n+j]=true;
       eval_strides();
     }
     void set_full(index_type dim, index_type range) {
@@ -264,7 +264,7 @@ namespace bgeot {
     }
     void shift_dim_num_ge(dim_type dim, int shift) {
       for (dim_type i=0; i < idxs.size(); ++i) {
-	if (idxs[i] >= dim) idxs[i] = dim_type(idxs[i] + shift);
+        if (idxs[i] >= dim) idxs[i] = dim_type(idxs[i] + shift);
       }
       check_assertions();
     }
@@ -273,7 +273,7 @@ namespace bgeot {
       p.resize(card());
       index_type i = 0;
       for (tensor_ranges_loop l(r); !l.finished(); l.next()) {
-	if (m[lpos(l.cnt)]) p[i++] = lpos(l.cnt);
+        if (m[lpos(l.cnt)]) p[i++] = lpos(l.cnt);
       }
       assert(i==card());
     }
@@ -297,15 +297,15 @@ namespace bgeot {
   struct tensor_index_to_mask {
     short_type mask_num;
     short_type mask_dim;
-    tensor_index_to_mask() : mask_num(short_type(-1)), 
-			     mask_dim(short_type(-1)) {}
-    bool is_valid() { return mask_num != short_type(-1) && 
-	mask_dim != short_type(-1); }
+    tensor_index_to_mask() : mask_num(short_type(-1)),
+                             mask_dim(short_type(-1)) {}
+    bool is_valid() { return mask_num != short_type(-1) &&
+        mask_dim != short_type(-1); }
   };
 
 
-  /* 
-     defini une "forme" de tenseur creux 
+  /*
+     defini une "forme" de tenseur creux
      la fonction merge permet de faire des unions / intersections entre ces formes
   */
   class tensor_shape {
@@ -317,32 +317,32 @@ namespace bgeot {
        (le tenseur est identiquement nul) */
     void check_empty_mask() {
       if (card() == 0) {
-	for (dim_type i=0; i < masks_.size(); ++i) {
-	  masks_[i].set_zero();
-	}
+        for (dim_type i=0; i < masks_.size(); ++i) {
+          masks_[i].set_zero();
+        }
       }
     }
 
-    static void find_linked_masks(dim_type mnum, const tensor_shape &ts1, const tensor_shape &ts2, 
-				dal::bit_vector& treated1, dal::bit_vector& treated2, 
-				std::vector<const tensor_mask*>& lstA,
-				std::vector<const tensor_mask*>& lstB) {
+    static void find_linked_masks(dim_type mnum, const tensor_shape &ts1, const tensor_shape &ts2,
+                                  dal::bit_vector& treated1, dal::bit_vector& treated2,
+                                  std::vector<const tensor_mask*>& lstA,
+                                  std::vector<const tensor_mask*>& lstB) {
       // gare aux boucles infinies si aucun des indices n'est valide
       assert(mnum < ts1.masks().size());
       assert(!treated1[mnum]);
       treated1.add(mnum);
       lstA.push_back(&ts1.mask(mnum));
       for (dim_type i=0; i < ts1.mask(mnum).indexes().size(); ++i) {
-	dim_type ii = ts1.mask(mnum).indexes()[i];
-	if (ts2.index_is_valid(ii) && !treated2[ts2.index_to_mask_num(ii)])
-	  find_linked_masks(ts2.index_to_mask_num(ii),ts2,ts1,treated2,treated1,lstB,lstA);
+        dim_type ii = ts1.mask(mnum).indexes()[i];
+        if (ts2.index_is_valid(ii) && !treated2[ts2.index_to_mask_num(ii)])
+          find_linked_masks(ts2.index_to_mask_num(ii),ts2,ts1,treated2,treated1,lstB,lstA);
       }
     }
 
   protected:
-    dim_type index_to_mask_num(dim_type ii) const { 
+    dim_type index_to_mask_num(dim_type ii) const {
       if (index_is_valid(ii))
-	return dim_type(idx2mask[ii].mask_num); else return dim_type(-1); 
+        return dim_type(idx2mask[ii].mask_num); else return dim_type(-1);
     }
   public:
     void clear() { masks_.resize(0); idx2mask.resize(0); }
@@ -351,39 +351,38 @@ namespace bgeot {
       masks_.swap(ts.masks_);
     }
     dim_type ndim() const { return dim_type(idx2mask.size()); }
-    bool index_is_valid(dim_type ii) const {  
-      assert(ii < idx2mask.size()); return idx2mask[ii].is_valid(); 
+    bool index_is_valid(dim_type ii) const {
+      assert(ii < idx2mask.size()); return idx2mask[ii].is_valid();
     }
-    const tensor_mask& index_to_mask(dim_type ii) const { 
-      assert(index_is_valid(ii)); return masks_[idx2mask[ii].mask_num]; 
+    const tensor_mask& index_to_mask(dim_type ii) const {
+      assert(index_is_valid(ii)); return masks_[idx2mask[ii].mask_num];
     }
-    dim_type index_to_mask_dim(dim_type ii) const { 
-      assert(index_is_valid(ii)); return dim_type(idx2mask[ii].mask_dim); 
+    dim_type index_to_mask_dim(dim_type ii) const {
+      assert(index_is_valid(ii)); return dim_type(idx2mask[ii].mask_dim);
     }
-    index_type dim(dim_type ii) const 
-    { assert(index_is_valid(ii)); return index_to_mask(ii).ranges()[index_to_mask_dim(ii)]; 
+    index_type dim(dim_type ii) const
+    { assert(index_is_valid(ii)); return index_to_mask(ii).ranges()[index_to_mask_dim(ii)];
     }
     tensor_mask_container& masks() { return masks_; }
     const tensor_mask_container& masks() const { return masks_; }
     const tensor_mask& mask(dim_type i) const { assert(i<masks_.size()); return masks_[i]; }
-    stride_type card(bool just_look=false) const { 
-      stride_type n = 1; 
-      for (dim_type i=0; i < masks().size(); ++i) 
-	n *= masks()[i].card(just_look); 
-      return n; 
-    }    
+    stride_type card(bool just_look=false) const {
+      stride_type n = 1;
+      for (dim_type i=0; i < masks().size(); ++i)
+        n *= masks()[i].card(just_look);
+      return n;
+    }
     void push_mask(const tensor_mask& m) { masks_.push_back(m); update_idx2mask(); }
     void remove_mask(dim_type mdim) { /* be careful with this function.. remove
-					 only useless mask ! */
+                                         only useless mask ! */
       masks_.erase(masks_.begin()+mdim);
       update_idx2mask();
     }
     void remove_unused_dimensions() {
       dim_type nd = 0;
       for (dim_type i=0; i < ndim(); ++i) {
-	if (index_is_valid(i)) {
-	  masks_[idx2mask[i].mask_num].indexes()[idx2mask[i].mask_dim] = nd++;
-	}
+        if (index_is_valid(i))
+          masks_[idx2mask[i].mask_num].indexes()[idx2mask[i].mask_dim] = nd++;
       }
       set_ndim_noclean(nd);
       update_idx2mask();
@@ -391,26 +390,25 @@ namespace bgeot {
 
     void update_idx2mask() const {
       /*
-	dim_type N=0;
-	for (dim_type i=0; i < masks_.size(); ++i) {
-	N = std::max(N, std::max_element(masks_.indexes().begin(), masks_.indexes.end()));
-	}
-	idx2mask.resize(N); 
+        dim_type N=0;
+        for (dim_type i=0; i < masks_.size(); ++i)
+          N = std::max(N, std::max_element(masks_.indexes().begin(), masks_.indexes.end()));
+        idx2mask.resize(N);
       */
 
       std::fill(idx2mask.begin(), idx2mask.end(), tensor_index_to_mask());
       for (dim_type i=0; i < masks_.size(); ++i) {
-	for (dim_type j=0; j < masks_[i].indexes().size(); ++j) {
-	  dim_type k = masks_[i].indexes()[j];
-	  GMM_ASSERT3(k < idx2mask.size() && !idx2mask[k].is_valid(), "");
-	  idx2mask[k].mask_num = i; idx2mask[k].mask_dim = j;
-	}
+        for (dim_type j=0; j < masks_[i].indexes().size(); ++j) {
+          dim_type k = masks_[i].indexes()[j];
+          GMM_ASSERT3(k < idx2mask.size() && !idx2mask[k].is_valid(), "");
+          idx2mask[k].mask_num = i; idx2mask[k].mask_dim = j;
+        }
       }
     }
-    void assign_shape(const tensor_shape& other) { 
+    void assign_shape(const tensor_shape& other) {
       masks_ = other.masks_;
       idx2mask = other.idx2mask;
-      //      update_idx2mask(); 
+      //      update_idx2mask();
     }
     void set_ndim(dim_type n) {
       clear();
@@ -419,7 +417,7 @@ namespace bgeot {
     void set_ndim_noclean(dim_type n) {idx2mask.resize(n);}
 
     tensor_shape() {}
-    
+
     /* create an "empty" shape of dimensions nd */
     explicit tensor_shape(dim_type nd) : idx2mask(nd,tensor_index_to_mask()) {
       masks_.reserve(16);
@@ -435,7 +433,7 @@ namespace bgeot {
       update_idx2mask();
     }
 
-    void set_empty(const tensor_ranges& r) { 
+    void set_empty(const tensor_ranges& r) {
       idx2mask.resize(r.size());
       masks_.resize(r.size());
       for (dim_type i=0; i < r.size(); ++i) masks_[i].set_empty(i,r[i]);
@@ -448,27 +446,27 @@ namespace bgeot {
       /* quelques verifs de base */
       GMM_ASSERT3(ts2.ndim() == ndim(), "");
       if (ts2.ndim()==0) return; /* c'est un scalaire */
-      for (dim_type i = 0; i < ndim(); ++i) 
-	if (index_is_valid(i) && ts2.index_is_valid(i))
-	  GMM_ASSERT3(ts2.dim(i) == dim(i), "");
+      for (dim_type i = 0; i < ndim(); ++i)
+        if (index_is_valid(i) && ts2.index_is_valid(i))
+          GMM_ASSERT3(ts2.dim(i) == dim(i), "");
 
       tensor_mask_container new_mask;
       dal::bit_vector mask_treated1; mask_treated1.sup(0,masks().size());
       dal::bit_vector mask_treated2; mask_treated2.sup(0,ts2.masks().size());
       std::vector<const tensor_mask*> lstA, lstB; lstA.reserve(10); lstB.reserve(10);
       for (dim_type i = 0; i < ndim(); ++i) {
-	dim_type i1 = dim_type(index_to_mask_num(i));
-	dim_type i2 = dim_type(ts2.index_to_mask_num(i));
-	lstA.clear(); lstB.clear();
-	if (index_is_valid(i) && !mask_treated1[i1])
-	  find_linked_masks(i1, *this, ts2, mask_treated1, mask_treated2,
-			    lstA, lstB);
-	else if (ts2.index_is_valid(i) && !mask_treated2[i2])
-	  find_linked_masks(i2, ts2, *this, mask_treated2, mask_treated1,
-			    lstB, lstA);
-	else continue;
-	GMM_ASSERT3(lstA.size() || lstB.size(), "");
-	new_mask.push_back(tensor_mask(lstA,lstB,and_op));
+        dim_type i1 = dim_type(index_to_mask_num(i));
+        dim_type i2 = dim_type(ts2.index_to_mask_num(i));
+        lstA.clear(); lstB.clear();
+        if (index_is_valid(i) && !mask_treated1[i1])
+          find_linked_masks(i1, *this, ts2, mask_treated1, mask_treated2,
+                            lstA, lstB);
+        else if (ts2.index_is_valid(i) && !mask_treated2[i2])
+          find_linked_masks(i2, ts2, *this, mask_treated2, mask_treated1,
+                            lstB, lstA);
+        else continue;
+        GMM_ASSERT3(lstA.size() || lstB.size(), "");
+        new_mask.push_back(tensor_mask(lstA,lstB,and_op));
       }
       masks_ = new_mask;
       update_idx2mask();
@@ -476,9 +474,8 @@ namespace bgeot {
     }
 
     void shift_dim_num_ge(dim_type dim_num, int shift) {
-      for (dim_type m = 0; m < masks().size(); ++m) {
-	masks()[m].shift_dim_num_ge(dim_num,shift);
-      }
+      for (dim_type m = 0; m < masks().size(); ++m)
+        masks()[m].shift_dim_num_ge(dim_num,shift);
     }
     /* the permutation vector might be greater than the current ndim,
        in which case some indexes will be unused (when p[i] == dim_type(-1))
@@ -488,19 +485,21 @@ namespace bgeot {
 
       /* build the inverse permutation and check that this IS really a permuation */
       for (dim_type i=0; i < p.size(); ++i) {
-	if (p[i] != dim_type(-1)) { assert(invp[p[i]] == dim_type(-1)); invp[p[i]] = i; }
+        if (p[i] != dim_type(-1)) {
+          assert(invp[p[i]] == dim_type(-1));
+          invp[p[i]] = i;
+        }
       }
       for (dim_type i=0; i < invp.size(); ++i) assert(invp[i] != dim_type(-1));
-      
+
       /* do the permutation (quite simple!) */
       for (dim_type m=0; m < masks().size(); ++m) {
-	for (dim_type i=0; i < masks()[m].indexes().size(); ++i) {
-	  if (!revert) {
-	    masks()[m].indexes()[i] = invp[masks()[m].indexes()[i]];
-	  } else {
-	    masks()[m].indexes()[i] = p[masks()[m].indexes()[i]];
-	  }
-	}
+        for (dim_type i=0; i < masks()[m].indexes().size(); ++i) {
+          if (!revert)
+            masks()[m].indexes()[i] = invp[masks()[m].indexes()[i]];
+          else
+            masks()[m].indexes()[i] = p[masks()[m].indexes()[i]];
+        }
       }
       set_ndim_noclean(dim_type(p.size()));
       update_idx2mask();
@@ -533,7 +532,8 @@ namespace bgeot {
       ts2.masks.resize(1);
       ts2.masks[0].set_diagonal(idx[i0].n, i0, i1);
       ts2.idx[i0].mask_num = ts2.idx[i1].mask_num = 0;
-      ts2.idx[i0].mask_dim = 0; ts2.idx[i1].mask_dim = 1;      
+      ts2.idx[i0].mask_dim = 0;
+      ts2.idx[i1].mask_dim = 1;
       }
     */
     void print(std::ostream& o) const;
@@ -541,7 +541,7 @@ namespace bgeot {
   };
 
 
-  /* reference to a tensor: 
+  /* reference to a tensor:
      - a shape
      - a data pointer
      - a set of strides
@@ -549,15 +549,15 @@ namespace bgeot {
   class tensor_ref : public tensor_shape {
     std::vector< tensor_strides > strides_;
     TDIter *pbase_; /* pointeur sur un pointeur qui designe les données
-		       ça permet de changer la base pour toute une serie
-		       de tensor_ref en un coup */
+                       ça permet de changer la base pour toute une serie
+                       de tensor_ref en un coup */
 
     stride_type base_shift_;
 
     void remove_mask(dim_type mdim) {
       tensor_shape::remove_mask(mdim);
       assert(strides_[mdim].size() == 0 ||
-	     (strides_[mdim].size() == 1 && strides_[mdim][0] == 0)); /* sanity check.. */
+             (strides_[mdim].size() == 1 && strides_[mdim][0] == 0)); /* sanity check.. */
       strides_.erase(strides_.begin()+mdim);
     }
   public:
@@ -576,16 +576,17 @@ namespace bgeot {
 
     void clear() { strides_.resize(0); pbase_ = 0; base_shift_ = 0; tensor_shape::clear(); }
 
-    
+
 
     /* s'assure que le stride du premier indice est toujours bien égal à zéro */
     void  ensure_0_stride() {
       for (index_type i=0; i < strides_.size(); ++i) {
-	if (strides_[i].size() >= 1 && strides_[i][0] != 0) {
-	  stride_type s = strides_[i][0];
-	  base_shift_ += s;
-	  for (index_type j=0; j < strides_[i].size(); ++j) strides_[i][j] -= s;
-	}
+        if (strides_[i].size() >= 1 && strides_[i][0] != 0) {
+          stride_type s = strides_[i][0];
+          base_shift_ += s;
+          for (index_type j=0; j < strides_[i].size(); ++j)
+            strides_[i][j] -= s;
+        }
       }
     }
 
@@ -595,7 +596,7 @@ namespace bgeot {
       strides_.reserve(16);
       init_strides();
     }
-    explicit tensor_ref(const tensor_ranges& r, TDIter *pbase__=0) 
+    explicit tensor_ref(const tensor_ranges& r, TDIter *pbase__=0)
       : tensor_shape(r), pbase_(pbase__), base_shift_(0) {
       strides_.reserve(16);
       init_strides();
@@ -604,10 +605,11 @@ namespace bgeot {
       strides_.resize(masks().size());
       stride_type s = 1;
       for (dim_type i = 0; i < strides_.size(); ++i) {
-	index_type n = mask(i).card();
-	strides_[i].resize(n);
-	for (index_type j=0;j<n;++j) strides_[i][j] = j*s;
-	s *= n;
+        index_type n = mask(i).card();
+        strides_[i].resize(n);
+        for (index_type j=0;j<n;++j)
+          strides_[i][j] = j*s;
+        s *= n;
       }
     }
     tensor_ref() : pbase_(0), base_shift_(0) { strides_.reserve(16); }
@@ -636,7 +638,7 @@ namespace bgeot {
 
     void print_() const { print(cerr); }
   };
-    
+
     std::ostream& operator<<(std::ostream& o, const tensor_mask& m);
     std::ostream& operator<<(std::ostream& o, const tensor_shape& ts);
     std::ostream& operator<<(std::ostream& o, const tensor_ref& tr);
@@ -660,9 +662,9 @@ namespace bgeot {
     }
     stride_type mean_increm; /* valeur moyenne de l'increment (utilisé pour le tri) */
     tensor_strides inc; /* not strides but increments to the next index value,
-				     with inc[range-1] == -sum(inc[0..range-2]) (automatic rewinding!) 
-				     of course, stride_type MUST be signed
-				  */
+                           with inc[range-1] == -sum(inc[0..range-2]) (automatic rewinding!)
+                           of course, stride_type MUST be signed
+                        */
     std::bitset<32> have_regular_strides;
   };
 
@@ -681,24 +683,24 @@ namespace bgeot {
     struct  index_value_data {
       dim_type cnt_num;
       const stride_type **ppinc; /* pointe vers pr[cnt_num].pinc, initialisé par rewind()
-				  et pas avant (à cause de pbs lors de la copie de multi_tensor_iterator sinon)
-				  permet de déduire la valeur du compteur: (*ppinc - pincbase) (à diviser par nn=(pri[cnt_num].n-N))
-			       */
+                                    et pas avant (à cause de pbs lors de la copie de multi_tensor_iterator sinon)
+                                    permet de déduire la valeur du compteur: (*ppinc - pincbase) (à diviser par nn=(pri[cnt_num].n-N))
+                                 */
       const stride_type *pincbase;
       const stride_type *pposbase; /* pointe dans pri[cnt_num].mask_pos, retrouve la position dans le masque en fonction
-				  du compteur déduit ci-dessus et des champs div et mod ci-dessous */
+                                      du compteur déduit ci-dessus et des champs div et mod ci-dessous */
       index_type div, mod, nn;
       stride_type pos_; /* stores the position when the indexe is not part of the pri array
-			  (hence the index only has 1 value, and ppos == &pos_, and pcnt = &zero */
+                           (hence the index only has 1 value, and ppos == &pos_, and pcnt = &zero */
     };
     std::vector<index_value_data> idxval;
     std::vector<stride_type> vectorized_strides_; /* if the tensor have regular strides, the mti might be vectorizable */
-    index_type vectorized_size_;                 /* the size of each vectorizable chunk */
-    index_type vectorized_pr_dim;                /* all pr[i], i >= vectorized_pr_dim, can be accessed via vectorized_strides */
+    index_type vectorized_size_;                  /* the size of each vectorizable chunk */
+    index_type vectorized_pr_dim;                 /* all pr[i], i >= vectorized_pr_dim, can be accessed via vectorized_strides */
   public:
-    void clear() { 
-      N = 0; pr.clear(); pri.clear(); bloc_rank.clear(); bloc_nelt.clear(); 
-      it.clear(); pit0.clear(); itbase.clear(); idxval.clear(); 
+    void clear() {
+      N = 0; pr.clear(); pri.clear(); bloc_rank.clear(); bloc_nelt.clear();
+      it.clear(); pit0.clear(); itbase.clear(); idxval.clear();
     }
     void swap(multi_tensor_iterator& m) {
       std::swap(N,m.N);  pr.swap(m.pr);  pri.swap(m.pri);
@@ -706,24 +708,26 @@ namespace bgeot {
       it.swap(m.it); pit0.swap(m.pit0); itbase.swap(m.itbase);
       idxval.swap(m.idxval);
     }
-    void rewind() { 
-      for (dim_type i=0; i < pr.size(); ++i) { 
-	pr[i].pinc = pr[i].begin = &pri[i].inc[0]; pr[i].end = pr[i].begin+pri[i].inc.size(); 
+    void rewind() {
+      for (dim_type i=0; i < pr.size(); ++i) {
+        pr[i].pinc = pr[i].begin = &pri[i].inc[0];
+        pr[i].end = pr[i].begin+pri[i].inc.size();
       }
-      for (dim_type n=0; n < N; ++n) it[n] = *(pit0[n]) + itbase[n];
+      for (dim_type n=0; n < N; ++n)
+        it[n] = *(pit0[n]) + itbase[n];
       for (dim_type i=0; i < idxval.size(); ++i) {
-	if (idxval[i].cnt_num != dim_type(-1)) {
-	  idxval[i].ppinc = &pr[idxval[i].cnt_num].pinc;
-	  idxval[i].pincbase = &pri[idxval[i].cnt_num].inc[0];
-	  idxval[i].pposbase = &pri[idxval[i].cnt_num].mask_pos[0];
-	  idxval[i].nn = (N-pri[idxval[i].cnt_num].n);
-	} else {
-	  static const stride_type *null=0;
-	  idxval[i].ppinc = &null;
-	  idxval[i].pincbase = 0;
-	  idxval[i].pposbase = &idxval[i].pos_;
-	  idxval[i].nn = 1;
-	}
+        if (idxval[i].cnt_num != dim_type(-1)) {
+          idxval[i].ppinc = &pr[idxval[i].cnt_num].pinc;
+          idxval[i].pincbase = &pri[idxval[i].cnt_num].inc[0];
+          idxval[i].pposbase = &pri[idxval[i].cnt_num].mask_pos[0];
+          idxval[i].nn = (N-pri[idxval[i].cnt_num].n);
+        } else {
+          static const stride_type *null=0;
+          idxval[i].ppinc = &null;
+          idxval[i].pincbase = 0;
+          idxval[i].pposbase = &idxval[i].pos_;
+          idxval[i].nn = 1;
+        }
       }
     }
     dim_type ndim() const { return dim_type(idxval.size()); }
@@ -738,15 +742,16 @@ namespace bgeot {
     bool next(unsigned i_stop = unsigned(-1), unsigned i0_ = unsigned(-2)) {//=pr.size()-1) {
       unsigned i0 = unsigned(i0_ == unsigned(-2) ? pr.size()-1 : i0_);
       while (i0 != i_stop) {
-	for (unsigned n = pr[i0].n; n < N; ++n) {
-	  //	  index_type pos = pr[i0].cnt * (N-pri[i0].n) + (n - pri[i0].n);
-	  it[n] += *pr[i0].pinc; pr[i0].pinc++; 
-	}
-	if (pr[i0].pinc != pr[i0].end) {
-	  return true;
-	} else {
-	  pr[i0].pinc = pr[i0].begin; i0--;
-	}
+        for (unsigned n = pr[i0].n; n < N; ++n) {
+          //  index_type pos = pr[i0].cnt * (N-pri[i0].n) + (n - pri[i0].n);
+          it[n] += *pr[i0].pinc; pr[i0].pinc++;
+        }
+        if (pr[i0].pinc != pr[i0].end) {
+          return true;
+        } else {
+          pr[i0].pinc = pr[i0].begin;
+          i0--;
+        }
       }
       return false;
     }
@@ -759,27 +764,29 @@ namespace bgeot {
       if (pr.size() == 0) return false;
       std::vector<packed_range>::reverse_iterator p_ = pr.rbegin();
      while (p_!=pr.rend()) {
-	it[0] += *(p_->pinc++);
-	if (p_->pinc != p_->end) {
-	  return true;
-	} else {
-	  p_->pinc = p_->begin; p_++;
-	}
+        it[0] += *(p_->pinc++);
+        if (p_->pinc != p_->end) {
+          return true;
+        } else {
+          p_->pinc = p_->begin;
+          p_++;
+        }
       }
       return false;
     }
 
-    bool qnext2() { 
+    bool qnext2() {
       if (pr.size() == 0) return false;
       std::vector<packed_range>::reverse_iterator p_ = pr.rbegin();
       while (p_!=pr.rend()) {
-	it[0] += *(p_->pinc++);
-	it[1] += *(p_->pinc++);
-	if (p_->pinc != p_->end) {
-	  return true;
-	} else {
-	  p_->pinc = p_->begin; p_++;
-	}
+        it[0] += *(p_->pinc++);
+        it[1] += *(p_->pinc++);
+        if (p_->pinc != p_->end) {
+          return true;
+        } else {
+          p_->pinc = p_->begin;
+          p_++;
+        }
       }
       return false;
     }
@@ -802,8 +809,8 @@ namespace bgeot {
       multi_tensor_iterator m(tr0, with_index_values);
       swap(m);
     }
-    multi_tensor_iterator(const tensor_ref& tr0, 
-			  const tensor_ref& tr1,  bool with_index_values) {
+    multi_tensor_iterator(const tensor_ref& tr0,
+                          const tensor_ref& tr1,  bool with_index_values) {
       std::vector<tensor_ref> trtab(2); trtab[0] = tr0; trtab[1] = tr1;
       init(trtab, with_index_values);
     }
@@ -811,9 +818,9 @@ namespace bgeot {
       multi_tensor_iterator m(tr0, tr1, with_index_values);
       swap(m);
     }
-    multi_tensor_iterator(const tensor_ref& tr0, 
-			  const tensor_ref& tr1, 
-			  const tensor_ref& tr2, bool with_index_values) {
+    multi_tensor_iterator(const tensor_ref& tr0,
+                          const tensor_ref& tr1,
+                          const tensor_ref& tr2, bool with_index_values) {
       std::vector<tensor_ref> trtab(3); trtab[0] = tr0; trtab[1] = tr1; trtab[2] = tr2;
       init(trtab, with_index_values);
     }
@@ -828,9 +835,9 @@ namespace bgeot {
 
   /* handles a tree of reductions
      The tree is used if more than two tensors are reduced, i.e.
-       z(:,:)=t(:,i).u(i,j).v(j,:) 
+       z(:,:)=t(:,i).u(i,j).v(j,:)
      in that case, the reduction against j can be performed on u(:,j).v(j,:) = w(:,:)
-     and then, z(:,:) = t(:,i).w(i,:) 
+     and then, z(:,:) = t(:,i).w(i,:)
   */
   struct tensor_reduction {
     struct tref_or_reduction {
@@ -838,24 +845,24 @@ namespace bgeot {
       std::shared_ptr<tensor_reduction> reduction;
       tensor_ref &tr() { return tr_; }
       const tensor_ref &tr() const { return tr_; }
-      explicit tref_or_reduction(const tensor_ref &tr__, const std::string& s) 
-	: tr_(tr__), ridx(s) {}
-      explicit tref_or_reduction(const std::shared_ptr<tensor_reduction> &p, const std::string& s) 
-	: reduction(p), ridx(s) {
-	reduction->result(tr_);
+      explicit tref_or_reduction(const tensor_ref &tr__, const std::string& s)
+        : tr_(tr__), ridx(s) {}
+      explicit tref_or_reduction(const std::shared_ptr<tensor_reduction> &p, const std::string& s)
+        : reduction(p), ridx(s) {
+        reduction->result(tr_);
       }
       bool is_reduction() const { return reduction != 0; }
       void swap(tref_or_reduction &other) { tr_.swap(other.tr_); std::swap(reduction, other.reduction); }
       std::string ridx;      /* reduction indexes, no index can appear
-			      twice in the same tensor */
+                                twice in the same tensor */
       std::vector<dim_type> gdim; /* mapping to the global virtual
-				     tensor whose range is the
-				     union of the ranges of each
-				     reduced tensor */
+                                     tensor whose range is the
+                                     union of the ranges of each
+                                     reduced tensor */
       std::vector<dim_type> rdim; /* mapping to the dimensions of the
-				     reduced tensor ( = dim_type(-1) for
-				     dimensions i s.t. ridx[i] != ' ' ) */
-				     
+                                     reduced tensor ( = dim_type(-1) for
+                                     dimensions i s.t. ridx[i] != ' ' ) */
+
     };
     tensor_ranges reduced_range;
     std::string reduction_chars; /* list of all indexes used for reduction */
@@ -877,10 +884,9 @@ namespace bgeot {
     */
     static void diag_shape(tensor_shape& ts, const std::string& s) {
       for (index_type i=0; i < s.length(); ++i) {
-	size_type pos = s.find(s[i]);
-	if (s[i] != ' ' && pos != i) { // ce n'est pas de l'indice => reduction sur la diagonale
-	  ts = ts.diag_shape(tensor_mask::Diagonal(dim_type(pos),dim_type(i)));
-	}
+        size_type pos = s.find(s[i]);
+        if (s[i] != ' ' && pos != i) // ce n'est pas de l'indice => reduction sur la diagonale
+          ts = ts.diag_shape(tensor_mask::Diagonal(dim_type(pos),dim_type(i)));
       }
     }
 

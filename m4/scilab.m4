@@ -27,19 +27,19 @@ AC_DEFUN([AC_CHECK_SCILAB],
    esac],[usescilab=NO])
 
   AC_ARG_WITH(scilab_prefix,
-		AC_HELP_STRING([--with-scilab-prefix=DIR],[Set the path to Scilab]),
+		AS_HELP_STRING([--with-scilab-prefix=DIR],[Set the path to Scilab]),
 		[with_scilab_prefix=$withval],
 		[with_scilab_prefix='yes']
 		)
 
   AC_ARG_WITH(scilab_version,
-		AC_HELP_STRING([--with-scilab-version="major.minor.micro"],[Set the required Scilab version]),
+		AS_HELP_STRING([--with-scilab-version="major.minor.micro"],[Set the required Scilab version]),
 		[with_scilab_version=$withval],
 		[with_scilab_version='yes']
 		)
 
   AC_ARG_WITH(scilab_toolbox_dir,
-		AC_HELP_STRING([--with-scilab-toolbox-dir=DIR],[Set the path to the toolbox installation directory]),
+		AS_HELP_STRING([--with-scilab-toolbox-dir=DIR],[Set the path to the toolbox installation directory]),
 		[with_scilab_toolbox_dir=$withval],
 		[with_scilab_toolbox_dir='yes']
 		)

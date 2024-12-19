@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 1999-2023 Yves Renard
+ Copyright (C) 1999-2024 Yves Renard
 
  This file is a part of GetFEM
 
@@ -4089,98 +4089,152 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*    Morley element on the triangle                                    */
+  /*    Morley element on the triangle and tetrahedron                    */
   /* ******************************************************************** */
 
-  struct morley_triangle__ : public fem<base_poly> {
+  struct morley_element__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
                            bgeot::pgeometric_trans pgt) const;
-    morley_triangle__();
+    morley_element__(dim_type);
   };
 
-  void morley_triangle__::mat_trans(base_matrix &M,
+  void morley_element__::mat_trans(base_matrix &M,
                                     const base_matrix &G,
                                     bgeot::pgeometric_trans pgt) const {
 
     THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
     THREAD_SAFE_STATIC pfem_precomp pfp;
     THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
-    THREAD_SAFE_STATIC base_matrix K(2, 2);
+    dim_type n = dim();
     dim_type N = dim_type(G.nrows());
-    GMM_ASSERT1(N == 2, "Sorry, this version of morley "
-                "element works only on dimension two.")
+    size_type nddl = base_.size();
+    GMM_ASSERT1(N == n, "Sorry, this version of morley "
+                "element works only for indentical dimensions.")
 
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
-      pfp = fem_precomp(std::make_shared<morley_triangle__>(), node_tab(0), 0);
+      pfp = fem_precomp(std::make_shared<morley_element__>(n), node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
-    THREAD_SAFE_STATIC base_matrix W(3, 6);
-    base_small_vector norient(M_PI, M_PI * M_PI);
+
+    THREAD_SAFE_STATIC base_matrix W(n+1, nddl);
+    dim_type nfd = (n == 2) ? 3 : 6;
+    
+    base_matrix K(n, n);
+    base_small_vector norient(n);
+    norient[0] = M_PI;
+    for (dim_type i = 1; i < n; ++i)
+      norient[i] = M_PI * norient[i-1];
     if (pgt->is_linear())
       { gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K); }
-    for (unsigned i = 3; i < 6; ++i) {
+    for (unsigned i = nfd; i < nddl; ++i) {
       if (!(pgt->is_linear()))
         { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
-      bgeot::base_small_vector n(2), v(2);
-      gmm::mult(gmm::transposed(K), cvr->normals()[i-3], n);
-      n /= gmm::vect_norm2(n);
+      bgeot::base_small_vector nn(n), v(n);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i-nfd], nn);
+      nn /= gmm::vect_norm2(nn);
 
-      scalar_type ps = gmm::vect_sp(n, norient);
-      if (ps < 0) n *= scalar_type(-1);
+      scalar_type ps = gmm::vect_sp(nn, norient);
+      if (ps < 0) nn *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
         GMM_WARNING2("Morley : The normal orientation may be incorrect");
-      gmm::mult(K, n, v);
+      gmm::mult(K, nn, v);
       const bgeot::base_tensor &t = pfp->grad(i);
-      for (unsigned j = 0; j < 6; ++j)
-        W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+      for (unsigned j = 0; j < nddl; ++j)
+        if (n == 2)
+          W(i-nfd, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+        else
+          W(i-nfd, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1] + t(j, 0, 2)*v[2];
     }
 
-    THREAD_SAFE_STATIC base_matrix A(3, 3);
-    THREAD_SAFE_STATIC base_vector w(3);
-    THREAD_SAFE_STATIC base_vector coeff(3);
-    THREAD_SAFE_STATIC gmm::sub_interval SUBI(3, 3);
-    THREAD_SAFE_STATIC gmm::sub_interval SUBJ(0, 3);
+    base_matrix A(n+1, n+1);
+    base_vector w(n+1);
+    base_vector coeff(n+1);
+    gmm::sub_interval SUBI(nfd, n+1);
+    gmm::sub_interval SUBJ(0, n+1);
     gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
     gmm::lu_inverse(A);
     gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
 
-    for (unsigned j = 0; j < 3; ++j) {
+    for (unsigned j = 0; j < nfd; ++j) {
       gmm::mult(W, gmm::mat_row(M, j), w);
       gmm::mult(A, gmm::scaled(w, -1.0), coeff);
       gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
     }
   }
 
-  morley_triangle__::morley_triangle__() {
-    cvr = bgeot::simplex_of_reference(2);
+  morley_element__::morley_element__(dim_type n) {
+    cvr = bgeot::simplex_of_reference(n);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
     es_degree = 2;
     is_pol = true;
     is_standard_fem = is_lag = is_equiv = false;
-    base_.resize(6);
 
-    std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
-                        "(x + y - x^2 - 2*x*y + y^2)/2;"
-                        "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
+    if (n == 2) {
+      base_.resize(6);
 
-    for (unsigned k = 0; k < 6; ++k)
-      base_[k] = read_base_poly(2, s);
+      std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
+                          "(x + y - x^2 - 2*x*y + y^2)/2;"
+                          "((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
 
-    add_node(lagrange_dof(2), base_node(0.0, 0.0));
-    add_node(lagrange_dof(2), base_node(1.0, 0.0));
-    add_node(lagrange_dof(2), base_node(0.0, 1.0));
-    add_node(normal_derivative_dof(2), base_node(0.5, 0.5));
-    add_node(normal_derivative_dof(2), base_node(0.0, 0.5));
-    add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
+      for (unsigned k = 0; k < 6; ++k)
+        base_[k] = read_base_poly(2, s);
+
+      add_node(lagrange_dof(2), base_node(0.0, 0.0));
+      add_node(lagrange_dof(2), base_node(1.0, 0.0));
+      add_node(lagrange_dof(2), base_node(0.0, 1.0));
+      add_node(normal_derivative_dof(2), base_node(0.5, 0.5));
+      add_node(normal_derivative_dof(2), base_node(0.0, 0.5));
+      add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
+    } else {
+      base_.resize(10);
+
+      std::stringstream s
+        ("5/3 - 16/9*x - 28/9*y - 28/9*z + 8/9*x^2 + 8/3*x*y + 8/3*x*z"
+         " - 4/9*y^2 + 20/3*y*z - 4/9*z^2;"
+         "5/3 - 28/9*x - 16/9*y - 28/9*z - 4/9*x^2 + 8/3*x*y + 20/3*x*z"
+         " + 8/9*y^2 + 8/3*y*z - 4/9*z^2;"
+         "5/3 - 28/9*x - 28/9*y - 16/9*z - 4/9*x^2 + 20/3*x*y + 8/3*x*z"
+         " - 4/9*y^2 + 8/3*y*z + 8/9*z^2;"
+         "-4/3 + 20/9*x + 20/9*y + 32/9*z + 8/9*x^2 - 4/3*x*y - 16/3*x*z"
+         " + 8/9*y^2 - 16/3*y*z - 16/9*z^2;"
+         "-4/3 + 20/9*x + 32/9*y + 20/9*z + 8/9*x^2 - 16/3*x*y - 4/3*x*z"
+         " - 16/9*y^2 - 16/3*y*z + 8/9*z^2;"
+         "-4/3 + 32/9*x + 20/9*y + 20/9*z - 16/9*x^2 - 16/3*x*y - 16/3*x*z"
+         " + 8/9*y^2 - 4/3*y*z + 8/9*z^2;"
+         "sqrt(3)*(3/8 - x - y - z + 1/2*x^2 + 3/2*x*y + 3/2*x*z + 1/2*y^2"
+         " + 3/2*y*z + 1/2*z^2);"
+         "-1/8 - 2/3*x + 1/3*y + 1/3*z + 11/6*x^2 - 1/2*x*y - 1/2*x*z"
+         " - 1/6*y^2 - 1/2*y*z - 1/6*z^2;"
+         "-1/8 + 1/3*x - 2/3*y + 1/3*z - 1/6*x^2 - 1/2*x*y - 1/2*x*z"
+         " + 11/6*y^2 - 1/2*y*z - 1/6*z^2;"
+         "-1/8 + 1/3*x + 1/3*y - 2/3*z - 1/6*x^2 - 1/2*x*y - 1/2*x*z"
+         " - 1/6*y^2 - 1/2*y*z + 11/6*z^2;");
+      
+      for (unsigned k = 0; k < 10; ++k)
+        base_[k] = read_base_poly(3, s);
+
+      add_node(lagrange_dof(3), base_node(0.5, 0.0, 0.0));
+      add_node(lagrange_dof(3), base_node(0.0, 0.5, 0.0));
+      add_node(lagrange_dof(3), base_node(0.0, 0.0, 0.5));
+      add_node(lagrange_dof(3), base_node(0.5, 0.5, 0.0));
+      add_node(lagrange_dof(3), base_node(0.5, 0.0, 0.5));
+      add_node(lagrange_dof(3), base_node(0.0, 0.5, 0.5));
+      add_node(normal_derivative_dof(3), base_node(1./3., 1./3., 1./3.));
+      add_node(normal_derivative_dof(3), base_node(0.0, 1./3., 1./3.));
+      add_node(normal_derivative_dof(3), base_node(1./3., 0.0, 1./3.));
+      add_node(normal_derivative_dof(3), base_node(1./3., 1./3., 0.0));
+    }
   }
 
-  static pfem triangle_Morley_fem(fem_param_list &params,
+  static pfem element_Morley_fem(fem_param_list &params,
         std::vector<dal::pstatic_stored_object> &dependencies) {
-    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
-    pfem p = std::make_shared<morley_triangle__>();
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters");
+    int n = dim_type(::floor(params[0].num() + 0.01));
+    GMM_ASSERT1(n > 0 && n < 4, "Bad parameters");
+    pfem p = std::make_shared<morley_element__>(dim_type(n));
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -4547,7 +4601,7 @@ namespace getfem {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE", Hermite_fem);
       add_suffix("ARGYRIS", triangle_Argyris_fem);
-      add_suffix("MORLEY", triangle_Morley_fem);
+      add_suffix("MORLEY", element_Morley_fem);
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);

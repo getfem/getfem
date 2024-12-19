@@ -23,12 +23,13 @@ EXTRA_DIST = \
 check_PROGRAMS = 
 
 if BUILDPYTHON
+if LAPACK
 TESTS = plasticity_fin_strain_lin_hardening_plane_strain.py
-
+endif
 AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH=$(top_builddir)/interface/src/python; \
 	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
 LOG_COMPILER = $(PYTHON)
 endif
 
-CLEANFILES = *.vtk results/* __pycache__/*
+CLEANFILES = *.vtu results/* __pycache__/*

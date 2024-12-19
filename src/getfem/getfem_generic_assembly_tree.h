@@ -32,7 +32,7 @@
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @date   November 18, 2013.
     @brief  Definition of the syntax tree and basic operations on it.
-            Internal header for the generic assembly language part. 
+            Internal header for the generic assembly language part.
  */
 
 
@@ -212,7 +212,7 @@ namespace getfem {
     ga_throw_error_msg(expr, pos, ss.str());          \
     GMM_ASSERT1(false, "Error in assembly string" );  \
   }
-  
+
   // Structure for the tensor associated with a tree node
   struct assembly_tensor {
     bool is_copied;
@@ -221,14 +221,8 @@ namespace getfem {
     base_tensor t;
     assembly_tensor *tensor_copied;
 
-    const base_tensor &org_tensor() const
-    { return is_copied ? tensor_copied->org_tensor() : t; }
-    base_tensor &org_tensor()
-    { return is_copied ? tensor_copied->org_tensor() : t; }
-
     const base_tensor &tensor() const
     { return (is_copied ? tensor_copied->tensor() : t); }
-
     base_tensor &tensor()
     { return (is_copied ? tensor_copied->tensor() : t); }
 
@@ -241,9 +235,10 @@ namespace getfem {
     { return is_copied ? tensor_copied->sparsity() : sparsity_; }
 
     inline void set_to_original() { is_copied = false; }
+
     inline void set_to_copy(assembly_tensor &t_) {
       is_copied = true; sparsity_ = t_.sparsity_; qdim_ = t_.qdim_;
-      t = t_.org_tensor(); tensor_copied = &(t_);
+      t = t_.tensor(); tensor_copied = &(t_);
     }
 
     inline void adjust_sizes(const bgeot::multi_index &ssizes)
@@ -305,7 +300,7 @@ namespace getfem {
   struct ga_tree_node;
   typedef ga_tree_node *pga_tree_node;
 
-  
+
   struct ga_tree_node {
     GA_NODE_TYPE node_type;
     GA_TOKEN_TYPE op_type;
@@ -331,7 +326,7 @@ namespace getfem {
     std::string elementary_name;  // For Elementary_transformation :
                                   // name of transformation
     std::string elementary_target;// For Elementary_transformation :
-                                  // target variable (for its mesh_fem) 
+                                  // target variable (for its mesh_fem)
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     bool symmetric_op;
@@ -358,7 +353,7 @@ namespace getfem {
     }
 
     inline size_type tensor_proper_size() const
-    { return t.org_tensor().size() / tensor_test_size(); }
+    { return t.tensor().size() / tensor_test_size(); }
 
     inline size_type tensor_proper_size(size_type i) const
     { return t.sizes()[nb_test_functions()+i]; }
@@ -378,7 +373,7 @@ namespace getfem {
       return (node_type == GA_NODE_CONSTANT ||
               (node_type == GA_NODE_ZERO && test_function_type == 0));
     }
-    
+
     inline void init_scalar_tensor(scalar_type v)
     { t.init_scalar_tensor(v); test_function_type = 0; }
 

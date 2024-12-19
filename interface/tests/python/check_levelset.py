@@ -27,7 +27,6 @@
   $Id$
 """
 import numpy as np
-from scipy import rand
 
 import getfem as gf
 
