@@ -67,11 +67,11 @@ fi
 if [ "$do_mrproper" != 0 ]; then
   mkdir -p /tmp/toto00
   cd /tmp/toto00 || die "arg"
-  rsync --delete  -rlptDv --rsh="ssh" "." "$me@download.savannah.nongnu.org:/releases/getfem/doc/"
+  rsync --delete  -rtv --rsh="ssh" "." "$me@dl.sv.nongnu.org:/releases/getfem/doc/"
 fi
 
 if [ "$f" != "" ]; then
-  echo "uploading directory $f to download.savannah.nongnu.org:/releases/getfem/doc/"
+  echo "uploading directory $f to dl.sv.nongnu.org:/releases/getfem/doc/"
   chmod -R a+rw $f
-  rsync $options  -rlptDv --rsh="ssh" "$f" "$me@download.savannah.nongnu.org:/releases/getfem/doc/"
+  rsync $options  -rtv --rsh="ssh" "$f" "$me@dl.sv.nongnu.org:/releases/getfem/doc/"
 fi

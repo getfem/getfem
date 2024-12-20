@@ -69,7 +69,7 @@ fi
 if [ "$do_mrproper" != 0 ]; then
   mkdir -p /tmp/toto00
   cd /tmp/toto00 || die "arg"
-  rsync --delete  -rlptDv --rsh="ssh" "." "$me@download.savannah.nongnu.org:/releases/getfem/$where/"
+  rsync --delete  -rtv --rsh="ssh" "." "$me@dl.sv.nongnu.org:/releases/getfem/$where/"
   # rsync --delete  -rlptDv --rsh="ssh" "." "getfe806916@ftp.getfem.org:/$where/"
   rm -rf /tmp/toto00
 fi
