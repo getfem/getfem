@@ -23,7 +23,6 @@
 //
 
 lines(0);
-stacksize('max');
 
 path = get_absolute_file_path('demo_structural_optimization.sce');
 

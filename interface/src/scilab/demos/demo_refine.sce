@@ -20,7 +20,6 @@
 // transition between the Dirichlet and the Neumann boundary.
 
 lines(0);
-stacksize('max');
 
 path = get_absolute_file_path('demo_refine.sce');
 

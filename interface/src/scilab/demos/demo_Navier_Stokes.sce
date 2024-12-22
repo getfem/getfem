@@ -25,7 +25,6 @@
 //
 
 lines(0);
-stacksize('max');
 
 if getos()=='Windows' then
   // Under Windows, all the trace messages are available in the dos console

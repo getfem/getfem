@@ -16,7 +16,6 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 lines(0);
-stacksize('max');
 
 if getos()=='Windows' then
   // Under Windows, all the trace messages are available in the dos console

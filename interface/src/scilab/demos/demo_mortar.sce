@@ -20,7 +20,6 @@
 // the interface between the two areas
 
 lines(0);
-stacksize('max');
 
 path = get_absolute_file_path('demo_mortar.sce');
 

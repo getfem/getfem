@@ -6,6 +6,8 @@
 
 sci_getfem_path = get_absolute_file_path('builder_gateway_c.sce');
 getfem_path = '@GETFEM_INTERFACE_PATH@';
+superlu_libs = '@SUPERLU_LIBS@';
+mumps_libs = '@MUMPS_LIBS@'
 
 // Functions extracted from getfem_interface.cc
 
@@ -117,7 +119,7 @@ else
   cflags = cflags + ' -I' + SCI + '/../../include/scilab'; // For the binary distribution
   cflags = cflags + ' -D__USE_DEPRECATED_STACK_FUNCTIONS__';
   
-  ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
+  ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a ' + superlu_libs + ' ' + mumps_libs;
 end
 
 if ~isempty('@QHULL_LIBS@') & getos()~='Windows' then

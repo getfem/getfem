@@ -21,7 +21,6 @@ printf('Instead it shows how the linear system is built with direct calls\n')
 printf('to the assembly routines.\n')
 
 lines(0);
-stacksize('max');
 
 path = get_absolute_file_path('demo_tripod_alt.sce');
 
