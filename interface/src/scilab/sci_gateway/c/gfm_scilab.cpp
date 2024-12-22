@@ -146,7 +146,7 @@ extern "C" int sci_gf_scilab(char * fname, StrCtx *_pvApiCtx)
 
   pvApiCtx = _pvApiCtx;
    
-  sciprint("sci_gf_scilab: Rhs = %d Lhs = %d\n", Rhs, Lhs);
+  // sciprint("sci_gf_scilab: Rhs = %d Lhs = %d\n", Rhs, Lhs);
 
   ptr_param = (int **)MALLOC((Rhs+1)*sizeof(int *));
   for(i=1;i<=Rhs;i++)
