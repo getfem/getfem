@@ -788,7 +788,7 @@ int main(int argc, char *argv[]) {
   //cout << "nb_dof_mult = " << mf_mult.nb_dof() << endl;
   gmm::range_basis(BRBB, cols, 1e-12);
   mf_mult.reduce_to_basic_dof(cols);
-  // penser à l'optimisation sur les mailles ...
+  // penser Ã  l'optimisation sur les mailles ...
 
 
   // kept_dof_mult = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
@@ -1055,9 +1055,13 @@ int main(int argc, char *argv[]) {
       plain_vector BE(mf.nb_basic_dof()), BS(mf.nb_basic_dof()), BBS(nb_dof);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i) {
         BE[i] = scalar_type(1);
+#if defined(GMM_USES_SUPERLU)
         // TODO: store LU decomp.
         double rcond;
         gmm::SuperLU_solve(EO, BS, BE, rcond);
+#else
+        gmm::MUMPS_solve(EO, BS, BE);
+#endif
         gmm::mult(gmm::transposed(mf.extension_matrix()), BS, BBS);
         gmm::mult(gmm::transposed(T1), BBS, gmm::mat_row(E1, i));
         BE[i] = scalar_type(0);
