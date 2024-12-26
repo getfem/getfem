@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: UTF8 -*-
+# -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
 # Copyright (C) 2020-2023 Konstantinos Poulios.
@@ -51,7 +51,8 @@ pl_sigma_0 = 5e2    # Initial yield stress
 pl_H = 21e1         # Plastic modulus (0.1% of E)
 
 disp = 8.           # maximum displacement
-steps_t = 200       # number of load steps for increasing the load
+# steps_t = 200       # number of load steps for increasing the load
+steps_t = 50       # number of load steps for increasing the load
 
 #------------------------------------
 geotrans = "GT_QK(2,2)"  # geometric transformation
@@ -190,7 +191,7 @@ md.add_nonlinear_term(mim, "(disp-u(1))*dirmult", XP_RG)
 print(f"Model dofs: {md.nbdof()}\nDisplacement fem dofs: {mfu.nbdof()}")
 print("Dirichlet mult dofs: %i" % md.mesh_fem_of_variable("dirmult").nbdof())
 
-shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
+#shutil.copyfile(os.path.abspath(sys.argv[0]),resultspath+"/"+sys.argv[0])
 starttime_overall = time.process_time()
 with open(f"{resultspath}/tension_plane_strain.dat", "w") as f1:
    for step in range(steps_t+1):
