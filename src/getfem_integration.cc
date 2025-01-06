@@ -564,18 +564,16 @@ namespace getfem {
     size_type R = bgeot::alpha(nc,k);
 
     base_node c(nc);
-    if (nc == 0) {
+    if (nc == 0)
       add_point(c, scalar_type(1));
-    }
     else {
-
       std::stringstream name;
       name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
       ppoly_integration ppi = int_method_descriptor(name.str())->exact_method();
 
-      size_type sum = 0, l;
       c.fill(scalar_type(0.0));
-      if (k == 0) c.fill(1.0 / scalar_type(nc+1));
+      if (k == 0)
+        c.fill(1.0 / scalar_type(nc+1));
 
       gmm::dense_matrix<long_scalar_type> M(R, R);
       std::vector<long_scalar_type> F(R), U(R);
@@ -584,18 +582,28 @@ namespace getfem {
 
       bgeot::power_index pi(nc);
 
-      for (size_type r = 0; r < R; ++r, ++pi) {
-        base[r] = pi; nodes[r] = c;
-        if (k != 0 && nc > 0) {
-          l = 0; c[l] += 1.0 / scalar_type(k); sum++;
+      size_type sum = 0;
+      if (k != 0 && nc > 0)
+        for (size_type r = 0; r < R; ++r, ++pi) {
+          base[r] = pi;
+          nodes[r] = c;
+          size_type l = 0;
+          c[l] += 1.0 / scalar_type(k);
+          sum++;
           while (sum > k) {
             sum -= int(floor(0.5+(c[l] * k)));
-            c[l] = 0.0; l++; if (l == nc) break;
-            c[l] += 1.0 / scalar_type(k); sum++;
+            c[l++] = 0.0;
+            if (l == nc)
+              break;
+            c[l] += 1.0 / scalar_type(k);
+            sum++;
           }
         }
-      }
-
+      else // not sure if the following loop is really necessary
+        for (size_type r = 0; r < R; ++r, ++pi) {
+          base[r] = pi;
+          nodes[r] = c;
+        }
 //       if (nc == 1) {
 //         M = bgeot::vsmatrix<long_scalar_type>((R+1)/2, (R+1)/2);
 //         U = F = bgeot::vsvector<long_scalar_type>((R+1)/2);
