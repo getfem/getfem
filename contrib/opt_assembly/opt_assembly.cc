@@ -77,9 +77,9 @@ struct chrono {
 public:
   chrono() { }
   void init() { cpu_=0; }
-  void tic() { t = float(::clock())/float(CLOCKS_PER_SEC); }
+  void tic() { t = float(gmm::uclock_sec()); }
   void toc() {
-    float t2 = float(::clock())/float(CLOCKS_PER_SEC);
+    float t2 = float(gmm::uclock_sec());
     cpu_ += t2 - t; t = t2;
   }
   float cpu() const { return cpu_; }
