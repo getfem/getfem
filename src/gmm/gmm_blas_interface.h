@@ -165,22 +165,22 @@ namespace gmm {
   extern "C" {
     void daxpy_(const BLAS_INT *n, const double *alpha, const double *x,
                 const BLAS_INT *incx, double *y, const BLAS_INT *incy);
+    void saxpy_(...); /*void daxpy_(...);*/ void caxpy_(...); void zaxpy_(...);
     void dgemm_(const char *tA, const char *tB, const BLAS_INT *m,
-                const BLAS_INT *n, const BLAS_INT *k, const double *alpha,
-                const double *A, const BLAS_INT *ldA, const double *B,
-                const BLAS_INT *ldB, const double *beta, double *C,
+                const BLAS_INT *n, const BLAS_INT *k, const BLAS_D *alpha,
+                const BLAS_D *A, const BLAS_INT *ldA, const BLAS_D *B,
+                const BLAS_INT *ldB, const BLAS_D *beta, BLAS_D *C,
                 const BLAS_INT *ldC);
-    void sgemm_(...); void cgemm_(...); void zgemm_(...);
+    void sgemm_(...); /*void dgemm_(...);*/ void cgemm_(...); void zgemm_(...);
     void sgemv_(...); void dgemv_(...); void cgemv_(...); void zgemv_(...);
     void strsv_(...); void dtrsv_(...); void ctrsv_(...); void ztrsv_(...);
-    void saxpy_(...); /*void daxpy_(...); */void caxpy_(...); void zaxpy_(...);
     BLAS_S sdot_ (...); BLAS_D ddot_ (...);
     BLAS_C cdotu_(...); BLAS_Z zdotu_(...);
     // Hermitian product in {c,z}dotc is defined in reverse order than usually
     BLAS_C cdotc_(...); BLAS_Z zdotc_(...);
     BLAS_S snrm2_(...); BLAS_D dnrm2_(...);
     BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
-    void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...);
+    void sger_(...); void dger_(...); void cgerc_(...); void zgerc_(...);
   }
 
 
@@ -914,98 +914,62 @@ namespace gmm {
   /* Tri solve.                                                            */
   /* ********************************************************************* */
 
-# define trsv_interface(f_name, loru, param1, trans1, blas_name, base_type)\
+# define trsv_interface(f_name, LorU, param1, trans1, blas_name, base_type)\
   inline void f_name(param1(base_type), std::vector<base_type> &x,         \
                      size_type k, bool is_unit) {                          \
     GMMLAPACK_TRACE("trsv_interface");                                     \
-    loru; trans1(base_type); char d = is_unit ? 'U' : 'N';                 \
+    const char l = LorU; trans1(base_type); char d = is_unit ? 'U' : 'N';  \
     BLAS_INT lda(BLAS_INT(mat_nrows(A))), inc(1), n = BLAS_INT(k);         \
     if (lda) blas_name(&l, &t, &d, &n, &A(0,0), &lda, &x[0], &inc);        \
   }
 
-# define trsv_upper const char l = 'U'
-# define trsv_lower const char l = 'L'
-
   // X <- LOWER(A)^{-1}X.
-  trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-                 strsv_, BLAS_S)
-  trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-                 dtrsv_, BLAS_D)
-  trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-                 ctrsv_, BLAS_C)
-  trsv_interface(lower_tri_solve, trsv_lower, gem_p1_n, gem_trans1_n,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(lower_tri_solve, 'L', gem_p1_n, gem_trans1_n, strsv_, BLAS_S)
+  trsv_interface(lower_tri_solve, 'L', gem_p1_n, gem_trans1_n, dtrsv_, BLAS_D)
+  trsv_interface(lower_tri_solve, 'L', gem_p1_n, gem_trans1_n, ctrsv_, BLAS_C)
+  trsv_interface(lower_tri_solve, 'L', gem_p1_n, gem_trans1_n, ztrsv_, BLAS_Z)
 
   // X <- UPPER(A)^{-1}X.
-  trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-                 strsv_, BLAS_S)
-  trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-                 dtrsv_, BLAS_D)
-  trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-                 ctrsv_, BLAS_C)
-  trsv_interface(upper_tri_solve, trsv_upper, gem_p1_n, gem_trans1_n,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(upper_tri_solve, 'U', gem_p1_n, gem_trans1_n, strsv_, BLAS_S)
+  trsv_interface(upper_tri_solve, 'U', gem_p1_n, gem_trans1_n, dtrsv_, BLAS_D)
+  trsv_interface(upper_tri_solve, 'U', gem_p1_n, gem_trans1_n, ctrsv_, BLAS_C)
+  trsv_interface(upper_tri_solve, 'U', gem_p1_n, gem_trans1_n, ztrsv_, BLAS_Z)
 
   // X <- LOWER(transposed(A))^{-1}X.
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-                 strsv_, BLAS_S)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-                 dtrsv_, BLAS_D)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-                 ctrsv_, BLAS_C)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_t, gem_trans1_t,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_t, gem_trans1_t, strsv_, BLAS_S)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_t, gem_trans1_t, dtrsv_, BLAS_D)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_t, gem_trans1_t, ctrsv_, BLAS_C)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_t, gem_trans1_t, ztrsv_, BLAS_Z)
 
   // X <- UPPER(transposed(A))^{-1}X.
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-                 strsv_, BLAS_S)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-                 dtrsv_, BLAS_D)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-                 ctrsv_, BLAS_C)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_t, gem_trans1_t,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_t, gem_trans1_t, strsv_, BLAS_S)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_t, gem_trans1_t, dtrsv_, BLAS_D)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_t, gem_trans1_t, ctrsv_, BLAS_C)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_t, gem_trans1_t, ztrsv_, BLAS_Z)
 
   // X <- LOWER(transposed(const A))^{-1}X.
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-                 strsv_, BLAS_S)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-                 dtrsv_, BLAS_D)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-                 ctrsv_, BLAS_C)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_tc, gem_trans1_t,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_tc, gem_trans1_t, strsv_, BLAS_S)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_tc, gem_trans1_t, dtrsv_, BLAS_D)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_tc, gem_trans1_t, ctrsv_, BLAS_C)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_tc, gem_trans1_t, ztrsv_, BLAS_Z)
 
   // X <- UPPER(transposed(const A))^{-1}X.
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-                 strsv_, BLAS_S)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-                 dtrsv_, BLAS_D)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-                 ctrsv_, BLAS_C)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_tc, gem_trans1_t,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_tc, gem_trans1_t, strsv_, BLAS_S)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_tc, gem_trans1_t, dtrsv_, BLAS_D)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_tc, gem_trans1_t, ctrsv_, BLAS_C)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_tc, gem_trans1_t, ztrsv_, BLAS_Z)
 
   // X <- LOWER(conjugated(A))^{-1}X.
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-                 strsv_, BLAS_S)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-                 dtrsv_, BLAS_D)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-                 ctrsv_, BLAS_C)
-  trsv_interface(lower_tri_solve, trsv_upper, gem_p1_c, gem_trans1_c,
-                 ztrsv_, BLAS_Z)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_c, gem_trans1_c, strsv_, BLAS_S)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_c, gem_trans1_c, dtrsv_, BLAS_D)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_c, gem_trans1_c, ctrsv_, BLAS_C)
+  trsv_interface(lower_tri_solve, 'U', gem_p1_c, gem_trans1_c, ztrsv_, BLAS_Z)
 
   // X <- UPPER(conjugated(A))^{-1}X.
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-                 strsv_, BLAS_S)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-                 dtrsv_, BLAS_D)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-                 ctrsv_, BLAS_C)
-  trsv_interface(upper_tri_solve, trsv_lower, gem_p1_c, gem_trans1_c,
-                 ztrsv_, BLAS_Z)
-
+  trsv_interface(upper_tri_solve, 'L', gem_p1_c, gem_trans1_c, strsv_, BLAS_S)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_c, gem_trans1_c, dtrsv_, BLAS_D)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_c, gem_trans1_c, ctrsv_, BLAS_C)
+  trsv_interface(upper_tri_solve, 'L', gem_p1_c, gem_trans1_c, ztrsv_, BLAS_Z)
 }
 
 #endif // GMM_BLAS_INTERFACE_H
