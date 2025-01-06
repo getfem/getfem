@@ -196,40 +196,46 @@ namespace bgeot {
       faces.resize(nbf);
       dir_points_.resize(Nc+1);
 
-      for (int i = 0; i < nbf; i++) {
-        if (KK > 0) {
+      if (KK > 0)
+        for (int i = 0; i < nbf; i++) {
           faces_struct[i] = simplex_structure(dim_type(Nc-1), KK);
           faces[i].resize(faces_struct[i]->nb_points());
         }
-        else {
+      else
+        for (int i = 0; i < nbf; i++) {
           faces_struct[i] = pconvex_structure();
           faces[i].resize(0);
         }
-      }
 
-      base_node c(Nc); c.fill(0.0);
-      std::vector<int> pf(Nc+1); std::fill(pf.begin(), pf.end(), 0);
+      base_node c(Nc);
+      c.fill(0.0);
+      std::vector<int> pf(Nc+1,0);
       size_type l, sum = 0, pd = 0;
-      if (KK == 0) c.fill(scalar_type(1.0) / scalar_type(Nc+1));
+      if (KK == 0)
+        c.fill(scalar_type(1.0) / scalar_type(Nc+1));
       else {
-        for (l = 1; l <= Nc; ++l) (faces[l])[(pf[l])++] = 0;
-        dir_points_[pd++] = 0;
-      }
-
-      for (short_type r = 1; r < nbpt; ++r) {
-        l = 0;
-        c[l] += scalar_type(1.0) / scalar_type(KK); ++sum;
-        while (sum > KK) {
-          sum -= size_type(floor(0.5+(c[l] * KK)));
-          c[l] = 0.0; ++l; c[l] += scalar_type(1.0) / scalar_type(KK);
-          ++sum;
-        }
         for (l = 1; l <= Nc; ++l)
-          if (c[l-1] == scalar_type(0.0)) (faces[l])[(pf[l])++] = r;
-        if (sum == KK) {
-          (faces[0])[(pf[0])++] = r;
-          if (*(std::max_element(c.begin(), c.end())) == scalar_type(1.0))
-            dir_points_[pd++] = r;
+          (faces[l])[(pf[l])++] = 0;
+        dir_points_[pd++] = 0;
+
+        for (short_type r = 1; r < nbpt; ++r) {
+          l = 0;
+          c[l] += scalar_type(1) / scalar_type(KK);
+          ++sum;
+          while (sum > KK) {
+            sum -= size_type(floor(0.5+(c[l] * KK)));
+            c[l] = 0.0; ++l;
+            c[l] += scalar_type(1) / scalar_type(KK);
+            ++sum;
+          }
+          for (l = 1; l <= Nc; ++l)
+            if (c[l-1] == scalar_type(0.0))
+              (faces[l])[(pf[l])++] = r;
+          if (sum == KK) {
+            (faces[0])[(pf[0])++] = r;
+            if (*(std::max_element(c.begin(), c.end())) == scalar_type(1.0))
+              dir_points_[pd++] = r;
+          }
         }
       }
     }
