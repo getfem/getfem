@@ -100,13 +100,13 @@ namespace gmm {
   /* LU decomposition.                                                      */
   /* ********************************************************************** */
 
-# define getrf_interface(lapack_name, base_type) inline                      \
-    size_type lu_factor(dense_matrix<base_type> &A, lapack_ipvt &ipvt){      \
-    GMMLAPACK_TRACE("getrf_interface");                                      \
-    BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A)), lda(m); \
-    BLAS_INT info=BLAS_INT(-1);                                              \
-    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);         \
-    return size_type(abs(info));                                             \
+# define getrf_interface(lapack_name, base_type) inline                       \
+  size_type lu_factor(dense_matrix<base_type> &A, lapack_ipvt &ipvt) {        \
+    GMMLAPACK_TRACE("getrf_interface");                                       \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A)), lda(m);\
+    BLAS_INT info(-1);                                                        \
+    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);          \
+    return size_type(abs(info));                                              \
   }
 
   getrf_interface(sgetrf_, BLAS_S)
@@ -118,15 +118,15 @@ namespace gmm {
   /* LU solve.                                                             */
   /* ********************************************************************* */
 
-# define getrs_interface(f_name, trans1, lapack_name, base_type) inline    \
+# define getrs_interface(f_name, trans, lapack_name, base_type) inline     \
   void f_name(const dense_matrix<base_type> &A,                            \
               const lapack_ipvt &ipvt, std::vector<base_type> &x,          \
               const std::vector<base_type> &b) {                           \
     GMMLAPACK_TRACE("getrs_interface");                                    \
-    BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), nrhs(1);                 \
-    gmm::copy(b, x); trans1;                                               \
+    const BLAS_INT n=BLAS_INT(mat_nrows(A)), nrhs(1);                      \
+    BLAS_INT info(0); gmm::copy(b, x); trans;                              \
     if (n)                                                                 \
-      lapack_name(&t,&n,&nrhs,&(A(0,0)),&n,&ipvt[0],&x[0],&n,&info);       \
+      lapack_name(&t, &n, &nrhs, &A(0,0), &n, &ipvt[0], &x[0], &n, &info); \
   }
 
 # define getrs_trans_n const char t = 'N'
@@ -145,12 +145,13 @@ namespace gmm {
   /* LU inverse.                                                           */
   /* ********************************************************************* */
 
-# define getri_interface(lapack_name, base_type) inline                    \
-  void lu_inverse(const dense_matrix<base_type> &LU,                       \
-                  const lapack_ipvt &ipvt, dense_matrix<base_type> &A) {   \
+# define getri_interface(lapack_name, base_type)                           \
+  inline void lu_inverse(const dense_matrix<base_type> &LU,                \
+                         const lapack_ipvt &ipvt,                          \
+                         dense_matrix<base_type> &A) {                     \
     GMMLAPACK_TRACE("getri_interface");                                    \
-    BLAS_INT n = BLAS_INT(mat_nrows(A)), info(0), lwork(-1);               \
-    base_type work1;                                                       \
+    const BLAS_INT n=BLAS_INT(mat_nrows(A));                               \
+    BLAS_INT info(0), lwork(-1); base_type work1;                          \
     if (n) {                                                               \
       gmm::copy(LU, A);                                                    \
       lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
@@ -169,18 +170,17 @@ namespace gmm {
   /* QR factorization.                                                      */
   /* ********************************************************************** */
 
-# define geqrf_interface(lapack_name1, base_type) inline                   \
-  void qr_factor(dense_matrix<base_type> &A){                              \
+# define geqrf_interface(lapack_name, base_type)                           \
+  inline void qr_factor(dense_matrix<base_type> &A) {                      \
     GMMLAPACK_TRACE("geqrf_interface");                                    \
-    BLAS_INT m = BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));         \
-    BLAS_INT info(0), lwork(-1);                                           \
-    base_type work1;                                                       \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));     \
+    BLAS_INT info(0), lwork(-1); base_type work1;                          \
     if (m && n) {                                                          \
       std::vector<base_type> tau(n);                                       \
-      lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
+      lapack_name(&m, &n, &A(0,0), &m, &tau[0], &work1, &lwork, &info);    \
       lwork = BLAS_INT(gmm::real(work1));                                  \
       std::vector<base_type> work(lwork);                                  \
-      lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info); \
+      lapack_name(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info);  \
       GMM_ASSERT1(!info, "QR factorization failed");                       \
     }                                                                      \
   }
@@ -196,9 +196,8 @@ namespace gmm {
   void qr_factor(const dense_matrix<base_type> &A,                         \
                  dense_matrix<base_type> &Q, dense_matrix<base_type> &R) { \
     GMMLAPACK_TRACE("geqrf_interface2");                                   \
-    BLAS_INT m = BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));         \
-    BLAS_INT info(0), lwork(-1);                                           \
-    base_type work1;                                                       \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));     \
+    BLAS_INT info(0), lwork(-1); base_type work1;                          \
     if (m && n) {                                                          \
       std::copy(A.begin(), A.end(), Q.begin());                            \
       std::vector<base_type> tau(n);                                       \
@@ -340,12 +339,12 @@ namespace gmm {
   /*  A = Q*S*(Q^T), with Q orthogonal and S upper quasi-triangula          */
   /* ********************************************************************** */
 
-# define geesx_interface(lapack_name, base_type) inline                 \
-  void schur(dense_matrix<base_type> &A,                                \
-             dense_matrix<base_type> &S,                                \
-             dense_matrix<base_type> &Q) {                              \
+# define geesx_interface(lapack_name, base_type)                        \
+  inline void schur(dense_matrix<base_type> &A,                         \
+                    dense_matrix<base_type> &S,                         \
+                    dense_matrix<base_type> &Q) {                       \
     GMMLAPACK_TRACE("geesx_interface");                                 \
-    BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A));    \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));  \
     GMM_ASSERT1(m == n, "Schur decomposition requires square matrix");  \
     char jobvs = 'V', sort = 'N', sense = 'N';                          \
     bool select = false;                                                \
@@ -363,12 +362,12 @@ namespace gmm {
     GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
   }
 
-# define geesx_interface2(lapack_name, base_type) inline                \
-  void schur(dense_matrix<base_type> &A,                                \
-             dense_matrix<base_type> &S,                                \
-             dense_matrix<base_type> &Q) {                              \
+# define geesx_interface2(lapack_name, base_type)                       \
+  inline void schur(dense_matrix<base_type> &A,                         \
+                    dense_matrix<base_type> &S,                         \
+                    dense_matrix<base_type> &Q) {                       \
     GMMLAPACK_TRACE("geesx_interface");                                 \
-    BLAS_INT m = BLAS_INT(mat_nrows(A)), n = BLAS_INT(mat_ncols(A));    \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), n=BLAS_INT(mat_ncols(A));  \
     GMM_ASSERT1(m == n, "Schur decomposition requires square matrix");  \
     char jobvs = 'V', sort = 'N', sense = 'N';                          \
     bool select = false;                                                \
@@ -403,11 +402,11 @@ namespace gmm {
   /* Author : Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>        */
   /* ********************************************************************** */
 
-# define gesvd_interface(lapack_name, base_type) inline                 \
-  void svd(dense_matrix<base_type> &X,                                  \
-           dense_matrix<base_type> &U,                                  \
-           dense_matrix<base_type> &Vtransposed,                        \
-           std::vector<base_type> &sigma) {                             \
+# define gesvd_interface(lapack_name, base_type)                        \
+  inline void svd(dense_matrix<base_type> &X,                           \
+                  dense_matrix<base_type> &U,                           \
+                  dense_matrix<base_type> &Vtransposed,                 \
+                  std::vector<base_type> &sigma) {                      \
     GMMLAPACK_TRACE("gesvd_interface");                                 \
     BLAS_INT m = BLAS_INT(mat_nrows(X)), n = BLAS_INT(mat_ncols(X));    \
     BLAS_INT mn_min = m < n ? m : n;                                    \
@@ -422,11 +421,11 @@ namespace gmm {
                 &m, &Vtransposed(0,0), &n, &work[0], &lwork, &info);    \
   }
 
-# define cgesvd_interface(lapack_name, base_type, base_type2) inline    \
-  void svd(dense_matrix<base_type> &X,                                  \
-           dense_matrix<base_type> &U,                                  \
-           dense_matrix<base_type> &Vtransposed,                        \
-           std::vector<base_type2> &sigma) {                            \
+# define cgesvd_interface(lapack_name, base_type, base_type2)           \
+  inline void svd(dense_matrix<base_type> &X,                           \
+                  dense_matrix<base_type> &U,                           \
+                  dense_matrix<base_type> &Vtransposed,                 \
+                  std::vector<base_type2> &sigma) {                     \
     GMMLAPACK_TRACE("gesvd_interface");                                 \
     BLAS_INT m = BLAS_INT(mat_nrows(X)), n = BLAS_INT(mat_ncols(X));    \
     BLAS_INT mn_min = m < n ? m : n;                                    \

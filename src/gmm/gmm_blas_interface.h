@@ -192,7 +192,7 @@ namespace gmm {
   inline number_traits<base_type>::magnitude_type         \
   vect_norm2(const std::vector<base_type> &x) {           \
     GMMLAPACK_TRACE("nrm2_interface");                    \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(x)));           \
+    const BLAS_INT n=BLAS_INT(vect_size(x)), inc(1);      \
     return blas_name(&n, &x[0], &inc);                    \
   }
 
@@ -209,7 +209,7 @@ namespace gmm {
   inline base_type funcname(const std::vector<base_type> &x,               \
                             const std::vector<base_type> &y) {             \
     GMMLAPACK_TRACE(msg);                                                  \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     return blas_name(&n, &x[0], &inc, &y[0], &inc);                        \
   }                                                                        \
   inline base_type funcname                                                \
@@ -218,7 +218,7 @@ namespace gmm {
     GMMLAPACK_TRACE(msg);                                                  \
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type a(x_.r);                                                     \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     return a * blas_name(&n, &x[0], &inc, &y[0], &inc);                    \
   }                                                                        \
   inline base_type funcname                                                \
@@ -227,7 +227,7 @@ namespace gmm {
     GMMLAPACK_TRACE(msg);                                                  \
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type b(y_.r);                                                     \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     return b * blas_name(&n, &x[0], &inc, &y[0], &inc);                    \
   }                                                                        \
   inline base_type funcname                                                \
@@ -237,7 +237,7 @@ namespace gmm {
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type a(x_.r), b(y_.r);                                            \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     return a*b * blas_name(&n, &x[0], &inc, &y[0], &inc);                  \
   }
 
@@ -257,7 +257,7 @@ namespace gmm {
                             const std::vector<base_type> &y) {             \
     GMMLAPACK_TRACE(msg);                                                  \
     base_type res;                                                         \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return res;                                                            \
   }                                                                        \
@@ -267,7 +267,7 @@ namespace gmm {
     GMMLAPACK_TRACE(msg);                                                  \
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type res, a(x_.r);                                                \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return a*res;                                                          \
   }                                                                        \
@@ -277,7 +277,7 @@ namespace gmm {
     GMMLAPACK_TRACE(msg);                                                  \
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type res, b(bdef);                                                \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return b*res;                                                          \
   }                                                                        \
@@ -288,7 +288,7 @@ namespace gmm {
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type res, a(x_.r), b(bdef);                                       \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     BLAS_CPLX_FUNC_CALL(blas_name, res, &n, &y[0], &inc, &x[0], &inc);     \
     return a*b*res;                                                        \
   }
@@ -389,9 +389,9 @@ namespace gmm {
   inline void add(const std::vector<base_type> &x,                         \
                   std::vector<base_type> &y) {                             \
     GMMLAPACK_TRACE("axpy_interface");                                     \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y))); base_type a(1);            \
-    if(n == 0) return;                                                     \
-    else if(n < 25) add_for_short_vectors(x, y, n);                        \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1); base_type a(1);       \
+    if (n == 0) return;                                                    \
+    else if (n < 25) add_for_short_vectors(x, y, n);                       \
     else blas_name(&n, &a, &x[0], &inc, &y[0], &inc);                      \
   }
 
@@ -406,11 +406,11 @@ namespace gmm {
   (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,    \
    std::vector<base_type> &y) {                                            \
     GMMLAPACK_TRACE("axpy_interface");                                     \
-    BLAS_INT inc(1), n(BLAS_INT(vect_size(y)));                            \
+    const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
     const std::vector<base_type>& x = *(linalg_origin(x_));                \
-    base_type a(x_.r);                                                     \
-    if(n == 0) return;                                                     \
-    else if(n < 25) add_for_short_vectors(x, y, a, n);                     \
+    const base_type a(x_.r);                                               \
+    if (n == 0) return;                                                    \
+    else if (n < 25) add_for_short_vectors(x, y, a, n);                    \
     else blas_name(&n, &a, &x[0], &inc, &y[0], &inc);                      \
   }
 
@@ -430,8 +430,8 @@ namespace gmm {
                             std::vector<base_type> &z, orien) {            \
     GMMLAPACK_TRACE("gemv_interface");                                     \
     trans1(base_type); trans2(base_type); base_type beta(1);               \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda(m);                            \
-    BLAS_INT n(BLAS_INT(mat_ncols(A))), inc(1);                            \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   n=BLAS_INT(mat_ncols(A)), inc(1);                       \
     if (m && n) blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc,  \
                           &beta, &z[0], &inc);                             \
     else gmm::clear(z);                                                    \
@@ -553,8 +553,8 @@ namespace gmm {
                         std::vector<base_type> &z, orien) {                \
     GMMLAPACK_TRACE("gemv_interface2");                                    \
     trans1(base_type); trans2(base_type); base_type beta(0);               \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda(m);                            \
-    BLAS_INT n(BLAS_INT(mat_ncols(A))), inc(1);                            \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   n=BLAS_INT(mat_ncols(A)), inc(1);                       \
     if (m && n)                                                            \
       blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc, &beta,     \
                 &z[0], &inc);                                              \
@@ -651,12 +651,11 @@ namespace gmm {
                               const std::vector<base_type> &V,             \
                               const std::vector<base_type> &W) {           \
     GMMLAPACK_TRACE("ger_interface");                                      \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT incx = 1, incy = 1;                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   n=BLAS_INT(mat_ncols(A)), inc(1);                       \
     base_type alpha(1);                                                    \
     if (m && n)                                                            \
-      blas_name(&m, &n, &alpha, &V[0], &incx, &W[0], &incy, &A(0,0), &lda);\
+      blas_name(&m, &n, &alpha, &V[0], &inc, &W[0], &inc, &A(0,0), &lda);  \
   }
 
   ger_interface(sger_, BLAS_S)
@@ -670,11 +669,10 @@ namespace gmm {
                               const std::vector<base_type> &W) {           \
     GMMLAPACK_TRACE("ger_interface");                                      \
     gemv_trans2_s(base_type);                                              \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT incx = 1, incy = 1;                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   n=BLAS_INT(mat_ncols(A)), inc(1);                       \
     if (m && n)                                                            \
-      blas_name(&m, &n, &alpha, &x[0], &incx, &W[0], &incy, &A(0,0), &lda);\
+      blas_name(&m, &n, &alpha, &x[0], &inc, &W[0], &inc, &A(0,0), &lda);  \
   }
 
   ger_interface_sn(sger_, BLAS_S)
@@ -688,12 +686,11 @@ namespace gmm {
                               gemv_p2_s(base_type)) {                      \
     GMMLAPACK_TRACE("ger_interface");                                      \
     gemv_trans2_s(base_type);                                              \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT n(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT incx = 1, incy = 1;                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   n=BLAS_INT(mat_ncols(A)), inc(1);                       \
     base_type al2 = gmm::conj(alpha);                                      \
     if (m && n)                                                            \
-      blas_name(&m, &n, &al2, &V[0], &incx, &x[0], &incy, &A(0,0), &lda);  \
+      blas_name(&m, &n, &al2, &V[0], &inc, &x[0], &inc, &A(0,0), &lda);    \
   }
 
   ger_interface_ns(sger_, BLAS_S)
@@ -711,11 +708,10 @@ namespace gmm {
                         dense_matrix<base_type> &C, c_mult) {              \
     GMMLAPACK_TRACE("gemm_interface_nn");                                  \
     const char t = 'N';                                                    \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT k(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
-    BLAS_INT ldb = k, ldc = m;                                             \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), lda(m),                       \
+                   k=BLAS_INT(mat_ncols(A)), ldb(k),                       \
+                   n=BLAS_INT(mat_ncols(B)), ldc(m);                       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &t, &m, &n, &k, &alpha,                                \
                   &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
@@ -731,21 +727,20 @@ namespace gmm {
   /* transposed(dense matrix) x dense matrix multiplication.               */
   /* ********************************************************************* */
 
-# define gemm_interface_tn(blas_name, base_type, is_const)                 \
+# define gemm_interface_tn(blas_name, base_type, mat_type)                 \
   inline void mult_spec(                                                   \
-         const transposed_col_ref<is_const<base_type> *> &A_,              \
+         const transposed_col_ref<mat_type<base_type> *> &A_,              \
          const dense_matrix<base_type> &B,                                 \
          dense_matrix<base_type> &C, rcmult) {                             \
     GMMLAPACK_TRACE("gemm_interface_tn");                                  \
     const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const char t = 'T', u = 'N';                                           \
-    BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
-    BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
-    BLAS_INT lda = k, ldb = k, ldc = m;                                    \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_ncols(A)), k=BLAS_INT(mat_nrows(A)),     \
+                   n=BLAS_INT(mat_ncols(B)), lda(k), ldb(k), ldc(m);       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
-                  &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
+                &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
   }
 
@@ -762,18 +757,17 @@ namespace gmm {
   /* dense matrix x transposed(dense matrix) multiplication.               */
   /* ********************************************************************* */
 
-# define gemm_interface_nt(blas_name, base_type, is_const)                 \
-  inline void mult_spec(const dense_matrix<base_type> &A,                  \
-                     const transposed_col_ref<is_const<base_type> *> &B_,  \
-         dense_matrix<base_type> &C, r_mult) {                             \
+# define gemm_interface_nt(blas_name, base_type, mat_type)                 \
+  inline void                                                              \
+  mult_spec(const dense_matrix<base_type> &A,                              \
+            const transposed_col_ref<mat_type<base_type> *> &B_,           \
+            dense_matrix<base_type> &C, r_mult) {                          \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'N', u = 'T';                                           \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT k(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT n(BLAS_INT(mat_nrows(B)));                                    \
-    BLAS_INT ldb = n, ldc = m;                                             \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), k=BLAS_INT(mat_ncols(A)),     \
+                   n=BLAS_INT(mat_nrows(B)), lda(m), ldb(n), ldc(m);       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
@@ -793,18 +787,17 @@ namespace gmm {
   /* transposed(dense matrix) x transposed(dense matrix) multiplication.   */
   /* ********************************************************************* */
 
-# define gemm_interface_tt(blas_name, base_type, isA_const, isB_const)     \
-  inline void mult_spec(                                                   \
-               const transposed_col_ref<isA_const <base_type> *> &A_,      \
-               const transposed_col_ref<isB_const <base_type> *> &B_,      \
-               dense_matrix<base_type> &C, r_mult) {                       \
+# define gemm_interface_tt(blas_name, base_type, matA_type, matB_type)     \
+  inline void                                                              \
+  mult_spec(const transposed_col_ref<matA_type<base_type> *> &A_,          \
+            const transposed_col_ref<matB_type<base_type> *> &B_,          \
+            dense_matrix<base_type> &C, r_mult) {                          \
     GMMLAPACK_TRACE("gemm_interface_tt");                                  \
     const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'T', u = 'T';                                           \
-    BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
-    BLAS_INT n(BLAS_INT(mat_nrows(B)));                                    \
-    BLAS_INT lda = k, ldb = n, ldc = m;                                    \
+    const BLAS_INT m=BLAS_INT(mat_ncols(A)), k=BLAS_INT(mat_nrows(A)),     \
+                   n=BLAS_INT(mat_nrows(B)), lda(k), ldb(n), ldc(m);       \
     base_type alpha(1), beta(0);                                           \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
@@ -842,10 +835,9 @@ namespace gmm {
     GMMLAPACK_TRACE("gemm_interface_cn");                                  \
     const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const char t = 'C', u = 'N';                                           \
-    BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
-    BLAS_INT n(BLAS_INT(mat_ncols(B)));                                    \
-    BLAS_INT lda = k, ldb = k, ldc = m;                                    \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_ncols(A)), k=BLAS_INT(mat_nrows(A)),     \
+                   n=BLAS_INT(mat_ncols(B)), lda(k), ldb(k), ldc(m);       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
@@ -862,16 +854,16 @@ namespace gmm {
   /* ********************************************************************* */
 
 # define gemm_interface_nc(blas_name, base_type)                           \
-  inline void mult_spec(const dense_matrix<base_type> &A,                  \
+  inline void mult_spec(                                                   \
+      const dense_matrix<base_type> &A,                                    \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &B_, \
       dense_matrix<base_type> &C, c_mult, row_major) {                     \
     GMMLAPACK_TRACE("gemm_interface_nc");                                  \
     const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'N', u = 'C';                                           \
-    BLAS_INT m(BLAS_INT(mat_nrows(A))), lda = m;                           \
-    BLAS_INT k(BLAS_INT(mat_ncols(A)));                                    \
-    BLAS_INT n(BLAS_INT(mat_nrows(B))), ldb = n, ldc = m;                  \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_nrows(A)), k=BLAS_INT(mat_ncols(A)),     \
+                   n=BLAS_INT(mat_nrows(B)), lda(m), ldb(n), ldc(m);       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
@@ -896,9 +888,9 @@ namespace gmm {
     const dense_matrix<base_type> &A = *(linalg_origin(A_));               \
     const dense_matrix<base_type> &B = *(linalg_origin(B_));               \
     const char t = 'C', u = 'C';                                           \
-    BLAS_INT m(BLAS_INT(mat_ncols(A))), k(BLAS_INT(mat_nrows(A)));         \
-    BLAS_INT lda = k, n(BLAS_INT(mat_nrows(B))), ldb = n, ldc = m;         \
-    base_type alpha(1), beta(0);                                           \
+    const BLAS_INT m=BLAS_INT(mat_ncols(A)), k=BLAS_INT(mat_nrows(A)),     \
+                   n=BLAS_INT(mat_nrows(B)), lda(k), ldb(n), ldc(m);       \
+    const base_type alpha(1), beta(0);                                     \
     if (m && k && n)                                                       \
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
@@ -919,7 +911,7 @@ namespace gmm {
                      size_type k, bool is_unit) {                          \
     GMMLAPACK_TRACE("trsv_interface");                                     \
     const char l = LorU; trans1(base_type); char d = is_unit ? 'U' : 'N';  \
-    BLAS_INT lda(BLAS_INT(mat_nrows(A))), inc(1), n = BLAS_INT(k);         \
+    const BLAS_INT lda=BLAS_INT(mat_nrows(A)), inc(1), n=BLAS_INT(k);      \
     if (lda) blas_name(&l, &t, &d, &n, &A(0,0), &lda, &x[0], &inc);        \
   }
 
