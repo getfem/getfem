@@ -295,7 +295,6 @@ namespace gmm {
                       abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
                 vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
-    size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);
@@ -1538,14 +1537,15 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void add_spspsp(const L1& l1, const L2& l2, L3& l3, linalg_false)
-  { copy(l2, l3); add(l2, l3); }
+  { copy(l1, l3); add(l2, l3); }
 
   template <typename L1, typename L2, typename L3>
   void add(const L1& l1, const L2& l2, L3& l3,
            abstract_sparse, abstract_sparse, abstract_sparse) {
-    add_spspsp(l1, l2, l3, typename linalg_and<typename
-               linalg_traits<L1>::index_sorted,
-               typename linalg_traits<L2>::index_sorted>::bool_type());
+    add_spspsp(l1, l2, l3,
+      typename linalg_and<typename linalg_traits<L1>::index_sorted,
+                          typename linalg_traits<L2>::index_sorted>
+                         ::bool_type());
   }
 
   template <typename L1, typename L2>
