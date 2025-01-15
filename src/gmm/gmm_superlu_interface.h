@@ -69,11 +69,19 @@ namespace SuperLU {
   #include "superlu/slu_scomplex.h"
   #include "superlu/slu_dcomplex.h"
 #endif
+
+#if (SUPERLU_MAJOR_VERSION <= 6)
+#  define singlecomplex complex
+#endif
+
+  
   // Hard copy from {s,d,c,z}lu_sdefs.h headers from SuperLU version 7
   // This is a fragile solution, but SuperLU headers contaminate the
   // global namespace too much (breaking linking with BLAS for clang).
-  static_assert(SUPERLU_MAJOR_VERSION >= 7,
-                "GMM library supports only SuperLU version 7 or later");
+
+  //  static_assert(SUPERLU_MAJOR_VERSION >= 6,
+  //                "GMM library supports only SuperLU version 7 or later");
+
   extern "C"{
   extern void
   sgssv(superlu_options_t *, SuperMatrix *, int *, int *, SuperMatrix *,

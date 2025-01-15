@@ -931,7 +931,7 @@ namespace bgeot {
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0) {
 #if defined(GMM_USES_BLAS)
-      BLAS_INT nn = n, incx = s[1], incy = s[0];
+      BLAS_INT nn = BLAS_INT(n), incx = s[1], incy = s[0];
 #else
       dim_type incx = dim_type(s[1]), incy = dim_type(s[0]);
 #endif
@@ -986,7 +986,7 @@ namespace bgeot {
     const std::vector<stride_type> &s = mti.vectorized_strides();
     if (n && s[0] && s[1] && s[2] == 0 && s[3] == 0) {
 #if defined(GMM_USES_BLAS)
-      BLAS_INT nn = n, incx = s[1], incy = s[0];
+      BLAS_INT nn = BLAS_INT(n), incx = s[1], incy = s[0];
 #else
       dim_type incx = dim_type(s[1]), incy = dim_type(s[0]);
 #endif
