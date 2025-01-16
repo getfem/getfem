@@ -1,0 +1,12 @@
+.. include:: ../replaces.txt
+
+**************************
+  What's New in |gf| 5.4.4
+**************************
+
+|gf| 5.4.4 is a patch version.
+
+Released version, 2025/01/16.
+
+This patch version fix a problem in the use of the libtool variable LIBTOOL_VERSION_INFO and reduce code of the superlu and blas interfaces of GMM.
+

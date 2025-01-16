@@ -22,7 +22,7 @@ eval 'exec perl -S $0 "$@"'
 $getfem_root = ".";
 $MAJOR_VERSION = "5";
 $MINOR_VERSION = "4";
-$PATCH_VERSION = "3";
+$PATCH_VERSION = "4";
 # $DATE_VERSION = -`date +%Y%m%d`;
 # $DATE_VERSION = ".0";
 
