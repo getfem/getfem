@@ -625,9 +625,10 @@ namespace gmm {
 
   /* ********************************************************************* */
   /* transposed(dense matrix) x dense matrix multiplication.               */
+  /* dense matrix x transposed(dense matrix) multiplication.               */
   /* ********************************************************************* */
 
-# define gemm_interface_tn(blas_name, base_type, mat_type)                 \
+# define gemm_interface_tn_nt(blas_name, base_type, mat_type)              \
   inline void mult_spec(                                                   \
          const transposed_col_ref<mat_type<base_type> *> &A_,              \
          const dense_matrix<base_type> &B,                                 \
@@ -642,22 +643,7 @@ namespace gmm {
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
-  }
-
-  gemm_interface_tn(sgemm_, BLAS_S, dense_matrix)
-  gemm_interface_tn(dgemm_, BLAS_D, dense_matrix)
-  gemm_interface_tn(cgemm_, BLAS_C, dense_matrix)
-  gemm_interface_tn(zgemm_, BLAS_Z, dense_matrix)
-  gemm_interface_tn(sgemm_, BLAS_S, const dense_matrix)
-  gemm_interface_tn(dgemm_, BLAS_D, const dense_matrix)
-  gemm_interface_tn(cgemm_, BLAS_C, const dense_matrix)
-  gemm_interface_tn(zgemm_, BLAS_Z, const dense_matrix)
-
-  /* ********************************************************************* */
-  /* dense matrix x transposed(dense matrix) multiplication.               */
-  /* ********************************************************************* */
-
-# define gemm_interface_nt(blas_name, base_type, mat_type)                 \
+  }                                                                        \
   inline void                                                              \
   mult_spec(const dense_matrix<base_type> &A,                              \
             const transposed_col_ref<mat_type<base_type> *> &B_,           \
@@ -674,14 +660,15 @@ namespace gmm {
     else gmm::clear(C);                                                    \
   }
 
-  gemm_interface_nt(sgemm_, BLAS_S, dense_matrix)
-  gemm_interface_nt(dgemm_, BLAS_D, dense_matrix)
-  gemm_interface_nt(cgemm_, BLAS_C, dense_matrix)
-  gemm_interface_nt(zgemm_, BLAS_Z, dense_matrix)
-  gemm_interface_nt(sgemm_, BLAS_S, const dense_matrix)
-  gemm_interface_nt(dgemm_, BLAS_D, const dense_matrix)
-  gemm_interface_nt(cgemm_, BLAS_C, const dense_matrix)
-  gemm_interface_nt(zgemm_, BLAS_Z, const dense_matrix)
+  gemm_interface_tn_nt(sgemm_, BLAS_S, dense_matrix)
+  gemm_interface_tn_nt(dgemm_, BLAS_D, dense_matrix)
+  gemm_interface_tn_nt(cgemm_, BLAS_C, dense_matrix)
+  gemm_interface_tn_nt(zgemm_, BLAS_Z, dense_matrix)
+  gemm_interface_tn_nt(sgemm_, BLAS_S, const dense_matrix)
+  gemm_interface_tn_nt(dgemm_, BLAS_D, const dense_matrix)
+  gemm_interface_tn_nt(cgemm_, BLAS_C, const dense_matrix)
+  gemm_interface_tn_nt(zgemm_, BLAS_Z, const dense_matrix)
+
 
   /* ********************************************************************* */
   /* transposed(dense matrix) x transposed(dense matrix) multiplication.   */
@@ -725,9 +712,11 @@ namespace gmm {
 
   /* ********************************************************************* */
   /* conjugated(dense matrix) x dense matrix multiplication.               */
+  /* dense matrix x conjugated(dense matrix) multiplication.               */
+  /* conjugated(dense matrix) x conjugated(dense matrix) multiplication.   */
   /* ********************************************************************* */
 
-# define gemm_interface_cn(blas_name, base_type)                           \
+# define gemm_interface_cn_nc_cc(blas_name, base_type)                     \
   inline void mult_spec(                                                   \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &A_, \
       const dense_matrix<base_type> &B,                                    \
@@ -742,18 +731,7 @@ namespace gmm {
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
-  }
-
-  gemm_interface_cn(sgemm_, BLAS_S)
-  gemm_interface_cn(dgemm_, BLAS_D)
-  gemm_interface_cn(cgemm_, BLAS_C)
-  gemm_interface_cn(zgemm_, BLAS_Z)
-
-  /* ********************************************************************* */
-  /* dense matrix x conjugated(dense matrix) multiplication.               */
-  /* ********************************************************************* */
-
-# define gemm_interface_nc(blas_name, base_type)                           \
+  }                                                                        \
   inline void mult_spec(                                                   \
       const dense_matrix<base_type> &A,                                    \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &B_, \
@@ -768,18 +746,7 @@ namespace gmm {
       blas_name(&t, &u, &m, &n, &k, &alpha,                                \
                 &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
     else gmm::clear(C);                                                    \
-  }
-
-  gemm_interface_nc(sgemm_, BLAS_S)
-  gemm_interface_nc(dgemm_, BLAS_D)
-  gemm_interface_nc(cgemm_, BLAS_C)
-  gemm_interface_nc(zgemm_, BLAS_Z)
-
-  /* ********************************************************************* */
-  /* conjugated(dense matrix) x conjugated(dense matrix) multiplication.   */
-  /* ********************************************************************* */
-
-# define gemm_interface_cc(blas_name, base_type)                           \
+  }                                                                        \
   inline void mult_spec(                                                   \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &A_, \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type> > &B_, \
@@ -797,10 +764,11 @@ namespace gmm {
     else gmm::clear(C);                                                    \
   }
 
-  gemm_interface_cc(sgemm_, BLAS_S)
-  gemm_interface_cc(dgemm_, BLAS_D)
-  gemm_interface_cc(cgemm_, BLAS_C)
-  gemm_interface_cc(zgemm_, BLAS_Z)
+  gemm_interface_cn_nc_cc(sgemm_, BLAS_S)
+  gemm_interface_cn_nc_cc(dgemm_, BLAS_D)
+  gemm_interface_cn_nc_cc(cgemm_, BLAS_C)
+  gemm_interface_cn_nc_cc(zgemm_, BLAS_Z)
+
 
   /* ********************************************************************* */
   /* Tri solve.                                                            */
