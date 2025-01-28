@@ -21,10 +21,11 @@
 
 // Semantic analysis of assembly trees and semantic manipulations.
 
-
 #include <getfem/getfem_generic_assembly_functions_and_operators.h>
 #include <getfem/getfem_generic_assembly_semantic.h>
 #include <getfem/getfem_generic_assembly_compile_and_exec.h>
+
+// #define GA_PRINT_DEBUG_INFO 
 
 namespace getfem {
 
@@ -402,7 +403,9 @@ namespace getfem {
                                pga_tree_node pnode, const mesh &me,
                                size_type ref_elt_dim, bool eval_fixed_size,
                                bool ignore_X, int option) {
-    // cout << "Analysis of "; ga_print_node(pnode, cout); cout << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "Analysis of "; ga_print_node(pnode, cout); cout << endl;
+#   endif
     bool all_cte = true, all_sc = true;
     size_type meshdim = (&me == &dummy_mesh()) ? 1 : me.dim();
     pnode->symmetric_op = false;
@@ -496,6 +499,8 @@ namespace getfem {
         size_type t_type = pnode->test_function_type;
         if (t_type == 1) {
           pnode->name_test1 = pnode->name;
+          // if (pnode->node_type == GA_NODE_INTERPOLATE_DERIVATIVE)
+          //   mf = workspace.associated_mf(
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           pnode->interpolate_name_test2 = pnode->name_test2 = "";
           pnode->qdim1 = (mf || imd)
@@ -528,25 +533,29 @@ namespace getfem {
           ga_throw_error(pnode->expr, pnode->pos,
                          "Invalid null size of variable");
         if (!mf & !imd) { // global variable
-          if (q == 1) {
-            pnode->init_vector_tensor(1);
-            pnode->tensor()[0] = scalar_type(1);
-          } else
-            pnode->init_identity_matrix_tensor(q);
+          if (pnode->node_type != GA_NODE_INTERPOLATE_DERIVATIVE) {
+            if (q == 1) {
+              pnode->init_vector_tensor(1);
+              pnode->tensor()[0] = scalar_type(1);
+            } else
+              pnode->init_identity_matrix_tensor(q);
+          }
           pnode->test_function_type = t_type;
         } else if (imd) {
-          bgeot::multi_index mii = workspace.qdims(pnode->name);
-          if (q == 1 && mii.size() <= 1) {
-            pnode->init_vector_tensor(1);
-            pnode->tensor()[0] = scalar_type(1);
-          } else {
-            mii.insert(mii.begin(), q);
-            pnode->t.set_to_original();
-            pnode->t.adjust_sizes(mii);
-            auto itw = pnode->tensor().begin();
-            for (size_type i = 0; i < q; ++i) // set identity matrix
-              for (size_type j = 0; j < q; ++j)
-                *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+          if (pnode->node_type != GA_NODE_INTERPOLATE_DERIVATIVE) {
+            bgeot::multi_index mii = workspace.qdims(pnode->name);
+            if (q == 1 && mii.size() <= 1) {
+              pnode->init_vector_tensor(1);
+              pnode->tensor()[0] = scalar_type(1);
+            } else {
+              mii.insert(mii.begin(), q);
+              pnode->t.set_to_original();
+              pnode->t.adjust_sizes(mii);
+              auto itw = pnode->tensor().begin();
+              for (size_type i = 0; i < q; ++i) // set identity matrix
+                for (size_type j = 0; j < q; ++j)
+                  *itw++ = (i == j) ? scalar_type(1) : scalar_type(0);
+            }
           }
           pnode->test_function_type = t_type;
         }
@@ -1241,10 +1250,13 @@ namespace getfem {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1[size1.size()-dim1];
 
-          if (s0 != s1) ga_throw_error(pnode->expr, pnode->pos, "Dot product "
-                                       "of expressions of different sizes ("
-                                       << s0 << " != " << s1 << ").");
-          if (dim0 <= 1 && dim1 <= 1) pnode->symmetric_op = true;
+          if (s0 != s1)
+            ga_throw_error(pnode->expr, pnode->pos,
+                           "Dot product of expressions of different sizes."
+                           // << "(" << s0 << " != " << s1 << "). "
+                           << " Sizes of arguments (last one): " << size0
+                           << " and " << size1);
+         if (dim0 <= 1 && dim1 <= 1) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1);
           if (dim0 > 1 || dim1 > 1) {
             mi = pnode->t.sizes();
@@ -1271,7 +1283,7 @@ namespace getfem {
             pnode->node_type = GA_NODE_CONSTANT;
             tree.clear_children(pnode);
           }
-        }
+         }
         break;
 
       case GA_COLON:
@@ -1285,7 +1297,9 @@ namespace getfem {
             ga_throw_error(pnode->expr, pnode->pos, "Frobenius product "
                            "of expressions of different sizes ("
                            << s00 << "," << s01 << " != " << s10 << ","
-                           << s11 << ").");
+                           << s11 << ")."
+                           << " Sizes of arguments (last two): " << size0
+                           << " and " << size1);
           if (child0->tensor_order() <= 2 && child1->tensor_order() <= 2)
             pnode->symmetric_op = true;
           pnode->mult_test(child0, child1);
@@ -1952,7 +1966,9 @@ namespace getfem {
       // Grad and Diff operators
       if (child0->node_type == GA_NODE_NAME) {
         if (child0->name.compare("Grad") == 0) {
-          // cout<<"Compute gradient of ";ga_print_node(child1,cout);cout<<endl;
+#         ifdef GA_PRINT_DEBUG_INFO
+          cout << "Compute gradient of ";ga_print_node(child1,cout);cout<<endl;
+#         endif
           if (pnode->children.size() != 2)
             ga_throw_error(pnode->expr, child0->pos,
                            "Bad number of parameters for Grad operator");
@@ -2703,8 +2719,10 @@ namespace getfem {
                 predef_operators_contact_initialized, "Internal error");
     if (!(tree.root))
       return;
-    // cout << "Begin semantic analysis with ";
-    // ga_print_node(tree.root, cout); cout << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "Begin semantic analysis with ";
+    ga_print_node(tree.root, cout); cout << endl;
+#   endif
 
     if (option == 1) { workspace.test1.clear(); workspace.test2.clear(); }
     ga_node_analysis(tree, workspace, tree.root, m, ref_elt_dim,
@@ -2722,10 +2740,12 @@ namespace getfem {
         tree.clear();
     }
     ga_valid_operand(tree.root);
-    // cout << "End of semantic analysis";
-    // if (tree.root)
-    //   ga_print_node(tree.root, cout);
-    // cout << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "End of semantic analysis : ";
+    if (tree.root)
+      ga_print_node(tree.root, cout);
+    cout << endl;
+#   endif
   }
 
 
@@ -3367,7 +3387,7 @@ namespace getfem {
           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
           size_type q = workspace.qdim(pnode_trans->name);
           size_type n = mf->linked_mesh().dim();
-          size_type qv = workspace.qdim(varname);
+          // size_type qv = workspace.qdim(varname);
           bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
 
           if (is_val)  // --> t(target_dim*Qmult,N)
@@ -3377,7 +3397,7 @@ namespace getfem {
 
           if (n > 1) {
             if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
-            else mii.push_back(qv);
+            else mii.push_back(q);
             if (is_grad || is_diverg) mii.push_back(n);
           }
           pnode_trans->t.adjust_sizes(mii);
@@ -3945,7 +3965,10 @@ namespace getfem {
   void ga_derivative(ga_tree &tree, const ga_workspace &workspace,
                      const mesh &m, const std::string &varname,
                      const std::string &interpolatename, size_type order) {
-    // cout << "Will derive : " << ga_tree_to_string(tree) << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "Derivation with respect to " << varname << " : "
+         << ga_tree_to_string(tree) << endl;
+#   endif
     if (!(tree.root)) return;
     if (ga_node_mark_tree_for_variable(tree.root, workspace, m, varname,
                                        interpolatename))
@@ -3953,7 +3976,9 @@ namespace getfem {
                          interpolatename, order);
     else
       tree.clear();
-    // cout << "Derivation done : " << ga_tree_to_string(tree) << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "Derivation result : " << ga_tree_to_string(tree) << endl;
+#   endif
   }
 
   //=========================================================================
@@ -4020,7 +4045,9 @@ namespace getfem {
 
   static void ga_node_grad(ga_tree &tree, const ga_workspace &workspace,
                            const mesh &m, pga_tree_node pnode) {
-    // cout << "Gradient of "; ga_print_node(pnode, cout); cout << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "Gradient of "; ga_print_node(pnode, cout); cout << endl;
+#   endif
     size_type meshdim = (&m == &dummy_mesh()) ? 1 : m.dim();
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
@@ -4917,7 +4944,9 @@ namespace getfem {
     default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                          << " in gradient. Internal error.");
     }
-    // cout << "End of gradient of "; ga_print_node(pnode, cout); cout << endl;
+#   ifdef GA_PRINT_DEBUG_INFO
+    cout << "End of gradient of "; ga_print_node(pnode, cout); cout << endl;
+#   endif
   }
 
 
