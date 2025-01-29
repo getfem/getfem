@@ -3438,6 +3438,7 @@ namespace getfem {
         const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
         size_type q = workspace.qdim(pnode_trans->name);
         size_type n = mf->linked_mesh().dim();
+        // size_type qv = workspace.qdim(varname);
         bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
         if (is_val) // --> t(Qmult*ndof,Qmult*target_dim,N)
           pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
@@ -3447,9 +3448,8 @@ namespace getfem {
         if (q == 1 && mii.size() <= 1)
           mii.resize(0);
         mii.insert(mii.begin(), 2); // Prepend adaptable test functions dimension
-
         if (n > 1) {
-          mii.push_back(n);
+          mii.push_back(q);
           if (is_grad || is_diverg) mii.push_back(n);
         }
         pnode_trans->t.adjust_sizes(mii);
