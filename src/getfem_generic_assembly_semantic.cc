@@ -499,8 +499,6 @@ namespace getfem {
         size_type t_type = pnode->test_function_type;
         if (t_type == 1) {
           pnode->name_test1 = pnode->name;
-          // if (pnode->node_type == GA_NODE_INTERPOLATE_DERIVATIVE)
-          //   mf = workspace.associated_mf(
           pnode->interpolate_name_test1 = pnode->interpolate_name;
           pnode->interpolate_name_test2 = pnode->name_test2 = "";
           pnode->qdim1 = (mf || imd)
@@ -1253,8 +1251,8 @@ namespace getfem {
           if (s0 != s1)
             ga_throw_error(pnode->expr, pnode->pos,
                            "Dot product of expressions of different sizes."
-                           // << "(" << s0 << " != " << s1 << "). "
-                           << " Sizes of arguments (last one): " << size0
+                           << "(" << s0 << " != " << s1 << "). "
+                           << " Sizes of operands: " << size0
                            << " and " << size1);
          if (dim0 <= 1 && dim1 <= 1) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1);
@@ -1283,7 +1281,7 @@ namespace getfem {
             pnode->node_type = GA_NODE_CONSTANT;
             tree.clear_children(pnode);
           }
-         }
+        }
         break;
 
       case GA_COLON:
@@ -3367,7 +3365,8 @@ namespace getfem {
           pnode_trans = pnode->parent->children[1];
         }
         if (ivar) { // Derivative wrt the interpolated variable
-         mi.resize(1); mi[0] = 2;
+          mi.resize(1);
+          mi[0] = 2;
           for (size_type i = 0; i < pnode->tensor_order(); ++i)
             mi.push_back(pnode->tensor_proper_size(i));
           pnode->t.adjust_sizes(mi);
@@ -3387,7 +3386,6 @@ namespace getfem {
           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
           size_type q = workspace.qdim(pnode_trans->name);
           size_type n = mf->linked_mesh().dim();
-          // size_type qv = workspace.qdim(varname);
           bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
 
           if (is_val)  // --> t(target_dim*Qmult,N)
@@ -3396,8 +3394,9 @@ namespace getfem {
             pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
 
           if (n > 1) {
-            if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
-            else mii.push_back(q);
+            if (q == 1 && mii.size() <= 1)
+              mii.resize(0);
+            mii.push_back(n);
             if (is_grad || is_diverg) mii.push_back(n);
           }
           pnode_trans->t.adjust_sizes(mii);
@@ -3439,18 +3438,18 @@ namespace getfem {
         const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
         size_type q = workspace.qdim(pnode_trans->name);
         size_type n = mf->linked_mesh().dim();
-        size_type qv = workspace.qdim(varname);
         bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
         if (is_val) // --> t(Qmult*ndof,Qmult*target_dim,N)
           pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
         else if (is_grad || is_diverg) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
           pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
 
-        if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = 2; }
-        else mii.insert(mii.begin(), 2);
+        if (q == 1 && mii.size() <= 1)
+          mii.resize(0);
+        mii.insert(mii.begin(), 2); // Prepend adaptable test functions dimension
 
         if (n > 1) {
-          mii.push_back(qv);
+          mii.push_back(n);
           if (is_grad || is_diverg) mii.push_back(n);
         }
         pnode_trans->t.adjust_sizes(mii);
