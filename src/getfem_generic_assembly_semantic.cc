@@ -3447,9 +3447,9 @@ namespace getfem {
 
         if (q == 1 && mii.size() <= 1)
           mii.resize(0);
-        mii.insert(mii.begin(), 2); // Prepend adaptable test functions dimension
+        mii.insert(mii.begin(), 2);// Prepend adaptable test functions dimension
         if (n > 1) {
-          mii.push_back(q);
+          mii.push_back(n);
           if (is_grad || is_diverg) mii.push_back(n);
         }
         pnode_trans->t.adjust_sizes(mii);
