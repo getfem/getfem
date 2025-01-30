@@ -1,21 +1,11 @@
-Main contributors of GetFEM++
-
-
-Yves RENARD             Initial project. All the project.
-
-Julien POMMIER          All the project. Main contributions on the Python/Matlab/Scilab
-                        interface, graphical post-treatment, generic assembly and
-                        import/export format.
-
-Konstantinos POULIOS    All the project. Main contributions on contact with
-                        friction algorithms.
-
-Andriy ANDREIKIV        All the project. Parallelisation.
-
-LIM Liang Jin           All the project. 
-
-Tomas LIGURSKY          Continuation/bifurcation algorithms.
-
-Luis Saavedra           Web site / documentation
-
-Yann Collette            Scilab interface
+Yves RENARD
+  - Initial project. All the project.
+Julien POMMIER
+  - All the project. Main contributions :
+  - Python/Matlab/Scilab interface,
+  - graphical post-treatment,
+  - generic assembly
+  - import/export format.
+Konstantinos POULIOS
+  - All the project.
+  - Main contributions on contact with friction algorithms.

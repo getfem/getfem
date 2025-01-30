@@ -1,29 +1,57 @@
-#  Copyright (C) 1999-2025 Yves Renard
-#
-#  This file is a part of GetFEM
-#
-#  GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
-#  under  the  terms  of the  GNU  Lesser General Public License as published
-#  by  the  Free Software Foundation;  either  version 3  of the License,  or
-#  (at your option) any later version along with the GCC Runtime Library
-#  Exception either version 3.1 or (at your option) any later version.
-#  This program  is  distributed  in  the  hope  that it will be useful,  but
-#  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-#  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-#  License and GCC Runtime Library Exception for more details.
-#  You  should  have received a copy of the GNU Lesser General Public License
-#  along  with  this program;  if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+GetFEM is an open source library based on collaborative development.
+It aims to offer the most flexible framework for solving potentially coupled
+systems of linear and nonlinear partial differential equations with the finite
+element method. GetFEM is interfaced
+with some script languages (Python, Octave, Scilab and Matlab) so that almost
+all of the functionalities can be used just writing scripts. It works in
+arbitrary dimension and allow to couple 1D, 2D and 3D problems. The strong
+points of GetFEM can be summarized as follows:
+
+  A weak form language (in terms of operators) that allows to translate quite
+  arbitrary weak formulations. A symbolic derivation that allows to
+  automatically obtain the tangent system for nonlinear problems. A compilation
+  of assembly terms into optimized basic instructions.
+
+  A model description that gather the variables, data and terms of a problem
+  and some predefined bricks representing classical models : elasticity in
+  small and large deformations, Helmholtz problem, scalar elliptic problem,
+  Dirichlet, contact and Neumann boundary conditions, incompressibility
+  constraint, ...
+
+  A complete separation between geometric transformation, finite element
+  method, integration methods and partial differential term description, which
+  allows to easily switch from a method to another.
+
+  A large set of predefined methods :
+  isoparametric/subparametric/overparametric elements, Pk on simplices of
+  arbitrary degree and dimension, Qk on parallelepipeds, pyramidal elements,
+  P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS,
+  elements with hierarchical basis (for multigrid methods for instance),
+  discontinuous Pk and Qk, vector elements (RT0, Nedelec) ...
+
+  A large set of predefined integration methods.
+  Structural mechanics terms (elasticity, contact with friction, plasticity ...)
+  Level-set and finite element cut by one or several level-set (Xfem)
+  
+  Computation of terms between two meshes with an arbitrary transformation:
+  this is a very powerful tool of the generic assembly that allows to use a
+  parameterized transformation. The derivative of the transformation with
+  respect to the potential dependance in the variables is taken into account.
+  Possible use : contact problems, fluid-structure interaction, special
+  boundary conditions ...
+
+  Post-processing directly with Scilab, Octave or Matlab interfaces or with
+  the export of vtk or gmsh files. Many possibility to interpolate arbitrary
+  quantities, make slices, projections ...
+
+GetFEM can be used to construct very generic finite element codes, where
+finite element methods, integration methods and the dimension of the problem
+are the parameters that can be changed very easily. This allows a wide range
+of experiments. Many examples and demos are provided.
+
+GetFEM has only an experimental meshing procedure (and produces regular meshes).
+It is therefore often necessary to import meshes. The formats currently
+supported are GID, GMSH, EMC2 and ANSYS. 
+
 
 Please read INSTALL and see the site https://getfem.org/
-
-
-
-IMAGES and documentation :
-
-#  Permission is granted to copy, distribute and/or modify all
-#  documentations and images included in GetFEM package
-#  under the terms of the GNU Free Documentation License, Version 1.3
-#  or any later version published by the Free Software Foundation;
-#  with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-#  A copy of the license is included in top directory.
