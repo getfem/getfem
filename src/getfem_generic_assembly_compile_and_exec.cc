@@ -7853,7 +7853,7 @@ namespace getfem {
           rmi.im = td.mim;
           // rmi.interpolate_infos.clear();
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
-          ga_compile_node(root, workspace, gis,rmi, *(td.m), false,
+          ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
                           rmi.current_hierarchy);
 
           // After compile tree

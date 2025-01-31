@@ -3404,10 +3404,11 @@ namespace getfem {
                                         (n > 1) ? GA_DOT : GA_MULT);
           pga_tree_node pnode_der = pnode_trans->parent->children[1];
           pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
+          // Fixed Test function dimension equal to 1 -- not adapted
           if (n == 1)
-            pnode_der->init_vector_tensor(2);
+            pnode_der->init_vector_tensor(1);
           else
-            pnode_der->init_matrix_tensor(2, n);
+            pnode_der->init_matrix_tensor(1, n);
           pnode_der->test_function_type = order;
           pnode_der->name = varname;
           pnode_der->interpolate_name_der = pnode_der->interpolate_name;

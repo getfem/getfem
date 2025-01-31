@@ -753,7 +753,11 @@ namespace getfem {
       if (compute_derivatives) { // Could be optimized ?
         for (auto &&d : derivatives) {
           workspace_gis_pair &pwi = compiled_derivatives[d.first];
-
+          pwi.gis().ctx = ctx_x;
+          pwi.gis().Normal = Normal;
+          pwi.gis().nbpt = 1;
+          pwi.gis().ipt = 0;
+          pwi.gis().pai = 0;
           gmm::clear(pwi.workspace().assembled_tensor().as_vector());
           ga_function_exec(pwi.gis());
           d.second = pwi.workspace().assembled_tensor();
