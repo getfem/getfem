@@ -3553,12 +3553,12 @@ namespace getfem {
     GMM_ASSERT1(is_lin, "Nonlinear term");
     if (order == 0) { is_coercive = is_sym = true; }
 
+    size_type brick_id(-1);
     std::string const_expr= workspace.extract_constant_term(mim.linked_mesh());
-    if (const_expr.size()) {
-      add_source_term_
-        (md, mim, const_expr, region, brickname+" (source term)",
-         "", "", false, secondary_domain);
-    }
+    if (const_expr.size())
+      brick_id = add_source_term_(md, mim, const_expr, region,
+                                  brickname+" (source term)",
+                                  "", "", false, secondary_domain);
 
     // GMM_ASSERT1(order <= 1,
     //             "This brick does not support a second order term");
@@ -3577,7 +3577,7 @@ namespace getfem {
 
       return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
     }
-    return size_type(-1);
+    return brick_id;
   }
 
   size_type add_linear_term
