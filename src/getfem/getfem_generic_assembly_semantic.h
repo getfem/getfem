@@ -85,7 +85,7 @@ namespace getfem {
 
   /* Extract the Neumann term of an assembly tree with respect to a variable. */
   void ga_extract_Neumann_term
-  (ga_tree &tree, const std::string &varname,
+  (const ga_tree &tree, const std::string &varname,
    ga_workspace &workspace, pga_tree_node pnode, std::string &result);
 
 

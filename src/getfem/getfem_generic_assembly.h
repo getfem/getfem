@@ -335,7 +335,7 @@ namespace getfem {
   private:
 
     // mesh regions
-    std::map<const mesh *, std::list<mesh_region> > registred_mesh_regions;
+    std::map<const mesh *, std::list<mesh_region> > registered_mesh_regions;
 
     const mesh_region &register_region(const mesh &m, const mesh_region &rg);
 
@@ -359,8 +359,7 @@ namespace getfem {
     // Adds a tree to the workspace. The argument tree is consumed by the
     // function and cannot be reused afterwards.
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
-                  const mesh_region &rg,
-                  const std::string &expr, size_type add_derivative_order,
+                  const mesh_region &rg, size_type add_derivative_order,
                   bool scalar_expr, operation_type op_type=ASSEMBLY,
                   const std::string varname_interpolation="");
 
@@ -448,8 +447,8 @@ namespace getfem {
     /** Print some information about all previously added expressions. */
     void print(std::ostream &str);
 
-    size_type nb_trees() const;
-    tree_description &tree_info(size_type i);
+    size_type nb_trees() const { return trees.size(); }
+    const tree_description &tree_info(size_type i) const { return trees[i]; }
 
     // variables and variable groups
     void add_fem_variable(const std::string &name, const mesh_fem &mf,

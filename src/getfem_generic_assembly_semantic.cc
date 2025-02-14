@@ -25,7 +25,7 @@
 #include <getfem/getfem_generic_assembly_semantic.h>
 #include <getfem/getfem_generic_assembly_compile_and_exec.h>
 
-// #define GA_PRINT_DEBUG_INFO 
+// #define GA_PRINT_DEBUG_INFO
 
 namespace getfem {
 
@@ -1461,11 +1461,11 @@ namespace getfem {
           } else if (child0->tensor_proper_size() == 1) {
             pnode->symmetric_op = true;
             for (size_type i = 0; i < dim1; ++i)
-                mi.push_back(child1->tensor_proper_size(i));
+              mi.push_back(child1->tensor_proper_size(i));
           } else if (child1->tensor_proper_size() == 1) {
             pnode->symmetric_op = true;
             for (size_type i = 0; i < dim0; ++i)
-                mi.push_back(child0->tensor_proper_size(i));
+              mi.push_back(child0->tensor_proper_size(i));
           } else if (child0->tensor_order() == 2 &&
                      child1->tensor_order() == 1) {
             size_type m = child0->tensor_proper_size(0);
@@ -3259,7 +3259,7 @@ namespace getfem {
 
 
   void ga_extract_Neumann_term
-  (ga_tree &tree, const std::string &varname,
+  (const ga_tree &tree, const std::string &varname,
    ga_workspace &workspace, pga_tree_node pnode, std::string &result) {
 
     for (size_type i = 0; i < pnode->children.size(); ++i)
@@ -3406,9 +3406,9 @@ namespace getfem {
           pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
           // Fixed Test function dimension equal to 1 -- not adapted
           if (n == 1)
-            pnode_der->init_vector_tensor(1);
+            pnode_der->init_vector_tensor(qv);
           else
-            pnode_der->init_matrix_tensor(1, n);
+            pnode_der->init_matrix_tensor(qv, n);
           pnode_der->test_function_type = order;
           pnode_der->name = varname;
           pnode_der->interpolate_name_der = pnode_der->interpolate_name;
@@ -4952,13 +4952,13 @@ namespace getfem {
 
   // The tree is modified. Should be copied first and passed to
   // ga_semantic_analysis after for enrichment
-  void ga_grad(ga_tree &tree, const ga_workspace &workspace, const mesh &m) {
-    if (!(tree.root)) return;
-    if (ga_node_mark_tree_for_grad(tree.root, workspace))
-      ga_node_grad(tree, workspace, m, tree.root);
-    else
-      tree.clear();
-  }
+//  void ga_grad(ga_tree &tree, const ga_workspace &workspace, const mesh &m) {
+//    if (!(tree.root)) return;
+//    if (ga_node_mark_tree_for_grad(tree.root, workspace))
+//      ga_node_grad(tree, workspace, m, tree.root);
+//    else
+//      tree.clear();
+//  }
 
 
 

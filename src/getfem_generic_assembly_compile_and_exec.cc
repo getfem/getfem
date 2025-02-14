@@ -7920,7 +7920,7 @@ namespace getfem {
 
     if (condensation && order == 2) {
       for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-        ga_workspace::tree_description &td = workspace.tree_info(i);
+        const ga_workspace::tree_description &td = workspace.tree_info(i);
         if (td.order != 2 && td.order != size_type(-1))
           continue;
         ga_tree tree(*(td.ptree)); // temporary tree (not used later)
@@ -8018,7 +8018,7 @@ namespace getfem {
     for (const auto &phase : phases) {
 
       for (size_type i = 0; i < workspace.nb_trees(); ++i) {
-        ga_workspace::tree_description &td = workspace.tree_info(i);
+        const ga_workspace::tree_description &td = workspace.tree_info(i);
         if (td.operation != phase)
           continue; // skip this tree in this phase
 

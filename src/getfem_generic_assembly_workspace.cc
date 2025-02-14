@@ -430,7 +430,7 @@ namespace getfem {
     if (&m == &dummy_mesh())
       return dummy_mesh_region();
 
-    std::list<mesh_region> &lmr = registred_mesh_regions[&m];
+    std::list<mesh_region> &lmr = registered_mesh_regions[&m];
     for (const mesh_region &rg : lmr)
       if (rg.compare(m, region, m)) return rg;
     lmr.push_back(region);
@@ -439,7 +439,6 @@ namespace getfem {
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
-                              const std::string &expr,
                               size_type add_derivative_order,
                               bool function_expr, operation_type op_type,
                               const std::string varname_interpolation) {
@@ -517,7 +516,7 @@ namespace getfem {
         trees.back().order = order;
         trees.back().operation = op_type;
         trees.back().varname_interpolation = varname_interpolation;
-       }
+      }
 
       if (op_type == ga_workspace::ASSEMBLY && order < add_derivative_order) {
         std::set<var_trans_pair> expr_variables;
@@ -536,7 +535,7 @@ namespace getfem {
                                  ref_elt_dim_of_mesh(m,rg),false,function_expr);
             // GA_TOCTIC("Analysis after Derivative time");
             // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
-            add_tree(dtree, m, mim, rg, expr, add_derivative_order,
+            add_tree(dtree, m, mim, rg, add_derivative_order,
                      function_expr, op_type, varname_interpolation);
           }
         }
@@ -592,7 +591,7 @@ namespace getfem {
         if (ltree.root) {
           // cout << "adding tree " << ga_tree_to_string(ltree) << endl;
           max_order = std::max(ltree.root->nb_test_functions(), max_order);
-          add_tree(ltree, mim.linked_mesh(), mim, rg, expr,
+          add_tree(ltree, mim.linked_mesh(), mim, rg,
                    add_derivative_order, true);
         }
       }
@@ -609,7 +608,7 @@ namespace getfem {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
       add_tree(tree, dummy_mesh(), dummy_mesh_im(), dummy_mesh_region(),
-               expr, 0, true);
+               0, true);
     }
   }
 
@@ -624,7 +623,7 @@ namespace getfem {
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid expression containing test functions");
-      add_tree(tree, m, dummy_mesh_im(), rg, expr, 0, false,
+      add_tree(tree, m, dummy_mesh_im(), rg, 0, false,
                ga_workspace::PRE_ASSIGNMENT);
     }
   }
@@ -641,7 +640,7 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, 0, false,
+      add_tree(tree, m, mim, rg, 0, false,
                ga_workspace::PRE_ASSIGNMENT);
     }
   }
@@ -660,17 +659,12 @@ namespace getfem {
     if (tree.root) {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
-      add_tree(tree, m, mim, rg, expr, order, false,
+      add_tree(tree, m, mim, rg, order, false,
                before ? ga_workspace::PRE_ASSIGNMENT
                       : ga_workspace::POST_ASSIGNMENT,
                varname);
     }
   }
-
-  size_type ga_workspace::nb_trees() const { return trees.size(); }
-
-  ga_workspace::tree_description &ga_workspace::tree_info(size_type i)
-  { return trees[i]; }
 
   bool ga_workspace::used_variables(std::vector<std::string> &vl,
                                     std::vector<std::string> &vl_test1,
@@ -1082,7 +1076,7 @@ namespace getfem {
     std::string term;
     for (const ga_workspace::tree_description &td : trees) {
       if (td.order == 0) {
-        ga_tree &local_tree = *(td.ptree);
+        const ga_tree &local_tree = *(td.ptree);
         if (term.size())
           term += "+("+ga_tree_to_string(local_tree)+")";
         else
@@ -1101,7 +1095,7 @@ namespace getfem {
     std::string term;
     for (const ga_workspace::tree_description &td : trees) {
       if (td.order == 1 && td.name_test1 == varname) {
-        ga_tree &local_tree = *(td.ptree);
+        const ga_tree &local_tree = *(td.ptree);
         if (term.size())
           term += "+("+ga_tree_to_string(local_tree)+")";
         else
@@ -1119,7 +1113,7 @@ namespace getfem {
     std::string result;
     for (const ga_workspace::tree_description &td : trees) {
       if (td.order == 1 && td.name_test1 == varname) {
-        ga_tree &local_tree = *(td.ptree);
+        const ga_tree &local_tree = *(td.ptree);
         if (local_tree.root)
           ga_extract_Neumann_term(local_tree, varname, *this,
                                   local_tree.root, result);
