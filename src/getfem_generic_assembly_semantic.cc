@@ -3405,6 +3405,7 @@ namespace getfem {
           pga_tree_node pnode_der = pnode_trans->parent->children[1];
           pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
           // Fixed Test function dimension equal to 1 -- not adapted
+          size_type qv = workspace.qdim(varname);
           if (n == 1)
             pnode_der->init_vector_tensor(qv);
           else
