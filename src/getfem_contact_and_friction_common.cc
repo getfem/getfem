@@ -1267,7 +1267,7 @@ namespace getfem {
   //  Raytracing interpolate transformation for generic assembly
   //
   //=========================================================================
-  
+
   class  raytracing_interpolate_transformation
     : public virtual_interpolate_transformation {
   protected:
@@ -1279,7 +1279,7 @@ namespace getfem {
       mutable const model_real_plain_vector *U;      // Displacement
       mutable model_real_plain_vector U_unred; // Unreduced displacement
       bool slave;
- 
+
       contact_boundary()
         : region(-1), mfu(0), dispname(""), U(0), U_unred(0), slave(false) {}
       contact_boundary(size_type r, const mesh_fem *mf, const std::string &dn,
@@ -1301,11 +1301,11 @@ namespace getfem {
 
     scalar_type release_distance;  // Limit distance beyond which the contact
                                    // will not be considered.
-    
+
     std::vector<contact_boundary> contact_boundaries;
     typedef std::map<const mesh *, std::vector<size_type> > mesh_boundary_cor;
     mesh_boundary_cor boundary_for_mesh;
-    
+
     class obstacle {
       const model *md;
       const ga_workspace *parent_workspace;
@@ -1373,7 +1373,7 @@ namespace getfem {
     };
 
     std::vector<obstacle> obstacles;
-        
+
     mutable bgeot::rtree face_boxes;
     mutable std::vector<face_box_info> face_boxes_info;
 
@@ -1393,13 +1393,13 @@ namespace getfem {
           const model_real_plain_vector &U = *(cb.U);
           const mesh &m = mfu.linked_mesh();
           size_type N = m.dim();
-          
+
           base_node val(N), bmin(N), bmax(N);
           base_small_vector n0_x(N), n_x(N), n0_y(N), n_y(N), n_mean(N);
           base_matrix grad(N,N);
           mesh_region region = m.region(bnum);
           GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
-          
+
           dal::bit_vector points_already_interpolated;
           std::vector<base_node> transformed_points(m.nb_max_points());
           for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
@@ -1410,17 +1410,17 @@ namespace getfem {
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
             mfu.linked_mesh().points_of_convex(cv, G);
             fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
-            
+
             bgeot::pconvex_structure cvs = pgt->structure();
             size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
             GMM_ASSERT1(nb_pt_on_face >= 2, "This element has less than two "
                         "vertices on considered face !");
             gmm::clear(n_mean);
-            
+
             for (size_type k = 0; k < nb_pt_on_face; ++k) {
               size_type ip = cvs->ind_points_of_face(v.f())[k];
               size_type ind = m.ind_points_of_convex(cv)[ip];
-              
+
               // computation of transformed vertex
               ctx.set_ii(ip);
               if (!(points_already_interpolated.is_in(ind))) {
@@ -1435,7 +1435,7 @@ namespace getfem {
               compute_normal(ctx, v.f(), false, coeff, n0_x, n_x, grad);
               n_x /= gmm::vect_norm2(n_x);
               n_mean += n_x;
-              
+
               if (k == 0) // computation of bounding box
                 bmin = bmax = val;
               else {
@@ -1445,13 +1445,13 @@ namespace getfem {
                 }
               }
             }
-            
+
             // Security coefficient of 1.3 (for nonlinear transformations)
             scalar_type h = bmax[0] - bmin[0];
             for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
             for (size_type k = 0; k < N; ++k)
               { bmin[k] -= h * 0.15; bmax[k] += h * 0.15; }
-            
+
             // Store the bounding box and additional information.
             face_boxes.add_box(bmin, bmax, face_boxes_info.size());
             n_mean /= gmm::vect_norm2(n_mean);
@@ -1493,7 +1493,7 @@ namespace getfem {
         .push_back(contact_boundaries.size());
       contact_boundaries.push_back(cb);
     }
-    
+
     void add_contact_boundary(const ga_workspace &workspace, const mesh &m,
                               const std::string dispname,
                               size_type region, bool slave) {
@@ -1518,7 +1518,7 @@ namespace getfem {
                            std::set<var_trans_pair> &vars,
                            bool ignore_data, const mesh &m_x,
                            const std::string &interpolate_name) const {
-      
+
       bool expand_groups = !ignore_data;
       // const mesh_fem *mf = workspace.associated_mf(name);
       // GMM_ASSERT1(mf, "Internal error");
@@ -1601,12 +1601,12 @@ namespace getfem {
       GMM_ASSERT1(ib_x != size_type(-1),
                   "No contact region found for this point");
       const contact_boundary &cb_x = contact_boundaries[ib_x];
-      const mesh_fem &mfu_x = *(cb_x.mfu); 
+      const mesh_fem &mfu_x = *(cb_x.mfu);
       pfem pfu_x = mfu_x.fem_of_element(cv_x);
       size_type N = mfu_x.linked_mesh().dim();
       GMM_ASSERT1(mfu_x.get_qdim() == N,
                   "Displacment field with wrong dimension");
-      
+
       model_real_plain_vector coeff_x, coeff_y, stored_coeff_y;
       base_small_vector a(N-1), b(N-1), pt_x(N), pt_y(N), n_x(N);
       base_small_vector stored_pt_y(N), stored_n_y(N), stored_pt_y_ref(N);
@@ -1643,7 +1643,7 @@ namespace getfem {
         const obstacle &obs = obstacles[i];
         gmm::copy(pt_x, obs.point());
         const base_tensor &t = obs.eval();
-        
+
         GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
                     "a scalar valued one");
         d1 = t[0];
@@ -1667,7 +1667,7 @@ namespace getfem {
         size_type nit = 0, nb_fail = 0;
         scalar_type alpha(0), beta(0);
         d1 = d0;
-        
+
         while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
           if (nit != 1) gmm::copy(obs.eval_derivative().as_vector(), n_y);
 
@@ -1737,7 +1737,7 @@ namespace getfem {
         const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
         const base_node &Y0 = face_pts[0];
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
-        
+
         const base_small_vector &NY0
           = pfu_y->ref_convex(cv_y)->normals()[face_y];
         for (size_type k = 0; k < N-1; ++k) { // A basis for the face
@@ -1754,7 +1754,7 @@ namespace getfem {
         }
 
         gmm::clear(a);
-        
+
         for (size_type k = 0; k < N-1; ++k) {
           gmm::resize(Ti[k], N);
           scalar_type norm(0);
@@ -1778,7 +1778,7 @@ namespace getfem {
         bool exited = false;
         size_type nbfail = 0, niter = 0;
         for (;residual > 2E-12 && niter <= 30; ++niter) {
-          
+
           for (size_type subiter(0); subiter <= 4; ++subiter) {
             pps(a, hessa);
             det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())), N-1, false));
@@ -1789,10 +1789,10 @@ namespace getfem {
           if (det <= 1E-15) break;
           // Computation of the descent direction
           gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
-          
+
           if (gmm::vect_norm2(dir) > scalar_type(10)) nbfail++;
           if (nbfail >= 4) break;
-          
+
           // Line search
           scalar_type lambda(1);
           for (size_type j = 0; j < 5; ++j) {
@@ -1802,12 +1802,12 @@ namespace getfem {
             if (residual2 < residual) break;
             lambda /= ((j < 3) ? scalar_type(2) : scalar_type(5));
           }
-          
+
           residual = residual2;
           gmm::copy(res2, res);
           gmm::copy(b, a);
           scalar_type dist_ref = gmm::vect_norm2(a);
-          
+
           if (niter > 1 && dist_ref > 15) break;
           if (niter > 5 && dist_ref > 8) break;
           if (/*(niter > 1 && dist_ref > 7) ||*/ nbfail == 3) exited = true;
@@ -1825,14 +1825,14 @@ namespace getfem {
         // CRITERION 2 : The contact pair is eliminated when
         //               raytrace do not converge.
         if (!converged) continue;
-        
+
         // CRITERION 3 : The raytraced point is inside the element
         if (!is_in) continue;
 
         // CRITERION 4 : Apply the release distance
         scalar_type signed_dist = gmm::vect_dist2(pt_y, pt_x);
         if (signed_dist > release_distance) continue;
-        
+
         // compute the unit normal vector at y and the signed distance.
         compute_normal(ctx_y, face_y, false, coeff_y, n0_y, n_y, grad);
         n_y /= gmm::vect_norm2(n_y);
@@ -1890,13 +1890,13 @@ namespace getfem {
           fem_interpolation_context &ctx_y = stored_ctx_y;
           size_type cv_y = 0;
           if (ret_type == 1) cv_y = ctx_y.convex_num();
-          
+
           base_matrix I_nxny(N,N); // I - nx@ny/nx.ny
           gmm::copy(gmm::identity_matrix(), I_nxny);
           gmm::rank_one_update(I_nxny, n_x,
                                gmm::scaled(stored_n_y,scalar_type(-1)
                                            / gmm::vect_sp(n_x, stored_n_y)));
-        
+
           // Computation of F_y
           base_matrix F_y(N,N), F_y_inv(N,N), M1(N, N), M2(N, N);
           pfem pfu_y = 0;
@@ -1944,7 +1944,7 @@ namespace getfem {
           // Derivative : F_y^{-1}*I_nxny*(Test_u(X)-Test_u(Y)+gDn_x[Test_u])
           //         with Dn_x[Test_u] =-(I-nx@nx)*F_x^{-T}*Grad_Test_u^{T}*n_x
           //         and I_nxny*(I - nx@nx) = I_nxny
-          
+
           // F_y^{-1}*I_nxny*Test_u(X)
           gmm::mult(F_y_inv, I_nxny, M1);
           base_matrix der_x(ndof_ux, N);
@@ -1956,7 +1956,7 @@ namespace getfem {
             gmm::mult(vbase_uy, gmm::transposed(M1), der_y);
             gmm::scale(der_y, scalar_type(-1));
           }
-          
+
           // F_y^{-1}*I_nxny*gDn_x[Test_u]
           gmm::mult(M1, gmm::transposed(F_x_inv), M2);
           for (size_type i = 0; i < ndof_ux; ++i)
@@ -1989,7 +1989,7 @@ namespace getfem {
       }
       return ret_type;
     }
-    
+
     raytracing_interpolate_transformation(scalar_type d)
       : release_distance(d) {}
   };
@@ -2035,12 +2035,12 @@ namespace getfem {
       GMM_ASSERT1(ib_x != size_type(-1),
                   "No contact region found for this point");
       const contact_boundary &cb_x = contact_boundaries[ib_x];
-      const mesh_fem &mfu_x = *(cb_x.mfu); 
+      const mesh_fem &mfu_x = *(cb_x.mfu);
       pfem pfu_x = mfu_x.fem_of_element(cv_x);
       size_type N = mfu_x.linked_mesh().dim();
       GMM_ASSERT1(mfu_x.get_qdim() == N,
                   "Displacment field with wrong dimension");
-      
+
       model_real_plain_vector coeff_x, coeff_y, stored_coeff_y;
       base_small_vector a(N-1), b(N-1), pt_x(N), pt_y(N), n_x(N);
       base_small_vector stored_pt_y(N), stored_n_y(N), stored_pt_y_ref(N);
@@ -2079,7 +2079,7 @@ namespace getfem {
         const obstacle &obs = obstacles[i];
         gmm::copy(pt_x, obs.point());
         const base_tensor &t = obs.eval();
-        
+
         GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
                     "a scalar valued one");
         d1 = t[0];
@@ -2087,7 +2087,7 @@ namespace getfem {
         if (gmm::abs(d1) < release_distance && d1 < d0) {
           const base_tensor &t_der = obs.eval_derivative();
           GMM_ASSERT1(t_der.size() == n_x.size(), "Bad derivative size");
-          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
+          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0))
             { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
         }
       }
@@ -2100,7 +2100,7 @@ namespace getfem {
         size_type nit = 0, nb_fail = 0;
         scalar_type alpha(0), beta(0);
         d1 = d0;
-        
+
         while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
           if (nit != 1) gmm::copy(obs.eval_derivative().as_vector(), n_y);
 
@@ -2121,7 +2121,7 @@ namespace getfem {
         else if (gmm::vect_dist2(pt_y, pt_x) <= release_distance) {
           n_y /= gmm::vect_norm2(n_y);
           d0 = gmm::vect_dist2(pt_y, pt_x) * gmm::sgn(d0);
-          stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
+          stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y,
           stored_signed_distance = d0;
           first_pair_found = true;
         } else
@@ -2167,7 +2167,7 @@ namespace getfem {
         const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
         const base_node &Y0 = face_pts[0];
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
-        
+
         const base_small_vector &NY0
           = pfu_y->ref_convex(cv_y)->normals()[face_y];
 
@@ -2184,7 +2184,7 @@ namespace getfem {
             norm = gmm::vect_norm2(ti[k]);
           }
           ti[k] /= norm;
-        }        
+        }
         slice_vector_on_basic_dof_of_element(mfu_y, *(cb_y.U), cv_y, coeff_y);
         proj_pt_surf_cost_function_object pps(Y0, pt_x, ctx_y, coeff_y, ti,
                                                 1E-10, ref_conf);
@@ -2231,7 +2231,7 @@ namespace getfem {
           }
 
         bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
-         
+
           //cout<< "y_ref =" << ctx_y.xref() <<endl;
           //cout<< "x_ref =" << ctx_x.xref() <<endl;
          // cout<< "y =" << ctx_y.xreal() <<endl;
@@ -2316,7 +2316,7 @@ namespace getfem {
           // x (with respect to the integration method, for instance).
 
           // A specific (Quasi) Newton algorithm for computing the projection
-      }   
+      }
 
       int ret_type = 0;
       *m_t = 0; cv = size_type(-1); face_num = short_type(-1);
@@ -2339,13 +2339,13 @@ namespace getfem {
           fem_interpolation_context &ctx_y = stored_ctx_y;
           size_type cv_y = 0;
           if (ret_type == 1) cv_y = ctx_y.convex_num();
-        
-          
+
+
           base_matrix I_nyny(N,N); // I - ny@ny
           gmm::copy(gmm::identity_matrix(), I_nyny);
           gmm::rank_one_update(I_nyny, stored_n_y,
                                gmm::scaled(stored_n_y,scalar_type(-1)));
-        
+
           // Computation of F_y
           base_matrix F_y(N,N), F_y_inv(N,N), M1(N, N), M2(N, N);
           pfem pfu_y = 0;
@@ -2367,7 +2367,7 @@ namespace getfem {
           size_type qdim_ux = pfu_x->target_dim();
           size_type ndof_ux = pfu_x->nb_dof(cv_x) * N / qdim_ux;
           vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
-          
+
           base_tensor base_uy;
           base_matrix vbase_uy;
           size_type ndof_uy = 0;
@@ -2377,7 +2377,7 @@ namespace getfem {
             ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
             vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
           }
-          
+
           base_tensor grad_base_ux, vgrad_base_ux;
           ctx_x.grad_base_value(grad_base_ux);
           vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
@@ -2385,12 +2385,12 @@ namespace getfem {
 
           // Derivative : F_y^{-1}*I_nyny*(Test_u(X)-Test_u(Y))
           //         and I_nyny*(I - ny@ny) = I_nyny
-          
+
           // F_y^{-1}*I_nyny*Test_u(X)
           gmm::mult(F_y_inv, I_nyny, M1);
           base_matrix der_x(ndof_ux, N);
           gmm::mult(vbase_ux, gmm::transposed(M1), der_x);
-          
+
           // -F_y^{-1}*I_nyny*Test_u(Y)
           base_matrix der_y(ndof_uy, N);
           if (ret_type == 1) {
@@ -2586,7 +2586,7 @@ namespace getfem {
   { mi.resize(1); mi[0] = N; }
   // static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
   // { mi.resize(2); mi[0] = mi[1] = N; }
-  
+
 
   // Transformed_unit_vector(Grad_u, n)  = (I+Grad_u)^{-T}n / ||(I+Grad_u)^{-T}n||
   struct Transformed_unit_vector : public ga_nonlinear_operator {
@@ -2597,7 +2597,7 @@ namespace getfem {
       ga_init_vector(sizes, args[0]->sizes()[0]);
       return true;
     }
-    
+
     // Value : (I+Grad_u)^{-T}n / ||(I+Grad_u)^{-T}n||
     void value(const arg_list &args, base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -2613,7 +2613,7 @@ namespace getfem {
     // Derivative / Grad_u: -(I - n@n)(I+Grad_u)^{-T}Test_Grad_u n
     // Implementation: A{ijk} = -G{ik}ndef{j}
     //                 with G = (I - n@n)(I+Grad_u)^{-T}
-    //                 and ndef the transformed normal         
+    //                 and ndef the transformed normal
     // Derivative / n: ((I+Grad_u)^{-T}Test_n
     //                 - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
     // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
@@ -2649,7 +2649,7 @@ namespace getfem {
       }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative : not implemented
     void second_derivative(const arg_list &, size_type, size_type,
                            base_tensor &) const {
@@ -2669,7 +2669,7 @@ namespace getfem {
       ga_init_vector(sizes, N);
       return true;
     }
-    
+
     // Value : (lambda.n+rg)_- n - P_B(n, f(lambda.n+rg)_-)(lambda-r Vs)
     void value(const arg_list &args, base_tensor &result) const {
       const base_vector &lambda = *(args[0]);
@@ -2679,7 +2679,7 @@ namespace getfem {
       scalar_type g = (*(args[3]))[0];
       const base_vector &f = *(args[4]);
       scalar_type r = (*(args[5]))[0];
-      
+
 
       scalar_type nn = gmm::vect_norm2(n);
       scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
@@ -2687,7 +2687,7 @@ namespace getfem {
       size_type s_f = gmm::vect_size(f);
       scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0)) + f[0]*lambdan_aug;
       if (s_f >= 2) tau = std::min(tau, f[1]);
-    
+
       if (tau > scalar_type(0)) {
         gmm::add(lambda, gmm::scaled(Vs, -r), F);
         scalar_type mu = gmm::vect_sp(F, n)/nn;
@@ -2695,14 +2695,14 @@ namespace getfem {
         scalar_type norm = gmm::vect_norm2(F);
         if (norm > tau) gmm::scale(F, tau / norm);
       } else { gmm::clear(F); }
-      
+
       gmm::add(gmm::scaled(n, -lambdan_aug/nn), F);
     }
 
     // Derivative / Grad_u: -(I - n@n)(I+Grad_u)^{-T}Test_Grad_u n
     // Implementation: A{ijk} = -G{kj}ndef{i}
     //                 with G = (I - n@n)(I+Grad_u)^{-T}
-    //                 and ndef the transformed normal         
+    //                 and ndef the transformed normal
     // Derivative / n: ((I+Grad_u)^{-T}Test_n
     //                 - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
     // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
@@ -2726,7 +2726,7 @@ namespace getfem {
       scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0))+f[0]*lambdan_aug;
       if (s_f >= 2) tau = std::min(tau, f[1]);
       scalar_type norm(0);
-      
+
       if (tau > scalar_type(0)) {
         gmm::add(lambda, gmm::scaled(Vs, -r), F); // F <-- lambda -r*Vs
         scalar_type mu = gmm::vect_sp(F, n)/nn;   // mu <-- (lambda -r*Vs).n/|n|
@@ -2738,7 +2738,7 @@ namespace getfem {
         gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);  // dn <-- -(lambda -r*Vs).n/|n|² (I - n x n/|n|²) + n x ((lambda -r*Vs)*(I-n x n / |n|²)) /|n|²
         gmm::copy(gmm::identity_matrix(), dVs);                                // dVs <-- I
         gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn))); // dVs <-- I - n x n/|n|²
-        
+
         if (norm > tau) { // slip
           gmm::rank_one_update(dVs, F,
                                gmm::scaled(F, scalar_type(-1)/(norm*norm)));
@@ -2748,12 +2748,12 @@ namespace getfem {
           gmm::scale(dn, tau / norm);
           gmm::scale(F, tau / norm);
         } // else gmm::clear(dg);
-        
+
       } // else { gmm::clear(dg); gmm::clear(dVs); gmm::clear(F); gmm::clear(dn); }
       // At this stage, F = P_{B_T}, dVs = d_q P_{B_T}, dn = d_n P_{B_T}
       // and dg = d_tau P_{B_T}.
 
-      
+
       base_tensor::iterator it = result.begin();
       switch (nder) {
       case 1: // Derivative with respect to lambda
@@ -2825,7 +2825,7 @@ namespace getfem {
       }
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
-    
+
     // Second derivative : not implemented
     void second_derivative(const arg_list &, size_type, size_type,
                            base_tensor &) const {
@@ -2837,7 +2837,7 @@ namespace getfem {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
-    
+
     PREDEF_OPERATORS.add_method("Transformed_unit_vector",
                                 std::make_shared<Transformed_unit_vector>());
     PREDEF_OPERATORS.add_method("Coulomb_friction_coupled_projection",

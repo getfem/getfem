@@ -25,26 +25,27 @@
 namespace dal {
 
   bit_reference& bit_reference::operator = (bool x) {
-      if (x) { if (!(*p & mask)) { *p |= mask; bv->change_for_true(ind); } } 
-      else  { if (*p & mask) { *p &= ~mask; bv->change_for_false(ind); } }
-      return *this;
+    if (x) { if (!(*p & mask)) { *p |= mask; bv->change_for_true(ind); } }
+    else  { if (*p & mask) { *p &= ~mask; bv->change_for_false(ind); } }
+    return *this;
   }
 
   bit_iterator::bit_iterator(bit_vector &b, size_type i) : p(b, i / WD_BIT)
   { ind = i; bv = &b, mask = bit_support(1) << (i & WD_MASK); }
 
-  bit_iterator& bit_iterator::operator+=(difference_type i){
-      ind+=i; mask = bit_support(1) << (ind & WD_MASK); 
-      p=bit_container::iterator(*bv, ind/WD_BIT);
-      return *this;
+  bit_iterator& bit_iterator::operator+=(difference_type i) {
+    ind+=i; mask = bit_support(1) << (ind & WD_MASK);
+    p=bit_container::iterator(*bv, ind/WD_BIT);
+    return *this;
   }
 
   bit_const_iterator::bit_const_iterator(const bit_vector &b, size_type i)
     : p(b, i / WD_BIT)
   { ind = i; bv = &b, mask = bit_support(1) << (i & WD_MASK); }
 
-  bit_const_iterator& bit_const_iterator::operator+=(difference_type i) {
-    ind += i; mask = bit_support(1) << (ind & WD_MASK); 
+  bit_const_iterator&
+  bit_const_iterator::operator+=(difference_type i) {
+    ind += i; mask = bit_support(1) << (ind & WD_MASK);
     p = bit_container::const_iterator(*bv, ind/WD_BIT);
     return *this;
   }
@@ -55,7 +56,7 @@ namespace dal {
     if (r != 0) f++;
     l++;
     if (f < l) std::fill(dal::bit_container::begin()+f,
-			 dal::bit_container::begin()+l, 0);
+                         dal::bit_container::begin()+l, 0);
     ilast_false = i2;
   }
 
@@ -69,15 +70,15 @@ namespace dal {
     std::swap(icard_valid, da.icard_valid);
   }
 
-  bit_vector::size_type bit_vector::card(void) const {
+  bit_vector::size_type bit_vector::card() const {
     if (!icard_valid) {
 //       bit_container::const_iterator itb = bit_container::begin()
-// 	+ ifirst_true/WD_BIT, ite = bit_container::end();
+//         + ifirst_true/WD_BIT, ite = bit_container::end();
 //       bit_support x;
       icard = 0;
-//       for (; itb != ite; ++itb) { 
+//       for (; itb != ite; ++itb) {
 //         if ((x = *itb)) // fast count of the nb of bits
-// 	                // of an integer (faster than shifts)  
+//                         // of an integer (faster than shifts)
 //           do icard++; while ((x &= x-1));
 //       }
 //       icard_valid = true;
@@ -97,7 +98,7 @@ namespace dal {
     if (is_in(ifirst_true)) return ifirst_true;
     else { ifirst_true = ilast_true = 0; return size_type(-1); }
   }
-  
+
   bit_vector::size_type bit_vector::first_false(void) const {
     const_iterator itx = begin(), ite = end(); itx += ifirst_false;
     while (itx != ite && *itx) { ++itx; ++(ifirst_false); }
@@ -111,15 +112,15 @@ namespace dal {
     if (is_in(ilast_true)) return ilast_true;
     else return size_type(-1);
   }
-  
+
   bit_vector::size_type bit_vector::last_false(void) const {
     const_iterator itb = begin(), itx = itb; itx += ilast_false;
     while (itx != itb && *itx) { --itx; --(ilast_false); }
     return ilast_false;
   }
-  
+
   bit_vector &bit_vector::setminus(const bit_vector& b) {
-    for (bv_visitor i(b); !i.finished(); ++i) del(i); 
+    for (bv_visitor i(b); !i.finished(); ++i) del(i);
     return *this;
   }
 
@@ -127,13 +128,13 @@ namespace dal {
     for (bv_visitor i(bv); !i.finished(); ++i) add(i);
     return *this;
   }
-  
+
   bit_vector &bit_vector::operator &=(const bit_vector &bv) {
     bit_container::iterator it1b = bit_container::begin();
     bit_container::iterator it1e = bit_container::end();
     bit_container::const_iterator it2b = bv.bit_container::begin();
     bit_container::const_iterator it2e = bv.bit_container::end();
-    
+
     while (it1b != it1e && it2b != it2e) { *it1b++ &= *it2b++; }
     while (it1b != it1e) { *it1b++ = 0; }
     icard_valid = false;
@@ -152,14 +153,14 @@ namespace dal {
     bit_container::const_iterator it1e = bit_container::end();
     bit_container::const_iterator it2b = bv.bit_container::begin();
     bit_container::const_iterator it2e = bv.bit_container::end();
-    
+
     while (it1b!=it1e && it2b!=it2e) if (*it1b++ != *it2b++) return false;
     while (it1b != it1e) if (*it1b++ != 0) return false;
     while (it2b != it2e) if (*it2b++ != 0) return false;
     return true;
   }
 
-  void bit_vector::add(size_type i, size_type nb) { 
+  void bit_vector::add(size_type i, size_type nb) {
     if (nb)
       { add(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), true); }
   }
@@ -196,11 +197,11 @@ namespace dal {
     while (1) {
       size_type ind_b = (ind&(~WD_MASK));
       while (v) {
-	++ind; v >>= 1;
-	if (v&1) return true;
+        ++ind; v >>= 1;
+        if (v&1) return true;
       }
       ind = ind_b + WD_BIT;
-      if (ind >= ilast) return false; 
+      if (ind >= ilast) return false;
       v = *(++it);
       if (v&1) return true;
     }

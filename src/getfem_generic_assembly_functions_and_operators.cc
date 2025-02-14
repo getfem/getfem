@@ -43,13 +43,13 @@ namespace getfem {
   //=========================================================================
 
   scalar_type ga_predef_function::operator()(scalar_type t_,
-					     scalar_type u_) const {
+                                             scalar_type u_) const {
     switch(ftype_) {
     case 0:
       if (nbargs_ == 2)
-	return (*f2_)(t_, u_);
+        return (*f2_)(t_, u_);
       else
-	return (*f1_)(t_);
+        return (*f1_)(t_);
       break;
     case 1:
       t.thrd_cast()[0] = t_; u.thrd_cast()[0] = u_;
@@ -64,10 +64,10 @@ namespace getfem {
   bool ga_predef_function::is_affine(const std::string &varname) const {
     if (ftype_ == 1) {
       for (size_type i = 0; i < workspace.thrd_cast().nb_trees(); ++i) {
-	const ga_workspace::tree_description &
-	  td = workspace.thrd_cast().tree_info(i);
-	if (!(ga_is_affine(*(td.ptree), workspace, varname, "")))
-	  return false;
+        const ga_workspace::tree_description &
+          td = workspace.thrd_cast().tree_info(i);
+        if (!(ga_is_affine(*(td.ptree), workspace, varname, "")))
+          return false;
       }
       return true;
     }
@@ -391,14 +391,14 @@ namespace getfem {
     : expr_(""), derivative1_(""), derivative2_(""), gis(nullptr) {}
 
   ga_predef_function::ga_predef_function(pscalar_func_onearg f,
-					 size_type dtype__,
-					 const std::string &der)
+                                         size_type dtype__,
+                                         const std::string &der)
     : ftype_(0), dtype_(dtype__), nbargs_(1), f1_(f), expr_(""),
         derivative1_(der), derivative2_("") {}
   ga_predef_function::ga_predef_function(pscalar_func_twoargs f,
-					 size_type dtype__,
-					 const std::string &der1,
-					 const std::string &der2)
+                                         size_type dtype__,
+                                         const std::string &der1,
+                                         const std::string &der2)
     : ftype_(0), dtype_(dtype__), nbargs_(2), f2_(f),
       expr_(""), derivative1_(der1), derivative2_(der2), gis(nullptr) {}
   ga_predef_function::ga_predef_function(const std::string &expr__)
@@ -735,13 +735,13 @@ namespace getfem {
       ga_derivative(tree, local_workspace, dummy_mesh(), var, "", 1);
       if (tree.root) {
         ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
-			     1, false, true);
+                             1, false, true);
         // To be improved to suppress test functions in the expression ...
         // ga_replace_test_by_cte do not work in all operations like
         // vector components x(1)
         // ga_replace_test_by_cte(tree.root, false);
         // ga_semantic_analysis(tree, local_workspace, dummy_mesh(), 1,
-	//                      false, true);
+        //                      false, true);
       }
       expr = ga_tree_to_string(tree);
     }

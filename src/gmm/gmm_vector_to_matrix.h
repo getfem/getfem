@@ -41,7 +41,7 @@
 namespace gmm {
 
   /* ********************************************************************* */
-  /*	     row vector -> transform a vector in a (1, n) matrix.          */
+  /*         row vector -> transform a vector in a (1, n) matrix.          */
   /* ********************************************************************* */
 
   template <typename PT> struct gen_row_vector {
@@ -52,12 +52,12 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
 
     simple_vector_ref<PT> vec;
-    
+
     reference operator()(size_type, size_type j) const { return vec[j]; }
-   
-    size_type nrows(void) const { return 1; }
-    size_type ncols(void) const { return vect_size(vec); }
-    
+
+    size_type nrows() const { return 1; }
+    size_type ncols() const { return vect_size(vec); }
+
     gen_row_vector(ref_V v) : vec(v) {}
     gen_row_vector() {}
     gen_row_vector(const gen_row_vector<CPT> &cr) : vec(cr.vec) {}
@@ -78,7 +78,7 @@ namespace gmm {
 
     simple_vector_ref<PT> vec;
     bool isend;
-    
+
     iterator &operator ++()   { isend = true; return *this; }
     iterator &operator --()   { isend = false; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
@@ -87,13 +87,13 @@ namespace gmm {
     { if (i) isend = false; return *this; }
     iterator &operator -=(difference_type i)
     { if (i) isend = true; return *this;  }
-    iterator operator +(difference_type i) const 
+    iterator operator +(difference_type i) const
     { iterator itt = *this; return (itt += i); }
     iterator operator -(difference_type i) const
     { iterator itt = *this; return (itt -= i); }
-    difference_type operator -(const iterator &i) const { 
+    difference_type operator -(const iterator &i) const {
       return (isend == true) ? ((i.isend == true) ? 0 : 1)
-	                     : ((i.isend == true) ? -1 : 0);
+                             : ((i.isend == true) ? -1 : 0);
     }
 
     const simple_vector_ref<PT>& operator *() const { return vec; }
@@ -105,12 +105,12 @@ namespace gmm {
     bool operator > (const iterator &i) const { return (*this - i >  0); }
     bool operator >=(const iterator &i) const { return (*this - i >= 0); }
 
-    gen_row_vector_iterator(void) {}
+    gen_row_vector_iterator() {}
     gen_row_vector_iterator(const gen_row_vector_iterator<MPT> &itm)
       : vec(itm.vec), isend(itm.isend) {}
     gen_row_vector_iterator(const gen_row_vector<PT> &m, bool iis_end)
       : vec(m.vec), isend(iis_end) { }
-    
+
   };
 
   template <typename PT>
@@ -121,7 +121,7 @@ namespace gmm {
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
-				PT>::ref_type porigin_type;
+                                PT>::ref_type porigin_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename select_ref<value_type,
             typename linalg_traits<V>::reference, PT>::ref_type reference;
@@ -130,12 +130,12 @@ namespace gmm {
     typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type const_col_iterator;
     typedef simple_vector_ref<const V *> const_sub_row_type;
-    typedef typename select_ref<abstract_null_type, 
+    typedef typename select_ref<abstract_null_type,
             simple_vector_ref<V *>, PT>::ref_type sub_row_type;
     typedef gen_row_vector_iterator<typename const_pointer<PT>::pointer>
             const_row_iterator;
-    typedef typename select_ref<abstract_null_type, 
-	    gen_row_vector_iterator<PT>, PT>::ref_type row_iterator;
+    typedef typename select_ref<abstract_null_type,
+            gen_row_vector_iterator<PT>, PT>::ref_type row_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef row_major sub_orientation;
     typedef typename linalg_traits<V>::index_sorted index_sorted;
@@ -161,13 +161,13 @@ namespace gmm {
     static reference access(const row_iterator &itrow, size_type i)
     { return itrow.vec[i]; }
   };
-  
+
   template <typename PT>
   std::ostream &operator <<(std::ostream &o, const gen_row_vector<PT>& m)
   { gmm::write(o,m); return o; }
 
   /* ********************************************************************* */
-  /*	     col vector -> transform a vector in a (n, 1) matrix.          */
+  /*         col vector -> transform a vector in a (n, 1) matrix.          */
   /* ********************************************************************* */
 
   template <typename PT> struct gen_col_vector {
@@ -178,12 +178,12 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
 
     simple_vector_ref<PT> vec;
-    
+
     reference operator()(size_type i, size_type) const { return vec[i]; }
-   
-    size_type ncols(void) const { return 1; }
-    size_type nrows(void) const { return vect_size(vec); }
-    
+
+    size_type ncols() const { return 1; }
+    size_type nrows() const { return vect_size(vec); }
+
     gen_col_vector(ref_V v) : vec(v) {}
     gen_col_vector() {}
     gen_col_vector(const gen_col_vector<CPT> &cr) : vec(cr.vec) {}
@@ -204,7 +204,7 @@ namespace gmm {
 
     simple_vector_ref<PT> vec;
     bool isend;
-    
+
     iterator &operator ++()   { isend = true; return *this; }
     iterator &operator --()   { isend = false; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
@@ -213,13 +213,13 @@ namespace gmm {
     { if (i) isend = false; return *this; }
     iterator &operator -=(difference_type i)
     { if (i) isend = true; return *this;  }
-    iterator operator +(difference_type i) const 
+    iterator operator +(difference_type i) const
     { iterator itt = *this; return (itt += i); }
     iterator operator -(difference_type i) const
     { iterator itt = *this; return (itt -= i); }
-    difference_type operator -(const iterator &i) const { 
+    difference_type operator -(const iterator &i) const {
       return (isend == true) ? ((i.isend == true) ? 0 : 1)
-	                     : ((i.isend == true) ? -1 : 0);
+                             : ((i.isend == true) ? -1 : 0);
     }
 
     const simple_vector_ref<PT>& operator *() const { return vec; }
@@ -231,12 +231,12 @@ namespace gmm {
     bool operator > (const iterator &i) const { return (*this - i >  0); }
     bool operator >=(const iterator &i) const { return (*this - i >= 0); }
 
-    gen_col_vector_iterator(void) {}
+    gen_col_vector_iterator() {}
     gen_col_vector_iterator(const gen_col_vector_iterator<MPT> &itm)
       : vec(itm.vec), isend(itm.isend) {}
     gen_col_vector_iterator(const gen_col_vector<PT> &m, bool iis_end)
       : vec(m.vec), isend(iis_end) { }
-    
+
   };
 
   template <typename PT>
@@ -247,7 +247,7 @@ namespace gmm {
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
-				PT>::ref_type porigin_type;
+                                PT>::ref_type porigin_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename select_ref<value_type,
             typename linalg_traits<V>::reference, PT>::ref_type reference;
@@ -256,12 +256,12 @@ namespace gmm {
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type const_row_iterator;
     typedef simple_vector_ref<const V *> const_sub_col_type;
-    typedef typename select_ref<abstract_null_type, 
+    typedef typename select_ref<abstract_null_type,
             simple_vector_ref<V *>, PT>::ref_type sub_col_type;
     typedef gen_col_vector_iterator<typename const_pointer<PT>::pointer>
             const_col_iterator;
-    typedef typename select_ref<abstract_null_type, 
-	    gen_col_vector_iterator<PT>, PT>::ref_type col_iterator;
+    typedef typename select_ref<abstract_null_type,
+            gen_col_vector_iterator<PT>, PT>::ref_type col_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef col_major sub_orientation;
     typedef typename linalg_traits<V>::index_sorted index_sorted;
@@ -287,19 +287,19 @@ namespace gmm {
     static reference access(const col_iterator &itcol, size_type i)
     { return itcol.vec[i]; }
   };
-  
+
   template <typename PT>
   std::ostream &operator <<(std::ostream &o, const gen_col_vector<PT>& m)
   { gmm::write(o,m); return o; }
 
   /* ******************************************************************** */
-  /*		col and row vectors                                       */
+  /*            col and row vectors                                       */
   /* ******************************************************************** */
 
-  
+
   template <class V> inline
   typename select_return< gen_row_vector<const V *>, gen_row_vector<V *>,
-			  const V *>::return_type
+                          const V *>::return_type
   row_vector(const V& v) {
     return typename select_return< gen_row_vector<const V *>,
       gen_row_vector<V *>, const V *>::return_type(linalg_cast(v));
@@ -307,20 +307,20 @@ namespace gmm {
 
   template <class V> inline
   typename select_return< gen_row_vector<const V *>, gen_row_vector<V *>,
-			  V *>::return_type
+                          V *>::return_type
   row_vector(V& v) {
     return typename select_return< gen_row_vector<const V *>,
       gen_row_vector<V *>, V *>::return_type(linalg_cast(v));
   }
- 
+
   template <class V> inline gen_row_vector<const V *>
   const_row_vector(V& v)
   { return gen_row_vector<const V *>(v); }
- 
+
 
   template <class V> inline
   typename select_return< gen_col_vector<const V *>, gen_col_vector<V *>,
-			  const V *>::return_type
+                          const V *>::return_type
   col_vector(const V& v) {
     return typename select_return< gen_col_vector<const V *>,
       gen_col_vector<V *>, const V *>::return_type(linalg_cast(v));
@@ -328,16 +328,16 @@ namespace gmm {
 
   template <class V> inline
   typename select_return< gen_col_vector<const V *>, gen_col_vector<V *>,
-			  V *>::return_type
+                          V *>::return_type
   col_vector(V& v) {
     return typename select_return< gen_col_vector<const V *>,
       gen_col_vector<V *>, V *>::return_type(linalg_cast(v));
   }
- 
+
   template <class V> inline gen_col_vector<const V *>
   const_col_vector(V& v)
   { return gen_col_vector<const V *>(v); }
- 
+
 
 }
 

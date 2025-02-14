@@ -41,19 +41,19 @@
 #include <complex>
 
 #ifndef M_PI
-# define	M_E		2.7182818284590452354       /* e          */
-# define	M_LOG2E		1.4426950408889634074       /* 1/ln(2)    */
-# define	M_LOG10E	0.43429448190325182765      /* 1/ln(10)   */
-# define	M_LN2		0.69314718055994530942      /* ln(2)      */
-# define	M_LN10		2.30258509299404568402      /* ln(10)     */
-# define	M_PI		3.14159265358979323846      /* pi         */
-# define	M_PI_2		1.57079632679489661923      /* pi/2       */
-# define	M_PI_4		0.78539816339744830962      /* pi/4       */
-# define	M_1_PI		0.31830988618379067154      /* 1/pi       */
-# define	M_2_PI		0.63661977236758134308      /* 2/pi       */
-# define	M_2_SQRTPI	1.12837916709551257390      /* 2/sqrt(pi) */
-# define	M_SQRT2		1.41421356237309504880      /* sqrt(2)    */
-# define	M_SQRT1_2	0.70710678118654752440      /* sqrt(2)/2  */
+# define        M_E             2.7182818284590452354       /* e          */
+# define        M_LOG2E         1.4426950408889634074       /* 1/ln(2)    */
+# define        M_LOG10E        0.43429448190325182765      /* 1/ln(10)   */
+# define        M_LN2           0.69314718055994530942      /* ln(2)      */
+# define        M_LN10          2.30258509299404568402      /* ln(10)     */
+# define        M_PI            3.14159265358979323846      /* pi         */
+# define        M_PI_2          1.57079632679489661923      /* pi/2       */
+# define        M_PI_4          0.78539816339744830962      /* pi/4       */
+# define        M_1_PI          0.31830988618379067154      /* 1/pi       */
+# define        M_2_PI          0.63661977236758134308      /* 2/pi       */
+# define        M_2_SQRTPI      1.12837916709551257390      /* 2/sqrt(pi) */
+# define        M_SQRT2         1.41421356237309504880      /* sqrt(2)    */
+# define        M_SQRT1_2       0.70710678118654752440      /* sqrt(2)/2  */
 #endif 
 
 #ifndef M_PIl
@@ -70,7 +70,7 @@ namespace gmm {
   typedef size_t size_type;
 
   /* ******************************************************************** */
-  /*		Specifier types                             		  */
+  /*            Specifier types                                           */
   /* ******************************************************************** */
   /* not perfectly null, required by aCC 3.33                             */
   struct abstract_null_type { 
@@ -357,7 +357,7 @@ namespace gmm {
   };
   
   /* ******************************************************************** */
-  /*		Operations on scalars                         		  */
+  /*            Operations on scalars                                     */
   /* ******************************************************************** */
 
   template <typename T> inline T sqr(T a) { return T(a * a); }
@@ -464,21 +464,21 @@ namespace gmm {
   struct strongest_value_type {
     typedef typename
     strongest_numeric_type<typename linalg_traits<V1>::value_type,
-			   typename linalg_traits<V2>::value_type>::T
+                           typename linalg_traits<V2>::value_type>::T
     value_type;
   };
   template <typename V1, typename V2, typename V3>
   struct strongest_value_type3 {
     typedef typename
     strongest_value_type<V1, typename
-			 strongest_value_type<V2,V3>::value_type>::value_type
+                         strongest_value_type<V2,V3>::value_type>::value_type
     value_type;
   };
 
   
 
   /* ******************************************************************** */
-  /*		Basic vectors used                         		  */
+  /*            Basic vectors used                                        */
   /* ******************************************************************** */
   
   template<typename T> struct dense_vector_type 
@@ -529,9 +529,9 @@ namespace gmm {
 
   template <typename V> struct temporary_vector {
     typedef typename temporary_vector_<typename is_a_reference<V>::reference,
-				       typename linalg_traits<V>::storage_type,
-				       typename linalg_traits<V>::linalg_type,
-				       V>::vector_type vector_type;
+                                       typename linalg_traits<V>::storage_type,
+                                       typename linalg_traits<V>::linalg_type,
+                                       V>::vector_type vector_type;
   };
 
   /* ******************************************************************** */
@@ -563,9 +563,9 @@ namespace gmm {
 
   template <typename V> struct temporary_matrix {
     typedef typename temporary_matrix_<typename is_a_reference<V>::reference,
-				       typename linalg_traits<V>::storage_type,
-				       typename linalg_traits<V>::linalg_type,
-				       V>::matrix_type matrix_type;
+                                       typename linalg_traits<V>::storage_type,
+                                       typename linalg_traits<V>::linalg_type,
+                                       V>::matrix_type matrix_type;
   };
 
   
@@ -708,15 +708,15 @@ namespace gmm {
 
   template <typename L> 
   typename select_return<const typename linalg_traits<L>::origin_type *,
-			 typename linalg_traits<L>::origin_type *,
-			 L *>::return_type
+                         typename linalg_traits<L>::origin_type *,
+                         L *>::return_type
   linalg_origin(L &l)
   { return linalg_traits<L>::origin(linalg_cast(l)); }
 
   template <typename L> 
   typename select_return<const typename linalg_traits<L>::origin_type *,
-			 typename linalg_traits<L>::origin_type *,
-			 const L *>::return_type
+                         typename linalg_traits<L>::origin_type *,
+                         const L *>::return_type
   linalg_origin(const L &l)
   { return linalg_traits<L>::origin(linalg_cast(l)); }
 
@@ -732,7 +732,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Miscellaneous                           		  */
+  /*            Miscellaneous                                             */
   /* ******************************************************************** */
 
   template <typename V> inline size_type vect_size(const V &v)
@@ -747,13 +747,15 @@ namespace gmm {
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-           typename linalg_traits<V>::iterator, V *>::return_type
+                         typename linalg_traits<V>::iterator,
+                         V *>::return_type
   vect_begin(V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-	   typename linalg_traits<V>::iterator, const V *>::return_type
+                         typename linalg_traits<V>::iterator,
+                         const V *>::return_type
   vect_begin(const V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
@@ -764,13 +766,15 @@ namespace gmm {
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-    typename linalg_traits<V>::iterator, V *>::return_type
+                         typename linalg_traits<V>::iterator,
+                         V *>::return_type
   vect_end(V &v)
   { return linalg_traits<V>::end(linalg_cast(v)); }
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-    typename linalg_traits<V>::iterator, const V *>::return_type
+                         typename linalg_traits<V>::iterator,
+                         const V *>::return_type
   vect_end(const V &v)
   { return linalg_traits<V>::end(linalg_cast(v)); }
 
@@ -781,12 +785,14 @@ namespace gmm {
 
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
-    typename linalg_traits<M>::row_iterator, M *>::return_type
+                         typename linalg_traits<M>::row_iterator,
+                         M *>::return_type
   mat_row_begin(M &m) { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
-    typename linalg_traits<M>::row_iterator, const M *>::return_type
+                         typename linalg_traits<M>::row_iterator,
+                         const M *>::return_type
   mat_row_begin(const M &m)
   { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
@@ -796,14 +802,16 @@ namespace gmm {
 
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
-    typename linalg_traits<M>::row_iterator, M *>::return_type
+                         typename linalg_traits<M>::row_iterator,
+                         M *>::return_type
   mat_row_end(M &v) {
     return linalg_traits<M>::row_end(linalg_cast(v));
   }
 
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
-    typename linalg_traits<M>::row_iterator, const M *>::return_type
+                         typename linalg_traits<M>::row_iterator,
+                         const M *>::return_type
   mat_row_end(const M &v) {
     return linalg_traits<M>::row_end(linalg_cast(v));
   }
@@ -815,14 +823,16 @@ namespace gmm {
 
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
-    typename linalg_traits<M>::col_iterator, M *>::return_type
+                         typename linalg_traits<M>::col_iterator,
+                         M *>::return_type
   mat_col_begin(M &v) {
     return linalg_traits<M>::col_begin(linalg_cast(v));
   }
 
   template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
-    typename linalg_traits<M>::col_iterator, const M *>::return_type
+                         typename linalg_traits<M>::col_iterator,
+                         const M *>::return_type
   mat_col_begin(const M &v) {
     return linalg_traits<M>::col_begin(linalg_cast(v));
   }
@@ -940,7 +950,7 @@ namespace gmm {
   { GMM_ASSERT3(!is_sparse(*v), "internal_error"); (void)v; }
 
   /* ******************************************************************** */
-  /*		General index for certain algorithms.         		  */
+  /*            General index for certain algorithms.                     */
   /* ******************************************************************** */
 
   template<class IT> 
@@ -962,12 +972,12 @@ namespace gmm {
     static T tol(10);
     if (tol == T(10)) {
       if (numeric_limits<T>::is_specialized)
-	tol = numeric_limits<T>::epsilon();
+        tol = numeric_limits<T>::epsilon();
       else {
-	int i=int(sizeof(T)/4); while(i-- > 0) tol*=T(1E-8); 
-	GMM_WARNING1("The numeric type " << typeid(T).name()
-		    << " has no numeric_limits defined !!\n"
-		    << "Taking " << tol << " as default tolerance");
+        int i=int(sizeof(T)/4); while(i-- > 0) tol*=T(1E-8); 
+        GMM_WARNING1("The numeric type " << typeid(T).name()
+                    << " has no numeric_limits defined !!\n"
+                    << "Taking " << tol << " as default tolerance");
       }
     }
     return tol;
@@ -980,12 +990,12 @@ namespace gmm {
     static T mi(10);
     if (mi == T(10)) {
       if (numeric_limits<T>::is_specialized)
-	mi = std::numeric_limits<T>::min();
+        mi = std::numeric_limits<T>::min();
       else {
-	mi = T(0);
-	GMM_WARNING1("The numeric type " << typeid(T).name()
-		    << " has no numeric_limits defined !!\n"
-		    << "Taking 0 as default minimum");
+        mi = T(0);
+        GMM_WARNING1("The numeric type " << typeid(T).name()
+                    << " has no numeric_limits defined !!\n"
+                    << "Taking 0 as default minimum");
       }
     }
     return mi;
@@ -998,12 +1008,12 @@ namespace gmm {
     static T mi(10);
     if (mi == T(10)) {
       if (numeric_limits<T>::is_specialized)
-	mi = std::numeric_limits<T>::max();
+        mi = std::numeric_limits<T>::max();
       else {
-	mi = T(1);
-	GMM_WARNING1("The numeric type " << typeid(T).name()
-		    << " has no numeric_limits defined !!\n"
-		    << "Taking 1 as default maximum !");
+        mi = T(1);
+        GMM_WARNING1("The numeric type " << typeid(T).name()
+                    << " has no numeric_limits defined !!\n"
+                    << "Taking 1 as default maximum !");
       }
     }
     return mi;
@@ -1028,7 +1038,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Write                                   		  */
+  /*             Write                                                    */
   /* ******************************************************************** */
 
   template <typename T> struct cast_char_type { typedef T return_type; };
@@ -1043,14 +1053,14 @@ namespace gmm {
   { write(o, l, typename linalg_traits<L>::linalg_type()); }
 
   template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_vector) {
+                                   abstract_vector) {
     o << "vector(" << vect_size(l) << ") [";
     write(o, l, typename linalg_traits<L>::storage_type());
     o << " ]";
   }
 
   template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_sparse) {
+                                   abstract_sparse) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
     for (; it != ite; ++it) 
@@ -1058,7 +1068,7 @@ namespace gmm {
   }
 
   template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_dense) {
+                                   abstract_dense) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
     if (it != ite) o << " " << cast_char(*it++);
@@ -1066,7 +1076,7 @@ namespace gmm {
   }
 
   template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_skyline) {
+                                   abstract_skyline) {
     typedef typename linalg_traits<L>::const_iterator const_iterator;
     const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
     if (it != ite) {
@@ -1077,13 +1087,13 @@ namespace gmm {
   }
 
   template <typename L> inline void write(std::ostream &o, const L &l,
-				       abstract_matrix) {
+                                          abstract_matrix) {
     write(o, l, typename linalg_traits<L>::sub_orientation());
   }
 
 
   template <typename L> void write(std::ostream &o, const L &l,
-				       row_major) {
+                                   row_major) {
     o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
     for (size_type i = 0; i < mat_nrows(l); ++i) {
       o << "(";
@@ -1105,13 +1115,13 @@ namespace gmm {
     for (size_type i = 0; i < mat_nrows(l); ++i) {
       o << "(";
       if (is_sparse(l)) { // not optimized ...
-	for (size_type j = 0; j < mat_ncols(l); ++j)
-	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
-	    o << " (r" << j << ", " << l(i,j) << ")";
+        for (size_type j = 0; j < mat_ncols(l); ++j)
+          if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
+            o << " (r" << j << ", " << l(i,j) << ")";
       }
       else {
-	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
-	for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
+        if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
+        for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
       }
       o << " )\n";
     }

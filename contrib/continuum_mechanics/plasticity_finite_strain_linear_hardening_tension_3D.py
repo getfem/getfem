@@ -207,7 +207,7 @@ starttime_overall = time.process_time()
 with open(f"{resultspath}/tension_3D.dat", "w") as f1:
    for step in range(steps_t+1):
       md.set_variable("disp", disp*step/float(steps_t))
-      print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")))
+      print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")[0]))
 
       starttime = time.process_time()
       md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
