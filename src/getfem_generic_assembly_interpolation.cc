@@ -172,7 +172,6 @@ namespace getfem {
     bool initialized;
     size_type s, nbdof;
 
-
     virtual bgeot::pstored_point_tab
     ppoints_for_element(size_type cv, short_type,
                        std::vector<size_type> &ind) const {
@@ -577,12 +576,12 @@ namespace getfem {
         pwi.workspace() = local_workspace;
         pwi.gis() = ga_instruction_set();
         if (pwi.workspace().nb_trees()) {
-          ga_tree tree = *(pwi.workspace().tree_info(0).ptree);
-          ga_derivative(tree, pwi.workspace(), source_mesh,
+          ga_tree der_tree = *(pwi.workspace().tree_info(0).ptree);
+          ga_derivative(der_tree, pwi.workspace(), source_mesh,
                         var.varname, var.transname, 1);
-          if (tree.root)
-            ga_semantic_analysis(tree, local_workspace, dummy_mesh(),
-                                 1, false, true);
+          pwi.workspace().clear_expressions();
+          const std::string der_expr=ga_tree_to_string(der_tree);
+          pwi.workspace().add_interpolation_expression(der_expr, target_mesh);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
@@ -824,7 +823,7 @@ namespace getfem {
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
     
-    std::string expression(void) const { return "X"; }
+    std::string expression() const { return "X"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
@@ -889,7 +888,7 @@ namespace getfem {
                            const std::string &/* interpolate_name */) const {}
     void init(const ga_workspace &/* workspace */) const {}
     void finalize() const {}
-    std::string expression(void) const { return "X"; }
+    std::string expression() const { return "X"; }
 
     int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
