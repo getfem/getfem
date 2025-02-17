@@ -50,21 +50,19 @@ namespace getfem {
 
     virtual bgeot::pstored_point_tab
     ppoints_for_element(size_type cv, short_type f,
-                       std::vector<size_type> &ind) const {
+                        std::vector<size_type> &ind) const {
       pfem pf = mf.fem_of_element(cv);
       GMM_ASSERT1(pf->is_lagrange(),
                   "Only Lagrange fems can be used in interpolation");
 
-      if (f != short_type(-1)) {
-
-        for (size_type i = 0;
-             i < pf->node_convex(cv).structure()->nb_points_of_face(f); ++i)
-          ind.push_back
-            (pf->node_convex(cv).structure()->ind_points_of_face(f)[i]);
-      } else {
+      if (f != short_type(-1))
+        for (size_type i = 0; i < pf->node_convex(cv).structure()
+                                    ->nb_points_of_face(f); ++i)
+          ind.push_back(pf->node_convex(cv).structure()
+                          ->ind_points_of_face(f)[i]);
+      else
         for (size_type i = 0; i < pf->node_convex(cv).nb_points(); ++i)
           ind.push_back(i);
-      }
 
       return pf->node_tab(cv);
     }
@@ -81,33 +79,29 @@ namespace getfem {
       initialized = true;
     }
 
-    void store_result_for_torus(size_type cv, size_type i, base_tensor &t) {
-      size_type target_dim = mf.fem_of_element(cv)->target_dim();
-      GMM_ASSERT2(target_dim == 3, "Invalid torus fem.");
-      size_type qdim = 1;
-      size_type result_dim = 2;
-      if (!initialized) {init_(qdim, qdim, qdim);}
-      size_type idof = mf.ind_basic_dof_of_element(cv)[i];
-      result[idof] = t[idof%result_dim];
-      ++dof_count[idof];
-    }
-
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
-      if (is_torus){
-        store_result_for_torus(cv, i, t);
-        return;
+      if (is_torus) {
+        size_type target_dim = mf.fem_of_element(cv)->target_dim();
+        GMM_ASSERT2(target_dim == 3, "Invalid torus fem.");
+        size_type qdim = 1;
+        size_type result_dim = 2;
+        if (!initialized) {init_(qdim, qdim, qdim);}
+        size_type idof = mf.ind_basic_dof_of_element(cv)[i];
+        result[idof] = t[idof%result_dim];
+        ++dof_count[idof];
+      } else {
+        size_type si = t.size();
+        size_type q = mf.get_qdim();
+        size_type qmult = si / q;
+        GMM_ASSERT1( (si % q) == 0, "Incompatibility between the mesh_fem and "
+                     "the size of the expression to be interpolated");
+        if (!initialized) { init_(si, q, qmult); }
+        GMM_ASSERT1(s == si, "Internal error");
+        size_type idof = mf.ind_basic_dof_of_element(cv)[i*q];
+        gmm::add(t.as_vector(),
+                 gmm::sub_vector(result, gmm::sub_interval(qmult*idof, s)));
+        (dof_count[idof/q])++;
       }
-      size_type si = t.size();
-      size_type q = mf.get_qdim();
-      size_type qmult = si / q;
-      GMM_ASSERT1( (si % q) == 0, "Incompatibility between the mesh_fem and "
-                   "the size of the expression to be interpolated");
-      if (!initialized) { init_(si, q, qmult); }
-      GMM_ASSERT1(s == si, "Internal error");
-      size_type idof = mf.ind_basic_dof_of_element(cv)[i*q];
-      gmm::add(t.as_vector(),
-               gmm::sub_vector(result, gmm::sub_interval(qmult*idof, s)));
-      (dof_count[idof/q])++;
     }
 
     virtual void finalize() {
