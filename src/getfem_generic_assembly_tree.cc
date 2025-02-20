@@ -1681,6 +1681,22 @@ namespace getfem {
                              "variable, test function, X or Normal.");
             tree.current_node->name = std::string(&((*expr)[token_pos]),
                                                   token_length);
+            if (tree.current_node->name.compare("Grad") == 0) {
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              if (t_type != GA_LPAR)
+                ga_throw_error(expr, pos-1, "Missing Grad argument.");
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              if (t_type != GA_NAME)
+                ga_throw_error(expr, pos,
+                        "Argument of Grad should be a variable name, here.");
+              tree.current_node->name = std::string(&((*expr)[token_pos]),
+                                                  token_length);
+              t_type = ga_get_token(*expr, pos, token_pos, token_length);
+              if (t_type != GA_RPAR)
+                ga_throw_error(expr, pos-1,
+                  "The sole argument of Grad should be a variable name, here.");
+              tree.current_node->name = "Grad_" + tree.current_node->name;
+            }
 
             t_type = ga_get_token(*expr, pos, token_pos, token_length);
             if (t_type != GA_COMMA)
