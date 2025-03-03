@@ -82,6 +82,9 @@ namespace getfem {
       case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
         pgt = bgeot::Q2_incomplete_geotrans(3);
       } break;
+      case 19: { /* INCOMPLETE 2ND ORDER PYRAMID (13-NODE) */
+        pgt = bgeot::pyramid_Q2_incomplete_geotrans();
+      } break;
       case 26: { /* 3RD ORDER LINE */
         pgt = bgeot::simplex_geotrans(1,3);
       } break;
@@ -148,6 +151,9 @@ namespace getfem {
       } break;
       case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
         nodes.resize(20);
+      } break;
+      case 19: { /* INCOMPLETE 2ND ORDER PYRAMID (13-NODE) */
+        nodes.resize(13);
       } break;
       case 26: { /* 3RD ORDER LINE */
         nodes.resize(4);
@@ -288,16 +294,16 @@ namespace getfem {
 
       inds.resize(nb_node);
       if (version >= 4.05) {
-	for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt)
-	  f >> inds[node_cnt];
+        for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt)
+          f >> inds[node_cnt];
       }
-      
+
       for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
         size_type node_id;
         base_node n{0,0,0};
-	if (version < 4.05) f >> node_id; else node_id = inds[node_cnt];
+        if (version < 4.05) f >> node_id; else node_id = inds[node_cnt];
 
-	f >> n[0] >> n[1] >> n[2];
+        f >> n[0] >> n[1] >> n[2];
         msh_node_2_getfem_node[node_id]
           = m.add_point(n, remove_duplicated_nodes ? 0. : -1.);
       }
@@ -324,7 +330,7 @@ namespace getfem {
       f >> nb_cv;
     }
     // cout << "nb_bloc = " << nb_block << " nb_cv = " << nb_cv << endl;
-     
+
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     dal::bit_vector reg;
     for (size_type block=0; block < nb_block; ++block) {
@@ -500,6 +506,21 @@ namespace getfem {
           ci.nodes[17] = tmp_nodes[7];
           ci.nodes[18] = tmp_nodes[19];
           ci.nodes[19] = tmp_nodes[6];
+        } break;
+        case 19: { /* Incomplete second order pyramid */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[5];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[8];
+          ci.nodes[4] = tmp_nodes[6];
+          ci.nodes[5] = tmp_nodes[3];
+          ci.nodes[6] = tmp_nodes[7];
+          ci.nodes[7] = tmp_nodes[2];
+          ci.nodes[8] = tmp_nodes[9];
+          ci.nodes[9] = tmp_nodes[10];
+          ci.nodes[10] = tmp_nodes[12];
+          //ci.nodes[11] = tmp_nodes[11];
+          ci.nodes[12] = tmp_nodes[4];
         } break;
         case 26 : { /* Third order line */
           //ci.nodes[0] = tmp_nodes[0];
