@@ -73,6 +73,9 @@ namespace getfem {
       case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
         pgt = bgeot::parallelepiped_geotrans(3,2);
       } break;
+      case 14: { /* 2ND ORDER PYRAMID (14-NODE) */
+        pgt = bgeot::pyramid_QK_geotrans(2);
+      } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
       } break;
@@ -142,6 +145,9 @@ namespace getfem {
       } break;
       case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
         nodes.resize(27);
+      } break;
+      case 14: { /* 2ND ORDER PYRAMID (14-NODE) */
+        nodes.resize(14);
       } break;
       case 15: { /* POINT */
         nodes.resize(1);
@@ -474,6 +480,22 @@ namespace getfem {
           ci.nodes[24] = tmp_nodes[7];
           ci.nodes[25] = tmp_nodes[19];
           ci.nodes[26] = tmp_nodes[6];
+        } break;
+        case 14: { /* Second order pyramid */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[5];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[8];
+          ci.nodes[4] = tmp_nodes[13];
+          ci.nodes[5] = tmp_nodes[6];
+          ci.nodes[6] = tmp_nodes[3];
+          //ci.nodes[7] = tmp_nodes[7];
+          ci.nodes[8] = tmp_nodes[2];
+          //ci.nodes[9] = tmp_nodes[9];
+          //ci.nodes[10] = tmp_nodes[10];
+          ci.nodes[11] = tmp_nodes[12];
+          ci.nodes[12] = tmp_nodes[11];
+          ci.nodes[13] = tmp_nodes[4];
         } break;
         case 16 : { /* Incomplete second order quadrangle */
           //ci.nodes[0] = tmp_nodes[0];
