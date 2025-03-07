@@ -119,10 +119,10 @@ namespace getfemint {
       dv = *gfi_double_get_data(arg);
     } break;
     case GFI_INT32: {
-      dv = (double)( *((dal::int32_type*)gfi_int32_get_data(arg)));
+      dv = double( *((dal::int32_type*)gfi_int32_get_data(arg)));
     } break;
     case GFI_UINT32: {
-      dv = (double)( *((dal::int32_type*)gfi_uint32_get_data(arg)));
+      dv = double( *((dal::int32_type*)gfi_uint32_get_data(arg)));
     } break;
     default: {
       THROW_BADARG("Argument " << argnum << " of class " << gfi_array_get_class_name(arg) <<
@@ -217,7 +217,7 @@ namespace getfemint {
                    " is out of bounds : " << dv << " not in " <<
                    "[" << minval << "..." << maxval << "]");
     }
-    return (int)dv;
+    return int(dv);
   }
 
   size_type
@@ -294,17 +294,17 @@ namespace getfemint {
   //     mesh = &object_to_mesh(o)->mesh();
   //   } else if (dynamic_cast<getfem::mesh_fem *>(o)) {
   //     mesh = &dynamic_cast<getfem::mesh_fem *>(o)->linked_mesh();
-  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     mid = workspace().object(mesh); // A arranger avec ce qui prÃ©cÃ¨de...
   //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
   //   } else if (dynamic_cast<getfem::mesh_im *>(o)) {
   //     // o n'est pas bon pour le moment. Le sera quand il viendra du workspace
   //     mesh = &dynamic_cast<getfem::mesh_im *>(o)->linked_mesh();
-  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     mid = workspace().object(mesh); // A arranger avec ce qui prÃ©cÃ¨de...
   //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
   //   } else if (dynamic_cast<getfem::im_data *>(o)) {
   //     // o n'est pas bon pour le moment. Le sera quand il viendra du workspace
   //     mesh =&dynamic_cast<getfem::im_data *>(o)->linked_mesh_im().linked_mesh();
-  //     mid = workspace().object(mesh); // A arranger avec ce qui précède...
+  //     mid = workspace().object(mesh); // A arranger avec ce qui prÃ©cÃ¨de...
   //     if (mid == id_type(-1)) THROW_INTERNAL_ERROR;
   //   } else THROW_INTERNAL_ERROR;
   //   return mesh;
@@ -326,7 +326,7 @@ namespace getfemint {
       THROW_BADARG("Argument " << argnum <<
                    " should be a vector, not a matrix");
     }
-    if (expected_dim != -1 && (int)v.size() != expected_dim) {
+    if (expected_dim != -1 && int(v.size()) != expected_dim) {
       THROW_BADARG("Argument " << argnum <<
                    " has wrong dimensions: expected " << expected_dim <<
                    ", found " << v.size());
@@ -338,20 +338,20 @@ namespace getfemint {
     if (expected_m == -2 && expected_n == -1 && v.size() == v.getm()) {
       v.reshape(1,v.getm());
     }
-    if (expected_m >= 0 && (int)v.getm() != expected_m)
+    if (expected_m >= 0 && int(v.getm()) != expected_m)
       THROW_BADARG("Argument " << argnum <<
                    " has a wrong number of rows (" << v.getm() <<
                    ") , " << expected_m << " rows were expected");
-    if (expected_n >= 0 && (int)v.getn() != expected_n)
+    if (expected_n >= 0 && int(v.getn()) != expected_n)
       THROW_BADARG("Argument " << argnum <<
                    " has a wrong number of columns (" << v.getn() <<
                    ") , " << expected_n << " columns were expected");
-    if (expected_p >= 0 && (int)v.getp() != expected_p)
+    if (expected_p >= 0 && int(v.getp()) != expected_p)
       THROW_BADARG("Argument " << argnum <<
                    " was expected to be a three-dimensional array, with " <<
                    expected_p << " elements in its third dimension (got " <<
                    v.getp() << ")");
-    if (expected_q >= 0 && (int)v.getq() != expected_q)
+    if (expected_q >= 0 && int(v.getq()) != expected_q)
       THROW_BADARG("Argument " << argnum <<
                    " was expected to be a four-dimensional array, with " <<
                    expected_q << " elements in its fourth dimension (got " <<
@@ -360,8 +360,8 @@ namespace getfemint {
 
   mexarg_in &mexarg_in::check_trailing_dimension(int expected_dim) {
     int nd = gfi_array_get_ndim(arg);
-    int d;
-    if (nd == 0) d = 1; else d = gfi_array_get_dim(arg)[nd-1];
+    int d = (nd == 0) ? 1
+                      : gfi_array_get_dim(arg)[nd-1];
     if (d != expected_dim) {
       array_dimensions ad(arg);
       std::string tip_of_the_day;
@@ -586,7 +586,7 @@ namespace getfemint {
                      << -shift << " ([found " << v[i] << ")");
       } else if (subsetof && !subsetof->is_in(idx)) {
         THROW_BADARG("Argument " << argnum <<
-                     " is not a valid set (contains values not allowed, such as " << (int)v[i] << ")");
+                     " is not a valid set (contains values not allowed, such as " << int(v[i]) << ")");
       }
       bv.add(idx);
     }
@@ -862,12 +862,12 @@ namespace getfemint {
                  const mexargs_in& in,
                  int min_argin, int max_argin) {
     if (cmd_strmatch(cmdname,s)) {
-      if ((int)in.remaining() < min_argin) {
+      if (int(in.remaining()) < min_argin) {
         THROW_BADARG("Not enough input arguments for command '"<<
                      cmdname << "' (got " << in.narg() <<
                      ", expected at least " << min_argin + in.narg()- in.remaining() << ")");
       }
-      if ((int)in.remaining() > max_argin && max_argin != -1) {
+      if (int(in.remaining()) > max_argin && max_argin != -1) {
         THROW_BADARG("Too much input arguments for command '"<<
                      cmdname << "' (got " << in.narg() <<
                      ", expected at most " << max_argin + in.narg()- in.remaining()<< ")");
