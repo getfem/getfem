@@ -214,13 +214,13 @@ namespace getfem {
   }
 
   // Structure for the tensor associated with a tree node
-  struct assembly_tensor {
+  class assembly_tensor {
     bool is_copied;
     int sparsity_; // 0: plain, 1: vectorized base, 2: vectorised grad, ...
     size_type qdim_; // Dimension of the vectorization for sparsity tensors
     base_tensor t;
     assembly_tensor *tensor_copied;
-
+  public:
     const base_tensor &tensor() const
     { return (is_copied ? tensor_copied->tensor() : t); }
     base_tensor &tensor()
