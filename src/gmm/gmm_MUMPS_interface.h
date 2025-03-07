@@ -171,15 +171,18 @@ namespace gmm {
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
-  bool MUMPS_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+  bool MUMPS_solve(const MAT &A, VECTX &X, const VECTB &B,
                    bool sym = false, bool distributed = false) {
-    VECTX &X = const_cast<VECTX &>(X_);
 
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename mumps_interf<T>::value_type MUMPS_T;
     GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
 
-    std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
+    std::vector<T> rhs(gmm::vect_size(B));
+    gmm::copy(B, rhs);
+    const int nrhs = int(rhs.size()/gmm::mat_nrows(A));
+    GMM_ASSERT2(nrhs*gmm::mat_nrows(A) == rhs.size(),
+                "Size of rhs must be an integer multiple of the matrix size");
 
     ij_sparse_matrix<T> AA(A, sym);
 
@@ -213,8 +216,11 @@ namespace gmm {
         id.jcn = &(AA.jcn[0]);
         id.a = (MUMPS_T*)(&(AA.a[0]));
       }
-      if (rank == 0)
+      if (rank == 0) {
+        id.nrhs = nrhs;
         id.rhs = (MUMPS_T*)(&(rhs[0]));
+        id.lrhs = id.n;
+      }
     }
 
     id.ICNTL(1) = -1; // output stream for error messages

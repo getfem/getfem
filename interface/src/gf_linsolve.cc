@@ -103,7 +103,14 @@ superlu_solver(gsparse &gsp,
 template <typename T> static void
 mumps_solver(gsparse &gsp,
              getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
-  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
+  int nrows = int(gsp.nrows());
+  garray<T> b = in.pop().to_garray(T());
+  int nrhs = 1; // just 1 rhs by default
+  if (b.getn() != 1 && b.getm() != 1) { // multiple rhs
+    in.last_popped().check_dimensions(b, nrows, -1);
+    nrhs = b.getn();
+  } else // check whether b is in fact a vector of proper size
+    in.last_popped().check_dimensions(b, nrows);
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
   gsp.to_csc();
 # if GETFEM_PARA_LEVEL > 1
@@ -216,13 +223,17 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 #if defined(GMM_USES_MUMPS)
     /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)
-    Solve `M.U = b` using the MUMPS solver.@*/
+    Solve `M.U = b` using the MUMPS solver.
+
+    The right hand side `b` can optionally by a matrix with several columns
+    in order to solve multiple right hand sides at once.@*/
     sub_command
       ("mumps", 2, 2, 0, 1,
        std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
-         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+         THROW_BADARG("please use a real right hand side, or convert "
+                      "the sparse matrix into a complex one");
        if (gsp.is_complex()) mumps_solver(gsp, in, out, complex_type());
        else                  mumps_solver(gsp, in, out, scalar_type());
        );
