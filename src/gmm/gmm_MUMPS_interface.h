@@ -265,7 +265,7 @@ namespace gmm {
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
-  bool MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
+  bool MUMPS_distributed_matrix_solve(const MAT &A, VECTX &X_,
                                       const VECTB &B, bool sym = false) {
     return MUMPS_solve(A, X_, B, sym, true);
   }
