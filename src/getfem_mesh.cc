@@ -809,7 +809,7 @@ namespace getfem {
     base_matrix K(pgp->grad(0).ncols(),G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      scalar_type emax, emin; gmm::condition_number(K,emax,emin);
+      scalar_type emax, emin; gmm::condition_number(K,emin,emax);
       q = std::max(q, emax);
     }
     return q * sqrt(scalar_type(N)) / scalar_type(2);
