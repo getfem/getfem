@@ -110,7 +110,8 @@ namespace dal {
 # define DAL_STORED_OBJECT_DEBUG_DESTROYED(o, name)
 #endif
 
-  enum permanence { PERMANENT_STATIC_OBJECT = 0, // not deletable object
+  enum permanence {
+    PERMANENT_STATIC_OBJECT = 0, // not deletable object
     STRONG_STATIC_OBJECT = 1,    // preferable not to delete it
     STANDARD_STATIC_OBJECT = 2,  // standard
     WEAK_STATIC_OBJECT = 3,      // delete it if necessary
@@ -272,7 +273,7 @@ namespace dal {
                          bool ignore_unstored=false);
 
   /** Delete all the object whose permanence is greater or equal to perm. */
-  void del_stored_objects(int perm);
+  void del_stored_objects(permanence perm);
 
   /** Show a list of stored objects (for debugging purpose). */
   void list_stored_objects(std::ostream &ost);
