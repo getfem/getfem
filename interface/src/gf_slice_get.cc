@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -133,8 +133,8 @@ interpolate_convex_data(const getfem::stored_mesh_slice *sl,
 struct sub_gf_slice_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::stored_mesh_slice *sl) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::stored_mesh_slice *sl) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_slice_get> psub_command;
@@ -143,28 +143,26 @@ typedef std::shared_ptr<sub_gf_slice_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_slice_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::stored_mesh_slice *sl)			\
-      { dummy_func(in); dummy_func(out); dummy_func(sl); code }		\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_slice_get {                                 \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::stored_mesh_slice *sl)                       \
+      { dummy_func(in); dummy_func(out); dummy_func(sl); code }             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
 
 
 void gf_slice_get(getfemint::mexargs_in& m_in,
-		  getfemint::mexargs_out& m_out) {
+                  getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
 
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
-
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@RDATTR d = ('dim')
       Return the dimension of the slice (2 for a 2D mesh, etc..).@*/
@@ -189,7 +187,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("cvs", 0, 0, 0, 1,
        iarray w = out.pop().create_iarray_h(unsigned(sl->nb_convex()));
        for (size_type i=0; i < sl->nb_convex(); ++i)
-	 w[i] = int(sl->convex_num(i) + config::base_index());
+         w[i] = int(sl->convex_num(i) + config::base_index());
        );
 
 
@@ -212,10 +210,10 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("nbsplxs", 0, 1, 0, 1,
        std::vector<size_type> v; sl->nb_simplexes(v);
        if (in.remaining()) {
-	 size_type i= in.pop().to_integer(0,100);
-	 out.pop().from_integer(int(i < v.size() ? v[i] : 0));
+         size_type i= in.pop().to_integer(0,100);
+         out.pop().from_integer(int(i < v.size() ? v[i] : 0));
        } else {
-	 out.pop().from_ivector(v);
+         out.pop().from_ivector(v);
        }
        );
 
@@ -226,18 +224,18 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("pts", 0, 0, 0, 1,
        darray w = out.pop().create_darray(unsigned(sl->dim()), unsigned(sl->nb_points()));
        for (size_type ic=0, cnt=0; ic < sl->nb_convex(); ++ic) {
-	 for (getfem::mesh_slicer::cs_nodes_ct::const_iterator it=sl->nodes(ic).begin();
-	      it != sl->nodes(ic).end(); ++it) {
-	   for (size_type k=0; k < sl->dim(); ++k)
-	     w[cnt++] = it->pt[k];
-	 }
+         for (getfem::mesh_slicer::cs_nodes_ct::const_iterator it=sl->nodes(ic).begin();
+              it != sl->nodes(ic).end(); ++it) {
+           for (size_type k=0; k < sl->dim(); ++k)
+             w[cnt++] = it->pt[k];
+         }
        }
        );
 
 
     /*@GET @CELL{S, CV2S} = ('splxs',@int dim)
       Return the list of simplexes of dimension `dim`.
-      
+
       On output, S has 'dim+1' rows, each column contains the point
       numbers of a simplex.  The vector `CV2S` can be used to find the
       list of simplexes for any convex stored in the slice. For example
@@ -250,21 +248,21 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        size_type Scnt = size_type(-1);
        iarray cv2splx;
        if (out.remaining()) {
-	 cv2splx = out.pop().create_iarray_h(unsigned(sl->nb_convex()+1));
-	 Scnt = config::base_index();
+         cv2splx = out.pop().create_iarray_h(unsigned(sl->nb_convex()+1));
+         Scnt = config::base_index();
        }
        for (size_type ic=0, cnt=0, pcnt=0; ic < sl->nb_convex(); ++ic) {
-	 size_type scnt = 0;
-	 for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=sl->simplexes(ic).begin();
-	      it != sl->simplexes(ic).end(); ++it) {
-	   if (it->dim() == sdim) {
-	     for (size_type k=0; k < sdim+1; ++k)
-	       w[cnt++] = int(it->inodes[k] + pcnt + config::base_index());
-	     scnt++;
-	   }
-	 }
-	 pcnt += sl->nodes(ic).size();
-	 if (Scnt != size_type(-1)) { cv2splx[ic] = int(Scnt); Scnt+=scnt; }
+         size_type scnt = 0;
+         for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=sl->simplexes(ic).begin();
+              it != sl->simplexes(ic).end(); ++it) {
+           if (it->dim() == sdim) {
+             for (size_type k=0; k < sdim+1; ++k)
+               w[cnt++] = int(it->inodes[k] + pcnt + config::base_index());
+             scnt++;
+           }
+         }
+         pcnt += sl->nodes(ic).size();
+         if (Scnt != size_type(-1)) { cv2splx[ic] = int(Scnt); Scnt+=scnt; }
        }
        if (Scnt != size_type(-1)) cv2splx[sl->nb_convex()] = int(Scnt);
        );
@@ -272,7 +270,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
 
     /*@GET @CELL{P, E1, E2} = ('edges')
       Return the edges of the linked mesh contained in the slice.
-      
+
       `P` contains the list of all edge vertices, `E1` contains
       the indices of each mesh edge in `P`, and `E2` contains the
       indices of each "edges" which is on the border of the slice.
@@ -292,25 +290,25 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        iarray T1 = out.pop().create_iarray(2, unsigned(m.nb_convex() - slice_edges.card()));
        iarray T2 = out.pop().create_iarray(2, unsigned(slice_edges.card()));
        for (size_type j = 0; j < bv.last_true()+1; j++) {
-	 for (size_type i = 0; i < m.dim(); i++) {
-	   P(i,j) = (bv.is_in(j)) ? (m.points()[j])[i] : nan;
-	 }
+         for (size_type i = 0; i < m.dim(); i++) {
+           P(i,j) = (bv.is_in(j)) ? (m.points()[j])[i] : nan;
+         }
        }
        iarray::iterator itt1=T1.begin(); iarray::iterator itt2=T2.begin();
        for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
-	 if (!slice_edges[cv]) {
-	   itt1[0] = int(m.ind_points_of_convex(cv)[0]);
-	   itt1[1] = int(m.ind_points_of_convex(cv)[1]);
-	   // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1);
-	   itt1[0] += config::base_index();
-	   itt1[1] += config::base_index(); itt1 += 2;
-	 } else {
-	   itt2[0] = int(m.ind_points_of_convex(cv)[0]);
-	   itt2[1] = int(m.ind_points_of_convex(cv)[1]);
-	   // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2);
-	   itt2[0] += config::base_index();
-	   itt2[1] += config::base_index(); itt2 += 2;
-	 }
+         if (!slice_edges[cv]) {
+           itt1[0] = int(m.ind_points_of_convex(cv)[0]);
+           itt1[1] = int(m.ind_points_of_convex(cv)[1]);
+           // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1);
+           itt1[0] += config::base_index();
+           itt1[1] += config::base_index(); itt1 += 2;
+         } else {
+           itt2[0] = int(m.ind_points_of_convex(cv)[0]);
+           itt2[1] = int(m.ind_points_of_convex(cv)[1]);
+           // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2);
+           itt2[0] += config::base_index();
+           itt2[1] += config::base_index(); itt2 += 2;
+         }
        }
        );
 
@@ -326,7 +324,7 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("interpolate_convex_data", 1, 1, 0, 1,
        in.front().check_trailing_dimension(int(sl->linked_mesh().convex_index().last_true()+1));
        if (in.front().is_complex())
-	 interpolate_convex_data(sl, in.pop().to_darray(), out);
+         interpolate_convex_data(sl, in.pop().to_darray(), out);
        else interpolate_convex_data(sl, in.pop().to_carray(), out);
        );
 
@@ -336,13 +334,13 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("linked mesh", 0, 0, 0, 1,
        id_type id = workspace().object((const void *)(&(sl->linked_mesh())));
        if (id == id_type(-1)) {
-	 auto pst = workspace().hidden_object(workspace().object(sl),
-					      &sl->linked_mesh());
-	 if (!pst.get()) THROW_INTERNAL_ERROR;
-	 std::shared_ptr<getfem::mesh> pm = 
-	   std::const_pointer_cast<getfem::mesh>
-	   (std::dynamic_pointer_cast<const getfem::mesh>(pst));
-	 id = store_mesh_object(pm);
+         auto pst = workspace().hidden_object(workspace().object(sl),
+                                              &sl->linked_mesh());
+         if (!pst.get()) THROW_INTERNAL_ERROR;
+         std::shared_ptr<getfem::mesh> pm =
+           std::const_pointer_cast<getfem::mesh>
+           (std::dynamic_pointer_cast<const getfem::mesh>(pst));
+         id = store_mesh_object(pm);
        }
        out.pop().from_object_id(id, MESH_CLASS_ID);
        );
@@ -395,45 +393,45 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        bool ascii = false;
        bool edges = false;
        while (in.remaining() && in.front().is_string()) {
-	 std::string cmd2 = in.pop().to_string();
-	 if (cmd_strmatch(cmd2, "ascii"))
-	   ascii = true;
-	 else if (cmd_strmatch(cmd2, "edges"))
-	   edges = true;
-	 else THROW_BADARG("expecting 'ascii' or 'edges', got " << cmd2);
+         std::string cmd2 = in.pop().to_string();
+         if (cmd_strmatch(cmd2, "ascii"))
+           ascii = true;
+         else if (cmd_strmatch(cmd2, "edges"))
+           edges = true;
+         else THROW_BADARG("expecting 'ascii' or 'edges', got " << cmd2);
        }
        getfem::vtk_export exp(fname, ascii);
        getfem::stored_mesh_slice sl_edges;
        const getfem::stored_mesh_slice *vtk_slice = sl;
        getfem::mesh m_edges;
        if (edges) {
-	 vtk_slice = &sl_edges;
-	 dal::bit_vector slice_edges;
-	 getfem::mesh_slicer slicer(sl->linked_mesh());
-	 getfem::slicer_build_edges_mesh action(m_edges,slice_edges);
-	 slicer.push_back_action(action); slicer.exec(*sl);
-	 sl_edges.build(m_edges, getfem::slicer_none());
+         vtk_slice = &sl_edges;
+         dal::bit_vector slice_edges;
+         getfem::mesh_slicer slicer(sl->linked_mesh());
+         getfem::slicer_build_edges_mesh action(m_edges,slice_edges);
+         slicer.push_back_action(action); slicer.exec(*sl);
+         sl_edges.build(m_edges, getfem::slicer_none());
        }
        exp.exporting(*vtk_slice);
        exp.write_mesh();
        int count = 1;
        if (in.remaining()) {
-	 do {
-	   if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
-	     const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
-	     
-	     darray U = in.pop().to_darray();
-	     in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
-	     
-	     exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
-	   } else if (in.remaining()) {
-	     darray slU = in.pop().to_darray();
-	     in.last_popped().check_trailing_dimension(int(vtk_slice->nb_points()));
-	     
-	     exp.write_sliced_point_data(slU,get_vtk_dataset_name(in, count));
-	   } else THROW_BADARG("don't know what to do with this argument")
-	       count+=1;
-	 } while (in.remaining());
+         do {
+           if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+             const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
+
+             darray U = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+
+             exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
+           } else if (in.remaining()) {
+             darray slU = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(vtk_slice->nb_points()));
+
+             exp.write_sliced_point_data(slU,get_vtk_dataset_name(in, count));
+           } else THROW_BADARG("don't know what to do with this argument")
+               count+=1;
+         } while (in.remaining());
        }
        );
 
@@ -547,41 +545,41 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        bool append = false;
        std::string mesh_name; std::string serie_name;
        while (in.remaining() && in.front().is_string()) {
-	 std::string cmd2 = in.pop().to_string();
-	 if (cmd_strmatch(cmd2, "ascii"))
-	   ascii = true;
-	 else if (cmd_strmatch(cmd2, "edges"))
-	   edges = true;
-	 else if (cmd_strmatch(cmd2, "append"))
-	   append = true;
-	 else if (cmd_strmatch(cmd2, "as") && in.remaining())
-	   mesh_name = in.pop().to_string();
-	 else if (cmd_strmatch(cmd2, "serie") && in.remaining())
-	   serie_name = in.pop().to_string();
-	 else THROW_BADARG("expecting 'ascii' or 'edges' or 'append' or 'as', got " << cmd2);
+         std::string cmd2 = in.pop().to_string();
+         if (cmd_strmatch(cmd2, "ascii"))
+           ascii = true;
+         else if (cmd_strmatch(cmd2, "edges"))
+           edges = true;
+         else if (cmd_strmatch(cmd2, "append"))
+           append = true;
+         else if (cmd_strmatch(cmd2, "as") && in.remaining())
+           mesh_name = in.pop().to_string();
+         else if (cmd_strmatch(cmd2, "serie") && in.remaining())
+           serie_name = in.pop().to_string();
+         else THROW_BADARG("expecting 'ascii' or 'edges' or 'append' or 'as', got " << cmd2);
        }
        getfem::dx_export exp(fname, ascii, append);
-       
+
        exp.exporting(*sl, mesh_name.c_str());
        exp.write_mesh();
        if (edges) exp.exporting_mesh_edges();
        if (in.remaining()) {
-	 do {
-	   if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
-	     const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
-	     
-	     darray U = in.pop().to_darray();
-	     in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
-	     
-	     exp.write_point_data(mf,U,get_dx_dataset_name(in));
-	   } else if (in.remaining()) {
-	     darray slU = in.pop().to_darray();
-	     in.last_popped().check_trailing_dimension(int(sl->nb_points()));
-	     
-	     exp.write_sliced_point_data(slU,get_dx_dataset_name(in));
-	   } else THROW_BADARG("don't know what to do with this argument");
-	   if (serie_name.size()) exp.serie_add_object(serie_name);
-	 } while (in.remaining());
+         do {
+           if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+             const getfem::mesh_fem &mf = *to_meshfem_object(in.pop());
+
+             darray U = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+
+             exp.write_point_data(mf,U,get_dx_dataset_name(in));
+           } else if (in.remaining()) {
+             darray slU = in.pop().to_darray();
+             in.last_popped().check_trailing_dimension(int(sl->nb_points()));
+
+             exp.write_sliced_point_data(slU,get_dx_dataset_name(in));
+           } else THROW_BADARG("don't know what to do with this argument");
+           if (serie_name.size()) exp.serie_add_object(serie_name);
+         } while (in.remaining());
        }
        );
 
@@ -598,33 +596,33 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       ("export to pos", 1, -1, 0, 0,
        std::string fname = in.pop().to_string();
        getfem::pos_export exp(fname);
-       
+
        std::string name = "";
        if (in.remaining() && in.front().is_string())
-	 name = in.pop().to_string();
+         name = in.pop().to_string();
        exp.write(*sl,name);
        while (in.remaining()) {
-	 if (in.remaining() >= 3 && is_meshfem_object(in.front())) {
-	     const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
-	   
-	   darray U = in.pop().to_darray();
-	   in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
-	   
-	   if (in.remaining() >= 1 && in.front().is_string())
-	     name = in.pop().to_string();
-	   else THROW_BADARG("expecting string darray_name")
-	     
-	     exp.write(*mf, U, name);
-	 } else if (in.remaining() >=2) {
-	   darray slU = in.pop().to_darray();
-	   in.last_popped().check_trailing_dimension(int(sl->nb_points()));
-	   
-	   if (in.remaining() >= 1 && in.front().is_string())
-	     name = in.pop().to_string();
-	   else THROW_BADARG("expecting string darray_name")
-	     
-	     exp.write(*sl, slU, name);
-	 }
+         if (in.remaining() >= 3 && is_meshfem_object(in.front())) {
+             const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+
+           darray U = in.pop().to_darray();
+           in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
+
+           if (in.remaining() >= 1 && in.front().is_string())
+             name = in.pop().to_string();
+           else THROW_BADARG("expecting string darray_name")
+
+             exp.write(*mf, U, name);
+         } else if (in.remaining() >=2) {
+           darray slU = in.pop().to_darray();
+           in.last_popped().check_trailing_dimension(int(sl->nb_points()));
+
+           if (in.remaining() >= 1 && in.front().is_string())
+             name = in.pop().to_string();
+           else THROW_BADARG("expecting string darray_name")
+
+             exp.write(*sl, slU, name);
+         }
        }
        );
 
@@ -653,19 +651,18 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
        );
 
   }
- 
+
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
   getfem::stored_mesh_slice *sl = to_slice_object(m_in.pop());
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, sl);
   }
   else bad_cmd(init_cmd);

@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -19,7 +19,6 @@
 
 ===========================================================================*/
 
-#include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_levelset.h>
 
@@ -70,7 +69,7 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     }
 
     auto pls = std::make_shared<getfem::level_set>(*mm, dim_type(degree),
-						   with_secondary);
+                                                   with_secondary);
     id_type id = store_levelset_object(pls);
 
     if (s1.size()) values_from_func(pls.get(), 0, s1);

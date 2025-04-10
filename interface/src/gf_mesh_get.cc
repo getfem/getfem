@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -278,7 +278,7 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out,
 
 }
 
-static void 
+static void
 all_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
   dal::bit_vector cvlst;
 
@@ -301,7 +301,7 @@ all_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
 
 
 
-static void 
+static void
 inner_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out) {
   dal::bit_vector cvlst;
 
@@ -355,16 +355,16 @@ typedef std::shared_ptr<sub_gf_mesh_set> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mesh_set {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-                       getfemint::mexargs_out& out,			\
-                       const getfem::mesh *pmesh)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mesh_set {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const getfem::mesh *pmesh)                           \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
@@ -378,10 +378,9 @@ template <typename T> static inline void dummy_func(T &) {}
 
 void gf_mesh_get(getfemint::mexargs_in& m_in,
                  getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@RDATTR d = ('dim')
     Get the dimension of the mesh (2 for a 2D mesh, etc).@*/
@@ -469,14 +468,14 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("pid in faces", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
-       
+
        iarray v = in.pop().to_iarray(2,-1);
-       
+
        dal::bit_vector pids;
        for (size_type j=0; j < v.getn(); j++) {
          size_type cv = v(0,j) - config::base_index();
          short_type f = short_type(v(1,j) - config::base_index());
-         
+
          if (pmesh->convex_index().is_in(cv)) {
            if (short_type(-1)==f){
              for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
@@ -494,20 +493,20 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
     /*@GET PIDs = ('pid in cvids', @imat CVIDs)
       Return point #id listed in `CVIDs`.
-      
+
       `PIDs` is a @MATLAB{row }vector containing points #id.@*/
     sub_command
       ("pid in cvids", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
-       
+
        dal::bit_vector cvlst = in.pop().to_bit_vector();
        dal::bit_vector pids;
-       
+
        for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
          if (pmesh->convex_index().is_in(cv))
            for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
              pids.add(pmesh->ind_points_of_convex(cv)[i]);
-       
+
        out.pop().from_bit_vector(pids);
        );
 
@@ -519,10 +518,10 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("pid in regions", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
-       
+
        dal::bit_vector rlst = in.pop().to_bit_vector(&pmesh->regions_index(), 0);
        dal::bit_vector pids;
-       
+
        for (dal::bv_visitor r(rlst); !r.finished(); ++r) {
          if (pmesh->regions_index().is_in(r)) {
            for (getfem::mr_visitor i(pmesh->region(r)); !i.finished(); ++i) {
@@ -536,7 +535,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
            }
          }
        }
-       
+
        out.pop().from_bit_vector(pids);
        );
 
@@ -584,7 +583,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        dal::bit_vector cvlst;
        if (in.remaining()) cvlst = in.pop().to_bit_vector();
        else cvlst.add(0, pmesh->convex_index().last_true()+1);
-       
+
        std::vector<size_type> pids;
        std::vector<size_type> idx;
        size_type pcnt = 0;
@@ -595,7 +594,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
              pids.push_back(size_type(pmesh->ind_points_of_convex(cv)[i] + config::base_index()));
        }
        idx.push_back(size_type(pcnt + config::base_index()));
-       
+
        iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
        if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
        if (out.remaining() && idx.size()) {
@@ -623,11 +622,11 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("pts from cvid", 0, 1, 0, 2,
        check_empty_mesh(pmesh);
-       
+
        dal::bit_vector cvlst;
        if (in.remaining()) cvlst = in.pop().to_bit_vector();
        else cvlst.add(0, pmesh->convex_index().last_true()+1);
-       
+
        getfem::base_vector pts;
        std::vector<size_type> idx;
        size_type pcnt = 0;
@@ -639,7 +638,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
                pts.push_back(pmesh->points_of_convex(cv)[i][k]);
        }
        idx.push_back(pcnt + config::base_index());
-       
+
        darray opts = out.pop().create_darray(pmesh->dim(),
                                     unsigned(pts.size()/pmesh->dim()));
        if (pts.size()) std::copy(pts.begin(), pts.end(), &opts[0]);
@@ -757,7 +756,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
     /*@GET CVIDs = ('cvid from pid', @ivec PIDs[, @bool share=False])
     Return convex #ids related with the point #ids given in `PIDs`.
-    
+
     If `share=False`, search convex whose vertex #ids are in `PIDs`.
     If `share=True`, search convex #ids that share the point #ids
     given in `PIDs`. `CVIDs` is a @MATLAB{row} vector (possibly
@@ -767,13 +766,13 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        check_empty_mesh(pmesh);
        dal::bit_vector pts = in.pop().to_bit_vector(&pmesh->points().index());
        dal::bit_vector cvchecked;
-       
+
        bool share = false;
        if (in.remaining() && in.front().is_bool())
          share = in.pop().to_bool();
-       
+
        std::vector<size_type> cvlst;
-       
+
        /* loop over the points */
        for (dal::bv_visitor ip(pts); !ip.finished(); ++ip) {
          /* iterators over the convexes attached to point ip */
@@ -781,12 +780,12 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
            cvit = pmesh->convex_to_point(ip).begin();
          bgeot::mesh_structure::ind_cv_ct::const_iterator
            cvit_end = pmesh->convex_to_point(ip).end();
-         
+
          for ( ; cvit != cvit_end; cvit++) {
            size_type ic = *cvit;
-           
+
            //cerr << "cv = " << ic+1 << endl;
-           
+
            if (!cvchecked.is_in(ic)) {
              if (share) cvlst.push_back(ic);
              else { /* check that each point of the convex is in the list */
@@ -850,7 +849,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        check_empty_mesh(pmesh);
        inner_faces(*pmesh, in, out);
        );
-    
+
     /*@GET CVFIDs = ('all faces'[, CVIDs])
     Return the set of faces of the in CVIDs (in all the mesh if CVIDs is
     omitted). Note that the face shared by two neighbor elements will be
@@ -875,7 +874,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        outer_faces(*pmesh, in, out, "direction");
        );
 
-    
+
     /*@GET CVFIDs = ('outer faces in box', @vec pmin, @vec pmax[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and lying within the box defined by the corner points `pmin` and `pmax`.
 
@@ -917,7 +916,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        bgeot::convex_face cvf = pmesh->adjacent_face(cv, f);
        getfem::mesh_region flst;
        if (cvf.cv != size_type(-1))
-	 flst.add(cvf.cv,cvf.f);
+         flst.add(cvf.cv,cvf.f);
        out.pop().from_mesh_region(flst);
        );
 
@@ -1121,7 +1120,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        );
 
 
-    
+
     /*@GET RIDs = ('regions')
     Return the list of valid regions stored in the mesh.@*/
     sub_command
@@ -1142,12 +1141,12 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("boundary", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
-       
+
        std::vector<unsigned> cvlst;
        std::vector<short> facelst;
-       
+
        dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
-       
+
        for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
          if (pmesh->regions_index().is_in(rnum)) {
            for (getfem::mr_visitor i(pmesh->region(rnum));
@@ -1157,7 +1156,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
            }
          }
        }
-       
+
        iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
        for (size_type j=0; j < cvlst.size(); j++) {
          w(0,j) = cvlst[j]+config::base_index();
@@ -1165,7 +1164,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        }
        );
 
-    
+
 
     /*@GET CVFIDs = ('region', @ivec RIDs)
     Return the list of convexes/faces on the regions `RIDs`.
@@ -1177,12 +1176,12 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("region", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
-       
+
        std::vector<unsigned> cvlst;
        std::vector<short> facelst;
-       
+
        dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
-       
+
        for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
          if (pmesh->regions_index().is_in(rnum)) {
            for (getfem::mr_visitor i(pmesh->region(rnum));
@@ -1313,7 +1312,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        std::string fname = in.pop().to_string();
        std::string name = "";
        if (in.remaining()) name = in.pop().to_string();
-       
+
        getfem::pos_export exp(fname);
        exp.write(*pmesh,name);
        );
@@ -1340,11 +1339,10 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
   const getfem::mesh *pmesh = extract_mesh_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  std::string init_cmd      = m_in.pop().to_string();
+  std::string cmd           = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

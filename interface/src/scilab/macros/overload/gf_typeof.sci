@@ -2,7 +2,7 @@ function res = gf_typeof(gf_var)
   res = '';
 
   // The CID value for each class of object is defined in
-  // gfi_array.h
+  // getfemint.h
 
   if (typeof(gf_var)~='objid') then
     error('gf_typeof: only objid structures accepted');

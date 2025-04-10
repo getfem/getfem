@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -19,7 +19,6 @@
 
 ===========================================================================*/
 
-#include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfem/getfem_continuation.h>
 
@@ -116,7 +115,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       dataname_current = in.pop().to_string();
     }
     scalar_type scfac = in.pop().to_scalar();
-    
+
     std::string lsolver("auto"), varname("");
     scalar_type h_init(1e-2), h_max(1e-1), h_min(1e-5), h_inc(1.3), h_dec(0.5),
       maxres(1e-6), maxdiff(1e-6), mincos(0.9), maxres_solve(1e-8),
@@ -124,91 +123,91 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     size_type maxit(10), thrit(4), nbdir(40), nbspan(1);
     int noisy(0), singularities(0);
     bool nonsmooth(false);
-    
+
     while (in.remaining() && in.front().is_string()) {
       std::string opt = in.pop().to_string();
       if (cmd_strmatch(opt, "lsolver"))  {
-	if (in.remaining()) lsolver = in.pop().to_string();
-	else THROW_BADARG("missing name for " << opt);
+        if (in.remaining()) lsolver = in.pop().to_string();
+        else THROW_BADARG("missing name for " << opt);
       } else if (cmd_strmatch(opt, "h_init")) {
-	if (in.remaining()) h_init = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) h_init = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "h_max")) {
-	if (in.remaining()) h_max = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) h_max = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "h_min")) {
-	if (in.remaining()) h_min = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) h_min = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "h_inc")) {
-	if (in.remaining()) h_inc = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) h_inc = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "h_dec")) {
-	if (in.remaining()) h_dec = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) h_dec = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "max_iter")) {
-	if (in.remaining()) maxit = in.pop().to_integer();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) maxit = in.pop().to_integer();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "thr_iter")) {
-	if (in.remaining()) thrit = in.pop().to_integer();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) thrit = in.pop().to_integer();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "max_res")) {
-	if (in.remaining()) maxres = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) maxres = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "max_diff")) {
-	if (in.remaining()) maxdiff = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) maxdiff = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "min_cos")) {
-	if (in.remaining()) mincos = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) mincos = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "max_res_solve")) {
-	if (in.remaining()) maxres_solve = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) maxres_solve = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "delta_max")) {
-	if (in.remaining()) delta_max = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) delta_max = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "delta_min")) {
-	if (in.remaining()) delta_min = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) delta_min = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "thr_var")) {
-	if (in.remaining()) thrvar = in.pop().to_scalar();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) thrvar = in.pop().to_scalar();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "nb_dir")) {
-	if (in.remaining()) nbdir = in.pop().to_integer();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) nbdir = in.pop().to_integer();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "nb_span")) {
-	if (in.remaining()) nbspan = in.pop().to_integer();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) nbspan = in.pop().to_integer();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "singularities")) {
-	if (in.remaining()) singularities = in.pop().to_integer();
-	else THROW_BADARG("missing value for " << opt);
+        if (in.remaining()) singularities = in.pop().to_integer();
+        else THROW_BADARG("missing value for " << opt);
       } else if (cmd_strmatch(opt, "variable_name")) {
-	if (in.remaining()) varname = in.pop().to_string();
-	else THROW_BADARG("missing name for " << opt);
+        if (in.remaining()) varname = in.pop().to_string();
+        else THROW_BADARG("missing name for " << opt);
       } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
       else if (cmd_strmatch(opt, "noisy")) noisy = 1;
       else if (cmd_strmatch(opt, "very noisy") ||
-	       cmd_strmatch(opt, "very_noisy")) noisy = 2;
+               cmd_strmatch(opt, "very_noisy")) noisy = 2;
       else THROW_BADARG("bad option: " << opt);
     }
-    
+
     auto shp = std::make_shared<getfem::cont_struct_getfem_model>
       (*md, dataname_parameter, scfac,
        getfem::rselect_linear_solver(*md, lsolver),
        h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
        mincos, maxres_solve, noisy, singularities, nonsmooth,
        delta_max, delta_min, thrvar, nbdir, nbspan);
-    
-    
-    
+
+
+
     if (!dataname_current.empty())
       shp->set_parametrised_data_names(dataname_init, dataname_final,
-				      dataname_current);
+                                       dataname_current);
     if (!varname.empty())
       shp->set_interval_from_variable_name(varname);
-    
+
     id_type id = store_cont_struct_object(shp);
     workspace().set_dependence(id, (const void *)(md));
     out.pop().from_object_id(id, CONT_STRUCT_CLASS_ID);
   }
-  
+
 }

@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -36,24 +36,24 @@
 using namespace getfemint;
 
 
-#define RETURN_SPARSE(realmeth, cplxmeth)                            \
-  if (!md->is_complex()) {                                           \
-    gf_real_sparse_by_col M(gmm::mat_nrows(md->realmeth),            \
-                            gmm::mat_ncols(md->realmeth));           \
-    gmm::copy(md->realmeth, M);                                      \
-    out.pop().from_sparse(M);                                        \
-  } else {                                                           \
-    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplxmeth),            \
-                            gmm::mat_ncols(md->cplxmeth));           \
-    gmm::copy(md->cplxmeth, M);                                      \
-    out.pop().from_sparse(M);                                        \
+#define RETURN_SPARSE(realmeth, cplxmeth)                  \
+  if (!md->is_complex()) {                                 \
+    gf_real_sparse_by_col M(gmm::mat_nrows(md->realmeth),  \
+                            gmm::mat_ncols(md->realmeth)); \
+    gmm::copy(md->realmeth, M);                            \
+    out.pop().from_sparse(M);                              \
+  } else {                                                 \
+    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplxmeth),  \
+                            gmm::mat_ncols(md->cplxmeth)); \
+    gmm::copy(md->cplxmeth, M);                            \
+    out.pop().from_sparse(M);                              \
   }
 
-#define RETURN_VECTOR(realmeth, cplxmeth)                      \
-  if (!md->is_complex()) {                                     \
-    out.pop().from_dcvector(md->realmeth);                     \
-  } else {                                                     \
-    out.pop().from_dcvector(md->cplxmeth);                     \
+#define RETURN_VECTOR(realmeth, cplxmeth)  \
+  if (!md->is_complex()) {                 \
+    out.pop().from_dcvector(md->realmeth); \
+  } else {                                 \
+    out.pop().from_dcvector(md->cplxmeth); \
   }
 
 /*@GFDOC
@@ -76,16 +76,16 @@ typedef std::shared_ptr<sub_gf_md_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_md_get {                                \
-      virtual void run(getfemint::mexargs_in& in,                       \
-                       getfemint::mexargs_out& out,                     \
-                       getfem::model *md)                               \
-      { dummy_func(in); dummy_func(out);  dummy_func(md); code }        \
-    };                                                                  \
-    psub_command psubc = std::make_shared<subc>();                      \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
-    subc_tab[cmd_normalize(name)] = psubc;                              \
+    struct subc : public sub_gf_md_get {                                    \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::model *md)                                   \
+      { dummy_func(in); dummy_func(out);  dummy_func(md); code }            \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 static void filter_lawname(std::string &lawname) {
@@ -95,10 +95,9 @@ static void filter_lawname(std::string &lawname) {
 
 void gf_model_get(getfemint::mexargs_in& m_in,
                   getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@GET b = ('is_complex')
       Return 0 is the model is real, 1 if it is complex.@*/
@@ -301,7 +300,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfem::ga_local_projection(*md, *mim, expr, *mf, result, region);
        out.pop().from_dcvector(result);
        );
-    
+
     /*@GET mf = ('mesh fem of variable', @str name)
       Gives access to the `mesh_fem` of a variable or data.@*/
     sub_command
@@ -430,7 +429,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
 
       Return the number of iterations, if an iterative method is used.
-      
+
       Note that it is possible to disable some variables
       (see MODEL:SET('disable variable') ) in order to
       solve the problem only with respect to a subset of variables (the
@@ -876,7 +875,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type N = size_type(mf->linked_mesh().dim());
        size_type ratio = 1;
        if (mf->get_qdim() == 1) ratio = N*N;
-       
+
        getfem::model_real_plain_vector VMM(ratio*mf->nb_dof());
 
        getfem::compute_sigmahathat
@@ -915,7 +914,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
         datalambda, datamu, datathreshold, datasigma);
        );
 
-    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1]) 	 
+    /*@GET ('small strain elastoplasticity next iter', @tmim mim,  @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region = -1])
       Function that allows to pass from a time step to another for the
       small strain plastic brick. The parameters have to be exactly the
       same than the one of `add_small_strain_elastoplasticity_brick`,
@@ -934,64 +933,64 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        filter_lawname(lawname);
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0 ||
-	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
-	 nb_var = nb_params = 3;
+           lawname.compare("prandtl_reuss") == 0 ||
+           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+           lawname.compare("plane_strain_prandtl_reuss") == 0) {
+         nb_var = nb_params = 3;
        } else if
-	   (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-	    lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-	    lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
-	    lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-	 nb_var = 4; nb_params = 5;
+           (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+            lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+            lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
+            lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+         nb_var = 4; nb_params = 5;
        } else
-	 THROW_BADARG(lawname << " is not an implemented elastoplastic law");
+         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
 
-       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY); 	 
+       getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
        mexarg_in argin = in.pop();
        if (argin.is_string()) {
-	 std::string opt = argin.to_string();
-	 filter_lawname(opt);
-	 if (opt.compare("displacement_only") == 0)
-	   unknowns_type = getfem::DISPLACEMENT_ONLY;
-	 else if (opt.compare("displacement_and_plastic_multiplier") == 0)
-	   unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
-	 else
-	   THROW_BADARG("Wrong input");
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_only") == 0)
+           unknowns_type = getfem::DISPLACEMENT_ONLY;
+         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else
+           THROW_BADARG("Wrong input");
        } else if (argin.is_integer())
-	 unknowns_type = static_cast<getfem::plasticity_unknowns_type>
-	   (argin.to_integer(0,1));
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+           (argin.to_integer(0,1));
 
        std::vector<std::string> varnames;
        for (size_type i = 0; i < nb_var; ++i)
-	 varnames.push_back(in.pop().to_string());
-       
+         varnames.push_back(in.pop().to_string());
+
        std::vector<std::string> params;
        for (size_type i = 0; i < nb_params; ++i)
-	 params.push_back(in.pop().to_string());
-       
+         params.push_back(in.pop().to_string());
+
        std::string theta = "1";
        std::string dt = "timestep";
        size_type region = size_type(-1);
        for (size_type i=0; i < 3 && in.remaining(); ++i) {
-	 argin = in.pop();
-	 if (argin.is_string()) {
-	   if (i==0)      theta = argin.to_string();
-	   else if (i==1) dt = argin.to_string();
-	   else           THROW_BADARG("Wrong input");
-	 } else if (argin.is_integer()) {
-	   region = argin.to_integer();
-	   GMM_ASSERT1(!in.remaining(), "Wrong input");
-	 }
+         argin = in.pop();
+         if (argin.is_string()) {
+           if (i==0)      theta = argin.to_string();
+           else if (i==1) dt = argin.to_string();
+           else           THROW_BADARG("Wrong input");
+         } else if (argin.is_integer()) {
+           region = argin.to_integer();
+           GMM_ASSERT1(!in.remaining(), "Wrong input");
+         }
        }
        params.push_back(theta);
        params.push_back(dt);
-       
+
        getfem::small_strain_elastoplasticity_next_iter
        (*md, *mim, lawname, unknowns_type, varnames, params, region);
        workspace().set_dependence(md, mim);
        );
-    
+
     /*@GET V = ('small strain elastoplasticity Von Mises', @tmim mim, @tmf mf_vm, @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @str theta = '1' [, @str dt = 'timestep']] [, @int region])
       This function computes the Von Mises stress field with respect to
       a small strain elastoplasticity term, approximated on `mf_vm`,
@@ -1000,7 +999,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       Remember that `small_strain_elastoplasticity_next_iter` has to be called
       before any call of this function.
       @*/
-    sub_command 	 
+    sub_command
       ("small strain elastoplasticity Von Mises", 4, 16, 0, 0,
        getfem::mesh_im *mim = to_meshim_object(in.pop());
        const getfem::mesh_fem *mf_vm = to_meshfem_object(in.pop());
@@ -1008,67 +1007,67 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        filter_lawname(lawname);
        size_type nb_var = 0; size_type nb_params = 0;
        if (lawname.compare("isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("prandtl_reuss") == 0 ||
-	   lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
-	   lawname.compare("plane_strain_prandtl_reuss") == 0) {
-	 nb_var = nb_params = 3;
+           lawname.compare("prandtl_reuss") == 0 ||
+           lawname.compare("plane_strain_isotropic_perfect_plasticity") == 0 ||
+           lawname.compare("plane_strain_prandtl_reuss") == 0) {
+         nb_var = nb_params = 3;
        } else if
-	   (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
-	    lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
-	    lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
-	    lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
-	 nb_var = 4; nb_params = 5;
+           (lawname.compare("isotropic_plasticity_linear_hardening") == 0 ||
+            lawname.compare("prandtl_reuss_linear_hardening") == 0 ||
+            lawname.compare("plane_strain_isotropic_plasticity_linear_hardening") == 0 ||
+            lawname.compare("plane_strain_prandtl_reuss_linear_hardening") == 0) {
+         nb_var = 4; nb_params = 5;
        } else
-	 THROW_BADARG(lawname << " is not an implemented elastoplastic law");
-       
+         THROW_BADARG(lawname << " is not an implemented elastoplastic law");
+
        getfem::plasticity_unknowns_type unknowns_type(getfem::DISPLACEMENT_ONLY);
        mexarg_in argin = in.pop();
        if (argin.is_string()) {
-	 std::string opt = argin.to_string();
-	 filter_lawname(opt);
-	 if (opt.compare("displacement_only") == 0)
-	   unknowns_type = getfem::DISPLACEMENT_ONLY;
-	 else if (opt.compare("displacement_and_plastic_multiplier") == 0)
-	   unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
-	 else
-	   THROW_BADARG("Wrong input");
+         std::string opt = argin.to_string();
+         filter_lawname(opt);
+         if (opt.compare("displacement_only") == 0)
+           unknowns_type = getfem::DISPLACEMENT_ONLY;
+         else if (opt.compare("displacement_and_plastic_multiplier") == 0)
+           unknowns_type = getfem::DISPLACEMENT_AND_PLASTIC_MULTIPLIER;
+         else
+           THROW_BADARG("Wrong input");
        } else if (argin.is_integer())
-	 unknowns_type = static_cast<getfem::plasticity_unknowns_type>
-	   (argin.to_integer(0,1));
-       
+         unknowns_type = static_cast<getfem::plasticity_unknowns_type>
+           (argin.to_integer(0,1));
+
        std::vector<std::string> varnames;
        for (size_type i = 0; i < nb_var; ++i)
-	 varnames.push_back(in.pop().to_string());
-      
+         varnames.push_back(in.pop().to_string());
+
        std::vector<std::string> params;
        for (size_type i = 0; i < nb_params; ++i)
-	 params.push_back(in.pop().to_string());
-       
+         params.push_back(in.pop().to_string());
+
        std::string theta = "1";
        std::string dt = "timestep";
        size_type region = size_type(-1);
        for (size_type i=0; i < 3 && in.remaining(); ++i) {
-	 argin = in.pop();
-	 if (argin.is_string()) {
-	   if (i==0)      theta = argin.to_string();
-	   else if (i==1) dt = argin.to_string();
-	   else           THROW_BADARG("Wrong input");
-	 } else if (argin.is_integer()) {
-	   region = argin.to_integer();
-	   GMM_ASSERT1(!in.remaining(), "Wrong input");
-	 }
+         argin = in.pop();
+         if (argin.is_string()) {
+           if (i==0)      theta = argin.to_string();
+           else if (i==1) dt = argin.to_string();
+           else           THROW_BADARG("Wrong input");
+         } else if (argin.is_integer()) {
+           region = argin.to_integer();
+           GMM_ASSERT1(!in.remaining(), "Wrong input");
+         }
        }
        params.push_back(theta);
        params.push_back(dt);
-       
+
        getfem::model_real_plain_vector VMM(mf_vm->nb_dof());
        getfem::compute_small_strain_elastoplasticity_Von_Mises
        (*md, *mim, lawname, unknowns_type, varnames, params, *mf_vm, VMM,
-	region);
+        region);
        out.pop().from_dcvector(VMM);
        );
-    
-    
+
+
     /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.
@@ -1358,12 +1357,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::model *md  = to_model_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  getfem::model *md    = to_model_object(m_in.pop());
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

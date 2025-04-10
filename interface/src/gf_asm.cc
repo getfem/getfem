@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -361,7 +361,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
       rg = in.pop().to_mesh_region();
     }
   } else rg = getfem::mesh_region(in.pop().to_integer());
-  
+
 
   std::string s = in.pop().to_string();
   getfem::generic_assembly assem(s);
@@ -432,10 +432,10 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   const getfem::model &md = with_model ? *to_model_object(in.pop()) : dummy_md;
   bool with_secondary = false;
   std::string secondary_domain;
-  
+
   bool with_select_output = false;
   std::string select_var1, select_var2;
-  
+
   getfem::ga_workspace workspace2(md);
   getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
 
@@ -499,7 +499,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       }
     }
   }
-    
+
   size_type der_order = (order != 0) ? 2 : 0;
   workspace.add_expression(expr, *mim, region, der_order, secondary_domain);
 
@@ -693,7 +693,7 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_fem *mf_u = to_meshfem_object(in.pop());
   const getfem::mesh_fem *mf_d = to_meshfem_object(in.pop());
   size_type region = boundary_num;
-  
+
   unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
   if (!in.front().is_complex()) {
 
@@ -764,10 +764,9 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model, ['Secondary_domain', 'name',]] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ['select_output', 'varname1'[, 'varname2]], ...)
       High-level generic assembly procedure for volumic or boundary assembly.
@@ -1481,7 +1480,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

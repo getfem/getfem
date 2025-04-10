@@ -65,7 +65,7 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
                                    caching);
     // gfi_pf = getfemint_pfem::get_from(pf);
     // gfi_pf->nbdof_need_convex_number() = true;
-    
+
     id = store_fem_object(pf);
 
     workspace().set_dependence(id, mim_target);
@@ -170,7 +170,7 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       Of course, you have to ensure that the selected fem is compatible with
       the geometric transformation: a Pk fem has no meaning on a quadrangle.
       @*/
-    
+
     id = store_fem_object(getfem::fem_descriptor(cmd));
   }
   out.pop().from_object_id(id, FEM_CLASS_ID);

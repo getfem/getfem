@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -30,7 +30,7 @@ using namespace getfemint;
 
 static void
 error_for_non_lagrange_elements(const getfem::mesh_fem &mf,
-				bool warning_only = false) {
+                                bool warning_only = false) {
   size_type cnt=0, total=0, cnt_no_fem=0;
   for (dal::bv_visitor cv(mf.linked_mesh().convex_index());
        !cv.finished(); ++cv) {
@@ -41,10 +41,10 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf,
   if (cnt) {
     if (!warning_only) {
       THROW_ERROR("Error: " << cnt << " elements on " << total << " are NOT "
-		  "lagrange elements -- Unable to compute a derivative");
+                  "lagrange elements -- Unable to compute a derivative");
     } else {
       GFI_WARNING(cnt << " elements on " << total
-		  << " are NOT lagrange elements");
+                  << " are NOT lagrange elements");
     }
   }
   // Test suppressed. If ones want to interpolate on a specific region
@@ -60,10 +60,10 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf,
 
 template <typename T> static void
 gf_compute_gradient(getfemint::mexargs_out& out,
-		    const getfem::mesh_fem& mf,
-		    const getfem::mesh_fem& mf_grad,
-		    const garray<T> &U,
-		    size_type qm) {
+                    const getfem::mesh_fem& mf,
+                    const getfem::mesh_fem& mf_grad,
+                    const garray<T> &U,
+                    size_type qm) {
   garray<T> DU;
   unsigned N = mf.linked_mesh().dim();
   array_dimensions dims(N);
@@ -85,10 +85,10 @@ gf_compute_gradient(getfemint::mexargs_out& out,
 
 template <typename T> static void
 gf_compute_hessian(getfemint::mexargs_out& out,
-		   const getfem::mesh_fem& mf,
-		   const getfem::mesh_fem& mf_hess,
-		   const garray<T> &U,
-		   size_type qm) {
+                   const getfem::mesh_fem& mf,
+                   const getfem::mesh_fem& mf_hess,
+                   const garray<T> &U,
+                   size_type qm) {
   garray<T> D2U;
   unsigned N = mf.linked_mesh().dim();
   array_dimensions dims(N); dims.push_back(N);
@@ -101,8 +101,8 @@ gf_compute_hessian(getfemint::mexargs_out& out,
   for (unsigned qq=0; qq < qqdim; ++qq) {
     // compute_gradient also checks that the meshes are the same
     getfem::compute_hessian(mf, mf_hess,
-			    gmm::sub_vector(U, gmm::sub_slice(qq, mf.nb_dof(),
-							      qqdim)), tmp);
+                            gmm::sub_vector(U, gmm::sub_slice(qq, mf.nb_dof(),
+                                                              qqdim)), tmp);
     for (unsigned j=0, pos=qq*N*N; j < tmp.size(); j+=N*N) {
       for (unsigned k=0; k < N*N; ++k) D2U[pos+k] = tmp[j+k];
       pos += qqdim*N*N;
@@ -112,7 +112,7 @@ gf_compute_hessian(getfemint::mexargs_out& out,
 
 template <typename T> static void
 gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
-	       const getfem::mesh_fem& mf, const garray<T> &U) {
+               const getfem::mesh_fem& mf, const garray<T> &U) {
   array_dimensions dims;
   dims.push_back(U,0,U.ndim()-1,true);
   if (is_meshfem_object(in.front())) {
@@ -121,8 +121,8 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     size_type qmult = mf.get_qdim() / mf_dest.get_qdim();
     if (qmult == 0)
       THROW_ERROR("Cannot interpolate a mesh_fem with qdim = " <<
-		  int(mf.get_qdim()) << " onto a mesh_fem whose qdim is "
-		  << int(mf_dest.get_qdim()));
+                  int(mf.get_qdim()) << " onto a mesh_fem whose qdim is "
+                  << int(mf_dest.get_qdim()));
     if (qmult != 1) dims.push_back(unsigned(qmult));
     dims.push_back(unsigned(mf_dest.nb_dof()));
     dims.opt_transform_col_vect_into_row_vect();
@@ -137,7 +137,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     for (size_type i=0; i < sl->nb_convex(); ++i)
       if (!mf.linked_mesh().convex_index().is_in(sl->convex_num(i)))
       THROW_BADARG("the slice is not compatible with the mesh_fem "
-		   "(cannot find convex " << sl->convex_num(i) << ")");
+                   "(cannot find convex " << sl->convex_num(i) << ")");
 
     if (mf.get_qdim() != 1) dims.push_back(mf.get_qdim());
     dims.push_back(unsigned(sl->nb_points()));
@@ -159,7 +159,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
       // cout << "adding point" << p << endl;
       mti.add_point(p);
     }
-    
+
     size_type qmult = mf.get_qdim();
     if (qmult != 1) dims.push_back(unsigned(qmult));
     dims.push_back(unsigned(nbpoints));
@@ -178,7 +178,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
 bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   if (U.sizes().size() == U.sizes().dim(-1)) return true;
   else THROW_BADARG("the U argument for the function " << cmd
-		    << " must be a one-dimensional array");
+                    << " must be a one-dimensional array");
   return false;
 }
 
@@ -199,9 +199,9 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
 struct sub_gf_compute : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   const getfem::mesh_fem *mf,
-		   rcarray U) = 0;
+                   getfemint::mexargs_out& out,
+                   const getfem::mesh_fem *mf,
+                   rcarray U) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_compute> psub_command;
@@ -210,27 +210,25 @@ typedef std::shared_ptr<sub_gf_compute> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_compute {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       const getfem::mesh_fem *mf, rcarray U)		\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_compute {                                   \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const getfem::mesh_fem *mf, rcarray U)               \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 
 void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-
+  if (subc_tab.empty()) {
 
     /*@FUNC n = ('L2 norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of the (real or complex) field `U`.
@@ -244,7 +242,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
-	 out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.real(), bv));
+         out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.real(), bv));
        else out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.cplx(),bv));
        );
 
@@ -261,18 +259,18 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
-	 dal::bit_vector bv = in.remaining() ?
-	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+         dal::bit_vector bv = in.remaining() ?
+           in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
 
-	 out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
-						   *mf_2, V, bv));
-       } else {	 
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
- 	 dal::bit_vector bv = in.remaining() ?
- 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-	 out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
-						   *mf_2, V, bv));
+         out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
+                                                   *mf_2, V, bv));
+       } else {
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+          dal::bit_vector bv = in.remaining() ?
+            in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+         out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
+                                                   *mf_2, V, bv));
        }
        );
 
@@ -289,10 +287,10 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
-	 out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf,
-							U.real(), bv));
+         out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf,
+                                                        U.real(), bv));
        else out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim,
-							   *mf, U.cplx(), bv));
+                                                           *mf, U.cplx(), bv));
        );
 
 
@@ -309,19 +307,19 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (!U.is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
-	 dal::bit_vector bv = in.remaining() ?
-	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+         dal::bit_vector bv = in.remaining() ?
+           in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
 
-	 out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
-							*mf_2, V, bv));
+         out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
+                                                        *mf_2, V, bv));
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
- 	 dal::bit_vector bv = in.remaining() ?
- 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-	 
-	 out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.cplx(),
-							*mf_2, V, bv));
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+          dal::bit_vector bv = in.remaining() ?
+            in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+
+         out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.cplx(),
+                                                        *mf_2, V, bv));
        }
        );
 
@@ -338,9 +336,9 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
-	 out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.real(), bv));
+         out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.real(), bv));
        else out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf,
-						      U.cplx(), bv));
+                                                      U.cplx(), bv));
        );
 
 
@@ -356,10 +354,11 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
-	 out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
-							U.real(), bv));
-       else out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
-							   U.cplx(), bv));
+         out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
+                                                        U.real(), bv));
+       else
+         out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
+                                                        U.cplx(), bv));
        );
 
 
@@ -375,7 +374,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        dal::bit_vector bv = in.remaining() ?
        in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
        if (!U.is_complex())
-	 out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.real(), bv));
+         out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.real(), bv));
        else out.pop().from_scalar(getfem::asm_H2_norm(*mim,*mf, U.cplx(), bv));
        );
 
@@ -404,9 +403,9 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        size_type qm
          = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
        if (!U.is_complex())
-	 gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
+         gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
        else
-	 gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
+         gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
        );
 
     /*@FUNC HU = ('hessian', @tmf mf_h)
@@ -419,9 +418,9 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        error_for_non_lagrange_elements(*mf_hess, true);
        size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
        if (!U.is_complex())
-	 gf_compute_hessian<scalar_type>(out, *mf, *mf_hess, U.real(), qm);
+         gf_compute_hessian<scalar_type>(out, *mf, *mf_hess, U.real(), qm);
        else
-	 gf_compute_hessian<complex_type>(out, *mf, *mf_hess, U.cplx(), qm);
+         gf_compute_hessian<complex_type>(out, *mf, *mf_hess, U.cplx(), qm);
        );
 
 
@@ -442,14 +441,14 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        int Nrefine = in.pop().to_integer(1, 1000);
        std::vector<convex_face> cvf;
        if (in.remaining() && !in.front().is_string()) {
-	 iarray v = in.pop().to_iarray(-1, -1);
-	 build_convex_face_lst(mf->linked_mesh(), cvf, &v);
+         iarray v = in.pop().to_iarray(-1, -1);
+         build_convex_face_lst(mf->linked_mesh(), cvf, &v);
        } else build_convex_face_lst(mf->linked_mesh(), cvf, 0);
        if (U.sizes().getn() != mf->nb_dof()) {
-	 THROW_BADARG("Wrong number of columns (need transpose ?)");
+         THROW_BADARG("Wrong number of columns (need transpose ?)");
        }
        eval_on_triangulated_surface(&mf->linked_mesh(), Nrefine, cvf, out,
-				    mf, U.real());
+                                    mf, U.real());
        );
 
 
@@ -491,15 +490,15 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_fem *mf_dest = to_meshfem_object(in.pop());
        error_for_non_lagrange_elements(*mf_dest, true);
        if (!U.is_complex()) {
-	 darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
-	 getfem::interpolation(*mf, *mf_dest, U.real(), V, 2);
+         darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
+         getfem::interpolation(*mf, *mf_dest, U.real(), V, 2);
        } else {
-	 carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
-	 getfem::interpolation(*mf, *mf_dest, U.cplx(), V, 2);
+         carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
+         getfem::interpolation(*mf, *mf_dest, U.cplx(), V, 2);
        }
        );
 
-    
+
     /*@FUNC E = ('error estimate', @tmim mim)
     Compute an a posteriori error estimate.
 
@@ -512,20 +511,20 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        out.pop().create_darray_h
        (unsigned(mim.linked_mesh().convex_index().last_true()+1));
        if (!U.is_complex())
-	 getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
+         getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
        else {
-	 getfem::base_vector err_imag(gmm::vect_size(err));
-	 getfem::error_estimate(mim, *mf, gmm::imag_part(U.cplx()), err_imag,
-				mim.convex_index());
-	 getfem::error_estimate(mim, *mf, gmm::real_part(U.cplx()), err,
-				mim.convex_index());
-	 gmm::add(err_imag, err);
+         getfem::base_vector err_imag(gmm::vect_size(err));
+         getfem::error_estimate(mim, *mf, gmm::imag_part(U.cplx()), err_imag,
+                                mim.convex_index());
+         getfem::error_estimate(mim, *mf, gmm::real_part(U.cplx()), err,
+                                mim.convex_index());
+         gmm::add(err_imag, err);
        }
        );
 
-      
+
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
-            
+
     /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda_, @scalar mu_, @scalar gamma0, @scalar f_coeff, @scalar vertical_force)
     Compute an a posteriori error estimate in the case of Nitsche method.
 
@@ -549,13 +548,13 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        gmm::copy(U.real(), UU);
        getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff,vertical_force, ERR);
        gmm::copy(ERR, err);
-       );   
-      
+       );
+
 #endif
-      
-      
-      
-      
+
+
+
+
     /*@FUNC ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
     Compute a convection of `U` with regards to a steady state velocity
     field `V` with a Characteristic-Galerkin method. The result is returned
@@ -583,16 +582,16 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (in.remaining()) option = in.pop().to_string();
        getfem::convect_boundary_option opt;
        if (option.size() == 0)
-	 opt = getfem::CONVECT_EXTRAPOLATION;
+         opt = getfem::CONVECT_EXTRAPOLATION;
        else if (cmd_strmatch(option, "extrapolation"))
-	 opt = getfem::CONVECT_EXTRAPOLATION;
+         opt = getfem::CONVECT_EXTRAPOLATION;
        else if (cmd_strmatch(option, "periodicity"))
-	 opt = getfem::CONVECT_PERIODICITY;
+         opt = getfem::CONVECT_PERIODICITY;
        else if (cmd_strmatch(option, "unchanged"))
-	 opt = getfem::CONVECT_UNCHANGED;
-       else 
-	 THROW_BADARG("Bad option " << option<< " for convect command. "
-		      "should be 'extrapolation', 'unchanged' or "
+         opt = getfem::CONVECT_UNCHANGED;
+       else
+         THROW_BADARG("Bad option " << option<< " for convect command. "
+                      "should be 'extrapolation', 'unchanged' or "
                       "'periodicity'");
 
        getfem::base_node per_min;
@@ -602,22 +601,21 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
          rcarray pmax = in.pop().to_rcarray();
          size_type N = mf_v->linked_mesh().dim();
          per_min.resize(N);
-         per_max.resize(N); 
+         per_max.resize(N);
          gmm::copy(pmin.real(), per_min);
          gmm::copy(pmax.real(), per_max);
        }
 
        if (U.is_complex() || V.is_complex())
-	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
+         THROW_BADARG("Sorry, complex version of convect to be interfaced");
        getfem::convect(*mf, U.real(), *mf_v, V.real(),
                        dt, nt, opt, per_min, per_max);
 
        );
 
-
   }
-  
-  
+
+
   if (m_in.narg() < 3)  THROW_BADARG( "Wrong number of input arguments");
 
   const getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
@@ -626,12 +624,11 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, mf, U);
   }
   else bad_cmd(init_cmd);
@@ -639,7 +636,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 }
 
 /*@MATLABFUNC [U2[,MF2,[,X[,Y[,Z]]]]] = ('interpolate on Q1 grid', {'regular h', hxyz | 'regular N', Nxyz | X[,Y[,Z]]})
-  
+
   Creates a cartesian Q1 mesh fem and interpolates U on it. The
   returned field U2 is organized in a matrix such that in can be drawn
   via the MATLAB command 'pcolor'. The first dimension is the Qdim of

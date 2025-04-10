@@ -371,7 +371,7 @@ namespace getfemint {
     /* largely inspired by getfem_export.h */
 
     /* interpolation of the solution.                                  */
-    /* faux dans le cas des éléments non tau-equivalents ou vectoriel. */
+    /* faux dans le cas des elements non tau-equivalents ou vectoriel. */
     if (cv_fem->target_dim() != 1)
       THROW_ERROR("interpolation on vector fem is still to be done! "
                   "(or at least to be tested...)");
@@ -462,7 +462,7 @@ namespace getfemint {
     getfem::base_matrix pt_val;
     if (pmf) {
       if (!pmf->convex_index()[cv])
-	THROW_ERROR( "convex " << cv+config::base_index() << " has no FEM");
+        THROW_ERROR( "convex " << cv+config::base_index() << " has no FEM");
       pt_val.resize(qdim*U.getm(), pt.size());
       interpolate_on_convex_ref(pmf, cv, pt, U, pt_val);
     }

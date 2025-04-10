@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -29,9 +29,9 @@ using namespace getfemint;
 
 static void
 cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in,
-	       bool linear=true) {
+               bool linear=true) {
   getfemint::size_type dim = in.remaining();
-  
+
   if (dim == 0) THROW_BADARG( "not enough input arguments");
 
   std::vector<darray> ppos(dim);
@@ -56,9 +56,9 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in,
     size_type id_pt = pmesh->add_point(pt);
     if (id_pt != i) {
       THROW_ERROR(
-		"something has changed in getfem, you need to reconsider "
-		"gf_mesh('cartesian')\nfor point " << i <<
-		", the index is " << id_pt << endl);
+                "something has changed in getfem, you need to reconsider "
+                "gf_mesh('cartesian')\nfor point " << i <<
+                ", the index is " << id_pt << endl);
     }
   }
 
@@ -83,11 +83,11 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in,
     for (size_type j = 0; j < (unsigned(1)<<dim); j++) {
       pts[j].resize(dim);
       for (size_type d=0; d < dim; d++) {
-	if ((j >> d) & 1) {
-	  pts[j][d] = ppos[d][ipt[d]+1];
-	} else {
-	  pts[j][d] = ppos[d][ipt[d]];
-	}
+        if ((j >> d) & 1) {
+          pts[j][d] = ppos[d][ipt[d]+1];
+        } else {
+          pts[j][d] = ppos[d][ipt[d]];
+        }
       }
     }
 
@@ -124,9 +124,9 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     size_type id_pt = pmesh->add_point(pt);
     if (id_pt != i) {
       THROW_ERROR(
-		"something has changed in getfem, you need to reconsider "
-		"gf_mesh('cartesian')\nfor point " << i <<
-		", the index is " << id_pt << endl);
+                "something has changed in getfem, you need to reconsider "
+                "gf_mesh('cartesian')\nfor point " << i <<
+                ", the index is " << id_pt << endl);
     }
   }
 
@@ -149,19 +149,19 @@ pyramidal_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     for (size_type j = 0; j < (unsigned(1)<<dim); j++) {
       pts[j].resize(dim);
       for (size_type d=0; d < dim; d++) {
-	if ((j >> d) & 1) {
-	  pts[j][d] = ppos[d][ipt[d]+1];
-	} else {
-	  pts[j][d] = ppos[d][ipt[d]];
-	}
+        if ((j >> d) & 1) {
+          pts[j][d] = ppos[d][ipt[d]+1];
+        } else {
+          pts[j][d] = ppos[d][ipt[d]];
+        }
       }
     }
-	
+
     bgeot::base_node barycenter(3);
     std::vector<size_type> iipts(8);
     for (size_type j = 0; j < 8; j++) {
-	barycenter += pts[j];
-	iipts[j] = pmesh->add_point(pts[j]);
+      barycenter += pts[j];
+      iipts[j] = pmesh->add_point(pts[j]);
     }
     barycenter /= 8.;
     size_type ib = pmesh->add_point(barycenter);
@@ -228,10 +228,10 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     if (in.front().is_string()) {
       std::string s = in.pop().to_string();
       if (cmd_strmatch(s, "degree")) {
-	if (!in.remaining()) { THROW_BADARG("missing degree"); }
-	else K=in.pop().to_integer(1, 10);
-	} else if (cmd_strmatch(s, "noised"))
-	noised = true;
+        if (!in.remaining()) { THROW_BADARG("missing degree"); }
+        else K=in.pop().to_integer(1, 10);
+      } else if (cmd_strmatch(s, "noised"))
+        noised = true;
     } else {
       xyz.push_back(in.pop().to_darray(-1));
       if (xyz.back().size() <= 1) THROW_BADARG("wrong dimensions");
@@ -261,8 +261,8 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
     for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
       std::vector<getfem::base_node> pts(pgt->nb_points());
       for (size_type i=0; i < pgt->nb_points(); ++i) {
-	pts[i] = msh.trans_of_convex(cv)->transform
-	  (pgt->convex_ref()->points()[i], msh.points_of_convex(cv));
+        pts[i] = msh.trans_of_convex(cv)->transform
+          (pgt->convex_ref()->points()[i], msh.points_of_convex(cv));
       }
       pmesh->add_convex_by_points(pgt, pts.begin());
     }
@@ -283,10 +283,10 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
       assert(ii < xyz[k].size());
       scalar_type a = p[k]-ii;
       if (ii != xyz[k].size()-1)
-	p[k] = (1-a) * xyz[k][ii] + a*xyz[k][ii+1];
+        p[k] = (1-a) * xyz[k][ii] + a*xyz[k][ii+1];
       else p[k] = xyz[k][ii];
       if (noised && ii != 0 && ii != nsubdiv[k])
-	p[k] += diff[k] * gmm::random(double()) * 0.2 / K;
+        p[k] += diff[k] * gmm::random(double()) * 0.2 / K;
     }
   }
   pmesh->points().resort();
@@ -310,7 +310,7 @@ curved_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 
   for (dal::bv_visitor cv(src_mesh->convex_index()); !cv.finished(); ++cv) {
     dest_mesh->add_convex(src_mesh->trans_of_convex(cv),
-			  src_mesh->ind_points_of_convex(cv).begin());
+                          src_mesh->ind_points_of_convex(cv).begin());
   }
 }
 
@@ -351,7 +351,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
     /* une hypothese bien commode pour la "compatibilite pdetool" */
     if (id_tab[i] != i && warn_cnt++ == 0) {
       GMM_WARNING1("The numbering of mesh points will be different, pt#" <<
-		   i+config::base_index() << " gets id#" << id_tab[i] + config::base_index());
+                   i+config::base_index() << " gets id#" << id_tab[i] + config::base_index());
     }
   }
 
@@ -372,8 +372,8 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
 struct sub_gf_mesh : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::mesh *pmesh) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::mesh *pmesh) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_mesh> psub_command;
@@ -382,16 +382,16 @@ typedef std::shared_ptr<sub_gf_mesh> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mesh {					\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::mesh *pmesh)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mesh {                                      \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::mesh *pmesh)                                 \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
@@ -406,11 +406,10 @@ template <typename T> static inline void dummy_func(T &) {}
 @*/
 
 void gf_mesh(getfemint::mexargs_in& m_in,
-	     getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+             getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@INIT M = ('empty', @int dim)
       Create a new empty mesh.@*/
@@ -419,7 +418,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        size_type dim = in.pop().to_integer(1,255);
        getfem::base_node pt(dim);
        /* just to initialize the dimension of the mesh
-	  (this is not very nice, i know) */
+          (this is not very nice, I know) */
        pmesh->sup_point(pmesh->add_point(pt));
        );
 
@@ -601,12 +600,12 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        if (in.remaining()) K = in.pop().to_integer(1,6);
        std::vector<getfem::base_node> fixed;
        if (in.remaining()) {
-	 darray v = in.pop().to_darray(-1, -1);
-	 for (int j=0; j < int(v.getn()); j++) {
-	   getfem::base_node pt(v.getm());
-	   gmm::copy(v.col_to_bn(j), pt);
-	   fixed.push_back(pt);
-	 }
+         darray v = in.pop().to_darray(-1, -1);
+         for (int j=0; j < int(v.getn()); j++) {
+           getfem::base_node pt(v.getm());
+           gmm::copy(v.col_to_bn(j), pt);
+           fixed.push_back(pt);
+         }
        }
        int prefind = 1;
        int max_iter = 400;
@@ -618,16 +617,15 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-  auto mesh = std::make_shared<getfem::mesh>();
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  auto mesh            = std::make_shared<getfem::mesh>();
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, mesh.get());
 
     m_out.pop().from_object_id(store_mesh_object(mesh), MESH_CLASS_ID);

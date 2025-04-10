@@ -3,13 +3,13 @@
 
  Copyright (C) 2002-2020 Julien Pommier
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -33,23 +33,21 @@
 #define GETFEMINT_WORKSPACE_H__
 
 #include <getfemint.h>
-#include <getfem/dal_bit_vector.h>
-#include <getfem/dal_static_stored_objects.h>
 
 namespace getfemint {
 
-  // The workspace_stack structure stores the various object assigned to
+  // The workspace_stack structure stores the various objects assigned to
   // the script languages variables (Python, Scilab or Matlab).
-  // This objects are organised in workspaces (for Matlab and Scilab only) in
-  // order to be able to delete all the variables created locally in a
+  // These objects are organised in workspaces (for Matlab and Scilab only)
+  // in order to be able to delete all the variables created locally in a
   // sub-program or a loop (however, this has to be managed by the user).
-  // Additionnally, a variable may have dependances with respect to some
+  // Additionally, a variable may have dependencies with respect to some
   // other variables, in the sense that if a deletion of a variable occurs
-  // it will be delayed untill all the dependant variables are deleted
-  // (implemented with shared pointers).
-  // The object having a delayed deletion are called hidden objects. It is
-  // also possible to directlycreate an hidden object. An hidden object
-  // can eventually be retransformed in a normal object.
+  // it will be delayed until all the dependent variables are deleted
+  // (garbage collection implemented with shared pointers).
+  // The objects subjected to a delayed deletion are called hidden objects.
+  // It is also possible to directly create an hidden object. A hidden
+  // object can eventually be retransformed into a normal object.
 
   class workspace_stack {
     
@@ -84,7 +82,7 @@ namespace getfemint {
 
     // Inserts a new object (and gives it an id)
     id_type push_object(const dal::pstatic_stored_object &p,
-			const void *raw_pointer, getfemint_class_id class_id);
+                        const void *raw_pointer, getfemint_class_id class_id);
 
     // Sets the dependence of an object with respect to another
     void set_dependence(id_type user, id_type used);
@@ -102,8 +100,8 @@ namespace getfemint {
     dal::pstatic_stored_object hidden_object(id_type user, const void *p);
 
     /** At least mark the objet for future deletion (object becomes anonymous)
-	and if possible, destroy the object (and all the objects which use
-	this one if they are all anonymous).
+        and if possible, destroy the object (and all the objects which use
+        this one if they are all anonymous).
     */
     void delete_object(id_type id);
 

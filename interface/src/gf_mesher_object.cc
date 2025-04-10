@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -37,8 +37,8 @@ using namespace getfemint;
 struct sub_mesher_object : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::pmesher_signed_distance &psd) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::pmesher_signed_distance &psd) = 0;
 };
 
 typedef std::shared_ptr<sub_mesher_object> psub_command;
@@ -47,27 +47,26 @@ typedef std::shared_ptr<sub_mesher_object> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_mesher_object {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::pmesher_signed_distance &psd) override	\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_mesher_object {                                \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::pmesher_signed_distance &psd) override       \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
 
 void gf_mesher_object(getfemint::mexargs_in& m_in,
-		      getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+                      getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-    
+  if (subc_tab.empty()) {
+
     /*@INIT MF = ('ball', @vec center, @scalar radius)
       Represents a ball of corresponding center and radius.
       @*/
@@ -111,7 +110,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        darray n = in.pop().to_darray();
        double length = in.pop().to_scalar();
        double radius = in.pop().to_scalar();
-       
+
        getfem::base_node bnorigin(gmm::vect_size(origin));
        gmm::copy(origin, bnorigin);
        getfem::base_node bnn(gmm::vect_size(n));
@@ -130,7 +129,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        darray n = in.pop().to_darray();
        double length = in.pop().to_scalar();
        double half_angle = in.pop().to_scalar();
-       
+
        getfem::base_node bnorigin(gmm::vect_size(origin));
        gmm::copy(origin, bnorigin);
        getfem::base_node bnn(gmm::vect_size(n));
@@ -151,7 +150,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        psd  = getfem::new_mesher_torus(R, r);
        );
 
-    
+
     /*@INIT MF = ('rectangle', @vec rmin, @vec rmax)
       Represents a rectangle (or parallelepiped in 3D) parallel to the axes.
       @*/
@@ -159,10 +158,10 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
       ("rectangle", 2, 2, 0, 1,
        darray rmin = in.pop().to_darray();
        darray rmax = in.pop().to_darray();
-       
+
        size_type N = gmm::vect_size(rmin);
        GMM_ASSERT1(N == gmm::vect_size(rmax),
-		   "Extreme points should be the same lenght");
+                   "Extreme points should be the same lenght");
 
        getfem::base_node rrmin(N); getfem::base_node rrmax(N);
        gmm::copy(rmin, rrmin); gmm::copy(rmax, rrmax);
@@ -179,8 +178,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        std::vector<getfem::pmesher_signed_distance> vd;
        vd.push_back(to_mesher_object(in.pop()));
        while (in.remaining())
-	 vd.push_back(to_mesher_object(in.pop()));
-       
+         vd.push_back(to_mesher_object(in.pop()));
+
        psd = getfem::new_mesher_intersection(vd);
        );
 
@@ -192,8 +191,8 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        std::vector<getfem::pmesher_signed_distance> vd;
        vd.push_back(to_mesher_object(in.pop()));
        while (in.remaining())
-	 vd.push_back(to_mesher_object(in.pop()));
-       
+         vd.push_back(to_mesher_object(in.pop()));
+
        psd = getfem::new_mesher_union(vd);
        );
 
@@ -210,16 +209,15 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
   getfem::pmesher_signed_distance psd;
-  
+
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
-  
 
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, psd);
   }
   else bad_cmd(init_cmd);

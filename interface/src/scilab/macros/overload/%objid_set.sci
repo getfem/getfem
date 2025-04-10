@@ -3,7 +3,7 @@ function %objid_set(varargin)
   other_param = list(varargin(2:$));
   
   // The CID value for each class of object is defined in
-  // gfi_array.h
+  // getfemint.h
 
   select gf_obj('cid')
   case 0 then

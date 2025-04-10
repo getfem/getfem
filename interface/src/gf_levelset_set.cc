@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -52,11 +52,11 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     if (in.remaining()) {
       if (!pls->has_secondary())
-	THROW_BADARG("The levelset has not secondary term");
+        THROW_BADARG("The levelset has not secondary term");
       if (in.front().is_string()) {
-	s2 = in.pop().to_string();
+        s2 = in.pop().to_string();
       } else {
-	v2 = in.pop().to_darray(int(pls->get_mesh_fem().nb_dof()));
+        v2 = in.pop().to_darray(int(pls->get_mesh_fem().nb_dof()));
       }
     }
     pls->values(0).resize(pls->get_mesh_fem().nb_dof());
@@ -70,7 +70,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (s2.size()) {
         values_from_func(pls, 1, s2);
       } else {
-	pls->values(1).assign(v2.begin(), v2.end());
+        pls->values(1).assign(v2.begin(), v2.end());
       }
     }
   } else if (check_cmd(cmd, "simplify", in, out, 0, 1, 0, 0)) {

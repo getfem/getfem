@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -37,8 +37,8 @@ using namespace getfemint;
 struct sub_gf_lset_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::mesh_level_set &mls) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::mesh_level_set &mls) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_lset_get> psub_command;
@@ -47,27 +47,25 @@ typedef std::shared_ptr<sub_gf_lset_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_lset_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::mesh_level_set &mls)			\
-      { dummy_func(in); dummy_func(out); dummy_func(mls); code }	\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_lset_get {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::mesh_level_set &mls)                         \
+      { dummy_func(in); dummy_func(out); dummy_func(mls); code }            \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
                           getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-
+  if (subc_tab.empty()) {
 
     /*@GET M = ('cut_mesh')
       Return a @tmesh cut by the linked @tls's.@*/
@@ -103,9 +101,9 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       ("levelsets", 0, 0, 0, 1,
        std::vector<id_type> ids;
        for (unsigned i=0; i < mls.nb_level_sets(); ++i) {
-	 id_type id = workspace().object((const void *)(mls.get_level_set(i)));
-	 GMM_ASSERT1(id != id_type(-1), "Unknown levelset !");
-	 ids.push_back(id);
+         id_type id = workspace().object((const void *)(mls.get_level_set(i)));
+         GMM_ASSERT1(id != id_type(-1), "Unknown levelset !");
+         ids.push_back(id);
        }
        out.pop().from_object_id(ids, LEVELSET_CLASS_ID);
        );
@@ -165,12 +163,11 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, mls);
   }
   else bad_cmd(init_cmd);

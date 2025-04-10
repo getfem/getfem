@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 #include <getfemint_workspace.h>
-#include <getfemint_precond.h>
+#include <getfemint_gprecond.h>
 #include <getfemint_gsparse.h>
 
 using namespace getfemint;
@@ -103,7 +103,7 @@ static void precond_spmat(gsparse *gsp, mexargs_out& out) {
 struct sub_gf_precond : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out) = 0;
+                   getfemint::mexargs_out& out) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_precond> psub_command;
@@ -112,25 +112,23 @@ typedef std::shared_ptr<sub_gf_precond> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_precond {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_precond {                                   \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out)                         \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
 
 void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-
+  if (subc_tab.empty()) {
 
     /*@INIT PC = ('identity')
       Create a REAL identity precondioner.@*/
@@ -193,9 +191,9 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
        if (M->is_complex()) precond_ildltt(*M, additional_fillin, threshold,
-					   out, complex_type());
+                                           out, complex_type());
        else                 precond_ildltt(*M, additional_fillin, threshold,
-					   out, scalar_type());
+                                           out, scalar_type());
        );
 
     /*@INIT PC = ('ilut', @tsp m[, @int fillin[, @scalar threshold]])
@@ -210,9 +208,9 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (in.remaining()) additional_fillin = in.pop().to_integer(0, 100000);
        if (in.remaining()) threshold = in.pop().to_scalar(0,1e30);
        if (M->is_complex()) precond_ilut(*M, additional_fillin, threshold,
-					 out, complex_type());
+                                         out, complex_type());
        else                 precond_ilut(*M, additional_fillin, threshold,
-					 out, scalar_type());
+                                         out, scalar_type());
        );
 
 #if defined(GMM_USES_SUPERLU)
@@ -235,21 +233,21 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("spmat", 1, 1, 0, 1,
        gsparse *ggsp = 0;
        if (is_spmat_object(in.front())) {
-	 ggsp = to_spmat_object(in.pop());
+         ggsp = to_spmat_object(in.pop());
        } else {
-	 auto gsp = std::make_shared<gsparse>();
-	 ggsp = gsp.get();
-	 std::shared_ptr<gsparse> src = in.pop().to_sparse();
-	 if (src->is_complex()) {
-	   ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
-			  complex_type());
-	   gmm::copy(src->csc(complex_type()), ggsp->csc_w(complex_type()));
-	 } else {
-	   ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
-			  scalar_type());
-	   gmm::copy(src->csc(scalar_type()), ggsp->csc_w(scalar_type()));
-	 }
-	 store_spmat_object(gsp);
+         auto gsp = std::make_shared<gsparse>();
+         ggsp = gsp.get();
+         std::shared_ptr<gsparse> src = in.pop().to_sparse();
+         if (src->is_complex()) {
+           ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
+                          complex_type());
+           gmm::copy(src->csc(complex_type()), ggsp->csc_w(complex_type()));
+         } else {
+           ggsp->allocate(src->nrows(), src->ncols(), src->storage(),
+                          scalar_type());
+           gmm::copy(src->csc(scalar_type()), ggsp->csc_w(scalar_type()));
+         }
+         store_spmat_object(gsp);
        }
        precond_spmat(ggsp, out);
        );
@@ -259,14 +257,14 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out);
   }
   else bad_cmd(init_cmd);

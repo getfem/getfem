@@ -29,13 +29,13 @@ using namespace getfemint;
 
 template <typename MAT>
 void copydiags(const MAT &M, const std::vector<size_type> &v,
-	       garray<typename MAT::value_type> &w) {
+               garray<typename MAT::value_type> &w) {
   size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
   for (unsigned ii=0; ii < v.size(); ++ii) {
     int d = int(v[ii]), i,j;
     if (d < 0) { i = -d; j = 0; } else { i = 0; j = d; }
     cout << "m=" << m << "n=" << n << ", d=" << d << ", i=" << i
-	 << ", j=" << j << "\n";
+         << ", j=" << j << "\n";
     for (; i < int(m) && j < int(n); ++i,++j)
       w(i,ii) = M(i,j);
   }
@@ -53,7 +53,7 @@ gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in, getfemint::mexargs_ou
     default: THROW_INTERNAL_ERROR;
     }
     std::copy(ww.begin(), ww.end(),
-	      out.pop().create_array(int(m),int(n),T()).begin());
+              out.pop().create_array(int(m),int(n),T()).begin());
   } else {
     sub_index ii = in.pop().to_sub_index().check_range(gsp.nrows());
     sub_index jj = in.remaining() ?
@@ -68,32 +68,32 @@ gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in, getfemint::mexargs_ou
       default: THROW_INTERNAL_ERROR;
       }
       if (gsp.is_complex()) {
-	if (out.remaining()) out.pop().from_scalar(gmm::real(val));
-	if (out.remaining()) out.pop().from_scalar(gmm::imag(val));
+        if (out.remaining()) out.pop().from_scalar(gmm::real(val));
+        if (out.remaining()) out.pop().from_scalar(gmm::imag(val));
       } else {
-	if (out.remaining()) out.pop().from_scalar(gmm::real(val));
-	// if (out.remaining()) out.pop().from_scalar(0);
+        if (out.remaining()) out.pop().from_scalar(gmm::real(val));
+        // if (out.remaining()) out.pop().from_scalar(0);
        }
     } else {
       gmm::dense_matrix<T> ww(m,n);
       switch (gsp.storage()) {
       case gsparse::CSCMAT:
-	gmm::copy(gmm::sub_matrix(gsp.csc(T()),ii,jj), ww); break;
+        gmm::copy(gmm::sub_matrix(gsp.csc(T()),ii,jj), ww); break;
       case gsparse::WSCMAT:
-	gmm::copy(gmm::sub_matrix(gsp.wsc(T()),ii,jj), ww); break;
+        gmm::copy(gmm::sub_matrix(gsp.wsc(T()),ii,jj), ww); break;
       default: THROW_INTERNAL_ERROR;
       }
       std::copy(ww.begin(), ww.end(),
-		out.pop().create_array(int(m),int(n),T()).begin());
+                out.pop().create_array(int(m),int(n),T()).begin());
     }
   }
-  
+
 }
 
 template <typename T> static void
 gf_spmat_mult_or_tmult(gsparse &gsp,
-		       getfemint::mexargs_in& in, getfemint::mexargs_out& out,
-		       bool tmult, T) {
+                       getfemint::mexargs_in& in, getfemint::mexargs_out& out,
+                       bool tmult, T) {
   size_type nj = gsp.ncols(), ni = gsp.nrows();
   if (tmult) std::swap(ni,nj);
   //cout << "NJ=" << nj << "NI=" << ni << ", tmaul=" << tmult << "\n";
@@ -116,7 +116,7 @@ gf_spmat_mult_or_tmult(gsparse &gsp,
 
 template <typename T> static void
 gf_spmat_get_diag(gsparse &gsp,
-		  getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+                  getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
   std::vector<size_type> v;
   if (in.remaining()) {
     iarray vv = in.pop().to_iarray(-1);
@@ -133,7 +133,7 @@ gf_spmat_get_diag(gsparse &gsp,
 
 template <typename T> static void
 gf_spmat_get_data(gmm::csc_matrix_ref<const T*, const unsigned int *, const unsigned int *> M,
-		  getfemint::mexargs_out& out, int which) {
+                  getfemint::mexargs_out& out, int which) {
   size_type nz = M.jc[M.nc];
   if (which == 0) {
     iarray w = out.pop().create_iarray_h(unsigned(M.nc+1));
@@ -142,7 +142,7 @@ gf_spmat_get_data(gmm::csc_matrix_ref<const T*, const unsigned int *, const unsi
     if (out.remaining()) {
       w = out.pop().create_iarray_h(unsigned(nz));
       for (unsigned i=0; i < nz; ++i)
-	{ w[i] = M.ir[i] + config::base_index(); }
+        { w[i] = M.ir[i] + config::base_index(); }
     }
   } else {
     garray<T> w = out.pop().create_array_h(unsigned(nz), T());
@@ -179,7 +179,7 @@ gf_spmat_get_Dirichlet_nullspace(gsparse &H, getfemint::mexargs_in& in, getfemin
 struct sub_gf_spmat_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out, gsparse &gsp) = 0;
+                   getfemint::mexargs_out& out, gsparse &gsp) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_spmat_get> psub_command;
@@ -188,26 +188,24 @@ typedef std::shared_ptr<sub_gf_spmat_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_spmat_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out, gsparse &gsp)	\
-      { dummy_func(in); dummy_func(out); dummy_func(gsp); code }	\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_spmat_get {                                 \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out, gsparse &gsp)           \
+      { dummy_func(in); dummy_func(out); dummy_func(gsp); code }            \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 void gf_spmat_get(getfemint::mexargs_in& m_in,
-		  getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
-  
-  if (subc_tab.size() == 0) {
-  
+                  getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
+
+  if (subc_tab.empty()) {
 
     /*@GET n = ('nnz')
       Return the number of non-null values stored in the sparse matrix.@*/
@@ -219,7 +217,7 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
     /*@GET Sm = ('full'[, @list I[, @list J]])
       Return a full (sub-)matrix.
-      
+
       The optional arguments `I` and `J`, are the sub-intervals for the
       rows and columns that are to be extracted.@*/
     sub_command
@@ -231,12 +229,12 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
     /*@GET MV = ('mult', @vec V)
       Product of the sparse matrix `M` with a vector `V`.
-      
+
       For matrix-matrix multiplications, see SPMAT:INIT('mult').@*/
     sub_command
       ("mult", 1, 1, 0, 1,
        if (!gsp.is_complex())
-	 gf_spmat_mult_or_tmult(gsp, in, out, false, scalar_type());
+         gf_spmat_mult_or_tmult(gsp, in, out, false, scalar_type());
        else gf_spmat_mult_or_tmult(gsp, in, out, false, complex_type());
        );
 
@@ -247,26 +245,26 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
     sub_command
       ("tmult", 1, 1, 0, 1,
        if (!gsp.is_complex())
-	 gf_spmat_mult_or_tmult(gsp, in, out, true, scalar_type());
+         gf_spmat_mult_or_tmult(gsp, in, out, true, scalar_type());
        else gf_spmat_mult_or_tmult(gsp, in, out, true, complex_type());
        );
 
 
     /*@GET D = ('diag'[, @list E])
       Return the diagonal of `M` as a vector.
-      
+
       If `E` is used, return the sub-diagonals whose ranks are given in E.@*/
     sub_command
       ("diag", 0, 1, 0, 1,
        if (!gsp.is_complex())
-	 gf_spmat_get_diag(gsp, in, out, scalar_type());
+         gf_spmat_get_diag(gsp, in, out, scalar_type());
        else gf_spmat_get_diag(gsp, in, out, complex_type());
        );
 
 
     /*@GET s = ('storage')
       Return the storage type currently used for the matrix.
-      
+
       The storage is returned as a string, either 'CSC' or 'WSC'.@*/
     sub_command
       ("storage", 0, 0, 0, 1,
@@ -294,29 +292,29 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
 
     /*@GET @CELL{JC, IR} = ('csc_ind')
       Return the two usual index arrays of CSC storage.
-      
+
       If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
     sub_command
       ("csc_ind", 0, 0, 0, 2,
        gsp.to_csc();
        if (!gsp.is_complex())
-	 gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
+         gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
        else
-	 gf_spmat_get_data(gsp.csc(complex_type()), out, 0);
+         gf_spmat_get_data(gsp.csc(complex_type()), out, 0);
        );
 
-    
+
     /*@GET V = ('csc_val')
       Return the array of values of all non-zero entries of `M`.
-      
+
       If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
     sub_command
       ("csc_val", 0, 0, 0, 1,
        gsp.to_csc();
        if (!gsp.is_complex())
-	 gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
+         gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
        else
-	 gf_spmat_get_data(gsp.csc(complex_type()), out, 1);
+         gf_spmat_get_data(gsp.csc(complex_type()), out, 1);
        );
 
 
@@ -336,9 +334,9 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
     sub_command
       ("dirichlet nullspace", 1, 1, 2, 2,
        if (gsp.is_complex())
-	 gf_spmat_get_Dirichlet_nullspace(gsp, in, out, complex_type());
+         gf_spmat_get_Dirichlet_nullspace(gsp, in, out, complex_type());
        else
-	 gf_spmat_get_Dirichlet_nullspace(gsp, in, out, scalar_type());
+         gf_spmat_get_Dirichlet_nullspace(gsp, in, out, scalar_type());
        );
 
 
@@ -357,14 +355,14 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
        std::string fname = in.pop().to_string();
        gsp.to_csc();
        if (!gsp.is_complex()) {
-	 if (ifmt == 0)
-	   gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
-	 else
+         if (ifmt == 0)
+           gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
+         else
            gmm::MatrixMarket_save(fname.c_str(), gsp.csc(scalar_type()));
        } else {
-	 if (ifmt == 0)
-	   gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(complex_type()));
-	 else
+         if (ifmt == 0)
+           gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(complex_type()));
+         else
            gmm::MatrixMarket_save(fname.c_str(), gsp.csc(complex_type()));
        }
        );
@@ -381,11 +379,11 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
       ("char", 0, 0, 0, 1,
        std::stringstream s;
        if (gsp.storage() == getfemint::gsparse::WSCMAT) {
-	 if (!gsp.is_complex()) s << gsp.wsc(scalar_type());
-	 else                   s << gsp.wsc(complex_type());
+         if (!gsp.is_complex()) s << gsp.wsc(scalar_type());
+         else                   s << gsp.wsc(complex_type());
        } else {
-	 if (!gsp.is_complex()) s << gsp.csc(scalar_type());
-	 else           	s << gsp.csc(complex_type());
+         if (!gsp.is_complex()) s << gsp.csc(scalar_type());
+         else                   s << gsp.csc(complex_type());
        }
        out.pop().from_string(s.str().c_str());
        );
@@ -433,12 +431,11 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, gsp);
   }
   else bad_cmd(init_cmd);

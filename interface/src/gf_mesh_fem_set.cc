@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -136,18 +136,16 @@ template <typename T> static inline void dummy_func(T &) {}
 
 void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
                      getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
-  
-  if (subc_tab.size() == 0) {
+  static std::map<std::string, psub_command > subc_tab;
 
-    
+  if (subc_tab.empty()) {
+
     /*@SET ('fem', @tfem f[, @ivec CVids])
       Set the Finite Element Method.
-      
+
       Assign an FEM `f` to all convexes whose #ids are listed in `CVids`.
       If `CVids` is not given, the integration is assigned to all convexes.
-      
+
       See the help of FEM:INIT to obtain a list of available FEM methods.@*/
     sub_command
       ("fem", 1, 2, 0, 0,
@@ -187,7 +185,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('qdim', @int Q)
       Change the `Q` dimension of the field that is interpolated by the @tmf.
-      
+
       `Q = 1` means that the @tmf describes a scalar field, `Q = N` means
       that the @tmf describes a vector field of dimension N.@*/
     sub_command
@@ -231,7 +229,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
       Set reduction mesh fem
       This function selects the degrees of freedom of the finite element
       method by selecting a set of independent vectors of the matrix RM.
-      The numer of columns of RM should corresponds to the number of degrees
+      The number of columns of RM should correspond to the number of degrees
       of freedom of the finite element method.  @*/
     sub_command
       ("reduce meshfem", 1, 1, 0, 0,
@@ -244,7 +242,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('dof partition', @ivec DOFP)
       Change the 'dof_partition' array.
-      
+
       `DOFP` is a vector holding a integer value for each convex of the @tmf.
       See MESH_FEM:GET('dof partition') for a description of "dof partition".@*/
     sub_command
@@ -294,7 +292,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
          mfls->adapt();
        else
         THROW_BADARG("The command 'adapt' can only be "
-                               "applied to a mesh_fem_level_set object");
+                     "applied to a mesh_fem_level_set object");
        );
 
     /*@SET ('set enriched dofs', @ivec DOFs)
@@ -315,12 +313,11 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  getfem::mesh_fem *mf = to_meshfem_object(m_in.pop());
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -34,8 +34,8 @@ using namespace getfemint;
 struct sub_gf_geotrans : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   const bgeot::pgeometric_trans &pgt) = 0;
+                   getfemint::mexargs_out& out,
+                   const bgeot::pgeometric_trans &pgt) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_geotrans> psub_command;
@@ -44,32 +44,31 @@ typedef std::shared_ptr<sub_gf_geotrans> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_geotrans {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       const bgeot::pgeometric_trans &pgt)		\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_geotrans {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const bgeot::pgeometric_trans &pgt)                  \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 
 
 void gf_geotrans_get(getfemint::mexargs_in& m_in,
-		     getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+                     getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@RDATTR d = ('dim')
       Get the dimension of the @tgt.
-      
+
       This is the dimension of the source space, i.e. the dimension of
       the reference convex.@*/
     sub_command
@@ -116,7 +115,7 @@ void gf_geotrans_get(getfemint::mexargs_in& m_in,
 
     /*@GET Pt = ('transform',@mat G, @mat Pr)
       Apply the @tgt to a set of points.
-      
+
       `G` is the set of vertices of the real convex, `Pr` is the set
       of points (in the reference convex) that are to be transformed.
       The corresponding set of points in the real convex is returned.@*/
@@ -126,12 +125,12 @@ void gf_geotrans_get(getfemint::mexargs_in& m_in,
        darray pts = in.pop().to_darray(pgt->dim(), -1);
        darray w = out.pop().create_darray(unsigned(G.nrows()), pts.getn());
        for (unsigned i=0; i < pts.getn(); ++i) {
-	 getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
-	 for (size_type k=0; k < P.size(); ++k) w(k,i) = P[k];
+         getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
+         for (size_type k=0; k < P.size(); ++k) w(k,i) = P[k];
        }
        );
 
-    
+
     /*@GET s = ('char')
       Output a (unique) string representation of the @tgt.
 
@@ -161,12 +160,11 @@ void gf_geotrans_get(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, pgt);
   }
   else bad_cmd(init_cmd);

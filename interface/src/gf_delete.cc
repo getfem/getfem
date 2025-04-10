@@ -37,30 +37,30 @@ void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     THROW_BADARG("Wrong number of input arguments, should be at least 1.");
   if (!out.narg_in_range(0,0))
     THROW_BADARG("No output argument needed.");
-  
+
   while (in.remaining()) {
     id_type id;
     /*@FUNC ('.list', I[, J, K,...])
-      
+
       I should be a descriptor given by gf_mesh(),
       gf_mesh_im(), gf_slice() etc.
-      
+
       Note that if another object uses I, then object I will be deleted only
       when both have been asked for deletion.
-      
+
       Only objects listed in the output of gf_workspace('stats') can be
       deleted (for example gf_fem objects cannot be destroyed).
-      
+
       You may also use gf_workspace('clear all') to erase everything at
       once.
       @*/
-    
+
     if (in.front().is_object_id()) {
       id_type cid; in.pop().to_object_id(&id,&cid);
       /*if (is_static_object(id, cid)) {
-	THROW_BADARG("sorry, this object of type " << 
-		     name_of_getfemint_class_id(cid) << 
-		     " is static, i.e. it can't be deleted");
+        THROW_BADARG("sorry, this object of type " <<
+                     name_of_getfemint_class_id(cid) <<
+                     " is static, i.e. it can't be deleted");
       }
       */
     } else if (in.front().is_integer()) {

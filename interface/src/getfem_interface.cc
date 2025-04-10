@@ -118,12 +118,11 @@ extern "C"
 char* getfem_interface_main(int config_id, const char *function,
                             int nb_in_args, const gfi_array *in_args[],
                             int *nb_out_args, gfi_array ***pout_args,
-			    char **pinfomsg, int scilab_flag) {
+                            char **pinfomsg, int scilab_flag) {
 
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
     subc_tab["workspace"] = gf_workspace;
     subc_tab["delete"] = gf_delete;
     subc_tab["eltm"] = gf_eltm;
@@ -196,7 +195,7 @@ char* getfem_interface_main(int config_id, const char *function,
     mexargs_out out(*nb_out_args);
     out.set_scilab(bool(scilab_flag));
 
-    SUBC_TAB::iterator it = subc_tab.find(function);
+    auto it = subc_tab.find(function);
     if (it != subc_tab.end()) {
       it->second(in, out);
     }

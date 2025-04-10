@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -25,7 +25,8 @@
 using namespace getfemint;
 
 static void check_not_exact(getfem::pintegration_method im) {
-  if (im->type() != getfem::IM_APPROX) THROW_ERROR("this has no meaning for exact integration methods");
+  if (im->type() != getfem::IM_APPROX)
+    THROW_ERROR("this has no meaning for exact integration methods");
 }
 /*@GFDOC
   General function for querying information about integration method objects.
@@ -37,9 +38,9 @@ static void check_not_exact(getfem::pintegration_method im) {
 struct sub_gf_integ_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   const getfem::pintegration_method &im,
-		   getfem::papprox_integration pai, size_type imdim) = 0;
+                   getfemint::mexargs_out& out,
+                   const getfem::pintegration_method &im,
+                   getfem::papprox_integration pai, size_type imdim) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_integ_get> psub_command;
@@ -48,30 +49,29 @@ typedef std::shared_ptr<sub_gf_integ_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_integ_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       const getfem::pintegration_method &im,		\
-		       getfem::papprox_integration pai,			\
-		       size_type imdim) {				\
-	dummy_func(in); dummy_func(out); dummy_func(im);		\
-	dummy_func(imdim); dummy_func(pai); code			\
-      }	                                            			\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_integ_get {                                 \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const getfem::pintegration_method &im,               \
+                       getfem::papprox_integration pai,                     \
+                       size_type imdim) {                                   \
+        dummy_func(in); dummy_func(out); dummy_func(im);                    \
+        dummy_func(imdim); dummy_func(pai); code                            \
+      }                                                                     \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 void gf_integ_get(getfemint::mexargs_in& m_in,
-		  getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
-  
-  if (subc_tab.size() == 0) {
+                  getfemint::mexargs_out& m_out) {
+  static std::map<std::string, psub_command > subc_tab;
+
+  if (subc_tab.empty()) {
 
     /*@RDATTR b = ('is_exact')
     Return 0 if the integration is an approximate one.@*/
@@ -104,13 +104,13 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
        iarray w = out.pop().create_iarray_h(1+pai->structure()->nb_faces());
        w[0] = int(pai->nb_points_on_convex());
        for (short_type i=0; i < pai->structure()->nb_faces(); ++i)
-	 w[i+1] = int(pai->nb_points_on_face(i));
+         w[i+1] = int(pai->nb_points_on_face(i));
        );
 
 
     /*@GET Pp = ('pts')
       Return the list of integration points
-      
+
       Only for approximate methods, this has no meaning for exact
       integration methods!@*/
     sub_command
@@ -122,7 +122,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
 
     /*@GET Pf = ('face_pts',F)
       Return the list of integration points for a face.
-      
+
       Only for approximate methods, this has no meaning for exact
       integration methods!@*/
     sub_command
@@ -131,10 +131,10 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
        short_type nbf = pai->structure()->nb_faces();
        short_type f = short_type(in.pop().to_face_number(nbf));
        darray w = out.pop().create_darray(unsigned(imdim),
-					  unsigned(pai->nb_points_on_face(f)));
+                                          unsigned(pai->nb_points_on_face(f)));
        for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
-	 for (size_type i=0; i < imdim; ++i)
-	   w(i,j)=pai->point_on_face(f,j)[i];
+         for (size_type i=0; i < imdim; ++i)
+           w(i,j)=pai->point_on_face(f,j)[i];
        );
 
 
@@ -164,7 +164,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
        darray w =
          out.pop().create_darray_h(unsigned(pai->nb_points_on_face(f)));
        for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
-	 w[j]=pai->coeff_on_face(f,j);
+         w[j]=pai->coeff_on_face(f,j);
        );
 
 
@@ -185,13 +185,13 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
       ("display", 0, 0, 0, 0,
        infomsg() << "gfInteg object " << getfem::name_of_int_method(im);
        if (im->type() != getfem::IM_APPROX)
-	 infomsg() << "Exact method in dimension " << int(imdim) << endl;
+         infomsg() << "Exact method in dimension " << int(imdim) << endl;
        else
-	 infomsg() << "Cubature method in dimension " << int(imdim)
-		   << " with " << pai->nb_points_on_convex()
-		   << " Gauss points \n";
+         infomsg() << "Cubature method in dimension " << int(imdim)
+                   << " with " << pai->nb_points_on_convex()
+                   << " Gauss points \n";
        );
-  
+
   }
 
 
@@ -207,12 +207,11 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, im, pai, imdim);
   }
   else bad_cmd(init_cmd);

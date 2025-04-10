@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -37,7 +37,7 @@ static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in,
 
   getfem::mesh_region &rg = mesh.region(boundary_num);
   if (do_clear) rg.clear();
-  
+
   if (v.getm() < 1 || v.getm() > 2 || v.getp() != 1 || v.getq() != 1)
     THROW_BADARG( "Invalid format for the convex or face list");
 
@@ -101,16 +101,16 @@ typedef std::shared_ptr<sub_gf_mesh_set> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mesh_set {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-                       getfemint::mexargs_out& out,			\
-                       getfem::mesh *pmesh)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mesh_set {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::mesh *pmesh)                                 \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
@@ -120,11 +120,9 @@ template <typename T> static inline void dummy_func(T &) {}
 
 void gf_mesh_set(getfemint::mexargs_in& m_in,
                  getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-
+  if (subc_tab.empty()) {
 
     /*@SET PIDs = ('pts', @mat PTS)
     Replace the coordinates of the mesh points with those given in `PTS`.@*/
@@ -173,7 +171,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("del point", 1, 1, 0, 0,
        check_empty_mesh(pmesh);
        iarray v = in.pop().to_iarray();
-       
+
        for (size_type j=0; j < v.size(); j++) {
          id_type id = v[j]-config::base_index();
          if (pmesh->is_point_valid(id)) {
@@ -200,7 +198,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        bgeot::pgeometric_trans pgt = to_geotrans_object(in.pop());
        darray v = in.pop().to_darray(pmesh->dim(), int(pgt->nb_points()), -1);
        iarray w = out.pop().create_iarray_h(v.getp());
-       
+
        std::vector<getfemint::id_type> qp(pgt->nb_points());
        /* loop over convexes */
        for (unsigned k=0; k < v.getp(); k++) {
@@ -223,7 +221,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
       ("del convex", 1, 1, 0, 0,
        check_empty_mesh(pmesh);
        iarray v = in.pop().to_iarray();
-       
+
        for (size_type j=0; j < v.size(); j++) {
          id_type id = v[j]-config::base_index();
          if (pmesh->convex_index().is_in(id)) {
@@ -357,7 +355,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('merge', @tmesh m2[, @scalar  tol])
       Merge with the @tmesh `m2`.
-      
+
       Overlapping points, within a tolerance radius `tol`, will not be
       duplicated. If `m2` is a @tmf object, its linked mesh will be used.@*/
     sub_command
@@ -406,12 +404,11 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
 
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  getfem::mesh *pmesh = to_mesh_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  getfem::mesh *pmesh  = to_mesh_object(m_in.pop());
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

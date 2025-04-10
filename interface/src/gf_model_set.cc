@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -61,16 +61,16 @@ typedef std::map<size_type, size_type> elt_corr_cont;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_md_set {                                \
-      virtual void run(getfemint::mexargs_in& in,                       \
-                       getfemint::mexargs_out& out,                     \
-                       getfem::model *md)                               \
-      { dummy_func(in); dummy_func(out); code }                         \
-    };                                                                  \
-    psub_command psubc = std::make_shared<subc>();                      \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
-    subc_tab[cmd_normalize(name)] = psubc;                              \
+    struct subc : public sub_gf_md_set {                                    \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::model *md)                                   \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 static void filter_lawname(std::string &lawname) {
@@ -80,10 +80,9 @@ static void filter_lawname(std::string &lawname) {
 
 void gf_model_set(getfemint::mexargs_in& m_in,
                   getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
+  if (subc_tab.empty()) {
 
     /*@SET ('clear')
       Clear the model.@*/
@@ -231,7 +230,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('add fem data', @str name, @tmf mf[, sizes])
       Add a data to the model linked to a @tmf. `name` is the data name,
-      `sizes` an optional parameter which is either an 
+      `sizes` an optional parameter which is either an
       integer  or a vector of suplementary dimensions with respect to `mf`. @*/
     sub_command
       ("add fem data", 2, 3, 0, 0,
@@ -256,7 +255,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ('add initialized fem data', @str name, @tmf mf, @vec V[, sizes])
       Add a data to the model linked to a @tmf. `name` is the data name.
       The data is initiakized with `V`. The data can be a scalar or vector
-      field. `sizes` an optional parameter which is either an 
+      field. `sizes` an optional parameter which is either an
       integer or a vector of suplementary dimensions with respect to `mf`.@*/
     sub_command
       ("add initialized fem data", 3, 4, 0, 0,
@@ -346,7 +345,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('add initialized data', @str name, @vec V[, sizes])
       Add an initialized fixed size data to the model. `sizes` an
-      optional parameter which is either an 
+      optional parameter which is either an
       integer  or a vector dimensions that describes the format of the
       data. By default, the data is considered to b a vector field.
       `name` is the data name and `V` is the value of the data.@*/
@@ -567,12 +566,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfem::mesh *sm = extract_mesh_object(in.pop());
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondence list");
+         THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
-	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
+         elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
        getfem::add_element_extrapolation_transformation(*md, transname, *sm,
-							elt_corr);
+                                                        elt_corr);
        );
 
     /*@SET ('add standard secondary domain', @str name, @tmim mim, @int region = -1)
@@ -597,14 +596,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string transname = in.pop().to_string();
        iarray v = in.pop().to_iarray();
        if (v.getm() != 2 || v.getp() != 1 || v.getq() != 1)
-       	 THROW_BADARG("Invalid format for the convex correspondence list");
+         THROW_BADARG("Invalid format for the convex correspondence list");
        elt_corr_cont elt_corr;
        for (size_type j=0; j < v.getn(); j++)
-	 elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
+         elt_corr[v(0,j)-config::base_index()] = v(1,j)-config::base_index();
        getfem::set_element_extrapolation_correspondence(*md, transname,
-							elt_corr);
+                                                        elt_corr);
        );
-    
+
     /*@SET ('add raytracing transformation', @str transname, @scalar release_distance)
       Add a raytracing interpolate transformation called `transname` to a model
       to be used by the generic assembly bricks.
@@ -662,7 +661,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Add a projection interpolate transformation called `transname` to a model
       to be used by the generic assembly bricks.
       CAUTION: For the moment, the derivative of the
-      transformation is not taken into account in the model solve. @*/  
+      transformation is not taken into account in the model solve. @*/
       sub_command
       ("add projection transformation", 2, 2, 0, 0,
        std::string transname = in.pop().to_string();
@@ -711,7 +710,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_rigid_obstacle_to_projection_transformation
        (*md, transname, expr, N);
        );
-      
+
     /*@SET ind = ('add linear term', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -739,7 +738,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind = getfem::add_linear_term
        (*md, *mim, expr, region, is_symmetric,
         is_coercive) + config::base_index();
@@ -763,7 +762,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind = getfem::add_linear_twodomain_term
        (*md, *mim, expr, region, secdom, is_symmetric,
         is_coercive) + config::base_index();
@@ -783,11 +782,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_linear_term
        (*md, *mim, expr, region, is_symmetric,
-	is_coercive) + config::base_index();
+        is_coercive) + config::base_index();
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
@@ -813,7 +812,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_nonlinear_term
        (*md, *mim, expr, region, is_symmetric,
@@ -838,7 +837,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_nonlinear_twodomain_term
        (*md, *mim, expr, region, secdom, is_symmetric,
@@ -846,7 +845,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
-    
+
 
     /*@SET ind = ('add nonlinear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Deprecated. Use MODEL:SET('add nonlinear term') instead.@*/
@@ -860,7 +859,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) is_symmetric = in.pop().to_integer();
        int is_coercive = 0;
        if (in.remaining()) is_coercive = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_nonlinear_term
        (*md, *mim, expr, region, is_symmetric,
@@ -868,7 +867,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
-    
+
     /*@SET ind = ('add source term', @tmim mim, @str expression[, @int region])
       Adds a source term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.
@@ -883,7 +882,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string expr = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_source_term
        (*md, *mim, expr, region) + config::base_index();
@@ -903,7 +902,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string expr = in.pop().to_string();
        size_type region = in.pop().to_integer();
        std::string secdom = in.pop().to_string();
-       
+
        size_type ind
        = getfem::add_twodomain_source_term
        (*md, *mim, expr, region, secdom) + config::base_index();
@@ -919,7 +918,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string expr = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
-       
+
        size_type ind
        = getfem::add_source_term_generic_assembly_brick
        (*md, *mim, expr, region) + config::base_index();
@@ -927,8 +926,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ('add assembly assignment', @str dataname, @str expression[, @int region[, @int order[, @int before]]]) 	 
-      Adds expression `expr` to be evaluated at assembly time and being	 
+    /*@SET ('add assembly assignment', @str dataname, @str expression[, @int region[, @int order[, @int before]]])
+      Adds expression `expr` to be evaluated at assembly time and being
       assigned to the data `dataname` which has to be of im_data type.
       This allows for instance to store a sub-expression of an assembly
       computation to be used on an other assembly. It can be used for instance
@@ -940,31 +939,31 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       of the other assembly terms, such that the data can be used in the
       remaining of the assembly as an intermediary result (be careful that it is
       still considered as a data, no derivation of the expression is performed
-      for the tangent system). 	 
+      for the tangent system).
       If before = 0 (default), the assignement is done after the assembly terms.
-      @*/ 	 
-    sub_command 	 
-      ("add assembly assignment", 2, 5, 0, 0, 	 
-       std::string dataname = in.pop().to_string(); 	 
-       std::string expr = in.pop().to_string(); 	 
-       size_type region = size_type(-1); 	 
-       if (in.remaining()) region = in.pop().to_integer(); 	 
-       size_type order = 1; 	 
-       if (in.remaining()) order = in.pop().to_integer(); 	 
-       bool before = false; 	 
-       if (in.remaining()) before = (in.pop().to_integer() != 0); 	 
-       
+      @*/
+    sub_command
+      ("add assembly assignment", 2, 5, 0, 0,
+       std::string dataname = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type order = 1;
+       if (in.remaining()) order = in.pop().to_integer();
+       bool before = false;
+       if (in.remaining()) before = (in.pop().to_integer() != 0);
+
        md->add_assembly_assignments(dataname, expr, region, order, before);
-       ); 	 
-    
-    /*@SET ('clear assembly assignment') 	 
-      Delete all added assembly assignments 	 
-      @*/ 	 
-    sub_command 	 
-      ("clear assembly assignment", 0, 0, 0, 0, 	 
-       md->clear_assembly_assignments(); 	 
        );
-    
+
+    /*@SET ('clear assembly assignment')
+      Delete all added assembly assignments
+      @*/
+    sub_command
+      ("clear assembly assignment", 0, 0, 0, 0,
+       md->clear_assembly_assignments();
+       );
+
     /*@SET ind = ('add Laplacian brick', @tmim mim, @str varname[, @int region])
     Add a Laplacian term to the model relatively to the variable `varname`
     (in fact with a minus : :math:`-\text{div}(\nabla u)`).
@@ -1096,7 +1095,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       This brick is to be reserved for simple Dirichlet conditions (only dof
       declared on the corresponding boundary are prescribed). The application
       of this brick on reduced dof may be problematic. Intrinsic vectorial
-      finite element method are not supported. 
+      finite element method are not supported.
       `dataname` is the optional right hand side of  the Dirichlet condition.
       It could be constant (but in that case, it can only be applied to
       Lagrange f.e.m.) or (important) described on the same finite
@@ -1178,7 +1177,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       region `region`. This region should be a boundary. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. This term can be obtained by 
+      generic assembly language. This term can be obtained by
       MODEL:GET('Neumann term', varname, region) once all volumic bricks have
       been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `datag` is the optional
@@ -1346,7 +1345,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       This region should be a boundary. `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. This term can be obtained by 
+      generic assembly language. This term can be obtained by
       MODEL:GET('Neumann term', varname, region) once all volumic bricks have
       been added to the model. The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
@@ -1358,7 +1357,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `theta = -1` corresponds to the skew-symmetric method which is
       inconditionally coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. 
+      even for nonlinear problems.
       Returns the brick index in the model.
       (This brick is not fully tested)
     @*/
@@ -1495,7 +1494,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The region should be a boundary.   `Neumannterm`
       is the expression of the Neumann term (obtained by the Green formula)
       described as an expression of the high-level
-      generic assembly language. This term can be obtained by 
+      generic assembly language. This term can be obtained by
       MODEL:GET('Neumann term', varname, region) once all volumic bricks have
       been added to the model.  The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
@@ -1990,7 +1989,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the whole mesh.
       On two-dimensional meshes, the term will correpsond to a plain strain
       approximation. On three-dimensional meshes, it will correspond to the
-      standard model. 
+      standard model.
       Return the brick index in the model.@*/
     sub_command
       ("add isotropic linearized elasticity pstrain brick", 4, 5, 0, 1,
@@ -2017,7 +2016,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the whole mesh.
       On two-dimensional meshes, the term will correpsond to a plain stress
       approximation. On three-dimensional meshes, it will correspond to the
-      standard model. 
+      standard model.
       Return the brick index in the model.@*/
     sub_command
       ("add isotropic linearized elasticity pstress brick", 4, 5, 0, 1,
@@ -2349,7 +2348,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add finite strain elastoplasticity brick', @tmim mim , @str lawname, @str unknowns_type [, @str varnames, ...] [, @str params, ...] [, @int region = -1])
       Add a finite strain elastoplasticity brick to the model.
-      For the moment there is only one supported law defined through 
+      For the moment there is only one supported law defined through
       `lawname` as "Simo_Miehe".
       This law supports to possibilities of unknown variables to solve for
       defined by means of `unknowns_type` set to either
@@ -2519,7 +2518,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependence(md, mim);
        out.pop().from_integer(int(ind));
        );
-    
+
     /*@SET ind = ('add Kirchhoff-Love plate brick', @tmim mim, @str varname, @str dataname_D, @str dataname_nu [, @int region])
       Add a bilaplacian brick on the variable
       `varname` and on the mesh region `region`.
@@ -2735,15 +2734,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          workspace().set_dependence(md, mim);
          out.pop().from_integer(int(ind));
          );
-  
-  
+
+
     /*@SET ind = ('add enriched Mindlin Reissner plate brick', @tmim mim, @tmim mim_reduced1, @tmim mim_reduced2, @str varname_ua, @str varname_theta,@str varname_u3, @str varname_theta3 , @str param_E, @str param_nu, @str param_epsilon [,@int variant [, @int region]])
     Add a term corresponding to the enriched Reissner-Mindlin plate
     model for which `varname_ua` is the membrane displacements,
     `varname_u3` is the transverse displacement,
     `varname_theta` the rotation of
-    fibers normal to the midplane, 
-    `varname_theta3` the pinching,     
+    fibers normal to the midplane,
+    `varname_theta3` the pinching,
     'param_E' the Young Modulus,
     `param_nu` the poisson ratio,
     `param_epsilon` the plate thickness. Note that since this brick
@@ -2768,7 +2767,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     For the moment, this is adapted to quadrilateral only (because it is not sufficient to
     remove the locking phenomenon on triangle elements). Note also that if
     you use high order elements, the projection on RT0 will reduce the order
-    of the approximation.   
+    of the approximation.
     Returns the brick index in the model.
       @*/
      sub_command
@@ -2794,7 +2793,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          workspace().set_dependence(md, mim);
          out.pop().from_integer(int(ind));
          );
-      
+
 
     /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataexpr_rho[, @int region]])
       Add mass term to the model relatively to the variable `varname`.
@@ -2991,7 +2990,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
      /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version[, @str dataname_gamma, @str dataname_wt]]])
-       
+
      Add a contact with or without friction brick to the model.
      If U is the vector
      of degrees of freedom on which the unilateral constraint is applied,
@@ -3108,7 +3107,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
      /*@SET ind = ('add basic contact brick two deformable bodies', @str varname_u1, @str varname_u2, @str multname_n, @str dataname_r, @tspmat BN1, @tspmat BN2[, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]]])
-       
+
      Add a frictionless contact condition to the model between two deformable
       bodies. If U1, U2 are the vector
       of degrees of freedom on which the unilateral constraint is applied,
@@ -3133,7 +3132,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string varname_u2 = in.pop().to_string();
         std::string multname_n = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
-       
+
         std::shared_ptr<gsparse> BN1 = in.pop().to_sparse();
         std::shared_ptr<gsparse> BN2 =  in.pop().to_sparse();
         if (BN1->is_complex()) THROW_BADARG("Complex matrix not allowed");
@@ -3244,7 +3243,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     range of acceptabe values (close to the Young modulus of the elastic
     body, see Getfem user documentation).  `dataname_friction_coeff` is
     the friction coefficient. It could be a scalar or a vector of values
-    representing the friction coefficient on each contact node. 
+    representing the friction coefficient on each contact node.
     The parameter `augmented_version`
     indicates the augmentation strategy : 1 for the non-symmetric
     Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
@@ -3299,7 +3298,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         infomsg() << "WARNING : gf_mesh_fem_get('add contact with rigid obstacle "
         << "brick', ...) is a deprecated command.\n          Use gf_mesh_fem_get("
         << "'add nodal contact with rigid obstacle brick', ...) instead." << endl;
-        SUBC_TAB::iterator it = subc_tab.find("add nodal contact with rigid obstacle brick");
+        auto it = subc_tab.find("add nodal contact with rigid obstacle brick");
         if (it != subc_tab.end())
             it->second->run(in, out, md);
         );
@@ -3429,8 +3428,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         workspace().set_dependence(md, mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
-     
-         
+
+
      /*@SET ind = ('add Nitsche contact with rigid obstacle brick', @tmim mim, @str varname, @str Neumannterm, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
@@ -3505,7 +3504,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       coefficient which could be constant or defined on a finite element
       method.
       Returns the brick index in the model.
-      
+
     @*/
     sub_command
       ("add Nitsche midpoint contact with rigid obstacle brick", 11, 11, 0, 1,
@@ -3544,25 +3543,25 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
      Adds a contact condition with or without Coulomb friction between
-     two bodies in a fictitious domain. The contact condition is applied on 
-     the variable `varname_u1` corresponds with the first and slave body 
-     with Nitsche's method and on the variable `varname_u2` corresponds 
-     with the second and master body with Nitsche's method. 
+     two bodies in a fictitious domain. The contact condition is applied on
+     the variable `varname_u1` corresponds with the first and slave body
+     with Nitsche's method and on the variable `varname_u2` corresponds
+     with the second and master body with Nitsche's method.
      The contact condition is evaluated on the fictitious slave boundary.
-     The first body should be described by the level-set `dataname_d1` 
+     The first body should be described by the level-set `dataname_d1`
      and the second body should be described by the level-set `dataname_d2`.
-     `gamma0name` is the Nitsche's method parameter. 
-     `theta` is a scalar value which can be positive or negative. 
+     `gamma0name` is the Nitsche's method parameter.
+     `theta` is a scalar value which can be positive or negative.
      `theta = 1` corresponds to the standard symmetric method which is
      conditionally coercive for  `gamma0` small.
      `theta = -1` corresponds to the skew-symmetric method which is inconditionally coercive.
      `theta = 0` is the simplest method for which the second derivative of
      the Neumann term is not necessary. The optional parameter `dataname_friction_coeff`
-     is the friction coefficient which could be constant or defined on a finite element method. 
+     is the friction coefficient which could be constant or defined on a finite element method.
      CAUTION: This brick has to be added in the model after all the bricks
      corresponding to partial differential terms having a Neumann term.
      Moreover, This brick can only be applied to bricks declaring their
-     Neumann terms. Returns the brick index in the model. 
+     Neumann terms. Returns the brick index in the model.
     @*/
     sub_command
       ("add Nitsche fictitious domain contact brick", 6, 11, 0, 1,
@@ -3660,7 +3659,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           mim2 = to_meshim_object(argin);
           varname_u1 = in.pop().to_string();
           varname_u2 = in.pop().to_string();
-	  cout << "ok here" << endl;
+          cout << "ok here" << endl;
         }
         std::string multname_n = in.pop().to_string();
         std::string multname_t;
@@ -3706,7 +3705,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         << "contact brick', ...) is a deprecated command.\n          Use "
         << "gf_mesh_fem_get('add nodal contact between nonmatching meshes "
         << "brick', ...) instead." << endl;
-        SUBC_TAB::iterator it = subc_tab.find("add nodal contact between nonmatching meshes brick");
+        auto it = subc_tab.find("add nodal contact between nonmatching meshes brick");
         if (it != subc_tab.end())
             it->second->run(in, out, md);
         );
@@ -3863,7 +3862,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
      sub_command
        ("add integral large sliding contact brick raytracing", 2, 6, 0, 1,
-        
+
         std::string dataname_r = in.pop().to_string();
         scalar_type d = in.pop().to_scalar();
         std::string dataname_fr = "0";
@@ -3974,7 +3973,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
      sub_command
        ("add Nitsche large sliding contact brick raytracing", 2, 6, 0, 1,
-        
+
         bool unbiased=(in.pop().to_integer() != 0);
         std::string dataname_r = in.pop().to_string();
         scalar_type d = in.pop().to_scalar();
@@ -4070,12 +4069,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  getfem::model *md  = to_model_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  getfem::model *md    = to_model_object(m_in.pop());
+  std::string init_cmd = m_in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
               it->second->arg_in_max, it->second->arg_out_min,

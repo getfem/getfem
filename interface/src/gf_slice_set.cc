@@ -51,12 +51,12 @@ void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     size_type min_dim = 0;
     for (size_type ic=0; ic < sl->nb_convex(); ++ic) {
       for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it = sl->simplexes(ic).begin();
-	   it != sl->simplexes(ic).end(); ++it)
-	min_dim = std::max(min_dim, it->dim());
+           it != sl->simplexes(ic).end(); ++it)
+        min_dim = std::max(min_dim, it->dim());
     }
     if (w.getm() < min_dim)
       GMM_THROW(getfemint_error, "can't reduce the dimension of the slice to " <<
-		w.getm() << " (it contains simplexes of dimension " << min_dim << ")");
+                w.getm() << " (it contains simplexes of dimension " << min_dim << ")");
     sl->set_dim(w.getm()); /* resize the points */
     for (size_type ic=0, cnt=0; ic < sl->nb_convex(); ++ic) {
       for (getfem::mesh_slicer::cs_nodes_ct::iterator it=sl->nodes(ic).begin();

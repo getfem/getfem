@@ -54,7 +54,7 @@ void gf_mesh_im_data(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out)
     tensor_size.resize(v.size());
     std::copy(v.begin(), v.end(), tensor_size.begin());
   }
-  
+
   auto mimd = std::make_shared<getfem::im_data>(*mim);
   mimd->set_region(rnum);
   mimd->set_tensor_size(tensor_size);

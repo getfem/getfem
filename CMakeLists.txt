@@ -559,7 +559,7 @@ if(ENABLE_PYTHON)
         interface/src/gf_delete.cc
         interface/src/getfemint_workspace.h
         interface/src/getfemint_workspace.cc
-        interface/src/getfemint_precond.h
+        interface/src/getfemint_gprecond.h
         interface/src/getfemint_levelset.h
         interface/src/getfemint_levelset.cc
         interface/src/getfemint_gsparse.h

@@ -4,11 +4,11 @@
 
  This file is a part of GetFEM
 
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -25,8 +25,8 @@
 using namespace getfemint;
 
 static size_type get_optional_convex_number(getfemint::mexargs_in &in,
-					    const getfem::pfem &pf,
-					    const std::string cmd) {
+                                            const getfem::pfem &pf,
+                                            const std::string cmd) {
   size_type cv = 0;
   if (!in.remaining() && pf->is_on_real_element())
     THROW_BADARG("This FEM requires a convex number for " << cmd);
@@ -45,8 +45,8 @@ static size_type get_optional_convex_number(getfemint::mexargs_in &in,
 struct sub_gf_fem_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   const getfem::pfem &pf) = 0;
+                   getfemint::mexargs_out& out,
+                   const getfem::pfem &pf) = 0;
 };
 
 typedef std::shared_ptr<sub_gf_fem_get> psub_command;
@@ -55,27 +55,25 @@ typedef std::shared_ptr<sub_gf_fem_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_fem_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       const getfem::pfem &pf)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = std::make_shared<subc>();			\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_fem_get {                                   \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       const getfem::pfem &pf)                              \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = std::make_shared<subc>();                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 
 
 void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  typedef std::map<std::string, psub_command > SUBC_TAB;
-  static SUBC_TAB subc_tab;
+  static std::map<std::string, psub_command > subc_tab;
 
-  if (subc_tab.size() == 0) {
-
+  if (subc_tab.empty()) {
 
     /*@RDATTR n = ('nbdof'[, @int cv])
     Return the number of dof for the @tfem.
@@ -120,7 +118,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@GET P = ('pts'[, @int cv])
       Get the location of the dof on the reference element.
-      
+
       Some specific @tfem may require a convex number `cv` to give their
       result (for example 'interpolated_fem'). In most of the case, you
       can omit this convex number. @*/
@@ -132,7 +130,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@RDATTR b = ('is_equivalent')
       Return 0 if the @tfem is not equivalent.
-      
+
       Equivalent @tfem are evaluated on the reference convex. This is
       the case of most classical @tfem's.@*/
     sub_command
@@ -169,7 +167,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@GET E = ('base_value',@mat p)
       Evaluate all basis functions of the FEM at point `p`.
-      
+
       `p` is supposed to be in the reference convex!@*/
     sub_command
       ("base_value", 1, 1, 0, 1,
@@ -216,12 +214,12 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("poly_str", 0, 0, 0, 1,
        getfem::ppolyfem ppf = dynamic_cast<getfem::ppolyfem>(pf.get());
        if (ppf) {
-	 std::vector<std::string> s(ppf->base().size());
-	 for (size_type i=0; i < s.size(); ++i) {
-	   std::stringstream ss; ss << ppf->base()[i];
-	   s[i] = ss.str();
-	 }
-	 out.pop().from_string_container(s);
+         std::vector<std::string> s(ppf->base().size());
+         for (size_type i=0; i < s.size(); ++i) {
+           std::stringstream ss; ss << ppf->base()[i];
+           s[i] = ss.str();
+         }
+         out.pop().from_string_container(s);
        }
        else THROW_BADARG("Cannot return the poly_str of non-polynomial FEMs");
        );
@@ -267,12 +265,11 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
-  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, pf);
   }
   else bad_cmd(init_cmd);

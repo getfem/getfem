@@ -462,7 +462,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         seeds[j] = v.col_to_bn(j);
       getfem::mesh_slice_cv_dof_data<darray> mfU(*mf,U);
       pstored = std::make_shared<getfem::mesh_slice_streamline>(&mfU, seeds,
-								true, true);
+                                                                true, true);
     } else if (check_cmd(cmd, "points", in, 2, 2)) {
     /*@INIT sl = ('points', @tmesh m, @dmat Pts)
       Return the "slice" composed of points given by the columns of `Pts`
@@ -486,11 +486,11 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       pstored = std::make_shared<getfem::stored_mesh_slice>();
       if (in.remaining()) mm = extract_mesh_object(in.pop());
       else {
-	auto m = std::make_shared<getfem::mesh>();
-	m->read_from_file(fname);
-	store_mesh_object(m);
-	mm = m.get();
-	workspace().add_hidden_object(store_slice_object(pstored), m);
+        auto m = std::make_shared<getfem::mesh>();
+        m->read_from_file(fname);
+        store_mesh_object(m);
+        mm = m.get();
+        workspace().add_hidden_object(store_slice_object(pstored), m);
       }
       pstored->read_from_file(fname, *mm);
     } else bad_cmd(cmd);

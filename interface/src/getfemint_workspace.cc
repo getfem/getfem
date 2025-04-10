@@ -42,12 +42,12 @@ namespace getfemint {
 
   /* inserts a new object (and gives it an id) */
   id_type workspace_stack::push_object(const dal::pstatic_stored_object &p,
-					const void *raw_pointer,
-					getfemint_class_id class_id) {
+                                        const void *raw_pointer,
+                                        getfemint_class_id class_id) {
     id_type id = id_type(valid_objects.first_false());
     valid_objects.add(id);
     if (id >= obj.size()) obj.push_back(object_info());
-    
+
     object_info &o = obj[id];
     o.p = p;
     o.raw_pointer = raw_pointer;
@@ -70,9 +70,9 @@ namespace getfemint {
       { u[j] = u[i]; if (u[i].get() != p.get()) ++j; }
     u.resize(j);
   }
-  
+
   void workspace_stack::add_hidden_object(id_type user,
-					  const dal::pstatic_stored_object &p) {
+                                          const dal::pstatic_stored_object &p) {
     if (!(valid_objects.is_in(user))) THROW_ERROR("Invalid object\n");
     auto &u = obj[user].dependent_on;
     for (auto it = u.begin(); it != u.end(); ++it)
@@ -81,7 +81,7 @@ namespace getfemint {
   }
 
   dal::pstatic_stored_object workspace_stack::hidden_object(id_type user,
-							    const void *p) {
+                                                            const void *p) {
     if (!(valid_objects.is_in(user))) THROW_ERROR("Invalid object\n");
     auto &u = obj[user].dependent_on;
     for (auto it = u.begin(); it != u.end(); ++it)
@@ -122,18 +122,18 @@ namespace getfemint {
     dal::bit_vector bv = valid_objects;
     for (dal::bv_visitor_c id(bv); !id.finished(); ++id) {
       if (valid_objects.is_in(id)) {
-	id_type owid = obj[id].workspace;
-	if (owid > get_current_workspace()) THROW_INTERNAL_ERROR;
-	if (owid == wid) delete_object(id_type(id));
+        id_type owid = obj[id].workspace;
+        if (owid > get_current_workspace()) THROW_INTERNAL_ERROR;
+        if (owid == wid) delete_object(id_type(id));
       }
     }
   }
 
   const void *workspace_stack::object(id_type id,
-				       const char *expected_type) const {
+                                       const char *expected_type) const {
     if (valid_objects[id] &&
         std::find(newly_created_objects.begin(),newly_created_objects.end(),id)
-	== newly_created_objects.end()) {
+        == newly_created_objects.end()) {
       return obj[id].raw_pointer;
     } else {
       THROW_ERROR("object " << expected_type << " [id=" << id << "] not found");
@@ -145,7 +145,7 @@ namespace getfemint {
   (id_type id, const char *expected_type) const {
     if (valid_objects[id] &&
         std::find(newly_created_objects.begin(),newly_created_objects.end(),id)
-	== newly_created_objects.end()) {
+        == newly_created_objects.end()) {
       return obj[id].p;
     } else {
       THROW_ERROR("object " << expected_type << " [id=" << id << "] not found");
@@ -170,40 +170,40 @@ namespace getfemint {
     }
   }
 
-  void workspace_stack::do_stats(std::ostream &o, id_type wid) {  
+  void workspace_stack::do_stats(std::ostream &o, id_type wid) {
     if (wid == id_type(-1)) {
       o << "Anonymous workspace (objects waiting for deletion)\n";
     } else {
       if (wid >= wrk.size()) THROW_INTERNAL_ERROR;
       size_type nb = 0;
       for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii)
-	if (obj[ii].workspace == wid) nb++;
-      
+        if (obj[ii].workspace == wid) nb++;
+
       o << "Workspace " << wid << " [" << wrk[wid] << " -- "
-		<< nb << " objects]\n";
+                << nb << " objects]\n";
     }
-    
+
     for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
       object_info &ob = obj[ii];
       if (ob.workspace == wid) {
-	std::string subclassname;
-	o << " ID" << std::setw(4) << ii << " " << std::setw(20)
-	  << name_of_getfemint_class_id(ob.class_id)
-	  << std::setw(10) << subclassname;
-	if (ob.dependent_on.size()) {
-	  o << " depends on ";
-	  for (size_type i=0; i < ob.dependent_on.size(); ++i) {
-	    id_type id = object(ob.dependent_on[i]);
-	    if (id != id_type(-1))
-	      o << " ID" << id;
-	    else
-	      o << " object of type "
-		<< name_of_getfemint_class_id
-		(class_id_of_object(ob.dependent_on[i]))
-		<< " waiting for deletion";
-	  }
-	}
-	o << endl;
+        std::string subclassname;
+        o << " ID" << std::setw(4) << ii << " " << std::setw(20)
+          << name_of_getfemint_class_id(ob.class_id)
+          << std::setw(10) << subclassname;
+        if (ob.dependent_on.size()) {
+          o << " depends on ";
+          for (size_type i=0; i < ob.dependent_on.size(); ++i) {
+            id_type id = object(ob.dependent_on[i]);
+            if (id != id_type(-1))
+              o << " ID" << id;
+            else
+              o << " object of type "
+                << name_of_getfemint_class_id
+                (class_id_of_object(ob.dependent_on[i]))
+                << " waiting for deletion";
+          }
+        }
+        o << endl;
       }
     }
   }

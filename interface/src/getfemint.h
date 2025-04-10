@@ -3,13 +3,13 @@
 
  Copyright (C) 2001-2020 Y. Renard, J. Pommier.
 
- This file is a part of GetFEM++
+ This file is a part of GetFEM
 
- GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
+ GetFEM is free software;  you can  redistribute it  and/or modify it under
+ the  terms  of the  GNU  Lesser General Public License as published by the
+ Free Software Foundation;  either version 3  of  the License,  or (at your
+ option) any  later  version  along with  the GCC Runtime Library Exception
+ either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
@@ -712,9 +712,9 @@ namespace getfemint {
   id_type class_id_of_object(const dal::pstatic_stored_object &p,
                              const void **q = 0);
 
-# define getfemint_declare_getfem_class(CLASS)                          \
+# define getfemint_declare_getfem_class(CLASS)               \
   } namespace getfem { class CLASS; } namespace getfemint {
-# define getfemint_delare_bgeot_class(CLASS)                            \
+# define getfemint_delare_bgeot_class(CLASS)                 \
   } namespace bgeot { class CLASS; } namespace getfemint {
   
   // Functions for CONT_STRUCT_CLASS_ID

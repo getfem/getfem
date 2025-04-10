@@ -111,7 +111,7 @@
     <ClInclude Include="..\..\interface\src\getfemint_pfem.h" />
     <ClInclude Include="..\..\interface\src\getfemint_pgt.h" />
     <ClInclude Include="..\..\interface\src\getfemint_poly.h" />
-    <ClInclude Include="..\..\interface\src\getfemint_precond.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_gprecond.h" />
     <ClInclude Include="..\..\interface\src\getfemint_std.h" />
     <ClInclude Include="..\..\interface\src\getfemint_workspace.h" />
     <ClInclude Include="..\..\interface\src\getfem_interface.h" />
