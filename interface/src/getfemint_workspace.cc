@@ -180,7 +180,7 @@ namespace getfemint {
         if (obj[ii].workspace == wid) nb++;
 
       o << "Workspace " << wid << " [" << wrk[wid] << " -- "
-                << nb << " objects]\n";
+        << nb << " objects]\n";
     }
 
     for (dal::bv_visitor ii(valid_objects); !ii.finished(); ++ii) {
@@ -199,7 +199,7 @@ namespace getfemint {
             else
               o << " object of type "
                 << name_of_getfemint_class_id
-                (class_id_of_object(ob.dependent_on[i]))
+                   (class_id_of_object(ob.dependent_on[i]))
                 << " waiting for deletion";
           }
         }
