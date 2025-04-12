@@ -605,29 +605,47 @@ namespace getfemint {
     return sub_index(va);
   }
 
-  gfi_array *
-  create_object_id(int nid, id_type *ids, id_type cid, bool not_as_a_vector) {
-    gfi_array *arg;
-    if (not_as_a_vector) {
-      assert(nid==1);
-      arg = checked_gfi_array_create_0(GFI_OBJID);
-    } else {
-      arg = checked_gfi_array_create_1(nid, GFI_OBJID);
-    }
-    for (size_type i=0; i < size_type(nid); ++i) {
-      gfi_objid_get_data(arg)[i].id = ids[i];
-      gfi_objid_get_data(arg)[i].cid = cid;
-    }
-    return arg;
+  gfi_array*
+  checked_gfi_array_create_0(gfi_type_id type,
+                             gfi_complex_flag is_complex = GFI_REAL) {
+    return checked_gfi_array_create(0,NULL,type,is_complex);
+  }
+
+  gfi_array*
+  checked_gfi_array_create_1(int M, gfi_type_id type,
+                             gfi_complex_flag is_complex = GFI_REAL) {
+    gfi_array *t = gfi_array_create_1(M,type,is_complex);
+    GMM_ASSERT1(t != NULL, "allocation of vector of " << M << " "
+                << gfi_type_id_name(type,is_complex) << " failed\n");
+    return t;
+  }
+
+  gfi_array*
+  checked_gfi_array_create_2(int M, int N, gfi_type_id type,
+                             gfi_complex_flag is_complex = GFI_REAL) {
+    gfi_array *t = gfi_array_create_2(M,N,type,is_complex);
+    GMM_ASSERT1(t != NULL, "allocation of a " << M << "x" << N << " matrix of "
+                << gfi_type_id_name(type,is_complex) << " failed\n");
+    return t;
   }
 
   void
-  mexarg_out::from_object_id(id_type id, id_type cid)
-  { arg = create_object_id(id, cid); }
+  mexarg_out::from_object_id(id_type id, id_type cid) {
+    gfi_array *arg0 = checked_gfi_array_create_0(GFI_OBJID);
+    gfi_objid_get_data(arg0)[0].id = id;
+    gfi_objid_get_data(arg0)[0].cid = cid;
+    arg = arg0;
+  }
 
   void
-  mexarg_out::from_object_id(std::vector<id_type> ids, id_type cid)
-  { arg = create_object_id(int(ids.size()), &ids[0], cid); }
+  mexarg_out::from_object_id(std::vector<id_type> ids, id_type cid) {
+    gfi_array *arg1 = checked_gfi_array_create_1(int(ids.size()), GFI_OBJID);
+    for (size_type i=0; i < ids.size(); ++i) {
+      gfi_objid_get_data(arg1)[i].id = ids[i];
+      gfi_objid_get_data(arg1)[i].cid = cid;
+    }
+    arg = arg1;
+  }
 
   void
   mexarg_out::from_integer(int i) {
@@ -646,6 +664,16 @@ namespace getfemint {
   void
   mexarg_out::from_string(const char *s) {
     arg = checked_gfi_array_from_string(s);
+  }
+
+  void
+  mexarg_out::from_string_container(const std::vector<std::string>& s)
+  {
+    arg = checked_gfi_array_create_2(int(s.size()), 1, GFI_CELL);
+    gfi_array **c = gfi_cell_get_data(arg);
+    size_type cnt = 0;
+    for (auto it = s.cbegin(); it != s.cend(); ++it, ++cnt)
+      c[cnt] = checked_gfi_array_from_string(it->c_str());
   }
 
   void

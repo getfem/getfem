@@ -42,24 +42,6 @@ namespace getfemint {
     return t;
   }
 
-  gfi_array* checked_gfi_array_create_0(gfi_type_id type, gfi_complex_flag is_complex) {
-    return checked_gfi_array_create(0,NULL,type,is_complex);
-  }
-
-  gfi_array* checked_gfi_array_create_1(int M, gfi_type_id type, gfi_complex_flag is_complex) {
-    gfi_array *t = gfi_array_create_1(M,type,is_complex);
-    GMM_ASSERT1(t != NULL, "allocation of vector of " << M << " "
-                << gfi_type_id_name(type,is_complex) << " failed\n");
-    return t;
-  }
-
-  gfi_array* checked_gfi_array_create_2(int M, int N, gfi_type_id type, gfi_complex_flag is_complex) {
-    gfi_array *t = gfi_array_create_2(M,N,type,is_complex);
-    GMM_ASSERT1(t != NULL, "allocation of a " << M << "x" << N << " matrix of "
-                << gfi_type_id_name(type,is_complex) << " failed\n");
-    return t;
-  }
-
   gfi_array* checked_gfi_array_from_string(const char*s) {
     gfi_array *t = gfi_array_from_string(s);
     GMM_ASSERT1(t != NULL, "allocation of a string of length "

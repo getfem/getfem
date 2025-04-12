@@ -71,11 +71,11 @@ namespace getfemint {
                  POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
                  GETFEMINT_NB_CLASS } getfemint_class_id;
 
-  
+
   /* Associate the class ID found in the matlab structures referencing
      getfem object to a class name which coincides with the class name
      given by matlab to the structure.
-     
+
      IMPORTANT: Should correspond to the getfemint_class_id
                 In particular, it should be in alphabetic order.
   */
@@ -85,12 +85,6 @@ namespace getfemint {
   gfi_array* checked_gfi_array_create(int ndim, const int *dims,
                                       gfi_type_id type,
                                       gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_0(gfi_type_id type,
-                                        gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_1(int M, gfi_type_id type,
-                                        gfi_complex_flag is_complex = GFI_REAL);
-  gfi_array* checked_gfi_array_create_2(int M, int N, gfi_type_id type,
-                                        gfi_complex_flag is_complex = GFI_REAL);
   gfi_array* checked_gfi_array_from_string(const char*s);
   gfi_array* checked_gfi_create_sparse(int m, int n, int nzmax,
                                        gfi_complex_flag is_complex);
@@ -497,7 +491,7 @@ namespace getfemint {
     void                      to_sparse(gf_real_sparse_csc_const_ref& M);
     void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
     std::shared_ptr<gsparse>  to_sparse();
-    
+
     mexarg_in &check_trailing_dimension(int expected_dim);
     void check_dimensions(array_dimensions &v, int expected_m,
                           int expected_n, int expected_p=-1, int expected_q=-1);
@@ -520,7 +514,7 @@ namespace getfemint {
     void from_integer(int i);
     void from_scalar(double v);
     void from_string(const char *s);
-    template<class STR_CONT> void from_string_container(const STR_CONT& s);
+    void from_string_container(const std::vector<std::string>& s);
     void from_bit_vector(const dal::bit_vector& bv,
                          int shift=config::base_index());
     void from_mesh_region(const getfem::mesh_region &region);
@@ -586,18 +580,6 @@ namespace getfemint {
     template<class VEC_CONT> void from_vector_container(const VEC_CONT& vv);
   };
 
-  template<class STR_CONT> void
-  mexarg_out::from_string_container(const STR_CONT& s)
-  {
-    arg = checked_gfi_array_create_2(int(s.size()), 1, GFI_CELL);
-    gfi_array **c = gfi_cell_get_data(arg);
-    typename STR_CONT::const_iterator it;
-    size_type cnt = 0;
-    for (it = s.begin(); it != s.end(); ++it, ++cnt) {
-      c[cnt] = checked_gfi_array_from_string(it->c_str());
-    }
-  }
-
   /* output a matrix from a container of vectors (of same dimensions) */
   template<class VEC_CONT> void
   mexarg_out::from_vector_container(const VEC_CONT& vv)
@@ -607,12 +589,6 @@ namespace getfemint {
     darray w  = create_darray(unsigned(m),unsigned(n));
     for (size_type j=0; j < n; ++j)
       std::copy(vv[j].begin(), vv[j].end(), &w(0,j));
-  }
-
-  gfi_array *create_object_id(int nid, id_type *ids, id_type cid,
-                              bool not_as_a_vector=false);
-  inline gfi_array *create_object_id(id_type id, id_type cid) {
-    return create_object_id(1, &id, cid, true);
   }
 
   /* handles the list of input arguments */
@@ -716,12 +692,12 @@ namespace getfemint {
   } namespace getfem { class CLASS; } namespace getfemint {
 # define getfemint_delare_bgeot_class(CLASS)                 \
   } namespace bgeot { class CLASS; } namespace getfemint {
-  
+
   // Functions for CONT_STRUCT_CLASS_ID
   getfemint_declare_getfem_class(cont_struct_getfem_model)
   bool is_cont_struct_object(const mexarg_in &p);
   id_type store_cont_struct_object
-  (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp);
+    (const std::shared_ptr<getfem::cont_struct_getfem_model> &shp);
   getfem::cont_struct_getfem_model *to_cont_struct_object(const mexarg_in &p);
 
   // Functions for CVSTRUCT_CLASS_ID
@@ -802,9 +778,9 @@ namespace getfemint {
   getfemint_declare_getfem_class(mesh_level_set)
   bool is_mesh_levelset_object(const mexarg_in &p);
   id_type store_mesh_levelset_object
-  (const std::shared_ptr<getfem::mesh_level_set> &shp);
+    (const std::shared_ptr<getfem::mesh_level_set> &shp);
   getfem::mesh_level_set *to_mesh_levelset_object(const mexarg_in &p);
-   
+
   // Functions for MESHER_OBJECT_CLASS_ID
   getfemint_declare_getfem_class(mesher_signed_distance)
   typedef std::shared_ptr<const getfem::mesher_signed_distance>
@@ -829,19 +805,18 @@ namespace getfemint {
   getfemint_declare_getfem_class(stored_mesh_slice)
   bool is_slice_object(const mexarg_in &p);
   id_type store_slice_object
-  (const std::shared_ptr<getfem::stored_mesh_slice> &shp);
+    (const std::shared_ptr<getfem::stored_mesh_slice> &shp);
   getfem::stored_mesh_slice *to_slice_object(const mexarg_in &p);
 
   // Functions for SPMAT_CLASS_ID
   class gsparse;
   bool is_spmat_object(const mexarg_in &p);
-  id_type store_spmat_object
-  (const std::shared_ptr<gsparse> &shp);
+  id_type store_spmat_object(const std::shared_ptr<gsparse> &shp);
   gsparse *to_spmat_object(const mexarg_in &p);
 
   // Functions for POLY_CLASS_ID
   struct getfemint_poly : virtual public dal::static_stored_object
-  { bgeot::base_poly p; };
+    { bgeot::base_poly p; };
   bool is_poly_object(const mexarg_in &p);
   id_type store_poly_object(const std::shared_ptr<getfemint_poly> &shp);
   getfemint_poly *to_poly_object(const mexarg_in &p);
