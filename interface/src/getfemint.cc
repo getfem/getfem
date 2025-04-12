@@ -1105,65 +1105,49 @@ namespace getfemint {
   }
 
 
-  // Version of the interface functions for an object managed preferabily by
-  // a raw pointer, allowing to be modified.
-# define SIMPLE_RAW_POINTER_MANAGED_OBJECT(NAME, TYPE, CLASS_ID)        \
-  bool is_##NAME##_object(const mexarg_in &p) {                         \
-    id_type id, cid;                                                    \
-    return (p.is_object_id(&id, &cid) && cid == CLASS_ID);              \
-  }                                                                     \
-                                                                        \
-  id_type store_##NAME##_object(const std::shared_ptr<TYPE> &shp) {     \
-    auto &w = workspace();                                              \
-    id_type id = w.object((const void *)(shp.get()));                   \
-    if (id == id_type(-1)) {                                            \
-      auto p =        std::dynamic_pointer_cast                         \
-        <const dal::static_stored_object>(shp);                         \
-      if (!(p.get())) THROW_INTERNAL_ERROR;                             \
-      id = w.push_object(p, (const void *)(shp.get()), CLASS_ID);       \
-    }                                                                   \
-    return id;                                                          \
-  }                                                                     \
-                                                                        \
-  TYPE *to_##NAME##_object(const mexarg_in &p) {                        \
-    id_type id, cid;                                                    \
-    if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {                 \
-      return const_cast<TYPE *>                                         \
-        ((const TYPE *)                                                 \
-         (workspace().object(id, name_of_getfemint_class_id(cid))));    \
-    } else {                                                            \
-      THROW_BADARG("argument " << p.argnum << " should be a " <<        \
-                   name_of_getfemint_class_id(CLASS_ID) <<              \
-                   " descriptor, its class is "                         \
-                   << name_of_getfemint_class_id(cid));                 \
-    }                                                                   \
+# define DEFINE_IS_X_OBJECT_FUNCTION(FUNCNAME, CLASS_ID)   \
+  bool FUNCNAME(const mexarg_in &p) {                      \
+    id_type id, cid;                                       \
+    return (p.is_object_id(&id, &cid) && cid == CLASS_ID); \
   }
 
-  // Version of the interface functions for an object managed only by the
-  // shared pointer, and assumed not to be modified.
-# define SIMPLE_SHARED_POINTER_MANAGED_OBJECT(NAME, TYPE, CLASS_ID)     \
-  bool is_##NAME##_object(const mexarg_in &p) {                         \
-    id_type id, cid;                                                    \
-    return (p.is_object_id(&id, &cid) && cid == CLASS_ID);              \
-  }                                                                     \
-                                                                        \
-  id_type store_##NAME##_object(const std::shared_ptr<const TYPE> &shp) \
-  {                                                                     \
-    auto &w = workspace();                                              \
-    id_type id = w.object((const void *)(shp.get()));                   \
-    if (id == id_type(-1)) {                                            \
-      auto p =                                                          \
-       std::dynamic_pointer_cast<const dal::static_stored_object>(shp); \
-      if (!(p.get())) THROW_INTERNAL_ERROR;                             \
-      id = w.push_object(p, (const void *)(shp.get()), CLASS_ID);       \
-    }                                                                   \
-    return id;                                                          \
-  }                                                                     \
-                                                                        \
-  std::shared_ptr<const TYPE> to_##NAME##_object(const mexarg_in &p) {  \
+# define DEFINE_STORE_X_OBJECT_FUNCTION(FUNCNAME, TYPE, CLASS_ID) \
+  id_type FUNCNAME(const std::shared_ptr<TYPE> &shp) {            \
+    auto &w = workspace();                                        \
+    id_type id = w.object((const void *)(shp.get()));             \
+    if (id == id_type(-1)) {                                      \
+      auto p = std::dynamic_pointer_cast                          \
+               <const dal::static_stored_object>(shp);            \
+      if (!(p.get())) THROW_INTERNAL_ERROR;                       \
+      id = w.push_object(p, (const void *)(shp.get()), CLASS_ID); \
+    }                                                             \
+    return id;                                                    \
+  }
+
+  // Access function to an object managed preferabily by a raw pointer,
+  // allowing to be modified.
+# define DEFINE_TO_X_OBJECT_FUNCTION_RAW(FUNCNAME, TYPE, CLASS_ID)    \
+  TYPE *FUNCNAME(const mexarg_in &p) {                                \
+    id_type id, cid;                                                  \
+    if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {               \
+      return const_cast<TYPE *>                                       \
+        ((const TYPE *)                                               \
+         (workspace().object(id, name_of_getfemint_class_id(cid))));  \
+    } else {                                                          \
+      THROW_BADARG("argument " << p.argnum << " should be a " <<      \
+                   name_of_getfemint_class_id(CLASS_ID) <<            \
+                   " descriptor, its class is "                       \
+                   << name_of_getfemint_class_id(cid));               \
+    }                                                                 \
+  }
+
+  // Access function to an object managed only by the shared pointer,
+  // and assumed not to be modified.
+# define DEFINE_TO_X_OBJECT_FUNCTION_SHARED(FUNCNAME, TYPE, CLASS_ID)   \
+  std::shared_ptr<TYPE> FUNCNAME(const mexarg_in &p) {                  \
     id_type id, cid;                                                    \
     if (p.is_object_id(&id, &cid) && cid == CLASS_ID) {                 \
-      return std::dynamic_pointer_cast<const TYPE>                      \
+      return std::dynamic_pointer_cast<TYPE>                            \
         (workspace().shared_pointer(id,                                 \
                                     name_of_getfemint_class_id(cid)));  \
     } else {                                                            \
@@ -1174,43 +1158,87 @@ namespace getfemint {
     }                                                                   \
   }
 
-  // Functions for CONT_STRUCT_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(cont_struct,
-                                    getfem::cont_struct_getfem_model,
-                                    CONT_STRUCT_CLASS_ID)
+  // Functions for CONT_STRUCT_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_cont_struct_object, CONT_STRUCT_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_cont_struct_object,
+                                 getfem::cont_struct_getfem_model,
+                                 CONT_STRUCT_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_cont_struct_object,
+                                  getfem::cont_struct_getfem_model,
+                                  CONT_STRUCT_CLASS_ID)
 
   // Functions for CVSTRUCT_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(cvstruct, bgeot::convex_structure,
-                                       CVSTRUCT_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_cvstruct_object, CVSTRUCT_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_cvstruct_object,
+                                 const bgeot::convex_structure,
+                                 CVSTRUCT_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_cvstruct_object,
+                                     const bgeot::convex_structure,
+                                     CVSTRUCT_CLASS_ID)
 
   // Functions for ELTM_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(eltm,
-                                       getfem::mat_elem_type,
-                                       ELTM_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_eltm_object, ELTM_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_eltm_object,
+                                 const getfem::mat_elem_type,
+                                 ELTM_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_eltm_object,
+                                     const getfem::mat_elem_type,
+                                     ELTM_CLASS_ID)
 
   // Functions for FEM_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(fem, getfem::virtual_fem,
-                                       FEM_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_fem_object, FEM_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_fem_object,
+                                 const getfem::virtual_fem,
+                                 FEM_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_fem_object,
+                                     const getfem::virtual_fem,
+                                     FEM_CLASS_ID)
 
   // Functions for GEOTRANS_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(geotrans, bgeot::geometric_trans,
-                                       GEOTRANS_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_geotrans_object, GEOTRANS_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_geotrans_object,
+                                 const bgeot::geometric_trans,
+                                 GEOTRANS_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_geotrans_object,
+                                     const bgeot::geometric_trans,
+                                     GEOTRANS_CLASS_ID)
 
   // Functions for GLOBAL_FUNCTION_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(global_function,
-                                       getfem::abstract_xy_function,
-                                       GLOBAL_FUNCTION_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_global_function_object,
+                              GLOBAL_FUNCTION_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_global_function_object,
+                                 const getfem::abstract_xy_function,
+                                 GLOBAL_FUNCTION_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_global_function_object,
+                                     const getfem::abstract_xy_function,
+                                     GLOBAL_FUNCTION_CLASS_ID)
 
   // Functions for INTEG_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(integ, getfem::integration_method,
-                                       INTEG_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_integ_object, INTEG_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_integ_object,
+                                 const getfem::integration_method,
+                                 INTEG_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_integ_object,
+                                     const getfem::integration_method,
+                                     INTEG_CLASS_ID)
 
-  // Functions for LEVELSET_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(levelset, getfem::level_set,
-                                    LEVELSET_CLASS_ID)
+  // Functions for LEVELSET_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_levelset_object, LEVELSET_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_levelset_object,
+                                 getfem::level_set,
+                                 LEVELSET_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_levelset_object,
+                                  getfem::level_set,
+                                  LEVELSET_CLASS_ID)
 
-  // Functions for MESH_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh, getfem::mesh, MESH_CLASS_ID)
+  // Functions for MESH_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_mesh_object, MESH_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_mesh_object,
+                                 getfem::mesh,
+                                 MESH_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_mesh_object,
+                                  getfem::mesh,
+                                  MESH_CLASS_ID)
 
   bool has_mesh_object(const mexarg_in &p) {
     return is_mesh_object(p) || is_meshfem_object(p) || is_meshim_object(p) ||
@@ -1239,38 +1267,90 @@ namespace getfemint {
     } else THROW_BADARG("Not a getfem object");
   }
 
-  // Functions for MESHFEM_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshfem, getfem::mesh_fem, MESHFEM_CLASS_ID)
+  // Functions for MESHFEM_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_meshfem_object, MESHFEM_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_meshfem_object,
+                                 getfem::mesh_fem,
+                                 MESHFEM_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_meshfem_object,
+                                  getfem::mesh_fem,
+                                  MESHFEM_CLASS_ID)
 
-  // Functions for MESHIM_CLASS_ID
-   SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshim, getfem::mesh_im, MESHIM_CLASS_ID)
+  // Functions for MESHIM_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_meshim_object, MESHIM_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_meshim_object,
+                                 getfem::mesh_im,
+                                 MESHIM_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_meshim_object,
+                                  getfem::mesh_im,
+                                  MESHIM_CLASS_ID)
 
-  // Functions for MESHIMDATA_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(meshimdata, getfem::im_data,
-                                    MESHIMDATA_CLASS_ID)
+  // Functions for MESHIMDATA_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_meshimdata_object, MESHIMDATA_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_meshimdata_object,
+                                 getfem::im_data,
+                                 MESHIMDATA_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_meshimdata_object,
+                                  getfem::im_data,
+                                  MESHIMDATA_CLASS_ID)
 
-  // Functions for MESH_LEVELSET_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(mesh_levelset, getfem::mesh_level_set,
-                                    MESH_LEVELSET_CLASS_ID)
+  // Functions for MESH_LEVELSET_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_mesh_levelset_object, MESH_LEVELSET_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_mesh_levelset_object,
+                                 getfem::mesh_level_set,
+                                 MESH_LEVELSET_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_mesh_levelset_object,
+                                  getfem::mesh_level_set,
+                                  MESH_LEVELSET_CLASS_ID)
 
   // Functions for MESHER_OBJECT_CLASS_ID
-  SIMPLE_SHARED_POINTER_MANAGED_OBJECT(mesher, getfem::mesher_signed_distance,
-                                       MESHER_OBJECT_CLASS_ID)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_mesher_object, MESHER_OBJECT_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_mesher_object,
+                                 const getfem::mesher_signed_distance,
+                                 MESHER_OBJECT_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_SHARED(to_mesher_object,
+                                     const getfem::mesher_signed_distance,
+                                     MESHER_OBJECT_CLASS_ID)
 
-  // Functions for MODEL_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(model, getfem::model, MODEL_CLASS_ID)
+  // Functions for MODEL_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_model_object, MODEL_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_model_object,
+                                 getfem::model,
+                                 MODEL_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_model_object,
+                                  getfem::model,
+                                  MODEL_CLASS_ID)
 
-  // Functions for PRECOND_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(precond, gprecond_base, PRECOND_CLASS_ID)
+  // Functions for PRECOND_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_precond_object, PRECOND_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_precond_object,
+                                 gprecond_base,
+                                 PRECOND_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_precond_object,
+                                  gprecond_base,
+                                  PRECOND_CLASS_ID)
 
-  // Functions for PRECOND_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(slice, getfem::stored_mesh_slice,
-                                    SLICE_CLASS_ID)
+  // Functions for PRECOND_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_slice_object, SLICE_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_slice_object,
+                                 getfem::stored_mesh_slice,
+                                 SLICE_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_slice_object,
+                                  getfem::stored_mesh_slice,
+                                  SLICE_CLASS_ID)
 
-  // Functions for SPMAT_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(spmat, gsparse, SPMAT_CLASS_ID)
+  // Functions for SPMAT_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_spmat_object, SPMAT_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_spmat_object, gsparse, SPMAT_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_spmat_object, gsparse, SPMAT_CLASS_ID)
 
-  // Functions for POLY_CLASS_ID
-  SIMPLE_RAW_POINTER_MANAGED_OBJECT(poly, getfemint_poly, POLY_CLASS_ID)
+  // Functions for POLY_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_poly_object, POLY_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_poly_object,
+                                 getfemint_poly,
+                                 POLY_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_poly_object,
+                                  getfemint_poly,
+                                  POLY_CLASS_ID)
 
 } /* namespace getfemint */
