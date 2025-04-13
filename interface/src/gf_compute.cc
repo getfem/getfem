@@ -182,15 +182,12 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   return false;
 }
 
+
+
 /*@GFDOC
   @ARGS{@tmf MF, @vec U}
   Various computations involving the solution U to a finite element problem.
 @*/
-
-
-
-
-
 
 
 
@@ -224,162 +221,158 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 
-
-void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@FUNC n = ('L2 norm', @tmim mim[, @mat CVids])
+void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@FUNC n = ('L2 norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of the (real or complex) field `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("L2 norm", 1, 2, 0, 1,
-       U_is_a_vector(U, "L2 norm");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       dal::bit_vector bv = in.remaining() ?
-       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-       if (!U.is_complex())
-         out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.real(), bv));
-       else out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.cplx(),bv));
-       );
+  sub_command
+    ("L2 norm", 1, 2, 0, 1,
+     U_is_a_vector(U, "L2 norm");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     dal::bit_vector bv = in.remaining() ?
+     in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+     if (!U.is_complex())
+       out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.real(), bv));
+     else out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.cplx(),bv));
+     );
 
-    /*@FUNC n = ('L2 dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
+
+  /*@FUNC n = ('L2 dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
     Compute the L2 distance between `U` and `U2`.
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("L2 dist", 3, 4, 0, 1,
-       U_is_a_vector(U, "L2 dist");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
-       if (!U.is_complex()) {
-         darray st = in.pop().to_darray();
-         std::vector<double> V(st.begin(), st.end());
-         dal::bit_vector bv = in.remaining() ?
-           in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+  sub_command
+    ("L2 dist", 3, 4, 0, 1,
+     U_is_a_vector(U, "L2 dist");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
+     if (!U.is_complex()) {
+       darray st = in.pop().to_darray();
+       std::vector<double> V(st.begin(), st.end());
+       dal::bit_vector bv = in.remaining() ?
+         in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
 
-         out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
+       out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
                                                    *mf_2, V, bv));
-       } else {
-         carray st = in.pop().to_carray();
-         std::vector<std::complex<double> > V(st.begin(), st.end());
-          dal::bit_vector bv = in.remaining() ?
-            in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-         out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
-                                                   *mf_2, V, bv));
-       }
-       );
+     } else {
+       carray st = in.pop().to_carray();
+       std::vector<std::complex<double> > V(st.begin(), st.end());
+        dal::bit_vector bv = in.remaining() ?
+          in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+       out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
+                                                 *mf_2, V, bv));
+     }
+     );
 
 
-   /*@FUNC n = ('H1 semi norm', @tmim mim[, @mat CVids])
+  /*@FUNC n = ('H1 semi norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of grad(`U`).
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("H1 semi norm", 1, 2, 0, 1,
-       U_is_a_vector(U, "H1 semi norm");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       dal::bit_vector bv = in.remaining() ?
-       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-       if (!U.is_complex())
-         out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf,
-                                                        U.real(), bv));
-       else out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim,
-                                                           *mf, U.cplx(), bv));
-       );
+  sub_command
+    ("H1 semi norm", 1, 2, 0, 1,
+     U_is_a_vector(U, "H1 semi norm");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     dal::bit_vector bv = in.remaining() ?
+     in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+     if (!U.is_complex())
+       out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf,
+                                                      U.real(), bv));
+     else
+       out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf,
+                                                      U.cplx(), bv));
+     );
 
 
-    /*@FUNC n = ('H1 semi dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
+  /*@FUNC n = ('H1 semi dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
     Compute the semi H1 distance between `U` and `U2`.
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("H1 semi dist", 3, 4, 0, 1,
-       U_is_a_vector(U, "H1 semi dist");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
-       if (!U.is_complex()) {
-         darray st = in.pop().to_darray();
-         std::vector<double> V(st.begin(), st.end());
-         dal::bit_vector bv = in.remaining() ?
-           in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-
-         out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
-                                                        *mf_2, V, bv));
-       } else {
-         carray st = in.pop().to_carray();
-         std::vector<std::complex<double> > V(st.begin(), st.end());
-          dal::bit_vector bv = in.remaining() ?
-            in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-
-         out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.cplx(),
-                                                        *mf_2, V, bv));
-       }
-       );
+  sub_command
+    ("H1 semi dist", 3, 4, 0, 1,
+     U_is_a_vector(U, "H1 semi dist");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     const getfem::mesh_fem *mf_2 = to_meshfem_object(in.pop());
+     if (!U.is_complex()) {
+       darray st = in.pop().to_darray();
+       std::vector<double> V(st.begin(), st.end());
+       dal::bit_vector bv = in.remaining() ?
+         in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+       out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
+                                                      *mf_2, V, bv));
+     } else {
+       carray st = in.pop().to_carray();
+       std::vector<std::complex<double> > V(st.begin(), st.end());
+       dal::bit_vector bv = in.remaining() ?
+         in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+       out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.cplx(),
+                                                      *mf_2, V, bv));
+     }
+     );
 
 
-    /*@FUNC n = ('H1 norm', @tmim mim[, @mat CVids])
+  /*@FUNC n = ('H1 norm', @tmim mim[, @mat CVids])
     Compute the H1 norm of `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("H1 norm", 1, 2, 0, 1,
-       U_is_a_vector(U, "H1 norm");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       dal::bit_vector bv = in.remaining() ?
-       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-       if (!U.is_complex())
-         out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.real(), bv));
-       else out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf,
-                                                      U.cplx(), bv));
-       );
+  sub_command
+    ("H1 norm", 1, 2, 0, 1,
+     U_is_a_vector(U, "H1 norm");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     dal::bit_vector bv = in.remaining() ?
+     in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+     if (!U.is_complex())
+       out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.real(), bv));
+     else
+       out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.cplx(), bv));
+     );
 
 
-    /*@FUNC n = ('H2 semi norm', @tmim mim[, @mat CVids])
+  /*@FUNC n = ('H2 semi norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of D^2(`U`).
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("H2 semi norm", 1, 2, 0, 1,
-       U_is_a_vector(U, "H2 semi norm");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       dal::bit_vector bv = in.remaining() ?
-       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-       if (!U.is_complex())
-         out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
-                                                        U.real(), bv));
-       else
-         out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
-                                                        U.cplx(), bv));
-       );
+   sub_command
+     ("H2 semi norm", 1, 2, 0, 1,
+      U_is_a_vector(U, "H2 semi norm");
+      const getfem::mesh_im *mim = to_meshim_object(in.pop());
+      dal::bit_vector bv = in.remaining() ?
+      in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+      if (!U.is_complex())
+        out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
+                                                       U.real(), bv));
+      else
+        out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf,
+                                                       U.cplx(), bv));
+      );
 
 
-    /*@FUNC n = ('H2 norm', @tmim mim[, @mat CVids])
+  /*@FUNC n = ('H2 norm', @tmim mim[, @mat CVids])
     Compute the H2 norm of `U`.
 
     If `CVids` is given, the norm will be computed only on the listed
     elements.@*/
-    sub_command
-      ("H2 norm", 1, 2, 0, 1,
-       U_is_a_vector(U, "H2 norm");
-       const getfem::mesh_im *mim = to_meshim_object(in.pop());
-       dal::bit_vector bv = in.remaining() ?
-       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-       if (!U.is_complex())
-         out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.real(), bv));
-       else out.pop().from_scalar(getfem::asm_H2_norm(*mim,*mf, U.cplx(), bv));
-       );
+  sub_command
+    ("H2 norm", 1, 2, 0, 1,
+     U_is_a_vector(U, "H2 norm");
+     const getfem::mesh_im *mim = to_meshim_object(in.pop());
+     dal::bit_vector bv = in.remaining() ?
+     in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+     if (!U.is_complex())
+       out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.real(), bv));
+     else
+       out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.cplx(), bv));
+     );
 
 
-    /*@FUNC DU = ('gradient', @tmf mf_du)
+  /*@FUNC DU = ('gradient', @tmf mf_du)
     Compute the gradient of the field `U` defined on @tmf `mf_du`.
 
     The gradient is interpolated on the @tmf `mf_du`, and returned in
@@ -396,35 +389,36 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Nmf_du is the number of dof of `mf_du`, and the optional Q dimension
     is inserted if `Qdim_mf != Qdim_mf_du`, where Qdim_mf is the Qdim of
     `mf` and Qdim_mf_du is the Qdim of `mf_du`.@*/
-    sub_command
-      ("gradient", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_grad = to_meshfem_object(in.pop());
-       error_for_non_lagrange_elements(*mf_grad, true);
-       size_type qm
-         = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
-       if (!U.is_complex())
-         gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
-       else
-         gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
-       );
+  sub_command
+    ("gradient", 1, 1, 0, 1,
+     const getfem::mesh_fem *mf_grad = to_meshfem_object(in.pop());
+     error_for_non_lagrange_elements(*mf_grad, true);
+     size_type qm
+       = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
+     if (!U.is_complex())
+       gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
+     else
+       gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
+     );
 
-    /*@FUNC HU = ('hessian', @tmf mf_h)
+
+  /*@FUNC HU = ('hessian', @tmf mf_h)
     Compute the hessian of the field `U` defined on @tmf `mf_h`.
 
     See also ::COMPUTE('gradient', @tmf mf_du).@*/
-    sub_command
-      ("hessian", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_hess = to_meshfem_object(in.pop());
-       error_for_non_lagrange_elements(*mf_hess, true);
-       size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
-       if (!U.is_complex())
-         gf_compute_hessian<scalar_type>(out, *mf, *mf_hess, U.real(), qm);
-       else
-         gf_compute_hessian<complex_type>(out, *mf, *mf_hess, U.cplx(), qm);
-       );
+  sub_command
+    ("hessian", 1, 1, 0, 1,
+     const getfem::mesh_fem *mf_hess = to_meshfem_object(in.pop());
+     error_for_non_lagrange_elements(*mf_hess, true);
+     size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
+     if (!U.is_complex())
+       gf_compute_hessian<scalar_type>(out, *mf, *mf_hess, U.real(), qm);
+     else
+       gf_compute_hessian<complex_type>(out, *mf, *mf_hess, U.cplx(), qm);
+     );
 
 
-    /*@FUNC UP = ('eval on triangulated surface', @int Nrefine, [@vec CVLIST])
+  /*@FUNC UP = ('eval on triangulated surface', @int Nrefine, [@vec CVLIST])
     [OBSOLETE FUNCTION! will be removed in a future release]
     Utility function designed for 2D triangular meshes : returns a list
     of triangles coordinates with interpolated U values. This can be
@@ -434,25 +428,24 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     interpolated values of U (one for each triangle vertex) CVLIST may
     indicate the list of convex number that should be consider, if not
     used then all the mesh convexes will be used. U should be a row
-    vector.
-    @*/
-    sub_command
-      ("eval on triangulated surface", 1, 2, 0, 1,
-       int Nrefine = in.pop().to_integer(1, 1000);
-       std::vector<convex_face> cvf;
-       if (in.remaining() && !in.front().is_string()) {
-         iarray v = in.pop().to_iarray(-1, -1);
-         build_convex_face_lst(mf->linked_mesh(), cvf, &v);
-       } else build_convex_face_lst(mf->linked_mesh(), cvf, 0);
-       if (U.sizes().getn() != mf->nb_dof()) {
-         THROW_BADARG("Wrong number of columns (need transpose ?)");
-       }
-       eval_on_triangulated_surface(&mf->linked_mesh(), Nrefine, cvf, out,
-                                    mf, U.real());
-       );
+    vector.@*/
+  sub_command
+    ("eval on triangulated surface", 1, 2, 0, 1,
+     int Nrefine = in.pop().to_integer(1, 1000);
+     std::vector<convex_face> cvf;
+     if (in.remaining() && !in.front().is_string()) {
+       iarray v = in.pop().to_iarray(-1, -1);
+       build_convex_face_lst(mf->linked_mesh(), cvf, &v);
+     } else build_convex_face_lst(mf->linked_mesh(), cvf, 0);
+     if (U.sizes().getn() != mf->nb_dof()) {
+       THROW_BADARG("Wrong number of columns (need transpose ?)");
+     }
+     eval_on_triangulated_surface(&mf->linked_mesh(), Nrefine, cvf, out,
+                                  mf, U.real());
+     );
 
 
-    /*@FUNC Ui = ('interpolate on', {@tmf mfi | @tsl sli | @vec pts})
+  /*@FUNC Ui = ('interpolate on', {@tmf mfi | @tsl sli | @vec pts})
     Interpolate a field on another @tmf or a @tsl or a list of points.
 
     - Interpolation on another @tmf `mfi`:
@@ -465,16 +458,15 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        points.
     - Interpolation on a set of points `pts`
 
-    See also ::ASM('interpolation matrix')
-    @*/
-    sub_command
-      ("interpolate on", 1, 1, 0, 1,
-       if (!U.is_complex()) gf_interpolate(in, out, *mf, U.real());
-       else                 gf_interpolate(in, out, *mf, U.cplx());
-      );
+    See also ::ASM('interpolation matrix')@*/
+  sub_command
+    ("interpolate on", 1, 1, 0, 1,
+     if (!U.is_complex()) gf_interpolate(in, out, *mf, U.real());
+     else                 gf_interpolate(in, out, *mf, U.cplx());
+    );
 
 
-    /*@FUNC Ue = ('extrapolate on', @tmf mfe)
+  /*@FUNC Ue = ('extrapolate on', @tmf mfe)
     Extrapolate a field on another @tmf.
 
     If the mesh of `mfe` is stricly included in the mesh of `mf`, this
@@ -485,77 +477,75 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     extrapolated.
 
     See also ::ASM('extrapolation matrix')@*/
-    sub_command
-      ("extrapolate on", 1, 1, 0, 1,
-       const getfem::mesh_fem *mf_dest = to_meshfem_object(in.pop());
-       error_for_non_lagrange_elements(*mf_dest, true);
-       if (!U.is_complex()) {
-         darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
-         getfem::interpolation(*mf, *mf_dest, U.real(), V, 2);
-       } else {
-         carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
-         getfem::interpolation(*mf, *mf_dest, U.cplx(), V, 2);
-       }
-       );
+  sub_command
+    ("extrapolate on", 1, 1, 0, 1,
+     const getfem::mesh_fem *mf_dest = to_meshfem_object(in.pop());
+     error_for_non_lagrange_elements(*mf_dest, true);
+     if (!U.is_complex()) {
+       darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
+       getfem::interpolation(*mf, *mf_dest, U.real(), V, 2);
+     } else {
+       carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
+       getfem::interpolation(*mf, *mf_dest, U.cplx(), V, 2);
+     }
+     );
 
 
-    /*@FUNC E = ('error estimate', @tmim mim)
+  /*@FUNC E = ('error estimate', @tmim mim)
     Compute an a posteriori error estimate.
 
     Currently there is only one which is available: for each convex,
     the jump of the normal derivative is integrated on its faces.@*/
-    sub_command
-      ("error_estimate", 1, 1, 0, 1,
-       const getfem::mesh_im &mim = *(to_meshim_object(in.pop()));
-       darray err =
-       out.pop().create_darray_h
-       (unsigned(mim.linked_mesh().convex_index().last_true()+1));
-       if (!U.is_complex())
-         getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
-       else {
-         getfem::base_vector err_imag(gmm::vect_size(err));
-         getfem::error_estimate(mim, *mf, gmm::imag_part(U.cplx()), err_imag,
-                                mim.convex_index());
-         getfem::error_estimate(mim, *mf, gmm::real_part(U.cplx()), err,
-                                mim.convex_index());
-         gmm::add(err_imag, err);
-       }
-       );
+  sub_command
+    ("error_estimate", 1, 1, 0, 1,
+     const getfem::mesh_im &mim = *(to_meshim_object(in.pop()));
+     darray err = out.pop().create_darray_h
+                            (unsigned(mim.linked_mesh()
+                                         .convex_index().last_true()+1));
+     if (!U.is_complex())
+       getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
+     else {
+       getfem::base_vector err_imag(gmm::vect_size(err));
+       getfem::error_estimate(mim, *mf, gmm::imag_part(U.cplx()), err_imag,
+                              mim.convex_index());
+       getfem::error_estimate(mim, *mf, gmm::real_part(U.cplx()), err,
+                              mim.convex_index());
+       gmm::add(err_imag, err);
+     }
+     );
 
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
 
-    /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda_, @scalar mu_, @scalar gamma0, @scalar f_coeff, @scalar vertical_force)
+  /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda_, @scalar mu_, @scalar gamma0, @scalar f_coeff, @scalar vertical_force)
     Compute an a posteriori error estimate in the case of Nitsche method.
 
     Currently there is only one which is available: for each convex,
     the jump of the normal derivative is integrated on its faces.@*/
-    sub_command
-      ("error_estimate_nitsche", 8, 8, 0, 1,
-       const getfem::mesh_im &mim = *to_meshim_object(in.pop());
-       int GAMMAC = in.pop().to_integer();
-       int GAMMAN = in.pop().to_integer();
-       scalar_type lambda = in.pop().to_scalar();
-       scalar_type mu = in.pop().to_scalar();
-       scalar_type gamma0 = in.pop().to_scalar();
-       scalar_type f_coeff = in.pop().to_scalar();
-       scalar_type vertical_force = in.pop().to_scalar();
-       unsigned si = unsigned(mim.linked_mesh().convex_index().last_true()+1);
-       darray err =
-       out.pop().create_darray_h(si);
-       getfem::base_vector ERR(si);
-       getfem::base_vector UU(U.real().size());
-       gmm::copy(U.real(), UU);
-       getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff,vertical_force, ERR);
-       gmm::copy(ERR, err);
-       );
+  sub_command
+    ("error_estimate_nitsche", 8, 8, 0, 1,
+     const getfem::mesh_im &mim = *to_meshim_object(in.pop());
+     int GAMMAC = in.pop().to_integer();
+     int GAMMAN = in.pop().to_integer();
+     scalar_type lambda = in.pop().to_scalar();
+     scalar_type mu = in.pop().to_scalar();
+     scalar_type gamma0 = in.pop().to_scalar();
+     scalar_type f_coeff = in.pop().to_scalar();
+     scalar_type vertical_force = in.pop().to_scalar();
+     unsigned si = unsigned(mim.linked_mesh().convex_index().last_true()+1);
+     darray err =
+     out.pop().create_darray_h(si);
+     getfem::base_vector ERR(si);
+     getfem::base_vector UU(U.real().size());
+     gmm::copy(U.real(), UU);
+     getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff,vertical_force, ERR);
+     gmm::copy(ERR, err);
+     );
 
 #endif
 
 
-
-
-    /*@FUNC ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
+  /*@FUNC ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
     Compute a convection of `U` with regards to a steady state velocity
     field `V` with a Characteristic-Galerkin method. The result is returned
     in-place in `U`.
@@ -570,68 +560,69 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     the two vectors per_min, per_max has to be given and represent the limits
     of the periodic domain (on components where per_max[k] < per_min[k]
     no operation is done).
-    This method is rather dissipative, but stable.
-    @*/
-    sub_command
-      ("convect", 4, 7, 0, 0,
-       const getfem::mesh_fem *mf_v = to_meshfem_object(in.pop());
-       rcarray V              = in.pop().to_rcarray();
-       scalar_type dt = in.pop().to_scalar();
-       size_type nt = in.pop().to_integer(0,100000);
-       std::string option;
-       if (in.remaining()) option = in.pop().to_string();
-       getfem::convect_boundary_option opt;
-       if (option.size() == 0)
-         opt = getfem::CONVECT_EXTRAPOLATION;
-       else if (cmd_strmatch(option, "extrapolation"))
-         opt = getfem::CONVECT_EXTRAPOLATION;
-       else if (cmd_strmatch(option, "periodicity"))
-         opt = getfem::CONVECT_PERIODICITY;
-       else if (cmd_strmatch(option, "unchanged"))
-         opt = getfem::CONVECT_UNCHANGED;
-       else
-         THROW_BADARG("Bad option " << option<< " for convect command. "
-                      "should be 'extrapolation', 'unchanged' or "
-                      "'periodicity'");
-
-       getfem::base_node per_min;
-       getfem::base_node per_max;
-       if (in.remaining()) {
-         rcarray pmin = in.pop().to_rcarray();
-         rcarray pmax = in.pop().to_rcarray();
-         size_type N = mf_v->linked_mesh().dim();
-         per_min.resize(N);
-         per_max.resize(N);
-         gmm::copy(pmin.real(), per_min);
-         gmm::copy(pmax.real(), per_max);
-       }
-
-       if (U.is_complex() || V.is_complex())
-         THROW_BADARG("Sorry, complex version of convect to be interfaced");
-       getfem::convect(*mf, U.real(), *mf_v, V.real(),
-                       dt, nt, opt, per_min, per_max);
-
-       );
-
-  }
+    This method is rather dissipative, but stable.@*/
+  sub_command
+    ("convect", 4, 7, 0, 0,
+     const getfem::mesh_fem *mf_v = to_meshfem_object(in.pop());
+     rcarray V              = in.pop().to_rcarray();
+     scalar_type dt = in.pop().to_scalar();
+     size_type nt = in.pop().to_integer(0,100000);
+     std::string option;
+     if (in.remaining()) option = in.pop().to_string();
+     getfem::convect_boundary_option opt;
+     if (option.size() == 0)
+       opt = getfem::CONVECT_EXTRAPOLATION;
+     else if (cmd_strmatch(option, "extrapolation"))
+       opt = getfem::CONVECT_EXTRAPOLATION;
+     else if (cmd_strmatch(option, "periodicity"))
+       opt = getfem::CONVECT_PERIODICITY;
+     else if (cmd_strmatch(option, "unchanged"))
+       opt = getfem::CONVECT_UNCHANGED;
+     else
+       THROW_BADARG("Bad option " << option<< " for convect command. "
+                    "should be 'extrapolation', 'unchanged' or "
+                    "'periodicity'");
+     getfem::base_node per_min;
+     getfem::base_node per_max;
+     if (in.remaining()) {
+       rcarray pmin = in.pop().to_rcarray();
+       rcarray pmax = in.pop().to_rcarray();
+       size_type N = mf_v->linked_mesh().dim();
+       per_min.resize(N);
+       per_max.resize(N);
+       gmm::copy(pmin.real(), per_min);
+       gmm::copy(pmax.real(), per_max);
+     }
+     if (U.is_complex() || V.is_complex())
+       THROW_BADARG("Sorry, complex version of convect to be interfaced");
+     getfem::convect(*mf, U.real(), *mf_v, V.real(),
+                     dt, nt, opt, per_min, per_max);
+     );
+} // build_sub_command_table
 
 
-  if (m_in.narg() < 3)  THROW_BADARG( "Wrong number of input arguments");
+void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
-  const getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
-  rcarray U              = m_in.pop().to_rcarray();
-  m_in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
 
+  if (in.narg() < 3) THROW_BADARG("Wrong number of input arguments");
+
+  const getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+  rcarray U                  = in.pop().to_rcarray();
+  in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
+  std::string init_cmd       = in.pop().to_string();
+  std::string cmd            = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, mf, U);
-  }
-  else bad_cmd(init_cmd);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, mf, U);
+  } else
+    bad_cmd(init_cmd);
 
 }
 

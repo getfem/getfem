@@ -32,7 +32,6 @@ using namespace getfemint;
 
 
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_ls_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -59,99 +58,97 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-
-
-void gf_levelset_get(getfemint::mexargs_in& m_in,
-                     getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@GET V = ('values', @int nls)
+void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@GET V = ('values', @int nls)
     Return the vector of dof for `nls` function.
 
     If `nls` is 0, the method return the vector of dof for the primary
     level-set function. If `nls` is 1, the method return the vector of
     dof for the secondary level-set function (if any).@*/
-    sub_command
-      ("values", 0, 1, 0, 1,
-       size_type il = 0;
-       if (in.remaining()) il = in.pop().to_integer(0, 1);
-       if (il != 0 && !ls.has_secondary())
-         THROW_BADARG("The levelset has not secondary term");
-       out.pop().from_dcvector(ls.values(unsigned(il)));
-       );
+  sub_command
+    ("values", 0, 1, 0, 1,
+     size_type il = 0;
+     if (in.remaining()) il = in.pop().to_integer(0, 1);
+     if (il != 0 && !ls.has_secondary())
+       THROW_BADARG("The levelset has not secondary term");
+     out.pop().from_dcvector(ls.values(unsigned(il)));
+     );
 
 
-    /*@RDATTR d = ('degree')
-      Return the degree of lagrange representation.@*/
-    sub_command
-      ("degree", 0, 0, 0, 1,
-       out.pop().from_integer(ls.degree());
-       );
+  /*@RDATTR d = ('degree')
+    Return the degree of lagrange representation.@*/
+  sub_command
+    ("degree", 0, 0, 0, 1,
+     out.pop().from_integer(ls.degree());
+     );
 
 
-    /*@GET mf = ('mf')
+  /*@GET mf = ('mf')
     Return a reference on the @tmf object.@*/
-    sub_command
-      ("mf", 0, 0, 0, 1,
-       getfem::mesh_fem *pmf=const_cast<getfem::mesh_fem*>(&ls.get_mesh_fem());
-       id_type id = workspace().object(pmf);
-       if (id == id_type(-1)) {
-         id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
-                                   (std::shared_ptr<getfem::mesh_fem>(), pmf));
-       }
-       out.pop().from_object_id(id, MESHFEM_CLASS_ID);
-       );
+  sub_command
+    ("mf", 0, 0, 0, 1,
+     getfem::mesh_fem *pmf=const_cast<getfem::mesh_fem*>(&ls.get_mesh_fem());
+     id_type id = workspace().object(pmf);
+     if (id == id_type(-1)) {
+       id = store_meshfem_object(std::shared_ptr<getfem::mesh_fem>
+                                 (std::shared_ptr<getfem::mesh_fem>(), pmf));
+     }
+     out.pop().from_object_id(id, MESHFEM_CLASS_ID);
+     );
 
 
-    /*@RDATTR z = ('memsize')
-      Return the amount of memory (in bytes) used by the level-set.@*/
-    sub_command
-      ("memsize", 0, 0, 0, 1,
-       out.pop().from_integer(int(ls.memsize()));
-       );
+  /*@RDATTR z = ('memsize')
+    Return the amount of memory (in bytes) used by the level-set.@*/
+  sub_command
+    ("memsize", 0, 0, 0, 1,
+     out.pop().from_integer(int(ls.memsize()));
+     );
 
 
-    /*@GET s = ('char')
-      Output a (unique) string representation of the @tls.
+  /*@GET s = ('char')
+    Output a (unique) string representation of the @tls.
 
-      This can be used to perform comparisons between two
-      different @tls objects.
-      This function is to be completed.
-      @*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       GMM_ASSERT1(false, "Sorry, function to be done");
-       // std::string s = ...;
-       // out.pop().from_string(s.c_str());
-       );
-
-
-    /*@GET ('display')
-      displays a short summary for a @tls.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfLevelSet object\n";
-       );
-
-  }
+    This can be used to perform comparisons between two
+    different @tls objects.
+    This function is to be completed.@*/
+  sub_command
+    ("char", 0, 0, 0, 1,
+     GMM_ASSERT1(false, "Sorry, function to be done");
+     // std::string s = ...;
+     // out.pop().from_string(s.c_str());
+     );
 
 
+  /*@GET ('display')
+    displays a short summary for a @tls.@*/
+  sub_command
+    ("display", 0, 0, 0, 0,
+     infomsg() << "gfLevelSet object\n";
+     );
 
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
+} // build_sub_command_table
 
-  getfem::level_set &ls = *(to_levelset_object(m_in.pop()));
-  std::string init_cmd  = m_in.pop().to_string();
+
+void gf_levelset_get(getfemint::mexargs_in& in,
+                     getfemint::mexargs_out& out) {
+
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
+  getfem::level_set &ls = *(to_levelset_object(in.pop()));
+  std::string init_cmd  = in.pop().to_string();
   std::string cmd       = cmd_normalize(init_cmd);
-
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, ls);
-  }
-  else bad_cmd(init_cmd);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, ls);
+  } else
+    bad_cmd(init_cmd);
 
 }

@@ -32,125 +32,53 @@ using namespace getfemint;
   of a convex structures are convex structures.
 @*/
 
+void gf_cvstruct_get(getfemint::mexargs_in& in,
+                     getfemint::mexargs_out& out) {
 
+  if (in.narg() < 2) THROW_BADARG( "Wrong number of input arguments");
 
-// Object for the declaration of a new sub-command.
+  bgeot::pconvex_structure cs = to_cvstruct_object(in.pop());
+  std::string init_cmd        = in.pop().to_string();
+  std::string cmd             = cmd_normalize(init_cmd);
 
-struct sub_gf_cvstruct_get : virtual public dal::static_stored_object {
-  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
-  virtual void run(getfemint::mexargs_in& in,
-                   getfemint::mexargs_out& out,
-                   const bgeot::pconvex_structure &cs) = 0;
-};
-
-typedef std::shared_ptr<sub_gf_cvstruct_get> psub_command;
-
-// Function to avoid warning in macro with unused arguments.
-template <typename T> static inline void dummy_func(T &) {}
-
-#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_cvstruct_get {                              \
-      virtual void run(getfemint::mexargs_in& in,                           \
-                       getfemint::mexargs_out& out,                         \
-                       const bgeot::pconvex_structure &cs)                  \
-      { dummy_func(in); dummy_func(out); dummy_func(cs); code }             \
-    };                                                                      \
-    psub_command psubc = std::make_shared<subc>();                          \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
-    subc_tab[cmd_normalize(name)] = psubc;                                  \
-  }
-
-
-
-
-void gf_cvstruct_get(getfemint::mexargs_in& m_in,
-                     getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
+  if (check_cmd(cmd, "nbpts", in, out, 0, 0, 0, 1)) {
     /*@RDATTR n = ('nbpts')
       Get the number of points of the convex structure.@*/
-    sub_command
-      ("nbpts", 0, 0, 0, 1,
-       out.pop().from_scalar(cs->nb_points());
-       );
-
-
+    out.pop().from_scalar(cs->nb_points());
+  } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
     /*@RDATTR d = ('dim')
       Get the dimension of the convex structure.@*/
-    sub_command
-      ("dim", 0, 0, 0, 1,
-       out.pop().from_scalar(cs->dim());
-       );
-
-
+    out.pop().from_scalar(cs->dim());
+  } else if (check_cmd(cmd, "basic_structure", in, out, 0, 0, 0, 1)) {
     /*@RDATTR cs = ('basic structure')
-    Get the simplest convex structure.
+      Get the simplest convex structure.
 
-    For example, the 'basic structure' of the 6-node triangle, is the
-    canonical 3-noded triangle.@*/
-    sub_command
-      ("basic_structure", 0, 0, 0, 1,
-       out.pop().from_object_id
-       (store_cvstruct_object(bgeot::basic_structure(cs)),
-        CVSTRUCT_CLASS_ID);
-       );
-
-
+      For example, the 'basic structure' of the 6-node triangle, is the
+      canonical 3-noded triangle.@*/
+    out.pop().from_object_id(store_cvstruct_object(bgeot::basic_structure(cs)),
+                             CVSTRUCT_CLASS_ID);
+  } else if (check_cmd(cmd, "face", in, out, 1, 1, 0, 1)) {
     /*@RDATTR cs = ('face', @int F)
       Return the convex structure of the face `F`.@*/
-    sub_command
-      ("face", 1, 1, 0, 1,
-       short_type f = in.pop().to_face_number(cs->nb_faces());
-       out.pop().from_object_id
-       (store_cvstruct_object(cs->faces_structure()[f]),
-        CVSTRUCT_CLASS_ID);
-       );
-
-
+    short_type f = in.pop().to_face_number(cs->nb_faces());
+    out.pop().from_object_id(store_cvstruct_object(cs->faces_structure()[f]),
+                             CVSTRUCT_CLASS_ID);
+  } else if (check_cmd(cmd, "facepts", in, out, 1, 1, 0, 1)) {
     /*@GET I = ('facepts', @int F)
       Return the list of point indices for the face `F`.@*/
-    sub_command
-      ("facepts", 1, 1, 0, 1,
-       short_type f = short_type(in.pop().to_face_number(cs->nb_faces()));
-       iarray w = out.pop().create_iarray_h(cs->nb_points_of_face(f));
-       for (size_type i=0; i < w.size(); ++i)
-         w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
-       );
-
+    short_type f = short_type(in.pop().to_face_number(cs->nb_faces()));
+    iarray w = out.pop().create_iarray_h(cs->nb_points_of_face(f));
+    for (size_type i=0; i < w.size(); ++i)
+      w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
+  } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
     /*@GET s = ('char')
       Output a string description of the @tcvstruct.@*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       GMM_ASSERT1(false,
-                   "No output format for a convex structure. To be done");
-       );
-
+    THROW_ERROR("No output format for a convex structure. To be done.");
+  } else if (check_cmd(cmd, "display", in, out, 0, 0, 0, 0)) {
     /*@GET ('display')
       displays a short summary for a @tcvstruct object.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfCvStruct (convex structure) in dimension "
-       << int(cs->dim()) << " with " << cs->nb_points() << "points. \n";
-       );
-
-
-  }
-
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-
-  bgeot::pconvex_structure cs = to_cvstruct_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
-
-  auto it = subc_tab.find(cmd);
-  if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, cs);
-  }
-  else bad_cmd(init_cmd);
+    infomsg() << "gfCvStruct (convex structure) in dimension "
+              << int(cs->dim()) << " with " << cs->nb_points() << "points.\n";
+  } else
+    bad_cmd(init_cmd);
 }

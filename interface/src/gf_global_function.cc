@@ -19,7 +19,7 @@
 
 ===========================================================================*/
 // $Id$
-#include <getfemint.h>
+
 #include <getfemint_workspace.h>
 #include <getfem/getfem_global_function.h>
 
@@ -65,89 +65,93 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void gf_global_function(getfemint::mexargs_in& m_in,
-                        getfemint::mexargs_out& m_out) {
+void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@INIT GF = ('cutoff', @int fn, @scalar r, @scalar r1, @scalar r0)
+    Create a cutoff global function.@*/
+  sub_command
+    ("cutoff", 4, 4, 0, 1,
+     size_type   fn = in.pop().to_integer(-1,2);
+     scalar_type r  = in.pop().to_scalar();
+     scalar_type r1 = in.pop().to_scalar();
+     scalar_type r0 = in.pop().to_scalar();
+
+     ggf = std::make_shared<getfem::cutoff_xy_function>(int(fn),r,r1,r0);
+     );
+
+
+  /*@INIT GF = ('crack', @int fn)
+    Create a near-tip asymptotic global function for modelling cracks.@*/
+  sub_command
+    ("crack", 1, 1, 0, 1,
+     size_type fn = in.pop().to_integer(0,11);
+     ggf = std::make_shared<getfem::crack_singular_xy_function>(unsigned(fn));
+     );
+
+
+  /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
+    Create a global function from strings `val`, `grad` and `hess`.
+    This function could be improved by using the derivation of the generic
+    assembly language ... to be done.@*/
+  sub_command
+    ("parser", 1, 3, 0, 1,
+     std::string sval = in.pop().to_string();
+     std::string sgrad = "[0;0]";
+     std::string shess = "[0,0;0,0]";
+     if (in.remaining() && in.front().is_string())
+       sgrad = in.pop().to_string();
+     if (in.remaining() && in.front().is_string())
+       shess = in.pop().to_string();
+     ggf = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
+     );
+
+
+  /*@INIT GF = ('product', @tgf F, @tgf G)
+    Create a product of two global functions.@*/
+  sub_command
+    ("product", 2, 2, 0, 1,
+     getfem::pxy_function af1 = to_global_function_object(in.pop());
+     getfem::pxy_function af2 = to_global_function_object(in.pop());
+     ggf = std::make_shared<getfem::product_of_xy_functions>(af1,af2);
+     );
+
+
+  /*@INIT GF = ('add', @tgf gf1, @tgf gf2)
+    Create a add of two global functions.@*/
+  sub_command
+    ("add", 2, 2, 0, 1,
+     getfem::pxy_function af1 = to_global_function_object(in.pop());
+     getfem::pxy_function af2 = to_global_function_object(in.pop());
+     ggf = std::make_shared<getfem::add_of_xy_functions>(af1,af2);
+     );
+
+} // build_sub_command_table
+
+
+
+void gf_global_function(getfemint::mexargs_in& in,
+                        getfemint::mexargs_out& out) {
+
   static std::map<std::string, psub_command > subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
 
-  if (subc_tab.empty()) {
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
 
-    /*@INIT GF = ('cutoff', @int fn, @scalar r, @scalar r1, @scalar r0)
-      Create a cutoff global function.@*/
-    sub_command
-      ("cutoff", 4, 4, 0, 1,
-       size_type   fn = in.pop().to_integer(-1,2);
-       scalar_type r  = in.pop().to_scalar();
-       scalar_type r1 = in.pop().to_scalar();
-       scalar_type r0 = in.pop().to_scalar();
-
-       ggf = std::make_shared<getfem::cutoff_xy_function>(int(fn),r,r1,r0);
-       );
-
-
-    /*@INIT GF = ('crack', @int fn)
-      Create a near-tip asymptotic global function for modelling cracks.@*/
-    sub_command
-      ("crack", 1, 1, 0, 1,
-       size_type fn = in.pop().to_integer(0,11);
-       ggf = std::make_shared<getfem::crack_singular_xy_function>(unsigned(fn));
-       );
-
-    /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
-      Create a global function from strings `val`, `grad` and `hess`.
-      This function could be improved by using the derivation of the generic
-      assembly language ... to be done. @*/
-    sub_command
-      ("parser", 1, 3, 0, 1,
-       std::string sval = in.pop().to_string();
-       std::string sgrad = "[0;0]";
-       std::string shess = "[0,0;0,0]";
-       if (in.remaining() && in.front().is_string())
-         sgrad = in.pop().to_string();
-       if (in.remaining() && in.front().is_string())
-         shess = in.pop().to_string();
-       ggf = std::make_shared<getfem::parser_xy_function>(sval,sgrad,shess);
-       );
-
-    /*@INIT GF = ('product', @tgf F, @tgf G)
-      Create a product of two global functions.@*/
-    sub_command
-      ("product", 2, 2, 0, 1,
-       getfem::pxy_function af1 = to_global_function_object(in.pop());
-       getfem::pxy_function af2 = to_global_function_object(in.pop());
-       ggf = std::make_shared<getfem::product_of_xy_functions>(af1,af2);
-       );
-
-
-    /*@INIT GF = ('add', @tgf gf1, @tgf gf2)
-      Create a add of two global functions.@*/
-    sub_command
-      ("add", 2, 2, 0, 1,
-       getfem::pxy_function af1 = to_global_function_object(in.pop());
-       getfem::pxy_function af2 = to_global_function_object(in.pop());
-       ggf = std::make_shared<getfem::add_of_xy_functions>(af1,af2);
-       );
-
-  }
-
-
-
-  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
-
-  getfem::pxy_function ggf;
-  std::string init_cmd   = m_in.pop().to_string();
+  std::string init_cmd   = in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
-
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, ggf);
-  }
-  else bad_cmd(init_cmd);
-
-  m_out.pop().from_object_id(store_global_function_object(ggf),
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    getfem::pxy_function ggf;
+    subcmd->run(in, out, ggf);
+    out.pop().from_object_id(store_global_function_object(ggf),
                              GLOBAL_FUNCTION_CLASS_ID);
+  } else
+    bad_cmd(init_cmd);
+
 }
 
 

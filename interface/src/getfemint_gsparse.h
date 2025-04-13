@@ -65,24 +65,24 @@ namespace getfemint
     t_wscmat_r& real_wsc(t_wscmat_r *p = 0)
     { if (p) { v = REAL; pwscmat_r = p; } return *pwscmat_r; }
     t_wscmat_c& cplx_wsc(t_wscmat_c *p = 0)
-    { if (p) { v = COMPLEX; pwscmat_c = p; }return *pwscmat_c; }
-    t_cscmat_ref_r real_csc() { 
-      if (gfimat && !gfi_array_is_complex(gfimat)) 
-        return t_cscmat_ref_r(gfi_sparse_get_pr(gfimat), 
-                              gfi_sparse_get_ir(gfimat), 
+    { if (p) { v = COMPLEX; pwscmat_c = p; } return *pwscmat_c; }
+    t_cscmat_ref_r real_csc() {
+      if (gfimat && !gfi_array_is_complex(gfimat))
+        return t_cscmat_ref_r(gfi_sparse_get_pr(gfimat),
+                              gfi_sparse_get_ir(gfimat),
                               gfi_sparse_get_jc(gfimat),
                               gfi_array_get_dim(gfimat)[0],
                               gfi_array_get_dim(gfimat)[1]);
       else if (pcscmat_r)
         return t_cscmat_ref_r(&pcscmat_r->pr[0], &pcscmat_r->ir[0],
-                              &pcscmat_r->jc[0], 
+                              &pcscmat_r->jc[0],
                               gmm::mat_nrows(*pcscmat_r),
                               gmm::mat_ncols(*pcscmat_r));
       else THROW_INTERNAL_ERROR;
     }
     t_cscmat_r& real_csc_w(t_cscmat_r *p=0)
     { if (p) { v = REAL; pcscmat_r = p; } return *pcscmat_r; }
-    t_cscmat_ref_c cplx_csc() { 
+    t_cscmat_ref_c cplx_csc() {
       if (gfimat && gfi_array_is_complex(gfimat)) {
         // unsigned nc = gfi_array_get_dim(gfimat)[1];
         // cout << "jc = [";
@@ -97,17 +97,17 @@ namespace getfemint
         // for (unsigned i = 0; i < 2*(gfi_sparse_get_jc(gfimat))[nc]; ++i)
         //   cout << (gfi_sparse_get_pr(gfimat))[i] << ", ";
         // cout << "]" << endl;
-        return t_cscmat_ref_c((complex_type*)gfi_sparse_get_pr(gfimat), 
-                              gfi_sparse_get_ir(gfimat), 
+        return t_cscmat_ref_c((complex_type*)gfi_sparse_get_pr(gfimat),
+                              gfi_sparse_get_ir(gfimat),
                               gfi_sparse_get_jc(gfimat),
                               gfi_array_get_dim(gfimat)[0],
                               gfi_array_get_dim(gfimat)[1]);
       }
       else if (pcscmat_c)
         return t_cscmat_ref_c(&pcscmat_c->pr[0], &pcscmat_c->ir[0],
-                              &pcscmat_c->jc[0], 
+                              &pcscmat_c->jc[0],
                               gmm::mat_nrows(*pcscmat_c),
-                              gmm::mat_ncols(*pcscmat_c)); 
+                              gmm::mat_ncols(*pcscmat_c));
       else THROW_INTERNAL_ERROR;
     }
     t_cscmat_c& cplx_csc_w(t_cscmat_c *p=0)
@@ -127,7 +127,7 @@ namespace getfemint
     gsparse(const gfi_array *a);
     storage_type storage() const { return s; }
     bool is_complex() const { return v == COMPLEX; }
-    bool is_a_native_matrix_ref() const 
+    bool is_a_native_matrix_ref() const
     { return (gfimat != 0); }
     void destroy();
     void allocate(size_type m, size_type n, storage_type s_,
@@ -146,15 +146,15 @@ namespace getfemint
     size_type nrows() const;
     size_type nnz() const;
     const char *name() { if (s == WSCMAT) return "WSC"; else return "CSC"; }
-    template <typename V1, typename V2> void 
+    template <typename V1, typename V2> void
     mult_or_transposed_mult(const V1 &vv, V2 &ww, bool tmult) {
       typedef typename gmm::linalg_traits<V1>::value_type T;
       switch (storage()) {
-        case CSCMAT: 
+        case CSCMAT:
           if (!tmult) gmm::mult(csc(T()), vv, ww);
           else gmm::mult(gmm::conjugated(csc(T())), vv, ww);
           break;
-        case WSCMAT: 
+        case WSCMAT:
           if (!tmult) gmm::mult(wsc(T()), vv, ww);
           else gmm::mult(gmm::conjugated(wsc(T())), vv, ww);
           break;

@@ -57,117 +57,116 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
+void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@RDATTR d = ('dim')
+    Get the dimension of the @tgt.
+
+    This is the dimension of the source space, i.e. the dimension of
+    the reference convex.@*/
+  sub_command
+    ("dim", 0, 0, 0, 1,
+     out.pop().from_scalar(pgt->dim());
+     );
 
 
-
-void gf_geotrans_get(getfemint::mexargs_in& m_in,
-                     getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@RDATTR d = ('dim')
-      Get the dimension of the @tgt.
-
-      This is the dimension of the source space, i.e. the dimension of
-      the reference convex.@*/
-    sub_command
-      ("dim", 0, 0, 0, 1,
-       out.pop().from_scalar(pgt->dim());
-       );
+  /*@RDATTR b = ('is_linear')
+    Return 0 if the @tgt is not linear.@*/
+  sub_command
+    ("is_linear", 0, 0, 0, 1,
+     out.pop().from_scalar(pgt->is_linear() ? 1. : 0.);
+     );
 
 
-    /*@RDATTR b = ('is_linear')
-      Return 0 if the @tgt is not linear.@*/
-    sub_command
-      ("is_linear", 0, 0, 0, 1,
-       out.pop().from_scalar(pgt->is_linear() ? 1. : 0.);
-       );
+  /*@RDATTR n = ('nbpts')
+    Return the number of points of the @tgt.@*/
+  sub_command
+    ("nbpts", 0, 0, 0, 1,
+     out.pop().from_scalar(double(pgt->nb_points()));
+     );
 
 
-    /*@RDATTR n = ('nbpts')
-      Return the number of points of the @tgt.@*/
-    sub_command
-      ("nbpts", 0, 0, 0, 1,
-       out.pop().from_scalar(double(pgt->nb_points()));
-       );
+  /*@GET P = ('pts')
+    Return the reference convex points of the @tgt.
+
+    The points are stored in the columns of the output matrix.@*/
+  sub_command
+    ("pts", 0, 0, 0, 1,
+     out.pop().from_vector_container(pgt->convex_ref()->points());
+     );
 
 
-    /*@GET P = ('pts')
-      Return the reference convex points of the @tgt.
+  /*@GET N = ('normals')
+    Get the normals for each face of the reference convex of the @tgt.
 
-      The points are stored in the columns of the output matrix.@*/
-    sub_command
-      ("pts", 0, 0, 0, 1,
-       out.pop().from_vector_container(pgt->convex_ref()->points());
-       );
-
-
-    /*@GET N = ('normals')
-      Get the normals for each face of the reference convex of the @tgt.
-
-      The normals are stored in the columns of the output matrix.@*/
-    sub_command
-      ("normals", 0, 0, 0, 1,
-       out.pop().from_vector_container(pgt->normals());
-       );
+    The normals are stored in the columns of the output matrix.@*/
+  sub_command
+    ("normals", 0, 0, 0, 1,
+     out.pop().from_vector_container(pgt->normals());
+     );
 
 
-    /*@GET Pt = ('transform',@mat G, @mat Pr)
-      Apply the @tgt to a set of points.
+  /*@GET Pt = ('transform',@mat G, @mat Pr)
+    Apply the @tgt to a set of points.
 
-      `G` is the set of vertices of the real convex, `Pr` is the set
-      of points (in the reference convex) that are to be transformed.
-      The corresponding set of points in the real convex is returned.@*/
-    sub_command
-      ("transform", 2, 2, 0, 1,
-       getfem::base_matrix G = in.pop().to_darray(-1, -1).row_col_to_bm();
-       darray pts = in.pop().to_darray(pgt->dim(), -1);
-       darray w = out.pop().create_darray(unsigned(G.nrows()), pts.getn());
-       for (unsigned i=0; i < pts.getn(); ++i) {
-         getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
-         for (size_type k=0; k < P.size(); ++k) w(k,i) = P[k];
-       }
-       );
-
-
-    /*@GET s = ('char')
-      Output a (unique) string representation of the @tgt.
-
-      This can be used to perform comparisons between two
-      different @tgt objects. @*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       std::string s = bgeot::name_of_geometric_trans(pgt);
-       out.pop().from_string(s.c_str());
-       );
+    `G` is the set of vertices of the real convex, `Pr` is the set
+    of points (in the reference convex) that are to be transformed.
+    The corresponding set of points in the real convex is returned.@*/
+  sub_command
+    ("transform", 2, 2, 0, 1,
+     getfem::base_matrix G = in.pop().to_darray(-1, -1).row_col_to_bm();
+     darray pts = in.pop().to_darray(pgt->dim(), -1);
+     darray w = out.pop().create_darray(unsigned(G.nrows()), pts.getn());
+     for (unsigned i=0; i < pts.getn(); ++i) {
+       getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
+       for (size_type k=0; k < P.size(); ++k) w(k,i) = P[k];
+     }
+     );
 
 
-    /*@GET ('display')
+  /*@GET s = ('char')
+    Output a (unique) string representation of the @tgt.
+
+    This can be used to perform comparisons between two
+    different @tgt objects. @*/
+  sub_command
+    ("char", 0, 0, 0, 1,
+     std::string s = bgeot::name_of_geometric_trans(pgt);
+     out.pop().from_string(s.c_str());
+     );
+
+
+  /*@GET ('display')
     displays a short summary for a @tgt object.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfGeoTrans object " << bgeot::name_of_geometric_trans(pgt)
-       << " in dimension " << int(pgt->dim())
-       << ", with " << pgt->nb_points() << " points \n";
-       );
+  sub_command
+    ("display", 0, 0, 0, 0,
+     infomsg() << "gfGeoTrans object " << bgeot::name_of_geometric_trans(pgt)
+     << " in dimension " << int(pgt->dim())
+     << ", with " << pgt->nb_points() << " points \n";
+     );
 
-  }
+} // build_sub_command_table
 
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  bgeot::pgeometric_trans pgt = to_geotrans_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+void gf_geotrans_get(getfemint::mexargs_in& in,
+                     getfemint::mexargs_out& out) {
 
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
+  bgeot::pgeometric_trans pgt = to_geotrans_object(in.pop());
+  std::string init_cmd        = in.pop().to_string();
+  std::string cmd             = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, pgt);
-  }
-  else bad_cmd(init_cmd);
-
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, pgt);
+  } else
+    bad_cmd(init_cmd);
 
 }
