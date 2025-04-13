@@ -65,7 +65,8 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@INIT GF = ('cutoff', @int fn, @scalar r, @scalar r1, @scalar r0)
     Create a cutoff global function.@*/
   sub_command
@@ -131,7 +132,7 @@ void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
 void gf_global_function(getfemint::mexargs_in& in,
                         getfemint::mexargs_out& out) {
 
-  static std::map<std::string, psub_command > subc_tab;
+  static std::map<std::string, psub_command> subc_tab;
   if (subc_tab.empty())
     build_sub_command_table(subc_tab);
 

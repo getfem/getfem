@@ -32,6 +32,7 @@
 using namespace getfemint;
 
 typedef enum {IS_LAGRANGE, IS_EQUIVALENT, IS_POLYNOMIAL} test_what;
+
 static void
 test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
           mexargs_out& out) {
@@ -197,18 +198,13 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   }
 }
 
+
 /*@GFDOC
   General function for inquiry about mesh_fem objects.
-  @*/
-
-
-
-
-
+@*/
 
 
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_mf_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -235,48 +231,41 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-
-
-
-void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
-                     getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@RDATTR n = ('nbdof')
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@RDATTR n = ('nbdof')
     Return the number of degrees of freedom (dof) of the @tmf.@*/
-    sub_command
-      ("nbdof", 0, 0, 0, 1,
-       out.pop().from_integer(int(mf->nb_dof()));
-       );
+  sub_command
+    ("nbdof", 0, 0, 0, 1,
+     out.pop().from_integer(int(mf->nb_dof()));
+     );
 
 
-    /*@RDATTR n = ('nb basic dof')
+  /*@RDATTR n = ('nb basic dof')
     Return the number of basic degrees of freedom (dof) of the @tmf.@*/
-    sub_command
-      ("nb basic dof", 0, 0, 0, 1,
-       out.pop().from_integer(int(mf->nb_basic_dof()));
-       );
+  sub_command
+    ("nb basic dof", 0, 0, 0, 1,
+     out.pop().from_integer(int(mf->nb_basic_dof()));
+     );
 
 
-    /*@GET DOF = ('dof from cv',@mat CVids)
+  /*@GET DOF = ('dof from cv',@mat CVids)
     Deprecated function. Use MESH_FEM:GET('basic dof from cv') instead. @*/
-    sub_command
-      ("dof from cv", 1, 1, 0, 1,
-       infomsg() << "WARNING : gf_mesh_fem_get('dof from cv', ...) is a "
-       << "deprecated command.\n"
-       << "          Use gf_mesh_fem_get('basic dof from cv', "
-       << "...) instead." << endl;
-       dal::bit_vector dof = get_cv_dof_list(mf, in);
-       out.pop().from_bit_vector(dof);
-       );
+  sub_command
+    ("dof from cv", 1, 1, 0, 1,
+     infomsg() << "WARNING : gf_mesh_fem_get('dof from cv', ...) is a"
+               << " deprecated command.\n"
+               << "          Use gf_mesh_fem_get('basic dof from cv',"
+               << " ...) instead." << endl;
+     dal::bit_vector dof = get_cv_dof_list(mf, in);
+     out.pop().from_bit_vector(dof);
+     );
 
 
-    /*@GET DOF = ('basic dof from cv',@mat CVids)
+  /*@GET DOF = ('basic dof from cv',@mat CVids)
     Return the dof of the convexes listed in `CVids`.
 
-    WARNING: the Degree of Freedom might be returned in ANY order, do
+    WARNING: the degrees of freedom might be returned in ANY order, do
     not use this function in your assembly routines. Use 'basic dof from cvid'
     instead, if you want to be able to map a convex number with its
     associated degrees of freedom.
@@ -284,49 +273,49 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     One can also get the list of basic dof on a set on convex faces, by
     indicating on the second row of `CVids` the faces numbers (with
     respect to the convex number on the first row).@*/
-    sub_command
-      ("basic dof from cv", 1, 1, 0, 1,
-       dal::bit_vector dof = get_cv_dof_list(mf, in);
-       out.pop().from_bit_vector(dof);
-       );
+  sub_command
+    ("basic dof from cv", 1, 1, 0, 1,
+     dal::bit_vector dof = get_cv_dof_list(mf, in);
+     out.pop().from_bit_vector(dof);
+     );
 
 
-    /*@GET @CELL{DOFs, IDx} = ('dof from cvid'[, @mat CVids])
-      Deprecated function. Use MESH_FEM:GET('basic dof from cvid') instead.
-      @*/
-    sub_command
-      ("dof from cvid", 0, 1, 0, 2,
-       infomsg() << "WARNING : gf_mesh_fem_get('dof from cvid', ...) is a "
-       << "deprecated command.\n          Use gf_mesh_fem_get('basic "
-       << "dof from cvid', ...) instead." << endl;
-       dal::bit_vector cvlst;
-       if (in.remaining()) cvlst = in.pop().to_bit_vector();
-       else cvlst.add(0, mf->linked_mesh().convex_index().last_true() + 1);
+  /*@GET @CELL{DOFs, IDx} = ('dof from cvid'[, @mat CVids])
+    Deprecated function. Use MESH_FEM:GET('basic dof from cvid') instead.@*/
+  sub_command
+    ("dof from cvid", 0, 1, 0, 2,
+     infomsg() << "WARNING : gf_mesh_fem_get('dof from cvid', ...) is a"
+               << " deprecated command.\n"
+               << "           Use gf_mesh_fem_get('basic dof from cvid',"
+               << " ...) instead." << endl;
+     dal::bit_vector cvlst;
+     if (in.remaining()) cvlst = in.pop().to_bit_vector();
+     else cvlst.add(0, mf->linked_mesh().convex_index().last_true() + 1);
 
-       std::vector<size_type> pids;
-       std::vector<size_type> idx;
-       size_type pcnt = 0;
-       for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-         idx.push_back(size_type(pcnt + config::base_index()));
-         if (mf->convex_index().is_in(cv))
-           for (size_type i = 0; i < mf->nb_basic_dof_of_element(cv);
-                ++i, ++pcnt)
-             pids.push_back
-               (size_type(mf->ind_basic_dof_of_element(cv)[i]
-                          + config::base_index()));
-       }
+     std::vector<size_type> pids;
+     std::vector<size_type> idx;
+     size_type pcnt = 0;
+     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
        idx.push_back(size_type(pcnt + config::base_index()));
+       if (mf->convex_index().is_in(cv))
+         for (size_type i = 0; i < mf->nb_basic_dof_of_element(cv);
+              ++i, ++pcnt)
+           pids.push_back
+             (size_type(mf->ind_basic_dof_of_element(cv)[i]
+                        + config::base_index()));
+     }
+     idx.push_back(size_type(pcnt + config::base_index()));
 
-       iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
-       if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
-       if (out.remaining() && idx.size()) {
-         iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
-         std::copy(idx.begin(), idx.end(), &oidx[0]);
-       }
-       );
+     iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
+     if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
+     if (out.remaining() && idx.size()) {
+       iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
+       std::copy(idx.begin(), idx.end(), &oidx[0]);
+     }
+     );
 
 
-    /*@GET @CELL{DOFs, IDx} = ('basic dof from cvid'[, @mat CVids])
+  /*@GET @CELL{DOFs, IDx} = ('basic dof from cvid'[, @mat CVids])
     Return the degrees of freedom attached to each convex of the mesh.
 
     If `CVids` is omitted, all the convexes will be considered (equivalent
@@ -340,45 +329,44 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     If `CVids` contains convex #id which do not exist in the mesh, their
     point list will be empty.@*/
-    sub_command
-      ("basic dof from cvid", 0, 1, 0, 2,
-       dal::bit_vector cvlst;
-       if (in.remaining()) cvlst = in.pop().to_bit_vector();
-       else cvlst.add(0, mf->linked_mesh().convex_index().last_true() + 1);
+  sub_command
+    ("basic dof from cvid", 0, 1, 0, 2,
+     dal::bit_vector cvlst;
+     if (in.remaining()) cvlst = in.pop().to_bit_vector();
+     else cvlst.add(0, mf->linked_mesh().convex_index().last_true() + 1);
 
-       std::vector<size_type> pids;
-       std::vector<size_type> idx;
-       size_type pcnt = 0;
-       for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-         idx.push_back(size_type(pcnt + config::base_index()));
-         if (mf->convex_index().is_in(cv))
-           for (size_type i = 0; i< mf->nb_basic_dof_of_element(cv); ++i, ++pcnt)
-             pids.push_back(size_type(mf->ind_basic_dof_of_element(cv)[i] + config::base_index()));
-       }
+     std::vector<size_type> pids;
+     std::vector<size_type> idx;
+     size_type pcnt = 0;
+     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
        idx.push_back(size_type(pcnt + config::base_index()));
+       if (mf->convex_index().is_in(cv))
+         for (size_type i = 0; i< mf->nb_basic_dof_of_element(cv); ++i, ++pcnt)
+           pids.push_back(size_type(mf->ind_basic_dof_of_element(cv)[i] + config::base_index()));
+     }
+     idx.push_back(size_type(pcnt + config::base_index()));
 
-       iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
-       if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
-       if (out.remaining() && idx.size()) {
-         iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
-         std::copy(idx.begin(), idx.end(), &oidx[0]);
-       }
-       );
-
-
-    /*@GET ('non conformal dof'[, @mat CVids])
-      Deprecated function. Use MESH_FEM:GET('non conformal basic dof') instead.
-      @*/
-    sub_command
-      ("non conformal dof", 0, 1, 0, 1,
-       infomsg() << "WARNING : gf_mesh_fem_get('non conformal dof', ...) is a "
-       << "deprecated command.\n          Use gf_mesh_fem_get('non "
-       << "conformal basic dof', ...) instead." << endl;
-       non_conformal_dof(*mf, in, out);
-       );
+     iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
+     if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
+     if (out.remaining() && idx.size()) {
+       iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
+       std::copy(idx.begin(), idx.end(), &oidx[0]);
+     }
+     );
 
 
-    /*@GET ('non conformal basic dof'[, @mat CVids])
+  /*@GET ('non conformal dof'[, @mat CVids])
+    Deprecated function. Use MESH_FEM:GET('non conformal basic dof') instead.@*/
+  sub_command
+    ("non conformal dof", 0, 1, 0, 1,
+     infomsg() << "WARNING : gf_mesh_fem_get('non conformal dof', ...) is a "
+     << "deprecated command.\n          Use gf_mesh_fem_get('non "
+     << "conformal basic dof', ...) instead." << endl;
+     non_conformal_dof(*mf, in, out);
+     );
+
+
+  /*@GET ('non conformal basic dof'[, @mat CVids])
     Return partially linked degrees of freedom.
 
     Return the basic dof located on the border of a convex and which belong
@@ -388,58 +376,58 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     middle of the face will be returned by this function (this can be
     useful when searching the interfaces between classical FEM and
     hierarchical FEM).@*/
-    sub_command
-      ("non conformal basic dof", 0, 1, 0, 1,
-       non_conformal_dof(*mf, in, out);
-       );
+  sub_command
+    ("non conformal basic dof", 0, 1, 0, 1,
+     non_conformal_dof(*mf, in, out);
+     );
 
 
-    /*@RDATTR ('qdim')
+  /*@RDATTR ('qdim')
     Return the dimension Q of the field interpolated by the @tmf.
 
     By default, Q=1 (scalar field). This has an impact on the dof numbering.@*/
-    sub_command
-      ("qdim", 0, 0, 0, 1,
-       out.pop().from_integer(mf->get_qdim());
-       );
+  sub_command
+    ("qdim", 0, 0, 0, 1,
+     out.pop().from_integer(mf->get_qdim());
+     );
 
 
-    /*@GET @CELL{FEMs, CV2F} = ('fem'[, @mat CVids])
-      Return a list of FEM used by the @tmf.
+  /*@GET @CELL{FEMs, CV2F} = ('fem'[, @mat CVids])
+    Return a list of FEM used by the @tmf.
 
-      `FEMs` is an array of all @tfem objects found in the convexes
-      given in `CVids`. If `CV2F` was supplied as an output argument,
-      it contains, for each convex listed in `CVids`, the index of its
-      correspounding FEM in `FEMs`.
+    `FEMs` is an array of all @tfem objects found in the convexes
+    given in `CVids`. If `CV2F` was supplied as an output argument,
+    it contains, for each convex listed in `CVids`, the index of its
+    correspounding FEM in `FEMs`.
 
-      Convexes which are not part of the mesh, or convexes which do not
-      have any FEM have their correspounding entry in `CV2F` set to -1.
-      @MATLAB{
-      Example::
+    Convexes which are not part of the mesh, or convexes which do not
+    have any FEM have their correspounding entry in `CV2F` set to -1.
+    @MATLAB{
+    Example::
 
-        cvid=gf_mesh_get(mf,'cvid');
-        [f,c2f]=gf_mesh_fem_get(mf, 'fem');
-        for i=1:size(f), sf{i}=gf_fem_get('char',f(i)); end;
-        for i=1:size(c2f),
-           disp(sprintf('the fem of convex %d is %s',...
-              cvid(i),sf{i}));
-        end;}
-      @*/
-    sub_command
-      ("fem", 0, 1, 0, 2,
-       get_basic_fem_of_convexes(*mf, in, out);
-       );
+      cvid=gf_mesh_get(mf,'cvid');
+      [f,c2f]=gf_mesh_fem_get(mf, 'fem');
+      for i=1:size(f), sf{i}=gf_fem_get('char',f(i)); end;
+      for i=1:size(c2f),
+         disp(sprintf('the fem of convex %d is %s',...
+            cvid(i),sf{i}));
+      end;
+    }@*/
+  sub_command
+    ("fem", 0, 1, 0, 2,
+     get_basic_fem_of_convexes(*mf, in, out);
+     );
 
 
-    /*@GET CVs = ('convex_index')
+  /*@GET CVs = ('convex_index')
     Return the list of convexes who have an FEM.@*/
-    sub_command
-      ("convex_index", 0, 0, 0, 1,
-       out.pop().from_bit_vector(mf->convex_index());
-       );
+  sub_command
+    ("convex_index", 0, 0, 0, 1,
+     out.pop().from_bit_vector(mf->convex_index());
+     );
 
 
-    /*@GET bB = ('is_lagrangian'[, @mat CVids])
+  /*@GET bB = ('is_lagrangian'[, @mat CVids])
     Test if the @tmf is Lagrangian.
 
     Lagrangian means that each base function Phi[i] is such that
@@ -449,98 +437,101 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     If `CVids` is omitted, it returns 1 if all convexes in the mesh
     are Lagrangian. If `CVids` is used, it returns the convex indices
     (with respect to `CVids`) which are Lagrangian.@*/
-    sub_command
-      ("is_lagrangian", 0, 1, 0, 1,
-       test_fems(IS_LAGRANGE , mf, in, out);
-       );
+  sub_command
+    ("is_lagrangian", 0, 1, 0, 1,
+     test_fems(IS_LAGRANGE , mf, in, out);
+     );
 
 
-    /*@GET bB = ('is_equivalent'[, @mat CVids])
+  /*@GET bB = ('is_equivalent'[, @mat CVids])
     Test if the @tmf is equivalent.
 
     See MESH_FEM:GET('is_lagrangian')@*/
-    sub_command
-      ("is_equivalent", 0, 1, 0, 1,
-       test_fems(IS_EQUIVALENT, mf, in, out);
-       );
+  sub_command
+    ("is_equivalent", 0, 1, 0, 1,
+     test_fems(IS_EQUIVALENT, mf, in, out);
+     );
 
 
-    /*@GET bB = ('is_polynomial'[, @mat CVids])
-      Test if all base functions are polynomials.
+  /*@GET bB = ('is_polynomial'[, @mat CVids])
+    Test if all base functions are polynomials.
 
-      See MESH_FEM:GET('is_lagrangian')@*/
-    sub_command
-      ("is_polynomial", 0, 1, 0, 1,
-       test_fems(IS_POLYNOMIAL, mf, in, out);
-       );
+    See MESH_FEM:GET('is_lagrangian')@*/
+  sub_command
+    ("is_polynomial", 0, 1, 0, 1,
+     test_fems(IS_POLYNOMIAL, mf, in, out);
+     );
 
 
-    /*@RDATTR bB = ('is_reduced')
+  /*@RDATTR bB = ('is_reduced')
     Return 1 if the optional reduction matrix is applied to the dofs.@*/
-    sub_command
-      ("is_reduced", 0, 0, 0, 1,
-       out.pop().from_integer(mf->is_reduced() ? 1 : 0);
-       );
+  sub_command
+    ("is_reduced", 0, 0, 0, 1,
+     out.pop().from_integer(mf->is_reduced() ? 1 : 0);
+     );
 
 
-    /*@GET bB = ('reduction matrix')
+  /*@GET bB = ('reduction matrix')
     Return the optional reduction matrix.@*/
-    sub_command
-      ("reduction matrix", 0, 0, 0, 1,
-       getfemint::gf_real_sparse_by_col
-       M(gmm::mat_nrows(mf->reduction_matrix()),
-         gmm::mat_ncols(mf->reduction_matrix()));
-       gmm::copy(mf->reduction_matrix(), M);
-       out.pop().from_sparse(M);
-       );
+  sub_command
+    ("reduction matrix", 0, 0, 0, 1,
+     getfemint::gf_real_sparse_by_col
+     M(gmm::mat_nrows(mf->reduction_matrix()),
+       gmm::mat_ncols(mf->reduction_matrix()));
+     gmm::copy(mf->reduction_matrix(), M);
+     out.pop().from_sparse(M);
+     );
 
 
-    /*@GET bB = ('extension matrix')
+  /*@GET bB = ('extension matrix')
     Return the optional extension matrix.@*/
-    sub_command
-      ("extension matrix", 0, 0, 0, 1,
-       getfemint::gf_real_sparse_by_col
-       M(gmm::mat_nrows(mf->extension_matrix()),
-         gmm::mat_ncols(mf->extension_matrix()));
-       gmm::copy(mf->extension_matrix(), M);
-       out.pop().from_sparse(M);
-       );
+  sub_command
+    ("extension matrix", 0, 0, 0, 1,
+     getfemint::gf_real_sparse_by_col
+     M(gmm::mat_nrows(mf->extension_matrix()),
+       gmm::mat_ncols(mf->extension_matrix()));
+     gmm::copy(mf->extension_matrix(), M);
+     out.pop().from_sparse(M);
+     );
 
-    /*@GET Vr = ('reduce vector', @vec V)
-      Multiply the provided vector V with the extension matrix of the @tmf.@*/
-    sub_command
-      ("reduce vector", 1, 1, 0, 1,
-       if (in.front().is_complex()) {
-         carray V = in.pop().to_carray(-1);
-         std::vector<std::complex<double> > Vr(mf->nb_dof());
-         mf->reduce_vector(V, Vr);
-         out.pop().from_dcvector(Vr);
-       } else {
-         darray V = in.pop().to_darray(-1);
-         std::vector<double> Vr(mf->nb_dof());
-         mf->reduce_vector(V, Vr);
-         out.pop().from_dcvector(Vr);
-       }
-       );
 
-    /*@GET Ve = ('extend vector', @vec V)
-      Multiply the provided vector V with the reduction matrix of the @tmf.@*/
-    sub_command
-      ("extend vector", 1, 1, 0, 1,
-       if (in.front().is_complex()) {
-         carray V = in.pop().to_carray(-1);
-         std::vector<std::complex<double> > Ve(mf->nb_basic_dof());
-         mf->extend_vector(V, Ve);
-         out.pop().from_dcvector(Ve);
-       } else {
-         darray V = in.pop().to_darray(-1);
-         std::vector<double> Ve(mf->nb_basic_dof());
-         mf->extend_vector(V, Ve);
-         out.pop().from_dcvector(Ve);
-       }
-       );
+  /*@GET Vr = ('reduce vector', @vec V)
+    Multiply the provided vector V with the extension matrix of the @tmf.@*/
+  sub_command
+    ("reduce vector", 1, 1, 0, 1,
+     if (in.front().is_complex()) {
+       carray V = in.pop().to_carray(-1);
+       std::vector<std::complex<double> > Vr(mf->nb_dof());
+       mf->reduce_vector(V, Vr);
+       out.pop().from_dcvector(Vr);
+     } else {
+       darray V = in.pop().to_darray(-1);
+       std::vector<double> Vr(mf->nb_dof());
+       mf->reduce_vector(V, Vr);
+       out.pop().from_dcvector(Vr);
+     }
+     );
 
-    /*@GET DOFs = ('basic dof on region',@mat Rs)
+
+  /*@GET Ve = ('extend vector', @vec V)
+    Multiply the provided vector V with the reduction matrix of the @tmf.@*/
+  sub_command
+    ("extend vector", 1, 1, 0, 1,
+     if (in.front().is_complex()) {
+       carray V = in.pop().to_carray(-1);
+       std::vector<std::complex<double> > Ve(mf->nb_basic_dof());
+       mf->extend_vector(V, Ve);
+       out.pop().from_dcvector(Ve);
+     } else {
+       darray V = in.pop().to_darray(-1);
+       std::vector<double> Ve(mf->nb_basic_dof());
+       mf->extend_vector(V, Ve);
+       out.pop().from_dcvector(Ve);
+     }
+     );
+
+
+  /*@GET DOFs = ('basic dof on region',@mat Rs)
     Return the list of basic dof (before the optional reduction) lying on one
     of the mesh regions listed in `Rs`.
 
@@ -550,17 +541,17 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     on the boundary, for example the dof of Pk(n,0) lies on the center
     of the convex, but the base function in not null on the convex
     border).@*/
-    sub_command
-      ("basic dof on region", 1, 1, 0, 1,
-       iarray bnums = in.pop().to_iarray(-1);
-       dal::bit_vector bv;
-       for (size_type i=0; i < bnums.size(); ++i)
-         bv |= mf->basic_dof_on_region(bnums[i]);
-       out.pop().from_bit_vector(bv);
-       );
+  sub_command
+    ("basic dof on region", 1, 1, 0, 1,
+     iarray bnums = in.pop().to_iarray(-1);
+     dal::bit_vector bv;
+     for (size_type i=0; i < bnums.size(); ++i)
+       bv |= mf->basic_dof_on_region(bnums[i]);
+     out.pop().from_bit_vector(bv);
+     );
 
 
-    /*@GET DOFs = ('dof on region',@mat Rs)
+  /*@GET DOFs = ('dof on region',@mat Rs)
     Return the list of dof (after the optional reduction) lying on one
     of the mesh regions listed in `Rs`.
 
@@ -575,65 +566,65 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     a dof is lying on a region if its potential corresponding shape
     function is nonzero on this region. The extension matrix is used
     to make the correspondence between basic and reduced dofs.@*/
-    sub_command
-      ("dof on region", 1, 1, 0, 1,
-       iarray bnums = in.pop().to_iarray(-1);
-       dal::bit_vector bv;
-       for (size_type i=0; i < bnums.size(); ++i)
-         bv |= mf->dof_on_region(bnums[i]);
-       out.pop().from_bit_vector(bv);
-       );
+  sub_command
+    ("dof on region", 1, 1, 0, 1,
+     iarray bnums = in.pop().to_iarray(-1);
+     dal::bit_vector bv;
+     for (size_type i=0; i < bnums.size(); ++i)
+       bv |= mf->dof_on_region(bnums[i]);
+     out.pop().from_bit_vector(bv);
+     );
 
 
-    /*@GET DOFpts = ('dof nodes'[, @mat DOFids])
-    Deprecated function. Use MESH_FEM:GET('basic dof nodes') instead. @*/
-    sub_command
-      ("dof nodes", 0, 1, 0, 2,
-       infomsg() << "WARNING: gf_mesh_fem_get('dof nodes', ...) is a deprecated "
-       << "command.\n          Use gf_mesh_fem_get('basic dof nodes', "
-       << "...) instead." << endl;
+  /*@GET DOFpts = ('dof nodes'[, @mat DOFids])
+    Deprecated function. Use MESH_FEM:GET('basic dof nodes') instead.@*/
+  sub_command
+    ("dof nodes", 0, 1, 0, 2,
+     infomsg() << "WARNING: gf_mesh_fem_get('dof nodes', ...) is a deprecated "
+               << "command.\n          Use gf_mesh_fem_get('basic dof nodes', "
+               << "...) instead." << endl;
 
-       dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
-       if (in.remaining())
-         dof_lst = in.pop().to_bit_vector(&dof_lst);
-       darray w = out.pop().create_darray(mf->linked_mesh().dim(),
-                                          unsigned(dof_lst.card()));
-       size_type j = 0;
-       for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
-         if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
-           THROW_INTERNAL_ERROR;
-         for (size_type i=0; i < w.getm(); i++)
-           w(i,j)= mf->point_of_basic_dof(dof)[i];
-       }
-       );
+     dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
+     if (in.remaining())
+       dof_lst = in.pop().to_bit_vector(&dof_lst);
+     darray w = out.pop().create_darray(mf->linked_mesh().dim(),
+                                        unsigned(dof_lst.card()));
+     size_type j = 0;
+     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
+       if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
+         THROW_INTERNAL_ERROR;
+       for (size_type i=0; i < w.getm(); i++)
+         w(i,j)= mf->point_of_basic_dof(dof)[i];
+     }
+     );
 
 
-    /*@GET DOFpts = ('basic dof nodes'[, @mat DOFids])
+  /*@GET DOFpts = ('basic dof nodes'[, @mat DOFids])
     Get location of basic degrees of freedom.
 
     Return the list of interpolation points for the specified
     dof #IDs in `DOFids` (if `DOFids` is omitted, all basic dof are
     considered).@*/
-    sub_command
-      ("basic dof nodes", 0, 1, 0, 2,
-       dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
-       if (in.remaining())
-         dof_lst = in.pop().to_bit_vector(&dof_lst);
-       darray w = out.pop().create_darray(mf->linked_mesh().dim(),
-                                          unsigned(dof_lst.card()));
-       size_type j = 0;
-       for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
-         if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
-           THROW_INTERNAL_ERROR;
-         for (size_type i=0; i < w.getm(); i++)
-           w(i,j)= mf->point_of_basic_dof(dof)[i];
-         // std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(),
-         //           &w(0,j));
-       }
-       );
+  sub_command
+    ("basic dof nodes", 0, 1, 0, 2,
+     dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
+     if (in.remaining())
+       dof_lst = in.pop().to_bit_vector(&dof_lst);
+     darray w = out.pop().create_darray(mf->linked_mesh().dim(),
+                                        unsigned(dof_lst.card()));
+     size_type j = 0;
+     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
+       if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
+         THROW_INTERNAL_ERROR;
+       for (size_type i=0; i < w.getm(); i++)
+         w(i,j)= mf->point_of_basic_dof(dof)[i];
+       // std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(),
+       //           &w(0,j));
+     }
+     );
 
 
-    /*@GET DOFP = ('dof partition')
+  /*@GET DOFP = ('dof partition')
     Get the 'dof_partition' array.
 
     Return the array which associates an integer (the partition number)
@@ -642,93 +633,94 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     only to the dof of neighboring convexes which have the same
     partition number, hence it is possible to create partially
     discontinuous @tmf very easily.@*/
-    sub_command
-      ("dof partition", 0, 0, 0, 1,
-       iarray v = out.pop().create_iarray_h
-       (unsigned(mf->linked_mesh().convex_index().last_true()+1));
-       for (unsigned cv=0; cv < v.size(); ++cv)
-         v[cv] = mf->get_dof_partition(cv);
-       );
+  sub_command
+    ("dof partition", 0, 0, 0, 1,
+     iarray v = out.pop().create_iarray_h
+     (unsigned(mf->linked_mesh().convex_index().last_true()+1));
+     for (unsigned cv=0; cv < v.size(); ++cv)
+       v[cv] = mf->get_dof_partition(cv);
+     );
 
 
-    /*@GET ('save',@str filename[, @str opt])
+  /*@GET ('save',@str filename[, @str opt])
     Save a @tmf in a text file (and optionally its linked mesh object
     if `opt` is the string 'with_mesh').@*/
-    sub_command
-      ("save", 1, 2, 0, 0,
-       std::string s = in.pop().to_string();
-       bool with_mesh = false;
-       if (in.remaining()) {
-         if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
-           with_mesh = true;
-         } else THROW_BADARG("expecting string 'with mesh'");
-       }
-       std::ofstream o(s.c_str());
-       if (!o) THROW_ERROR("impossible to write in file '" << s << "'");
-       o << "% GETFEM MESH+FEM FILE " << endl;
-       o << "% GETFEM VERSION " << GETFEM_VERSION << endl;
-       if (with_mesh) mf->linked_mesh().write_to_file(o);
-       mf->write_to_file(o);
-       o.close();
-       );
+  sub_command
+    ("save", 1, 2, 0, 0,
+     std::string s = in.pop().to_string();
+     bool with_mesh = false;
+     if (in.remaining()) {
+       if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
+         with_mesh = true;
+       } else THROW_BADARG("expecting string 'with mesh'");
+     }
+     std::ofstream o(s.c_str());
+     if (!o) THROW_ERROR("impossible to write in file '" << s << "'");
+     o << "% GETFEM MESH+FEM FILE " << endl;
+     o << "% GETFEM VERSION " << GETFEM_VERSION << endl;
+     if (with_mesh) mf->linked_mesh().write_to_file(o);
+     mf->write_to_file(o);
+     o.close();
+     );
 
 
-    /*@GET ('char'[, @str opt])
-      Output a string description of the @tmf.
+  /*@GET ('char'[, @str opt])
+    Output a string description of the @tmf.
 
-      By default, it does not include the description of the linked mesh
-      object, except if `opt` is 'with_mesh'.@*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       std::stringstream s;
-       if (in.remaining() && cmd_strmatch(in.pop().to_string(),"with mesh"))
-         mf->linked_mesh().write_to_file(s);
-       mf->write_to_file(s);
-       out.pop().from_string(s.str().c_str());
-       );
-
-    /*@GET ('display')
-      displays a short summary for a @tmf object.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfMeshFem object in dimension "
-       << int(mf->linked_mesh().dim())
-       << " with " << mf->linked_mesh().nb_points() << " points, "
-       << mf->linked_mesh().convex_index().card() << " elements and "
-       << mf->nb_dof() << " degrees of freedom\n";
-       );
+    By default, it does not include the description of the linked mesh
+    object, except if `opt` is 'with_mesh'.@*/
+  sub_command
+    ("char", 0, 0, 0, 1,
+     std::stringstream s;
+     if (in.remaining() && cmd_strmatch(in.pop().to_string(),"with mesh"))
+       mf->linked_mesh().write_to_file(s);
+     mf->write_to_file(s);
+     out.pop().from_string(s.str().c_str());
+     );
 
 
-    /*@GET m = ('linked mesh')
-      Return a reference to the @tmesh object linked to `mf`.@*/
-    sub_command
-      ("linked mesh", 0, 0, 0, 1,
-       id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
-       if (id == id_type(-1)) {
-         auto pst = workspace().hidden_object(workspace().object(mf),
-                                              &mf->linked_mesh());
-         if (!pst.get()) THROW_INTERNAL_ERROR;
-         std::shared_ptr<getfem::mesh> pm =
-           std::const_pointer_cast<getfem::mesh>
-           (std::dynamic_pointer_cast<const getfem::mesh>(pst));
-         id = store_mesh_object(pm);
-       }
-       out.pop().from_object_id(id, MESH_CLASS_ID);
-       );
+  /*@GET ('display')
+    displays a short summary for a @tmf object.@*/
+  sub_command
+    ("display", 0, 0, 0, 0,
+     infomsg() << "gfMeshFem object in dimension "
+               << int(mf->linked_mesh().dim()) << " with "
+               << mf->linked_mesh().nb_points() << " points, "
+               << mf->linked_mesh().convex_index().card() << " elements and "
+               << mf->nb_dof() << " degrees of freedom\n";
+     );
 
 
-    /*@GET m = ('mesh')
-      Return a reference to the @tmesh object linked to `mf`.
-      (identical to MESH:GET('linked mesh'))@*/
-    sub_command
-      ("mesh", 0, 0, 0, 1,
-       id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
-       if (id == id_type(-1)) THROW_INTERNAL_ERROR;
-       out.pop().from_object_id(id, MESH_CLASS_ID);
-       );
+  /*@GET m = ('linked mesh')
+    Return a reference to the @tmesh object linked to `mf`.@*/
+  sub_command
+    ("linked mesh", 0, 0, 0, 1,
+     id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
+     if (id == id_type(-1)) {
+       auto pst = workspace().hidden_object(workspace().object(mf),
+                                            &mf->linked_mesh());
+       if (!pst.get()) THROW_INTERNAL_ERROR;
+       std::shared_ptr<getfem::mesh> pm =
+         std::const_pointer_cast<getfem::mesh>
+         (std::dynamic_pointer_cast<const getfem::mesh>(pst));
+       id = store_mesh_object(pm);
+     }
+     out.pop().from_object_id(id, MESH_CLASS_ID);
+     );
 
 
-    /*@GET ('export to vtk',@str filename, ... ['ascii'], U, 'name'...)
+  /*@GET m = ('mesh')
+    Return a reference to the @tmesh object linked to `mf`.
+    (identical to MESH:GET('linked mesh'))@*/
+  sub_command
+    ("mesh", 0, 0, 0, 1,
+     id_type id =  workspace().object((const void *)(&mf->linked_mesh()));
+     if (id == id_type(-1)) THROW_INTERNAL_ERROR;
+     out.pop().from_object_id(id, MESH_CLASS_ID);
+     );
+
+
+  /*@GET ('export to vtk',@str filename, ... ['ascii'], U, 'name'...)
     Export a @tmf and some fields to a vtk file.
 
     The FEM and geometric transformations will be mapped to order 1
@@ -736,32 +728,32 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     order elements). If you need to represent high-order FEMs or
     high-order geometric transformations, you should consider
     SLICE:GET('export to vtk').@*/
-    sub_command
-      ("export to vtk", 0, -1, 0, 0,
-       std::string fname = in.pop().to_string();
-       bool ascii = false;
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else THROW_BADARG("expecting 'ascii', got " << cmd2);
-       }
-       getfem::vtk_export exp(fname, ascii);
-       exp.exporting(*mf);
-       exp.write_mesh();
-       int count = 1;
-       while (in.remaining()) {
-         const getfem::mesh_fem *mf2 = mf;
-         if (in.remaining() >= 2 && is_meshfem_object(in.front()))
-           mf2 = to_meshfem_object(in.pop());
-         darray U = in.pop().to_darray();
-         in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
-         exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
-         count+=1;
-       }
-       );
+  sub_command
+    ("export to vtk", 0, -1, 0, 0,
+     std::string fname = in.pop().to_string();
+     bool ascii = false;
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else THROW_BADARG("expecting 'ascii', got " << cmd2);
+     }
+     getfem::vtk_export exp(fname, ascii);
+     exp.exporting(*mf);
+     exp.write_mesh();
+     int count = 1;
+     while (in.remaining()) {
+       const getfem::mesh_fem *mf2 = mf;
+       if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+         mf2 = to_meshfem_object(in.pop());
+       darray U = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+       exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
+       count+=1;
+     }
+     );
 
-    /*@GET ('export to vtu',@str filename, ... ['ascii'], U, 'name'...)
+  /*@GET ('export to vtu',@str filename, ... ['ascii'], U, 'name'...)
     Export a @tmf and some fields to a vtu file.
 
     The FEM and geometric transformations will be mapped to order 1
@@ -769,33 +761,33 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     order elements). If you need to represent high-order FEMs or
     high-order geometric transformations, you should consider
     SLICE:GET('export to vtu').@*/
-    sub_command
-      ("export to vtu", 0, -1, 0, 0,
-       std::string fname = in.pop().to_string();
-       bool ascii = false;
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else THROW_BADARG("expecting 'ascii', got " << cmd2);
-       }
-       getfem::vtu_export exp(fname, ascii);
-       exp.exporting(*mf);
-       exp.write_mesh();
-       int count = 1;
-       while (in.remaining()) {
-         const getfem::mesh_fem *mf2 = mf;
-         if (in.remaining() >= 2 && is_meshfem_object(in.front()))
-           mf2 = to_meshfem_object(in.pop());
-         darray U = in.pop().to_darray();
-         in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
-         exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
-         count+=1;
-       }
-       );
+  sub_command
+    ("export to vtu", 0, -1, 0, 0,
+     std::string fname = in.pop().to_string();
+     bool ascii = false;
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else THROW_BADARG("expecting 'ascii', got " << cmd2);
+     }
+     getfem::vtu_export exp(fname, ascii);
+     exp.exporting(*mf);
+     exp.write_mesh();
+     int count = 1;
+     while (in.remaining()) {
+       const getfem::mesh_fem *mf2 = mf;
+       if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+         mf2 = to_meshfem_object(in.pop());
+       darray U = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+       exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
+       count+=1;
+     }
+     );
 
 
-    /*@GET ('export to dx',@str filename, ...['as', @str mesh_name][,'edges']['serie',@str serie_name][,'ascii'][,'append'], U, 'name'...)
+  /*@GET ('export to dx',@str filename, ...['as', @str mesh_name][,'edges']['serie',@str serie_name][,'ascii'][,'append'], U, 'name'...)
     Export a @tmf and some fields to an OpenDX file.
 
     This function will fail if the @tmf mixes different convex types
@@ -805,75 +797,75 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     The FEM will be mapped to order 1 Pk (or Qk) FEMs. If you need to
     represent high-order FEMs or high-order geometric transformations,
     you should consider SLICE:GET('export to dx').@*/
-    sub_command
-      ("export to dx",0, -1, 0, 0,
-       std::string fname = in.pop().to_string();
-       bool ascii = false;  bool append = false; bool edges = false;
-       std::string mesh_name;
-       std::string serie_name;
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else if (cmd_strmatch(cmd2, "edges"))
-           edges = true;
-         else if (cmd_strmatch(cmd2, "as") && in.remaining())
-           mesh_name = in.pop().to_string();
-         else if (cmd_strmatch(cmd2, "append"))
-           append = true;
-         else if (cmd_strmatch(cmd2, "serie") && in.remaining())
-           serie_name = in.pop().to_string();
-         else THROW_BADARG("expecting 'ascii', got " << cmd2);
-       }
-       getfem::dx_export exp(fname, ascii, append);
-       exp.exporting(*mf, mesh_name.c_str());
-       exp.write_mesh();
-       if (edges) exp.exporting_mesh_edges();
-       while (in.remaining()) {
-         const getfem::mesh_fem *mf2 = mf;
-         if (in.remaining() >= 2 && is_meshfem_object(in.front()))
-           mf2 = to_meshfem_object(in.pop());
-         darray U = in.pop().to_darray();
-         in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
-         exp.write_point_data(*mf2, U, get_dx_dataset_name(in));
-         if (serie_name.size()) exp.serie_add_object(serie_name);
-       }
-       );
+  sub_command
+    ("export to dx",0, -1, 0, 0,
+     std::string fname = in.pop().to_string();
+     bool ascii = false;  bool append = false; bool edges = false;
+     std::string mesh_name;
+     std::string serie_name;
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else if (cmd_strmatch(cmd2, "edges"))
+         edges = true;
+       else if (cmd_strmatch(cmd2, "as") && in.remaining())
+         mesh_name = in.pop().to_string();
+       else if (cmd_strmatch(cmd2, "append"))
+         append = true;
+       else if (cmd_strmatch(cmd2, "serie") && in.remaining())
+         serie_name = in.pop().to_string();
+       else THROW_BADARG("expecting 'ascii', got " << cmd2);
+     }
+     getfem::dx_export exp(fname, ascii, append);
+     exp.exporting(*mf, mesh_name.c_str());
+     exp.write_mesh();
+     if (edges) exp.exporting_mesh_edges();
+     while (in.remaining()) {
+       const getfem::mesh_fem *mf2 = mf;
+       if (in.remaining() >= 2 && is_meshfem_object(in.front()))
+         mf2 = to_meshfem_object(in.pop());
+       darray U = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+       exp.write_point_data(*mf2, U, get_dx_dataset_name(in));
+       if (serie_name.size()) exp.serie_add_object(serie_name);
+     }
+     );
 
 
-    /*@GET ('export to pos',@str filename[, @str name][[,@tmf mf1], @mat U1, @str nameU1[[,@tmf mf2], @mat U2, @str nameU2,...]])
+  /*@GET ('export to pos',@str filename[, @str name][[,@tmf mf1], @mat U1, @str nameU1[[,@tmf mf2], @mat U2, @str nameU2,...]])
     Export a @tmf and some fields to a pos file.
 
     The FEM and geometric transformations will be mapped to order 1
     isoparametric Pk (or Qk) FEMs (as GMSH does not handle higher
     order elements).@*/
-    sub_command
-      ("export to pos", 1, -1, 0, 0,
-       std::string fname = in.pop().to_string();
-       std::string name = "";
-       if (in.remaining() && in.front().is_string())
-         name = in.pop().to_string();
+  sub_command
+    ("export to pos", 1, -1, 0, 0,
+     std::string fname = in.pop().to_string();
+     std::string name = "";
+     if (in.remaining() && in.front().is_string())
+       name = in.pop().to_string();
 
-       getfem::pos_export exp(fname);
-       exp.write(*mf,name);
-       while (in.remaining()) {
-         const getfem::mesh_fem *mf2 = mf;
-         if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
-           mf2 = to_meshfem_object(in.pop());
-         }
-         darray U = in.pop().to_darray();
-         in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
-
-         if (in.remaining() >= 1 && in.front().is_string()) {
-           name = in.pop().to_string();
-         } else THROW_BADARG("expecting string darray_name")
-
-             exp.write(*mf2, U, name);
+     getfem::pos_export exp(fname);
+     exp.write(*mf,name);
+     while (in.remaining()) {
+       const getfem::mesh_fem *mf2 = mf;
+       if (in.remaining() >= 2 && is_meshfem_object(in.front())) {
+         mf2 = to_meshfem_object(in.pop());
        }
-       );
+       darray U = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
+
+       if (in.remaining() >= 1 && in.front().is_string()) {
+         name = in.pop().to_string();
+       } else THROW_BADARG("expecting string darray_name")
+
+       exp.write(*mf2, U, name);
+     }
+     );
 
 
-    /*@GET ('dof_from_im',@tmim mim[, @int p])
+  /*@GET ('dof_from_im',@tmim mim[, @int p])
     Return a selection of dof who contribute significantly to the
     mass-matrix that would be computed with `mf` and the integration
     method `mim`.
@@ -883,19 +875,19 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     IMPORTANT: you still have to set a valid integration method on
     the convexes which are not crosses by the levelset!@*/
-    sub_command
-      ("dof_from_im", 1, 2, 0, 1,
-       const getfem::mesh_im &mim = *to_meshim_object(in.pop());
-       int P = -1;
-       if (&mim.linked_mesh() != &mf->linked_mesh())
-         THROW_BADARG("the mesh_im uses a different mesh");
-       if (in.remaining())
-         P = in.pop().to_integer(1, mim.linked_mesh().dim());
-       out.pop().from_bit_vector(getfem::select_dofs_from_im(*mf, mim, P));
-       );
+  sub_command
+    ("dof_from_im", 1, 2, 0, 1,
+     const getfem::mesh_im &mim = *to_meshim_object(in.pop());
+     int P = -1;
+     if (&mim.linked_mesh() != &mf->linked_mesh())
+       THROW_BADARG("the mesh_im uses a different mesh");
+     if (in.remaining())
+       P = in.pop().to_integer(1, mim.linked_mesh().dim());
+     out.pop().from_bit_vector(getfem::select_dofs_from_im(*mf, mim, P));
+     );
 
 
-    /*@GET U = ('interpolate_convex_data',@mat Ucv)
+  /*@GET U = ('interpolate_convex_data',@mat Ucv)
 
     Interpolate data given on each convex of the mesh to the @tmf dof.
     The @tmf has to be lagrangian, and should be discontinuous (typically
@@ -905,68 +897,75 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     MESH:GET('max cvid') elements.
 
     Example of use: MESH_FEM:GET('interpolate_convex_data', MESH:GET('quality'))@*/
-    sub_command
-      ("interpolate_convex_data", 1, 1, 0, 1,
-       in.front().check_trailing_dimension
-       (int(mf->linked_mesh().convex_index().last_true()+1));
-       if (in.front().is_complex())
-         interpolate_convex_data(mf, in.pop().to_darray(), out);
-       else interpolate_convex_data(mf, in.pop().to_carray(), out);
-       );
+  sub_command
+    ("interpolate_convex_data", 1, 1, 0, 1,
+     in.front().check_trailing_dimension
+     (int(mf->linked_mesh().convex_index().last_true()+1));
+     if (in.front().is_complex())
+       interpolate_convex_data(mf, in.pop().to_darray(), out);
+     else interpolate_convex_data(mf, in.pop().to_carray(), out);
+     );
 
 
-    /*@GET z = ('memsize')
+  /*@GET z = ('memsize')
     Return the amount of memory (in bytes) used by the mesh_fem object.
 
     The result does not take into account the linked mesh object.@*/
-    sub_command
-      ("memsize", 0, 0, 0, 1,
-       out.pop().from_integer(int(mf->memsize()));
-       );
+  sub_command
+    ("memsize", 0, 0, 0, 1,
+     out.pop().from_integer(int(mf->memsize()));
+     );
 
 
-    /*@GET ('has_linked_mesh_levelset')
-       Is a mesh_fem_level_set or not. @*/
-    sub_command
-      ("has_linked_mesh_levelset", 0, 0, 0, 1,
-       getfem::mesh_fem_level_set *mfls =
-       dynamic_cast<getfem::mesh_fem_level_set *>(mf);
-       out.pop().from_integer(mfls ? 1 : 0);
-       );
+  /*@GET ('has_linked_mesh_levelset')
+     Is a mesh_fem_level_set or not.@*/
+  sub_command
+    ("has_linked_mesh_levelset", 0, 0, 0, 1,
+     getfem::mesh_fem_level_set *mfls =
+     dynamic_cast<getfem::mesh_fem_level_set *>(mf);
+     out.pop().from_integer(mfls ? 1 : 0);
+     );
 
 
-    /*@GET ('linked_mesh_levelset')
-      if it is a mesh_fem_level_set gives the linked mesh_level_set. @*/
-    sub_command
-      ("linked_mesh_levelset", 0, 0, 0, 1,
-       getfem::mesh_fem_level_set *mfls =
-       dynamic_cast<getfem::mesh_fem_level_set*>(mf);
-       if (mfls) {
-         getfem::mesh_level_set *mls =
-           const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
-         id_type id = workspace().object((const void *)(mls));
-         GMM_ASSERT1(id != id_type(-1), "Unknown mesh_level_set !");
-         out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);
-       } else THROW_BADARG("not a mesh_fem using a mesh_levelset");
-       );
+  /*@GET ('linked_mesh_levelset')
+    if it is a mesh_fem_level_set gives the linked mesh_level_set.@*/
+  sub_command
+    ("linked_mesh_levelset", 0, 0, 0, 1,
+     getfem::mesh_fem_level_set *mfls =
+     dynamic_cast<getfem::mesh_fem_level_set*>(mf);
+     if (mfls) {
+       getfem::mesh_level_set *mls =
+         const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
+       id_type id = workspace().object((const void *)(mls));
+       GMM_ASSERT1(id != id_type(-1), "Unknown mesh_level_set !");
+       out.pop().from_object_id(id, MESH_LEVELSET_CLASS_ID);
+     } else THROW_BADARG("not a mesh_fem using a mesh_levelset");
+     );
+
+} // build_sub_command_table
 
 
-  }
+void gf_mesh_fem_get(getfemint::mexargs_in& in,
+                     getfemint::mexargs_out& out) {
 
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
 
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  getfem::mesh_fem *mf   = to_meshfem_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
 
+  getfem::mesh_fem *mf = to_meshfem_object(in.pop());
+  std::string init_cmd = in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, mf);
-  }
-  else bad_cmd(init_cmd);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, mf);
+  } else
+    bad_cmd(init_cmd);
 
 }
 

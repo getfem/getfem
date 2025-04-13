@@ -120,7 +120,7 @@ char* getfem_interface_main(int config_id, const char *function,
                             int *nb_out_args, gfi_array ***pout_args,
                             char **pinfomsg, int scilab_flag) {
 
-  static std::map<std::string, psub_command > subc_tab;
+  static std::map<std::string, psub_command> subc_tab;
 
   if (subc_tab.empty()) {
     subc_tab["workspace"] = gf_workspace;

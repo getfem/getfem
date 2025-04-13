@@ -31,11 +31,10 @@ using namespace getfemint;
 
 
 
-void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+
   /*@INIT I = ('.init', @str method)
     Here is a list of some integration methods defined in GetFEM (see the
     description of finite element and integration methods for a complete

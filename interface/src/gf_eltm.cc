@@ -36,12 +36,11 @@ using namespace getfemint;
 @*/
 
 
-void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
-  std::string cmd                  = in.pop().to_string();
+void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+
+  std::string cmd            = in.pop().to_string();
   getfem::pmat_elem_type pme = 0;
   if (check_cmd(cmd, "base", in, out, 1, 1, 0, 1)) {
     /*@INIT E = ('base', @tfem FEM)
@@ -79,6 +78,7 @@ void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::pmat_elem_type  m1 = to_eltm_object(in.pop());
     getfem::pmat_elem_type  m2 = to_eltm_object(in.pop());
     pme = getfem::mat_elem_product(m1,m2);
-  } else bad_cmd(cmd);
+  } else
+    bad_cmd(cmd);
   out.pop().from_object_id(store_eltm_object(pme), ELTM_CLASS_ID);
 }

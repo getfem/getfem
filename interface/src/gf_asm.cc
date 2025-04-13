@@ -757,7 +757,8 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
 
   /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model, ['Secondary_domain', 'name',]] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ['select_output', 'varname1'[, 'varname2]], ...)
     High-level generic assembly procedure for volumic or boundary assembly.
@@ -1226,7 +1227,7 @@ void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
        if (argin.is_string()) {
          frobenius = cmd_strmatch(argin.to_string(), "frobenius");
          if (in.remaining())
-           THROW_BADARG( "Wrong types of input arguments");
+           THROW_BADARG("Wrong types of input arguments");
        } else {
          const double E(eps_ref);
          const double alpha(n);
@@ -1459,7 +1460,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   if (subc_tab.empty())
     build_sub_command_table(subc_tab);
 
-  if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
 
   std::string init_cmd = in.pop().to_string();
   std::string cmd      = cmd_normalize(init_cmd);

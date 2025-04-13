@@ -21,9 +21,8 @@
 
 #include <getfemint_gsparse.h>
 #include <getfemint_gprecond.h>
-#include <getfemint.h>
-#include <gmm/gmm_iter_solvers.h>
 #include <getfemint_misc.h>
+#include <gmm/gmm_iter_solvers.h>
 #include <gmm/gmm_superlu_interface.h>
 #include <gmm/gmm_MUMPS_interface.h>
 
@@ -123,136 +122,77 @@ mumps_solver(gsparse &gsp,
 }
 #endif
 
+
 /*@GFDOC
   Various linear system solvers.
 @*/
 
 
-// Object for the declaration of a new sub-command.
+void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
-struct sub_gf_linsolve : virtual public dal::static_stored_object {
-  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
-  virtual void run(getfemint::mexargs_in& in,
-                   getfemint::mexargs_out& out) = 0;
-};
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
 
-typedef std::shared_ptr<sub_gf_linsolve> psub_command;
+  std::string init_cmd = in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
 
-// Function to avoid warning in macro with unused arguments.
-template <typename T> static inline void dummy_func(T &) {}
-
-#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_linsolve {                                  \
-      virtual void run(getfemint::mexargs_in& in,                           \
-                       getfemint::mexargs_out& out)                         \
-      { dummy_func(in); dummy_func(out); code }                             \
-    };                                                                      \
-    psub_command psubc = std::make_shared<subc>();                          \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
-    subc_tab[cmd_normalize(name)] = psubc;                                  \
-  }
-
-
-
-void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
+  if (check_cmd(cmd, "gmres", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('gmres', @tsp M, @vec b[, @int restart][, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the generalized minimum residuals method.
 
     Optionally using `P` as preconditioner. The default value of the
     restart parameter is 50.@*/
-    sub_command
-      ("gmres", 2, 30, 0, 1,
-       iterative_gmm_solver(GMM_GMRES, in, out);
-       );
-
-
+    iterative_gmm_solver(GMM_GMRES, in, out);
+  } else if (check_cmd(cmd, "cg", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('cg', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the conjugated gradient method.
 
     Optionally using `P` as preconditioner.@*/
-    sub_command
-      ("cg", 2, 30, 0, 1,
-       iterative_gmm_solver(GMM_CG, in, out);
-       );
-
-
+    iterative_gmm_solver(GMM_CG, in, out);
+  } else if (check_cmd(cmd, "bicgstab", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('bicgstab', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the bi-conjugated gradient stabilized method.
 
     Optionally using `P` as a preconditioner.@*/
-    sub_command
-      ("bicgstab", 2, 30, 0, 1,
-       iterative_gmm_solver(GMM_BICGSTAB, in, out);
-       );
-
-
+    iterative_gmm_solver(GMM_BICGSTAB, in, out);
 #if defined(GMM_USES_SUPERLU)
+  } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 2)) {
     /*@FUNC @CELL{U, cond} = ('lu', @tsp M, @vec b)
       Alias for ::LINSOLVE('superlu',...)@*/
-    sub_command
-      ("lu", 2, 2, 0, 2,
-       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
-       gsparse &gsp = *pgsp;
-       if (!gsp.is_complex() && in.front().is_complex())
-         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
-       if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
-       else                  superlu_solver(gsp, in, out, scalar_type());
-       );
-
+    std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+    gsparse &gsp = *pgsp;
+    if (!gsp.is_complex() && in.front().is_complex())
+      THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+    if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
+    else                  superlu_solver(gsp, in, out, scalar_type());
+  } else if (check_cmd(cmd, "superlu", in, out, 2, 2, 0, 2)) {
     /*@FUNC @CELL{U, cond} = ('superlu', @tsp M, @vec b)
     Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
     The condition number estimate `cond` is returned with the solution `U`.@*/
-    sub_command
-      ("superlu", 2, 2, 0, 2,
-       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
-       gsparse &gsp = *pgsp;
-       if (!gsp.is_complex() && in.front().is_complex())
-         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
-       if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
-       else                  superlu_solver(gsp, in, out, scalar_type());
-       );
+    std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+    gsparse &gsp = *pgsp;
+    if (!gsp.is_complex() && in.front().is_complex())
+      THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+    if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
+    else                  superlu_solver(gsp, in, out, scalar_type());
 #endif
 
 #if defined(GMM_USES_MUMPS)
+  } else if (check_cmd(cmd, "mumps", in, out, 2, 2, 0, 1)) {
     /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)
     Solve `M.U = b` using the MUMPS solver.
 
     The right hand side `b` can optionally by a matrix with several columns
     in order to solve multiple right hand sides at once.@*/
-    sub_command
-      ("mumps", 2, 2, 0, 1,
-       std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
-       gsparse &gsp = *pgsp;
-       if (!gsp.is_complex() && in.front().is_complex())
-         THROW_BADARG("please use a real right hand side, or convert "
-                      "the sparse matrix into a complex one");
-       if (gsp.is_complex()) mumps_solver(gsp, in, out, complex_type());
-       else                  mumps_solver(gsp, in, out, scalar_type());
-       );
+    std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+    gsparse &gsp = *pgsp;
+    if (!gsp.is_complex() && in.front().is_complex())
+      THROW_BADARG("please use a real right hand side, or convert "
+                   "the sparse matrix into a complex one");
+    if (gsp.is_complex()) mumps_solver(gsp, in, out, complex_type());
+    else                  mumps_solver(gsp, in, out, scalar_type());
 #endif
-
-  }
-
-
-
-  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
-
-  std::string init_cmd = m_in.pop().to_string();
-  std::string cmd      = cmd_normalize(init_cmd);
-
-  auto it = subc_tab.find(cmd);
-  if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out);
-  }
-  else bad_cmd(init_cmd);
+  } else
+    bad_cmd(init_cmd);
 
 }

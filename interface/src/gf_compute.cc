@@ -192,7 +192,6 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
 
 
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_compute : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -221,7 +220,8 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@FUNC n = ('L2 norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of the (real or complex) field `U`.
 
@@ -533,8 +533,7 @@ void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
      scalar_type f_coeff = in.pop().to_scalar();
      scalar_type vertical_force = in.pop().to_scalar();
      unsigned si = unsigned(mim.linked_mesh().convex_index().last_true()+1);
-     darray err =
-     out.pop().create_darray_h(si);
+     darray err = out.pop().create_darray_h(si);
      getfem::base_vector ERR(si);
      getfem::base_vector UU(U.real().size());
      gmm::copy(U.real(), UU);

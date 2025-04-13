@@ -224,7 +224,7 @@ namespace getfemint {
   mexarg_in::to_convex_number(const getfem::mesh &m) {
     int cv = to_integer(config::base_index(), INT_MAX) - config::base_index();
     if (!m.convex_index().is_in(cv))
-      THROW_BADARG( "Convex " << cv << " is not part of the mesh");
+      THROW_BADARG("Convex " << cv << " is not part of the mesh");
     return cv;
   }
 

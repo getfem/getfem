@@ -60,7 +60,8 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@FUNC h = ('init step size')
     Return an initial step size for continuation.@*/
   sub_command

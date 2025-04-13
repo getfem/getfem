@@ -28,10 +28,11 @@
 
 using namespace getfemint;
 
-/*@GFDOC
-    Getfem workspace management function.
 
-    Getfem uses its own workspaces in Matlab, independently of the
+/*@GFDOC
+    GetFEM workspace management function.
+
+    GetFEM uses its own workspaces in Matlab, independently of the
     matlab workspaces (this is due to some limitations in the memory
     management of matlab objects). By default, all getfem variables
     belong to the root getfem workspace. A function can create its own
@@ -39,13 +40,10 @@ using namespace getfemint;
     exiting, this function MUST invoke gf_workspace('pop') (you can
     use matlab exceptions handling to do this cleanly when the
     function exits on an error).
-
  @*/
 
 
-
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_workspace : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -70,151 +68,159 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@FUNC ('push')
-      Create a new temporary workspace on the workspace stack. @*/
-    sub_command
-      ("push", 0, 1, 0, 0,
-       std::string s = "unnamed";
-       if (!in.remaining() == 0) s = in.pop().to_string();
-       workspace().push_workspace(s);
-       );
-
-    /*@FUNC ('pop',  [,i,j, ...])
-      Leave the current workspace, destroying all getfem objects
-      belonging to it, except the one listed after 'pop', and the ones
-      moved to parent workspace by ::WORKSPACE('keep'). @*/
-    sub_command
-      ("pop", 0, 256, 0, 0,
-       if (workspace().get_current_workspace()
-           != workspace().get_base_workspace()) {
-         while (in.remaining()) {
-           workspace().send_object_to_parent_workspace
-             (in.pop().to_object_id());
-         }
-         workspace().pop_workspace();
-       } else THROW_ERROR("Can't pop main workspace");
-       );
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@FUNC ('push')
+    Create a new temporary workspace on the workspace stack.@*/
+  sub_command
+    ("push", 0, 1, 0, 0,
+     std::string s = "unnamed";
+     if (!in.remaining() == 0) s = in.pop().to_string();
+     workspace().push_workspace(s);
+     );
 
 
-    /*@FUNC ('stat')
-       Print informations about variables in current workspace. @*/
-    sub_command
-      ("stat", 0, 0, 0, 0,
-       workspace().do_stats(infomsg(), workspace().get_current_workspace());
-       infomsg() << endl;
-       );
-
-
-    /*@FUNC ('stats')
-       Print informations about all getfem variables. @*/
-    sub_command
-      ("stats", 0, 0, 0, 0,
-       workspace().do_stats(infomsg());
-       infomsg() << endl;
-       );
-
-
-    /*@FUNC ('keep', i[,j,k...])
-      prevent the listed variables from being deleted when
-      ::WORKSPACE("pop") will be called by moving these variables in the
-      parent workspace. @*/
-    sub_command
-      ("keep", 1, 256, 0, 0,
+  /*@FUNC ('pop',  [,i,j, ...])
+    Leave the current workspace, destroying all getfem objects
+    belonging to it, except the one listed after 'pop', and the ones
+    moved to parent workspace by ::WORKSPACE('keep').@*/
+  sub_command
+    ("pop", 0, 256, 0, 0,
+     if (workspace().get_current_workspace()
+         != workspace().get_base_workspace()) {
        while (in.remaining()) {
-         workspace().send_object_to_parent_workspace(in.pop().to_object_id());
+         workspace().send_object_to_parent_workspace
+           (in.pop().to_object_id());
        }
-       );
+       workspace().pop_workspace();
+     } else THROW_ERROR("Can't pop main workspace");
+     );
 
 
-    /*@FUNC ('keep all')
-      prevent all variables from being deleted when
-      ::WORKSPACE("pop") will be called by moving the variables in the
-      parent workspace. @*/
-    sub_command
-      ("keep all", 0, 0, 0, 0,
-       workspace().send_all_objects_to_parent_workspace();
-       );
+  /*@FUNC ('stat')
+     Print informations about variables in current workspace.@*/
+  sub_command
+    ("stat", 0, 0, 0, 0,
+     workspace().do_stats(infomsg(), workspace().get_current_workspace());
+     infomsg() << endl;
+     );
 
-    /*@FUNC ('clear')
-      Clear the current workspace. @*/
-    sub_command
-      ("clear", 0, 0, 0, 0,
-       workspace().clear_workspace();
-       );
 
-    /*@FUNC ('clear all')
-      Clear every workspace, and returns to the main workspace (you
-      should not need this command). @*/
-    sub_command
-      ("clear all", 0, 0, 0, 0,
-       while (workspace().get_current_workspace()
-              != workspace().get_base_workspace()) {
-         workspace().pop_workspace();
-         //      mexPrintf("w <- %d\n", workspace().get_current_workspace());
-       }
-       workspace().clear_workspace();
-       );
+  /*@FUNC ('stats')
+     Print informations about all getfem variables.@*/
+  sub_command
+    ("stats", 0, 0, 0, 0,
+     workspace().do_stats(infomsg());
+     infomsg() << endl;
+     );
+
+
+  /*@FUNC ('keep', i[,j,k...])
+    prevent the listed variables from being deleted when
+    ::WORKSPACE("pop") will be called by moving these variables in the
+    parent workspace.@*/
+  sub_command
+    ("keep", 1, 256, 0, 0,
+     while (in.remaining()) {
+       workspace().send_object_to_parent_workspace(in.pop().to_object_id());
+     }
+     );
+
+
+  /*@FUNC ('keep all')
+    prevent all variables from being deleted when
+    ::WORKSPACE("pop") will be called by moving the variables in the
+    parent workspace.@*/
+  sub_command
+    ("keep all", 0, 0, 0, 0,
+     workspace().send_all_objects_to_parent_workspace();
+     );
+
+
+  /*@FUNC ('clear')
+    Clear the current workspace.@*/
+  sub_command
+    ("clear", 0, 0, 0, 0,
+     workspace().clear_workspace();
+     );
+
+
+  /*@FUNC ('clear all')
+    Clear every workspace, and returns to the main workspace (you
+    should not need this command).@*/
+  sub_command
+    ("clear all", 0, 0, 0, 0,
+     while (workspace().get_current_workspace()
+            != workspace().get_base_workspace()) {
+       workspace().pop_workspace();
+       //      mexPrintf("w <- %d\n", workspace().get_current_workspace());
+     }
+     workspace().clear_workspace();
+     );
 
 
     /* Unofficial function */
 #ifndef _MSC_VER
-    sub_command
-      ("chdir", 1, 1, 0, 0,
-       if (::chdir(in.pop().to_string().c_str())) {}
-       );
+  sub_command
+    ("chdir", 1, 1, 0, 0,
+     if (::chdir(in.pop().to_string().c_str())) {}
+     );
 #endif
 
-    /*@FUNC ('class name', i)
-      Return the class name of object i (if I is a mesh handle, it
-      return gfMesh etc..) @*/
-    sub_command
-      ("class name", 0, 1, 0, 1,
-       id_type id;  id_type cid;
-       in.pop().to_object_id(&id, &cid);
-       out.pop().from_string(name_of_getfemint_class_id(cid));
-       );
 
-    /* Unofficial function */
-    sub_command
-      ("connect", 0, -1, 0, -1,
-       GMM_THROW(getfemint_error, "cannot connect: the toolbox was built "
-                 "without rpc support");
-       );
+  /*@FUNC ('class name', i)
+    Return the class name of object i (if I is a mesh handle, it
+    return gfMesh etc..)@*/
+  sub_command
+    ("class name", 0, 1, 0, 1,
+     id_type id;  id_type cid;
+     in.pop().to_object_id(&id, &cid);
+     out.pop().from_string(name_of_getfemint_class_id(cid));
+     );
 
 
-    /* Unofficial function */
-    sub_command
-      ("list static objects", 0, -1, 0, -1,
-       dal::list_stored_objects(cout);
-       );
+  /* Unofficial function */
+  sub_command
+    ("connect", 0, -1, 0, -1,
+     GMM_THROW(getfemint_error, "cannot connect: the toolbox was built "
+               "without rpc support");
+     );
 
 
-    /* Unofficial function */
-    sub_command
-      ("nb static objects", 0, -1, 0, 1,
-       out.pop().from_integer(int(dal::nb_stored_objects()));
-       );
-
-  }
+  /* Unofficial function */
+  sub_command
+    ("list static objects", 0, -1, 0, -1,
+     dal::list_stored_objects(cout);
+     );
 
 
-  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
+  /* Unofficial function */
+  sub_command
+    ("nb static objects", 0, -1, 0, 1,
+     out.pop().from_integer(int(dal::nb_stored_objects()));
+     );
 
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+} // build_sub_command_table
 
+
+void gf_workspace(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+
+  std::string init_cmd = in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out);
-  }
-  else bad_cmd(init_cmd);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out);
+  } else
+    bad_cmd(init_cmd);
 
 }

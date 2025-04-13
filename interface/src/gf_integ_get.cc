@@ -66,7 +66,8 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@RDATTR b = ('is_exact')
     Return 0 if the integration is an approximate one.@*/
   sub_command

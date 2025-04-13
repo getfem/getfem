@@ -58,7 +58,8 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@GET V = ('values', @int nls)
     Return the vector of dof for `nls` function.
 

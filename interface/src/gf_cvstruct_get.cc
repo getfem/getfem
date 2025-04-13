@@ -35,7 +35,7 @@ using namespace getfemint;
 void gf_cvstruct_get(getfemint::mexargs_in& in,
                      getfemint::mexargs_out& out) {
 
-  if (in.narg() < 2) THROW_BADARG( "Wrong number of input arguments");
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
 
   bgeot::pconvex_structure cs = to_cvstruct_object(in.pop());
   std::string init_cmd        = in.pop().to_string();

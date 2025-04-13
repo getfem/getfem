@@ -35,9 +35,9 @@ using namespace getfemint;
 
 
 void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+
   std::string cmd = in.pop().to_string();
   id_type id = id_type(-1);
   if (check_cmd(cmd, "interpolated fem", in, out, 2, 4, 0, 1)) {

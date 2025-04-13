@@ -339,9 +339,16 @@ normal_of_face(const getfem::mesh& mesh, size_type cv, short_type f, size_type n
 }
 
 
+/*@GFDOC
+  General mesh inquiry function. All these functions accept also a
+  mesh_fem argument instead of a mesh M (in that case, the mesh_fem
+  linked mesh will be used). @MATLAB{Note that when your mesh is
+  recognized as a Matlab object , you can simply use "get(M, 'dim')"
+  instead of "gf_mesh_get(M, 'dim')".}
+@*/
+
 
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_mesh_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -368,45 +375,34 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
-/*@GFDOC
-  General mesh inquiry function. All these functions accept also a
-  mesh_fem argument instead of a mesh M (in that case, the mesh_fem
-  linked mesh will be used). @MATLAB{Note that when your mesh is
-  recognized as a Matlab object , you can simply use "get(M, 'dim')"
-  instead of "gf_mesh_get(M, 'dim')".}
-@*/
 
-void gf_mesh_get(getfemint::mexargs_in& m_in,
-                 getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@RDATTR d = ('dim')
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@RDATTR d = ('dim')
     Get the dimension of the mesh (2 for a 2D mesh, etc).@*/
-    sub_command
-      ("dim", 0, 0, 0, 1,
-       out.pop().from_integer(pmesh->dim());
-       );
+  sub_command
+    ("dim", 0, 0, 0, 1,
+     out.pop().from_integer(pmesh->dim());
+     );
 
 
-    /*@RDATTR np = ('nbpts')
+  /*@RDATTR np = ('nbpts')
     Get the number of points of the mesh.@*/
-    sub_command
-      ("nbpts", 0, 0, 0, 1,
-       out.pop().from_integer(int(pmesh->nb_points()));
-       );
+  sub_command
+    ("nbpts", 0, 0, 0, 1,
+     out.pop().from_integer(int(pmesh->nb_points()));
+     );
 
 
-    /*@RDATTR nc = ('nbcvs')
-      Get the number of convexes of the mesh.@*/
-    sub_command
-      ("nbcvs", 0, 0, 0, 1,
-       out.pop().from_integer(int(pmesh->nb_convex()));
-       );
+  /*@RDATTR nc = ('nbcvs')
+    Get the number of convexes of the mesh.@*/
+  sub_command
+    ("nbcvs", 0, 0, 0, 1,
+     out.pop().from_integer(int(pmesh->nb_convex()));
+     );
 
 
-    /*@GET P = ('pts'[, @ivec PIDs])
+  /*@GET P = ('pts'[, @ivec PIDs])
     Return the list of point coordinates of the mesh.
 
     Each column of the returned matrix contains the coordinates of one
@@ -418,34 +414,34 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     been issued). The columns corresponding to deleted points will be
     filled with NaN. You can use MESH:GET('pid') to filter such invalid
     points.@*/
-    sub_command
-      ("pts", 0, 1, 0, 1,
-       double nan = ::nan("");
-       if (!in.remaining()) {
-         dal::bit_vector bv = pmesh->points().index();
-         darray w = out.pop().create_darray(pmesh->dim(), unsigned(bv.last_true()+1));
-         for (size_type j = 0; j < bv.last_true()+1; j++) {
-           for (size_type i = 0; i < pmesh->dim(); i++) {
-             w(i,j) = (bv.is_in(j)) ? (pmesh->points()[j])[i] : nan;
-           }
-         }
-       } else {
-         dal::bit_vector pids = in.pop().to_bit_vector();
-         darray w = out.pop().create_darray(pmesh->dim(), unsigned(pids.card()));
-         size_type cnt=0;
-         for (dal::bv_visitor j(pids); !j.finished(); ++j) {
-           if (!pmesh->points().index().is_in(j))
-             THROW_ERROR("point " << j+config::base_index() << " is not part of the mesh");
-           for (size_type i = 0; i < pmesh->dim(); i++) {
-             w(i,cnt) = (pmesh->points()[j])[i];
-           }
-           cnt++;
+  sub_command
+    ("pts", 0, 1, 0, 1,
+     double nan = ::nan("");
+     if (!in.remaining()) {
+       dal::bit_vector bv = pmesh->points().index();
+       darray w = out.pop().create_darray(pmesh->dim(), unsigned(bv.last_true()+1));
+       for (size_type j = 0; j < bv.last_true()+1; j++) {
+         for (size_type i = 0; i < pmesh->dim(); i++) {
+           w(i,j) = (bv.is_in(j)) ? (pmesh->points()[j])[i] : nan;
          }
        }
-       );
+     } else {
+       dal::bit_vector pids = in.pop().to_bit_vector();
+       darray w = out.pop().create_darray(pmesh->dim(), unsigned(pids.card()));
+       size_type cnt=0;
+       for (dal::bv_visitor j(pids); !j.finished(); ++j) {
+         if (!pmesh->points().index().is_in(j))
+           THROW_ERROR("point " << j+config::base_index() << " is not part of the mesh");
+         for (size_type i = 0; i < pmesh->dim(); i++) {
+           w(i,cnt) = (pmesh->points()[j])[i];
+         }
+         cnt++;
+       }
+     }
+     );
 
 
-    /*@GET Pid = ('pid')
+  /*@GET Pid = ('pid')
     Return the list of points #id of the mesh.
 
     Note that their numbering is not supposed to be contiguous from
@@ -453,118 +449,117 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     especially if some points have been removed from the mesh. You
     can use MESH:SET('optimize_structure') to enforce a contiguous
     numbering. @MATLAB{Pid is a row vector.}@*/
-    sub_command
-      ("pid", 0, 0, 0, 1,
-       out.pop().from_bit_vector(pmesh->points().index());
-       );
+  sub_command
+    ("pid", 0, 0, 0, 1,
+     out.pop().from_bit_vector(pmesh->points().index());
+     );
 
 
-    /*@GET PIDs = ('pid in faces', @imat CVFIDs)
+  /*@GET PIDs = ('pid in faces', @imat CVFIDs)
     Return point #id listed in `CVFIDs`.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers. On return, `PIDs` is a
     @MATLAB{row }vector containing points #id.@*/
-    sub_command
-      ("pid in faces", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
+  sub_command
+    ("pid in faces", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
 
-       iarray v = in.pop().to_iarray(2,-1);
+     iarray v = in.pop().to_iarray(2,-1);
 
-       dal::bit_vector pids;
-       for (size_type j=0; j < v.getn(); j++) {
-         size_type cv = v(0,j) - config::base_index();
-         short_type f = short_type(v(1,j) - config::base_index());
+     dal::bit_vector pids;
+     for (size_type j=0; j < v.getn(); j++) {
+       size_type cv = v(0,j) - config::base_index();
+       short_type f = short_type(v(1,j) - config::base_index());
 
-         if (pmesh->convex_index().is_in(cv)) {
-           if (short_type(-1)==f){
-             for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
-               pids.add(pmesh->ind_points_of_convex(cv)[i]);
-           } else if (f < pmesh->structure_of_convex(cv)->nb_faces()) {
-             for (unsigned i=0; i < pmesh->structure_of_convex(cv)->nb_points_of_face(f); ++i)
-               pids.add(pmesh->ind_points_of_face_of_convex(cv,f)[i]);
-           }
-         }
-       }
-
-       out.pop().from_bit_vector(pids);
-       );
-
-
-    /*@GET PIDs = ('pid in cvids', @imat CVIDs)
-      Return point #id listed in `CVIDs`.
-
-      `PIDs` is a @MATLAB{row }vector containing points #id.@*/
-    sub_command
-      ("pid in cvids", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
-
-       dal::bit_vector cvlst = in.pop().to_bit_vector();
-       dal::bit_vector pids;
-
-       for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
-         if (pmesh->convex_index().is_in(cv))
+       if (pmesh->convex_index().is_in(cv)) {
+         if (short_type(-1)==f){
            for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
              pids.add(pmesh->ind_points_of_convex(cv)[i]);
+         } else if (f < pmesh->structure_of_convex(cv)->nb_faces()) {
+           for (unsigned i=0; i < pmesh->structure_of_convex(cv)->nb_points_of_face(f); ++i)
+             pids.add(pmesh->ind_points_of_face_of_convex(cv,f)[i]);
+         }
+       }
+     }
 
-       out.pop().from_bit_vector(pids);
-       );
+     out.pop().from_bit_vector(pids);
+     );
 
 
-    /*@GET PIDs = ('pid in regions', @imat RIDs)
+  /*@GET PIDs = ('pid in cvids', @imat CVIDs)
+    Return point #id listed in `CVIDs`.
+
+    `PIDs` is a @MATLAB{row }vector containing points #id.@*/
+  sub_command
+    ("pid in cvids", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
+
+     dal::bit_vector cvlst = in.pop().to_bit_vector();
+     dal::bit_vector pids;
+     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
+       if (pmesh->convex_index().is_in(cv))
+         for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
+           pids.add(pmesh->ind_points_of_convex(cv)[i]);
+
+     out.pop().from_bit_vector(pids);
+     );
+
+
+  /*@GET PIDs = ('pid in regions', @imat RIDs)
     Return point #id listed in `RIDs`.
 
     `PIDs` is a @MATLAB{row }vector containing points #id.@*/
-    sub_command
-      ("pid in regions", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
+  sub_command
+    ("pid in regions", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
 
-       dal::bit_vector rlst = in.pop().to_bit_vector(&pmesh->regions_index(), 0);
-       dal::bit_vector pids;
+     dal::bit_vector rlst = in.pop().to_bit_vector(&pmesh->regions_index(), 0);
+     dal::bit_vector pids;
 
-       for (dal::bv_visitor r(rlst); !r.finished(); ++r) {
-         if (pmesh->regions_index().is_in(r)) {
-           for (getfem::mr_visitor i(pmesh->region(r)); !i.finished(); ++i) {
-             if (short_type(-1)==i.f()) {
-               for (unsigned j=0; j < pmesh->nb_points_of_convex(i.cv()); ++j)
-                 pids.add(pmesh->ind_points_of_convex(i.cv())[j]);
-             } else {
-               for (unsigned j=0; j < pmesh->structure_of_convex(i.cv())->nb_points_of_face(i.f()); ++j)
-                 pids.add(pmesh->ind_points_of_face_of_convex(i.cv(),i.f())[j]);
-             }
+     for (dal::bv_visitor r(rlst); !r.finished(); ++r) {
+       if (pmesh->regions_index().is_in(r)) {
+         for (getfem::mr_visitor i(pmesh->region(r)); !i.finished(); ++i) {
+           if (short_type(-1)==i.f()) {
+             for (unsigned j=0; j < pmesh->nb_points_of_convex(i.cv()); ++j)
+               pids.add(pmesh->ind_points_of_convex(i.cv())[j]);
+           } else {
+             for (unsigned j=0; j < pmesh->structure_of_convex(i.cv())->nb_points_of_face(i.f()); ++j)
+               pids.add(pmesh->ind_points_of_face_of_convex(i.cv(),i.f())[j]);
            }
          }
        }
+     }
 
-       out.pop().from_bit_vector(pids);
-       );
+     out.pop().from_bit_vector(pids);
+     );
 
 
-    /*@GET PIDs = ('pid from coords', @mat PTS[, @scalar radius=0])
+  /*@GET PIDs = ('pid from coords', @mat PTS[, @scalar radius=0])
     Return point #id whose coordinates are listed in `PTS`.
 
     `PTS` is an array containing a list of point coordinates. On
     return, `PIDs` is a @MATLAB{row }vector containing points
     #id for each point found in `eps` range, and -1 for those
     which where not found in the mesh.@*/
-    sub_command
-      ("pid from coords", 1, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       darray v = in.pop().to_darray(pmesh->dim(), -1);
-       scalar_type radius = 0;
-       if (in.remaining()) radius = in.pop().to_scalar(0);
-       iarray w = out.pop().create_iarray_h(v.getn());
-       for (unsigned j=0; j < v.getn(); j++) {
-         getfem::base_node P = v.col_to_bn(j);
-         getfem::size_type id = size_type(-1);
-         if (!std::isnan(P[0])) id = pmesh->search_point(P,radius);
-         if (id == getfem::size_type(-1)) w[j] = -1;
-         else w[j] = int(id + config::base_index());
-       }
-       );
+  sub_command
+    ("pid from coords", 1, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     darray v = in.pop().to_darray(pmesh->dim(), -1);
+     scalar_type radius = 0;
+     if (in.remaining()) radius = in.pop().to_scalar(0);
+     iarray w = out.pop().create_iarray_h(v.getn());
+     for (unsigned j=0; j < v.getn(); j++) {
+       getfem::base_node P = v.col_to_bn(j);
+       getfem::size_type id = size_type(-1);
+       if (!std::isnan(P[0])) id = pmesh->search_point(P,radius);
+       if (id == getfem::size_type(-1)) w[j] = -1;
+       else w[j] = int(id + config::base_index());
+     }
+     );
 
 
-    /*@GET @CELL{Pid, IDx} = ('pid from cvid'[, @imat CVIDs])
+  /*@GET @CELL{Pid, IDx} = ('pid from cvid'[, @imat CVIDs])
     Return the points attached to each convex of the mesh.
 
     If `CVIDs` is omitted, all the convexes will be considered
@@ -578,33 +573,33 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
     If `CVIDs` contains convex #id which do not exist in the mesh,
     their point list will be empty.@*/
-    sub_command
-      ("pid from cvid", 0, 1, 0, 2,
-       dal::bit_vector cvlst;
-       if (in.remaining()) cvlst = in.pop().to_bit_vector();
-       else cvlst.add(0, pmesh->convex_index().last_true()+1);
+  sub_command
+    ("pid from cvid", 0, 1, 0, 2,
+     dal::bit_vector cvlst;
+     if (in.remaining()) cvlst = in.pop().to_bit_vector();
+     else cvlst.add(0, pmesh->convex_index().last_true()+1);
 
-       std::vector<size_type> pids;
-       std::vector<size_type> idx;
-       size_type pcnt = 0;
-       for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-         idx.push_back(size_type(pcnt + config::base_index()));
-         if (pmesh->convex_index().is_in(cv))
-           for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
-             pids.push_back(size_type(pmesh->ind_points_of_convex(cv)[i] + config::base_index()));
-       }
+     std::vector<size_type> pids;
+     std::vector<size_type> idx;
+     size_type pcnt = 0;
+     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
        idx.push_back(size_type(pcnt + config::base_index()));
+       if (pmesh->convex_index().is_in(cv))
+         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
+           pids.push_back(size_type(pmesh->ind_points_of_convex(cv)[i] + config::base_index()));
+     }
+     idx.push_back(size_type(pcnt + config::base_index()));
 
-       iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
-       if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
-       if (out.remaining() && idx.size()) {
-         iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
-         std::copy(idx.begin(), idx.end(), &oidx[0]);
-       }
-       );
+     iarray opids = out.pop().create_iarray_h(unsigned(pids.size()));
+     if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
+     if (out.remaining() && idx.size()) {
+       iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
+       std::copy(idx.begin(), idx.end(), &oidx[0]);
+     }
+     );
 
 
-    /*@GET @CELL{Pts, IDx} = ('pts from cvid'[, @imat CVIDs])
+  /*@GET @CELL{Pts, IDx} = ('pts from cvid'[, @imat CVIDs])
     Search point listed in `CVID`.
 
     Return `Pts` and `IDx`.
@@ -619,37 +614,37 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
     If `CVIDs` contains convex #id which do not exist in the mesh,
     their point list will be empty.@*/
-    sub_command
-      ("pts from cvid", 0, 1, 0, 2,
-       check_empty_mesh(pmesh);
+  sub_command
+    ("pts from cvid", 0, 1, 0, 2,
+     check_empty_mesh(pmesh);
 
-       dal::bit_vector cvlst;
-       if (in.remaining()) cvlst = in.pop().to_bit_vector();
-       else cvlst.add(0, pmesh->convex_index().last_true()+1);
+     dal::bit_vector cvlst;
+     if (in.remaining()) cvlst = in.pop().to_bit_vector();
+     else cvlst.add(0, pmesh->convex_index().last_true()+1);
 
-       getfem::base_vector pts;
-       std::vector<size_type> idx;
-       size_type pcnt = 0;
-       for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-         idx.push_back(pcnt + config::base_index());
-         if (pmesh->convex_index().is_in(cv))
-           for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
-             for (size_type k=0; k< pmesh->dim(); ++k)
-               pts.push_back(pmesh->points_of_convex(cv)[i][k]);
-       }
+     getfem::base_vector pts;
+     std::vector<size_type> idx;
+     size_type pcnt = 0;
+     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
        idx.push_back(pcnt + config::base_index());
+       if (pmesh->convex_index().is_in(cv))
+         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
+           for (size_type k=0; k< pmesh->dim(); ++k)
+             pts.push_back(pmesh->points_of_convex(cv)[i][k]);
+     }
+     idx.push_back(pcnt + config::base_index());
 
        darray opts = out.pop().create_darray(pmesh->dim(),
                                     unsigned(pts.size()/pmesh->dim()));
-       if (pts.size()) std::copy(pts.begin(), pts.end(), &opts[0]);
-       if (out.remaining() && idx.size()) {
-         iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
-         std::copy(idx.begin(), idx.end(), &oidx[0]);
-       }
-       );
+     if (pts.size()) std::copy(pts.begin(), pts.end(), &opts[0]);
+     if (out.remaining() && idx.size()) {
+       iarray oidx = out.pop().create_iarray_h(unsigned(idx.size()));
+       std::copy(idx.begin(), idx.end(), &oidx[0]);
+     }
+     );
 
 
-    /*@GET CVid = ('cvid')
+  /*@GET CVid = ('cvid')
     Return the list of all convex #id.
 
     Note that their numbering is not supposed to be contiguous from
@@ -657,31 +652,31 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     especially if some points have been removed from the mesh. You
     can use MESH:SET('optimize_structure') to enforce a contiguous
     numbering. @MATLAB{CVid is a row vector.}@*/
-    sub_command
-      ("cvid", 0, 0, 0, 1,
-       out.pop().from_bit_vector(pmesh->convex_index());
-       );
+  sub_command
+    ("cvid", 0, 0, 0, 1,
+     out.pop().from_bit_vector(pmesh->convex_index());
+     );
 
 
-    /*@GET m = ('max pid')
-      Return the maximum #id of all points in the mesh (see 'max cvid').@*/
-    sub_command
-      ("max pid", 0, 0, 0, 1,
-       int i = pmesh->points().index().card() ? int(pmesh->points().index().last_true()) : -1;
-       out.pop().from_integer(i + config::base_index());
-       );
+  /*@GET m = ('max pid')
+    Return the maximum #id of all points in the mesh (see 'max cvid').@*/
+  sub_command
+    ("max pid", 0, 0, 0, 1,
+     int i = pmesh->points().index().card() ? int(pmesh->points().index().last_true()) : -1;
+     out.pop().from_integer(i + config::base_index());
+     );
 
 
-    /*@GET m = ('max cvid')
-      Return the maximum #id of all convexes in the mesh (see 'max pid').@*/
-    sub_command
-      ("max cvid", 0, 0, 0, 1,
-       int i = pmesh->convex_index().card()? int(pmesh->convex_index().last_true()) : -1;
-       out.pop().from_integer(i + config::base_index());
-       );
+  /*@GET m = ('max cvid')
+    Return the maximum #id of all convexes in the mesh (see 'max pid').@*/
+  sub_command
+    ("max cvid", 0, 0, 0, 1,
+     int i = pmesh->convex_index().card()? int(pmesh->convex_index().last_true()) : -1;
+     out.pop().from_integer(i + config::base_index());
+     );
 
 
-    /*@GET [E,C] = ('edges' [, CVLST][, 'merge'])
+  /*@GET [E,C] = ('edges' [, CVLST][, 'merge'])
     [OBSOLETE FUNCTION! will be removed in a future release]
 
     Return the list of edges of mesh M for the convexes listed in the
@@ -693,26 +688,26 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     edges of convexes are merged in a single edge.  If the optional
     output argument C is specified, it will contain the convex number
     associated with each edge.@*/
-    sub_command
-      ("edges", 0, 2, 0, 2,
-       bgeot::edge_list el;
-       build_edge_list(*pmesh, el, in);
-       iarray w   = out.pop().create_iarray(2, unsigned(el.size()));
-       /* copy the edge list to the matlab array */
+  sub_command
+    ("edges", 0, 2, 0, 2,
+     bgeot::edge_list el;
+     build_edge_list(*pmesh, el, in);
+     iarray w   = out.pop().create_iarray(2, unsigned(el.size()));
+     /* copy the edge list to the matlab array */
+     for (size_type j = 0; j < el.size(); j++) {
+       w(0,j) = int(el[j].i + config::base_index());
+       w(1,j) = int(el[j].j + config::base_index());
+     }
+     if (out.remaining()) {
+       iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
        for (size_type j = 0; j < el.size(); j++) {
-         w(0,j) = int(el[j].i + config::base_index());
-         w(1,j) = int(el[j].j + config::base_index());
+         cv[j] = int(el[j].cv+config::base_index());
        }
-       if (out.remaining()) {
-         iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
-         for (size_type j = 0; j < el.size(); j++) {
-           cv[j] = int(el[j].cv+config::base_index());
-         }
-       }
-       );
+     }
+     );
 
 
-    /*@GET [E,C] = ('curved edges', @int N [, CVLST])
+  /*@GET [E,C] = ('curved edges', @int N [, CVLST])
     [OBSOLETE FUNCTION! will be removed in a future release]
 
     Return E and C.
@@ -724,105 +719,101 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     number, in the array E which is a [ mesh_dim x 2 x nb_edges ]
     array.  If the optional output argument C is specified, it will
     contain the convex number associated with each edge.@*/
-    sub_command
-      ("curved edges", 1, 2, 0, 2,
-       bgeot::edge_list el;
-       size_type N = in.pop().to_integer(2,10000);
-       build_edge_list(*pmesh, el, in);
-       darray w   = out.pop().create_darray(pmesh->dim(), unsigned(N),
-                                            unsigned(el.size()));
-       transform_edge_list(*pmesh, unsigned(N), el, w);
-       if (out.remaining()) {
-         iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
-         for (size_type j = 0; j < el.size(); j++) {
-           cv[j] = int(el[j].cv + config::base_index());
-         }
+  sub_command
+    ("curved edges", 1, 2, 0, 2,
+     bgeot::edge_list el;
+     size_type N = in.pop().to_integer(2,10000);
+     build_edge_list(*pmesh, el, in);
+     darray w   = out.pop().create_darray(pmesh->dim(), unsigned(N),
+                                          unsigned(el.size()));
+     transform_edge_list(*pmesh, unsigned(N), el, w);
+     if (out.remaining()) {
+       iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
+       for (size_type j = 0; j < el.size(); j++) {
+         cv[j] = int(el[j].cv + config::base_index());
        }
-       );
+     }
+     );
 
 
-    /*@GET PIDs = ('orphaned pid')
-      Return point #id which are not linked to a convex.@*/
-    sub_command
-      ("orphaned pid", 0, 0, 0, 1,
-       dal::bit_vector bv = pmesh->points().index();
-       for (dal::bv_visitor cv(pmesh->convex_index()); !cv.finished(); ++cv) {
-         for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
-           bv.sup(pmesh->ind_points_of_convex(cv)[i]);
-       }
-       out.pop().from_bit_vector(bv);
-       );
+  /*@GET PIDs = ('orphaned pid')
+    Return point #id which are not linked to a convex.@*/
+  sub_command
+    ("orphaned pid", 0, 0, 0, 1,
+     dal::bit_vector bv = pmesh->points().index();
+     for (dal::bv_visitor cv(pmesh->convex_index()); !cv.finished(); ++cv) {
+       for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
+         bv.sup(pmesh->ind_points_of_convex(cv)[i]);
+     }
+     out.pop().from_bit_vector(bv);
+     );
 
 
-    /*@GET CVIDs = ('cvid from pid', @ivec PIDs[, @bool share=False])
+  /*@GET CVIDs = ('cvid from pid', @ivec PIDs[, @bool share=False])
     Return convex #ids related with the point #ids given in `PIDs`.
 
     If `share=False`, search convex whose vertex #ids are in `PIDs`.
     If `share=True`, search convex #ids that share the point #ids
     given in `PIDs`. `CVIDs` is a @MATLAB{row} vector (possibly
     empty).@*/
-    sub_command
-      ("cvid from pid", 1, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       dal::bit_vector pts = in.pop().to_bit_vector(&pmesh->points().index());
-       dal::bit_vector cvchecked;
+  sub_command
+    ("cvid from pid", 1, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     dal::bit_vector pts = in.pop().to_bit_vector(&pmesh->points().index());
+     bool share = false;
+     if (in.remaining() && in.front().is_bool())
+       share = in.pop().to_bool();
 
-       bool share = false;
-       if (in.remaining() && in.front().is_bool())
-         share = in.pop().to_bool();
+     dal::bit_vector cvchecked;
+     std::vector<size_type> cvlst;
+     /* loop over the points */
+     for (dal::bv_visitor ip(pts); !ip.finished(); ++ip) {
+       /* iterators over the convexes attached to point ip */
+       bgeot::mesh_structure::ind_cv_ct::const_iterator
+         cvit = pmesh->convex_to_point(ip).begin();
+       bgeot::mesh_structure::ind_cv_ct::const_iterator
+         cvit_end = pmesh->convex_to_point(ip).end();
 
-       std::vector<size_type> cvlst;
-
-       /* loop over the points */
-       for (dal::bv_visitor ip(pts); !ip.finished(); ++ip) {
-         /* iterators over the convexes attached to point ip */
-         bgeot::mesh_structure::ind_cv_ct::const_iterator
-           cvit = pmesh->convex_to_point(ip).begin();
-         bgeot::mesh_structure::ind_cv_ct::const_iterator
-           cvit_end = pmesh->convex_to_point(ip).end();
-
-         for ( ; cvit != cvit_end; cvit++) {
-           size_type ic = *cvit;
-
-           //cerr << "cv = " << ic+1 << endl;
-
-           if (!cvchecked.is_in(ic)) {
-             if (share) cvlst.push_back(ic);
-             else { /* check that each point of the convex is in the list */
-               bool ok = true;
-               bgeot::mesh_structure::ind_cv_ct cvpt = pmesh->ind_points_of_convex(ic);
-               for (unsigned ii=0; ii < cvpt.size(); ++ii) {
-                 if (!pts.is_in(cvpt[ii])) {
-                   ok = false; break;
-                 }
+       for ( ; cvit != cvit_end; cvit++) {
+         size_type ic = *cvit;
+         //cerr << "cv = " << ic+1 << endl;
+         if (!cvchecked.is_in(ic)) {
+           if (share) cvlst.push_back(ic);
+           else { /* check that each point of the convex is in the list */
+             bool ok = true;
+             bgeot::mesh_structure::ind_cv_ct cvpt = pmesh->ind_points_of_convex(ic);
+             for (unsigned ii=0; ii < cvpt.size(); ++ii) {
+               if (!pts.is_in(cvpt[ii])) {
+                 ok = false; break;
                }
-               if (ok) cvlst.push_back(ic);
              }
-             cvchecked.add(ic);
+             if (ok) cvlst.push_back(ic);
            }
+           cvchecked.add(ic);
          }
        }
-       iarray w = out.pop().create_iarray_h(unsigned(cvlst.size()));
-       for (size_type j=0; j < cvlst.size(); j++)
-         w[j] = int(cvlst[j]+config::base_index());
-       );
+     }
+     iarray w = out.pop().create_iarray_h(unsigned(cvlst.size()));
+     for (size_type j=0; j < cvlst.size(); j++)
+       w[j] = int(cvlst[j]+config::base_index());
+     );
 
 
-    /*@GET CVFIDs = ('faces from pid', @ivec PIDs)
+  /*@GET CVFIDs = ('faces from pid', @ivec PIDs)
     Return the convex faces whose vertex #ids are in `PIDs`.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers (local number in the convex).
     For a convex face to be returned, EACH of its points have to be
     listed in `PIDs`.@*/
-    sub_command
-      ("faces from pid", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
-       faces_from_pid(*pmesh, in, out);
-       );
+  sub_command
+    ("faces from pid", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
+     faces_from_pid(*pmesh, in, out);
+     );
 
 
-    /*@GET CVFIDs = ('outer faces'[, dim][, CVIDs])
+  /*@GET CVFIDs = ('outer faces'[, dim][, CVIDs])
     Return the set of faces not shared by two elements.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists
@@ -834,33 +825,36 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     function basically returns the mesh boundary. If `CVIDs`
     is given, it returns the boundary of the convex set whose #ids are
     listed in `CVIDs`.@*/
-    sub_command
-      ("outer faces", 0, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       outer_faces(*pmesh, in, out);
-       );
+  sub_command
+    ("outer faces", 0, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     outer_faces(*pmesh, in, out);
+     );
 
-    /*@GET CVFIDs = ('inner faces'[, CVIDs])
+
+  /*@GET CVFIDs = ('inner faces'[, CVIDs])
     Return the set of faces shared at least by two elements in CVIDs.
     Each face is represented only once and is arbitrarily chosen
-    between the two neighbor elements. @*/
-    sub_command
-      ("inner faces", 0, 1, 0, 1,
-       check_empty_mesh(pmesh);
-       inner_faces(*pmesh, in, out);
-       );
+    between the two neighbor elements.@*/
+  sub_command
+    ("inner faces", 0, 1, 0, 1,
+     check_empty_mesh(pmesh);
+     inner_faces(*pmesh, in, out);
+     );
 
-    /*@GET CVFIDs = ('all faces'[, CVIDs])
+
+  /*@GET CVFIDs = ('all faces'[, CVIDs])
     Return the set of faces of the in CVIDs (in all the mesh if CVIDs is
     omitted). Note that the face shared by two neighbor elements will be
-    represented twice. @*/
-    sub_command
-      ("all faces", 0, 1, 0, 1,
-       check_empty_mesh(pmesh);
-       all_faces(*pmesh, in, out);
-       );
+    represented twice.@*/
+  sub_command
+    ("all faces", 0, 1, 0, 1,
+     check_empty_mesh(pmesh);
+     all_faces(*pmesh, in, out);
+     );
 
-    /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle[, dim][, CVIDs])
+
+  /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and with a mean outward vector lying within an angle `angle` (in radians) from vector `v`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
@@ -868,14 +862,14 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     convex). The argument `dim` works as in outer_faces().
     If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
-    sub_command
-      ("outer faces with direction", 2, 4, 0, 1,
-       check_empty_mesh(pmesh);
-       outer_faces(*pmesh, in, out, "direction");
-       );
+  sub_command
+    ("outer faces with direction", 2, 4, 0, 1,
+     check_empty_mesh(pmesh);
+     outer_faces(*pmesh, in, out, "direction");
+     );
 
 
-    /*@GET CVFIDs = ('outer faces in box', @vec pmin, @vec pmax[, dim][, CVIDs])
+  /*@GET CVFIDs = ('outer faces in box', @vec pmin, @vec pmax[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and lying within the box defined by the corner points `pmin` and `pmax`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
@@ -883,13 +877,14 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     convex). The argument `dim` works as in outer_faces().
     If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
-    sub_command
-      ("outer faces in box", 2, 4, 0, 1,
-       check_empty_mesh(pmesh);
-       outer_faces(*pmesh, in, out, "box");
-       );
+  sub_command
+    ("outer faces in box", 2, 4, 0, 1,
+     check_empty_mesh(pmesh);
+     outer_faces(*pmesh, in, out, "box");
+     );
 
-    /*@GET CVFIDs = ('outer faces in ball', @vec center, @scalar radius[, dim][, CVIDs])
+
+  /*@GET CVFIDs = ('outer faces in ball', @vec center, @scalar radius[, dim][, CVIDs])
     Return the set of faces not shared by two convexes and lying within the ball of corresponding `center` and `radius`.
 
     The output `CVFIDs` is a two-rows matrix, the first row lists convex
@@ -897,458 +892,462 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     convex). The argument `dim` works as in outer_faces().
     If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
-    sub_command
-      ("outer faces in ball", 2, 4, 0, 1,
-       check_empty_mesh(pmesh);
-       outer_faces(*pmesh, in, out, "ball");
-       );
+  sub_command
+    ("outer faces in ball", 2, 4, 0, 1,
+     check_empty_mesh(pmesh);
+     outer_faces(*pmesh, in, out, "ball");
+     );
 
-    /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
+
+  /*@GET CVFIDs = ('adjacent face', @int cvid, @int fid)
     Return convex face of the neighbor element if it exists.
     If the convex have more than one neighbor
     relatively to the face ``f`` (think to bar elements in 3D for instance),
-    return the first face found. @*/
-    sub_command
-      ("adjacent face", 2, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       size_type cv = in.pop().to_convex_number(*pmesh);
-       short_type f = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
-       bgeot::convex_face cvf = pmesh->adjacent_face(cv, f);
-       getfem::mesh_region flst;
-       if (cvf.cv != size_type(-1))
-         flst.add(cvf.cv,cvf.f);
-       out.pop().from_mesh_region(flst);
-       );
+    return the first face found.@*/
+  sub_command
+    ("adjacent face", 2, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     size_type cv = in.pop().to_convex_number(*pmesh);
+     short_type f = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
+     bgeot::convex_face cvf = pmesh->adjacent_face(cv, f);
+     getfem::mesh_region flst;
+     if (cvf.cv != size_type(-1))
+       flst.add(cvf.cv,cvf.f);
+     out.pop().from_mesh_region(flst);
+     );
 
-    /*@GET CVFIDs = ('faces from cvid'[, @ivec CVIDs][, 'merge'])
+
+  /*@GET CVFIDs = ('faces from cvid'[, @ivec CVIDs][, 'merge'])
     Return a list of convex faces from a list of convex #id.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers (local number in the convex).
     If `CVIDs` is not given, all convexes are considered. The optional
     argument 'merge' merges faces shared by the convex of `CVIDs`.@*/
-    sub_command
-      ("faces from cvid", 0, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       dal::bit_vector bv;
-       if (in.remaining() && !in.front().is_string())
-         bv = in.pop().to_bit_vector(&pmesh->convex_index());
-       else
-         bv = pmesh->convex_index();
-       bool merge = false;
-       if (in.remaining() && in.front().is_string()) {
-         std::string s = in.pop().to_string();
-         if (cmd_strmatch(s, "merge")) merge = true;
-         else bad_cmd(s);
-       }
-       getfem::mesh_region flst;
-       size_type cnt = 0;
-       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) {
-         for (short_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
-           bool add = true;
-           if (merge) {
-             bgeot::mesh_structure::ind_set neighbors;
-             pmesh->neighbors_of_convex(cv, f, neighbors);
-             for (bgeot::mesh_structure::ind_set::const_iterator it = neighbors.begin();
-                  it != neighbors.end(); ++it) {
-               if (*it < cv) { add = false; break; }
-             }
+  sub_command
+    ("faces from cvid", 0, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     dal::bit_vector bv;
+     if (in.remaining() && !in.front().is_string())
+       bv = in.pop().to_bit_vector(&pmesh->convex_index());
+     else
+       bv = pmesh->convex_index();
+     bool merge = false;
+     if (in.remaining() && in.front().is_string()) {
+       std::string s = in.pop().to_string();
+       if (cmd_strmatch(s, "merge")) merge = true;
+       else bad_cmd(s);
+     }
+     getfem::mesh_region flst;
+     size_type cnt = 0;
+     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) {
+       for (short_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
+         bool add = true;
+         if (merge) {
+           bgeot::mesh_structure::ind_set neighbors;
+           pmesh->neighbors_of_convex(cv, f, neighbors);
+           for (bgeot::mesh_structure::ind_set::const_iterator it = neighbors.begin();
+                it != neighbors.end(); ++it) {
+             if (*it < cv) { add = false; break; }
            }
-           if (add) flst.add(cv,f);
          }
+         if (add) flst.add(cv,f);
        }
-       out.pop().from_mesh_region(flst);
-       );
+     }
+     out.pop().from_mesh_region(flst);
+     );
 
 
-    /*@GET [@mat T] = ('triangulated surface', @int Nrefine [,CVLIST])
+  /*@GET [@mat T] = ('triangulated surface', @int Nrefine [,CVLIST])
     [DEPRECATED FUNCTION! will be removed in a future release]
 
     Similar function to MESH:GET('curved edges') : split (if
     necessary, i.e. if the geometric transformation if non-linear)
     each face into sub-triangles and return their coordinates in T
     (see also ::COMPUTE('eval on P1 tri mesh'))@*/
-    sub_command
-      ("triangulated surface", 1, 2, 0, 1,
-       int Nrefine = in.pop().to_integer(1, 1000);
-       std::vector<convex_face> cvf;
-       if (in.remaining() && !in.front().is_string()) {
-         iarray v = in.pop().to_iarray(-1, -1);
-         build_convex_face_lst(*pmesh, cvf, &v);
-       } else build_convex_face_lst(*pmesh, cvf, 0);
-       eval_on_triangulated_surface(pmesh, Nrefine, cvf, out, NULL, darray());
-       );
+  sub_command
+    ("triangulated surface", 1, 2, 0, 1,
+     int Nrefine = in.pop().to_integer(1, 1000);
+     std::vector<convex_face> cvf;
+     if (in.remaining() && !in.front().is_string()) {
+       iarray v = in.pop().to_iarray(-1, -1);
+       build_convex_face_lst(*pmesh, cvf, &v);
+     } else build_convex_face_lst(*pmesh, cvf, 0);
+     eval_on_triangulated_surface(pmesh, Nrefine, cvf, out, NULL, darray());
+     );
 
 
-    /*@GET N = ('normal of face', @int cv, @int f[, @int nfpt])
+  /*@GET N = ('normal of face', @int cv, @int f[, @int nfpt])
     Return the normal vector of convex `cv`, face `f` at the `nfpt` point of the face.
 
     If `nfpt` is not specified, then the normal is evaluated at each
     geometrical node of the face.@*/
-    sub_command
-      ("normal of face", 2, 3, 0, 1,
-       size_type cv = in.pop().to_convex_number(*pmesh);
-       short_type f  = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
-       size_type node = 0;
-       if (in.remaining()) node = in.pop().to_integer(config::base_index(),10000)-config::base_index();
-       bgeot::base_node N = normal_of_face(*pmesh, cv, f, node);
-       out.pop().from_dcvector(N);
-       );
+  sub_command
+    ("normal of face", 2, 3, 0, 1,
+     size_type cv = in.pop().to_convex_number(*pmesh);
+     short_type f  = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
+     size_type node = 0;
+     if (in.remaining()) node = in.pop().to_integer(config::base_index(),10000)-config::base_index();
+     bgeot::base_node N = normal_of_face(*pmesh, cv, f, node);
+     out.pop().from_dcvector(N);
+     );
 
 
-    /*@GET N = ('normal of faces', @imat CVFIDs)
+  /*@GET N = ('normal of faces', @imat CVFIDs)
     Return matrix of (at face centers) the normal vectors of convexes.
 
     `CVFIDs` is supposed a two-rows matrix, the first row lists convex
     #ids, and the second lists face numbers (local number in the convex).@*/
-    sub_command
-      ("normal of faces", 1, 1, 0, 1,
-       iarray v = in.pop().to_iarray(2,-1);
-       darray w = out.pop().create_darray(pmesh->dim(), v.getn());
-       for (size_type j=0; j < v.getn(); j++) {
-         size_type cv = v(0,j) - config::base_index();
-         short_type f  = short_type(v(1,j) - config::base_index());
-         bgeot::base_node N = normal_of_face(*pmesh, cv, f, 0);
-         for (size_type i=0; i < pmesh->dim(); ++i) w(i,j)=N[i];
-       }
-       );
+  sub_command
+    ("normal of faces", 1, 1, 0, 1,
+     iarray v = in.pop().to_iarray(2,-1);
+     darray w = out.pop().create_darray(pmesh->dim(), v.getn());
+     for (size_type j=0; j < v.getn(); j++) {
+       size_type cv = v(0,j) - config::base_index();
+       short_type f  = short_type(v(1,j) - config::base_index());
+       bgeot::base_node N = normal_of_face(*pmesh, cv, f, 0);
+       for (size_type i=0; i < pmesh->dim(); ++i) w(i,j)=N[i];
+     }
+     );
 
 
-    /*@GET CVIDs = ('convexes in box', @vec pmin, @vec pmax)
+  /*@GET CVIDs = ('convexes in box', @vec pmin, @vec pmax)
     Return the set of convexes lying entirely within the box defined by the corner points `pmin` and `pmax`.
 
     The output `CVIDs` is a two-rows matrix, the first row lists convex
     #ids, and the second one lists face numbers (local number in the
     convex). If `CVIDs` is given, it returns portion of the boundary of
     the convex set defined by the #ids listed in `CVIDs`.@*/
-    sub_command
-      ("convexes in box", 2, 2, 0, 1,
-       check_empty_mesh(pmesh);
-       int dim = pmesh->dim();
-       darray p1 = in.pop().to_darray(dim);
-       darray p2 = in.pop().to_darray(dim);
-       bgeot::base_node pmin(dim);
-       bgeot::base_node pmax(dim);
-       for (int k=0; k < dim; ++k) {
-         pmin[k] = std::min(p1[k],p2[k]);
-         pmax[k] = std::max(p1[k],p2[k]);
-       }
-       getfem::mesh_region mr = select_convexes_in_box(*pmesh, pmin, pmax);
-       iarray w = out.pop().create_iarray_h(unsigned(mr.size()));
-       size_type j(0);
-       for (getfem::mr_visitor i(mr); !i.finished(); ++i, ++j)
-         w[j] = int(i.cv()+config::base_index());
-       );
+  sub_command
+    ("convexes in box", 2, 2, 0, 1,
+     check_empty_mesh(pmesh);
+     int dim = pmesh->dim();
+     darray p1 = in.pop().to_darray(dim);
+     darray p2 = in.pop().to_darray(dim);
+     bgeot::base_node pmin(dim);
+     bgeot::base_node pmax(dim);
+     for (int k=0; k < dim; ++k) {
+       pmin[k] = std::min(p1[k],p2[k]);
+       pmax[k] = std::max(p1[k],p2[k]);
+     }
+     getfem::mesh_region mr = select_convexes_in_box(*pmesh, pmin, pmax);
+     iarray w = out.pop().create_iarray_h(unsigned(mr.size()));
+     size_type j(0);
+     for (getfem::mr_visitor i(mr); !i.finished(); ++i, ++j)
+       w[j] = int(i.cv()+config::base_index());
+     );
 
-    /*@GET Q = ('quality'[, @ivec CVIDs])
+
+  /*@GET Q = ('quality'[, @ivec CVIDs])
     Return an estimation of the quality of each convex (:math:`0 \leq Q \leq 1`).@*/
-    sub_command
-      ("quality", 0, 1, 0, 1,
-       dal::bit_vector bv;
-       if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
-       else bv = pmesh->convex_index();
-       darray w = out.pop().create_darray_h(unsigned(bv.card()));
-       size_type cnt = 0;
-       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
-         w[cnt] = pmesh->convex_quality_estimate(cv);
-       );
+  sub_command
+    ("quality", 0, 1, 0, 1,
+     dal::bit_vector bv;
+     if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
+     else bv = pmesh->convex_index();
+     darray w = out.pop().create_darray_h(unsigned(bv.card()));
+     size_type cnt = 0;
+     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
+       w[cnt] = pmesh->convex_quality_estimate(cv);
+     );
 
 
-    /*@GET A = ('convex area'[, @ivec CVIDs])
+  /*@GET A = ('convex area'[, @ivec CVIDs])
     Return an estimate of the area of each convex.@*/
-    sub_command
-      ("convex area", 0, 1, 0, 1,
-       dal::bit_vector bv;
-       if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
-       else bv = pmesh->convex_index();
-       darray w = out.pop().create_darray_h(unsigned(bv.card()));
-       size_type cnt = 0;
-       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
-         w[cnt] = pmesh->convex_area_estimate(cv);
-       );
+  sub_command
+    ("convex area", 0, 1, 0, 1,
+     dal::bit_vector bv;
+     if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
+     else bv = pmesh->convex_index();
+     darray w = out.pop().create_darray_h(unsigned(bv.card()));
+     size_type cnt = 0;
+     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
+       w[cnt] = pmesh->convex_area_estimate(cv);
+     );
 
-    /*@GET A = ('convex radius'[, @ivec CVIDs])
+
+  /*@GET A = ('convex radius'[, @ivec CVIDs])
     Return an estimate of the radius of each convex.@*/
-    sub_command
-      ("convex radius", 0, 1, 0, 1,
-       dal::bit_vector bv;
-       if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
-       else bv = pmesh->convex_index();
-       darray w = out.pop().create_darray_h(unsigned(bv.card()));
-       size_type cnt = 0;
-       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
-         w[cnt] = pmesh->convex_radius_estimate(cv);
-       );
+  sub_command
+    ("convex radius", 0, 1, 0, 1,
+     dal::bit_vector bv;
+     if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
+     else bv = pmesh->convex_index();
+     darray w = out.pop().create_darray_h(unsigned(bv.card()));
+     size_type cnt = 0;
+     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
+       w[cnt] = pmesh->convex_radius_estimate(cv);
+     );
 
 
-    /*@GET @CELL{S, CV2S} = ('cvstruct'[, @ivec CVIDs])
+  /*@GET @CELL{S, CV2S} = ('cvstruct'[, @ivec CVIDs])
     Return an array of the convex structures.
 
     If `CVIDs` is not given, all convexes are considered. Each convex
     structure is listed once in `S`, and `CV2S` maps the convexes
     indice in `CVIDs` to the indice of its structure in `S`.@*/
-    sub_command
-      ("cvstruct", 0, 1, 0, 2,
-       get_structure_or_geotrans_of_convexes(*pmesh, in, out,
-                                             CVSTRUCT_CLASS_ID);
-       );
+  sub_command
+    ("cvstruct", 0, 1, 0, 2,
+     get_structure_or_geotrans_of_convexes(*pmesh, in, out,
+                                           CVSTRUCT_CLASS_ID);
+     );
 
 
-    /*@GET @CELL{GT, CV2GT} = ('geotrans'[, @ivec CVIDs])
+  /*@GET @CELL{GT, CV2GT} = ('geotrans'[, @ivec CVIDs])
     Returns an array of the geometric transformations.
 
     See also MESH:GET('cvstruct').@*/
-    sub_command
-      ("geotrans", 0, 1, 0, 2,
-       get_structure_or_geotrans_of_convexes(*pmesh, in, out,
-                                             GEOTRANS_CLASS_ID);
-       );
+  sub_command
+    ("geotrans", 0, 1, 0, 2,
+     get_structure_or_geotrans_of_convexes(*pmesh, in, out,
+                                           GEOTRANS_CLASS_ID);
+     );
 
 
-    /*@GET RIDs = ('boundaries')
-    DEPRECATED FUNCTION. Use 'regions' instead. @*/
-    sub_command
-      ("boundaries", 0, 0, 0, 1,
-       iarray w
-       = out.pop().create_iarray_h(unsigned(pmesh->regions_index().card()));
-       size_type i=0;
-       for (dal::bv_visitor k(pmesh->regions_index()); !k.finished();
-            ++k, ++i) {
-         w[i] = int(k);
-       }
-       if (i != w.size()) THROW_INTERNAL_ERROR;
-       );
+  /*@GET RIDs = ('boundaries')
+    DEPRECATED FUNCTION. Use 'regions' instead.@*/
+  sub_command
+    ("boundaries", 0, 0, 0, 1,
+     iarray w
+     = out.pop().create_iarray_h(unsigned(pmesh->regions_index().card()));
+     size_type i=0;
+     for (dal::bv_visitor k(pmesh->regions_index()); !k.finished();
+          ++k, ++i) {
+       w[i] = int(k);
+     }
+     if (i != w.size()) THROW_INTERNAL_ERROR;
+     );
 
 
-
-    /*@GET RIDs = ('regions')
+  /*@GET RIDs = ('regions')
     Return the list of valid regions stored in the mesh.@*/
-    sub_command
-      ("regions", 0, 0, 0, 1,
-       iarray w
-       = out.pop().create_iarray_h(unsigned(pmesh->regions_index().card()));
-       size_type i=0;
-       for (dal::bv_visitor k(pmesh->regions_index());
-            !k.finished(); ++k, ++i) {
-         w[i] = int(k);
-       }
-       if (i != w.size()) THROW_INTERNAL_ERROR;
-       );
+  sub_command
+    ("regions", 0, 0, 0, 1,
+     iarray w
+     = out.pop().create_iarray_h(unsigned(pmesh->regions_index().card()));
+     size_type i=0;
+     for (dal::bv_visitor k(pmesh->regions_index());
+          !k.finished(); ++k, ++i) {
+       w[i] = int(k);
+     }
+     if (i != w.size()) THROW_INTERNAL_ERROR;
+     );
 
 
-    /*@GET RIDs = ('boundary')
-    DEPRECATED FUNCTION. Use 'region' instead. @*/
-    sub_command
-      ("boundary", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
+  /*@GET RIDs = ('boundary')
+    DEPRECATED FUNCTION. Use 'region' instead.@*/
+  sub_command
+    ("boundary", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
 
-       std::vector<unsigned> cvlst;
-       std::vector<short> facelst;
-
-       dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
-
-       for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
-         if (pmesh->regions_index().is_in(rnum)) {
-           for (getfem::mr_visitor i(pmesh->region(rnum));
-                !i.finished(); ++i) {
-             cvlst.push_back(unsigned(i.cv()));
-             facelst.push_back(i.f());
-           }
+     std::vector<unsigned> cvlst;
+     std::vector<short> facelst;
+     dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
+     for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
+       if (pmesh->regions_index().is_in(rnum)) {
+         for (getfem::mr_visitor i(pmesh->region(rnum));
+              !i.finished(); ++i) {
+           cvlst.push_back(unsigned(i.cv()));
+           facelst.push_back(i.f());
          }
        }
+     }
 
-       iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
-       for (size_type j=0; j < cvlst.size(); j++) {
-         w(0,j) = cvlst[j]+config::base_index();
-         w(1,j) = short_type(facelst[j]+config::base_index());
-       }
-       );
+     iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
+     for (size_type j=0; j < cvlst.size(); j++) {
+       w(0,j) = cvlst[j]+config::base_index();
+       w(1,j) = short_type(facelst[j]+config::base_index());
+     }
+     );
 
 
-
-    /*@GET CVFIDs = ('region', @ivec RIDs)
+  /*@GET CVFIDs = ('region', @ivec RIDs)
     Return the list of convexes/faces on the regions `RIDs`.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers (local number in the convex).
     (and @MATLAB{0}@SCILAB{0}@PYTHON{-1} when the whole convex is in the
     regions).@*/
-    sub_command
-      ("region", 1, 1, 0, 1,
-       check_empty_mesh(pmesh);
-
-       std::vector<unsigned> cvlst;
-       std::vector<short> facelst;
-
-       dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
-
-       for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
-         if (pmesh->regions_index().is_in(rnum)) {
-           for (getfem::mr_visitor i(pmesh->region(rnum));
-                !i.finished(); ++i) {
-             cvlst.push_back(unsigned(i.cv()));
-             facelst.push_back(i.f());
-           }
+  sub_command
+    ("region", 1, 1, 0, 1,
+     check_empty_mesh(pmesh);
+     std::vector<unsigned> cvlst;
+     std::vector<short> facelst;
+     dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
+     for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
+       if (pmesh->regions_index().is_in(rnum)) {
+         for (getfem::mr_visitor i(pmesh->region(rnum));
+              !i.finished(); ++i) {
+           cvlst.push_back(unsigned(i.cv()));
+           facelst.push_back(i.f());
          }
        }
+     }
 
-       iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
-       for (size_type j=0; j < cvlst.size(); j++) {
-         w(0,j) = cvlst[j]+config::base_index();
-         w(1,j) = short_type(facelst[j]+config::base_index());
-       }
-       );
+     iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
+     for (size_type j=0; j < cvlst.size(); j++) {
+       w(0,j) = cvlst[j]+config::base_index();
+       w(1,j) = short_type(facelst[j]+config::base_index());
+     }
+     );
 
 
-    /*@GET ('save', @str filename)
+  /*@GET ('save', @str filename)
     Save the mesh object to an ascii file.
 
     This mesh can be restored with MESH:INIT('load', filename).@*/
-    sub_command
-      ("save", 1, 1, 0, 0,
-       std::string fname = in.pop().to_string();
-       pmesh->write_to_file(fname);
-       );
+  sub_command
+    ("save", 1, 1, 0, 0,
+     std::string fname = in.pop().to_string();
+     pmesh->write_to_file(fname);
+     );
 
 
-    /*@GET s = ('char')
+  /*@GET s = ('char')
     Output a string description of the mesh.@*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       std::stringstream s;
-       pmesh->write_to_file(s);
-       out.pop().from_string(s.str().c_str());
-       );
+  sub_command
+    ("char", 0, 0, 0, 1,
+     std::stringstream s;
+     pmesh->write_to_file(s);
+     out.pop().from_string(s.str().c_str());
+     );
 
 
-    /*@GET ('export to vtk', @str filename, ... [,'ascii'][,'quality'])
+  /*@GET ('export to vtk', @str filename, ... [,'ascii'][,'quality'])
     Exports a mesh to a VTK file .
 
     If 'quality' is specified, an estimation of the quality of each
     convex will be written to the file.
 
     See also MESH_FEM:GET('export to vtk'), SLICE:GET('export to vtk').@*/
-    sub_command
-      ("export to vtk", 1, 3, 0, 1,
-       bool write_q = false; bool ascii = false;
-       std::string fname = in.pop().to_string();
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else if (cmd_strmatch(cmd2, "quality"))
-           write_q = true;
-         else THROW_BADARG("expecting 'ascii' or 'quality', got " << cmd2);
-       }
-       getfem::vtk_export exp(fname, ascii);
-       exp.exporting(*pmesh);
-       exp.write_mesh(); if (write_q) exp.write_mesh_quality(*pmesh);
-       );
+  sub_command
+    ("export to vtk", 1, 3, 0, 1,
+     bool write_q = false; bool ascii = false;
+     std::string fname = in.pop().to_string();
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else if (cmd_strmatch(cmd2, "quality"))
+         write_q = true;
+       else THROW_BADARG("expecting 'ascii' or 'quality', got " << cmd2);
+     }
+     getfem::vtk_export exp(fname, ascii);
+     exp.exporting(*pmesh);
+     exp.write_mesh(); if (write_q) exp.write_mesh_quality(*pmesh);
+     );
 
 
-    /*@GET ('export to vtu', @str filename, ... [,'ascii'][,'quality'])
+  /*@GET ('export to vtu', @str filename, ... [,'ascii'][,'quality'])
     Exports a mesh to a VTK(XML) file .
 
     If 'quality' is specified, an estimation of the quality of each
     convex will be written to the file.
 
     See also MESH_FEM:GET('export to vtu'), SLICE:GET('export to vtu').@*/
-    sub_command
-      ("export to vtu", 1, 3, 0, 1,
-       bool write_q = false; bool ascii = false;
-       std::string fname = in.pop().to_string();
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else if (cmd_strmatch(cmd2, "quality"))
-           write_q = true;
-         else THROW_BADARG("expecting 'ascii' or 'quality', got " << cmd2);
-       }
-       getfem::vtu_export exp(fname, ascii);
-       exp.exporting(*pmesh);
-       exp.write_mesh(); if (write_q) exp.write_mesh_quality(*pmesh);
-       );
+  sub_command
+    ("export to vtu", 1, 3, 0, 1,
+     bool write_q = false; bool ascii = false;
+     std::string fname = in.pop().to_string();
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else if (cmd_strmatch(cmd2, "quality"))
+         write_q = true;
+       else THROW_BADARG("expecting 'ascii' or 'quality', got " << cmd2);
+     }
+     getfem::vtu_export exp(fname, ascii);
+     exp.exporting(*pmesh);
+     exp.write_mesh(); if (write_q) exp.write_mesh_quality(*pmesh);
+     );
 
 
-    /*@GET ('export to dx', @str filename, ... [,'ascii'][,'append'][,'as',@str name,[,'serie',@str serie_name]][,'edges'])
+  /*@GET ('export to dx', @str filename, ... [,'ascii'][,'append'][,'as',@str name,[,'serie',@str serie_name]][,'edges'])
     Exports a mesh to an OpenDX file.
 
     See also MESH_FEM:GET('export to dx'), SLICE:GET('export to dx').@*/
-    sub_command
-      ("export to dx", 1, 3, 0, 1,
-       bool ascii = false; bool append = false; bool edges = false;
-       std::string fname = in.pop().to_string();
-       std::string mesh_name;
-       std::string serie_name;
-       while (in.remaining() && in.front().is_string()) {
-         std::string cmd2 = in.pop().to_string();
-         if (cmd_strmatch(cmd2, "ascii"))
-           ascii = true;
-         else if (cmd_strmatch(cmd2, "edges"))
-           edges = true;
-         else if (cmd_strmatch(cmd2, "append"))
-           append = true;
-         else if (cmd_strmatch(cmd2, "as") && in.remaining())
-           mesh_name = in.pop().to_string();
-         else if (cmd_strmatch(cmd2, "serie") && in.remaining() && mesh_name.size())
-           serie_name = in.pop().to_string();
-         else THROW_BADARG("expecting 'ascii' or 'append', 'serie', or 'as' got " << cmd2);
-       }
-       getfem::dx_export exp(fname, ascii, append);
-       exp.exporting(*pmesh, mesh_name);
-       exp.write_mesh();
-       if (edges) exp.exporting_mesh_edges();
-       if (serie_name.size()) exp.serie_add_object(serie_name,mesh_name);
-       );
+  sub_command
+    ("export to dx", 1, 3, 0, 1,
+     bool ascii = false; bool append = false; bool edges = false;
+     std::string fname = in.pop().to_string();
+     std::string mesh_name;
+     std::string serie_name;
+     while (in.remaining() && in.front().is_string()) {
+       std::string cmd2 = in.pop().to_string();
+       if (cmd_strmatch(cmd2, "ascii"))
+         ascii = true;
+       else if (cmd_strmatch(cmd2, "edges"))
+         edges = true;
+       else if (cmd_strmatch(cmd2, "append"))
+         append = true;
+       else if (cmd_strmatch(cmd2, "as") && in.remaining())
+         mesh_name = in.pop().to_string();
+       else if (cmd_strmatch(cmd2, "serie") && in.remaining() && mesh_name.size())
+         serie_name = in.pop().to_string();
+       else THROW_BADARG("expecting 'ascii' or 'append', 'serie', or 'as' got " << cmd2);
+     }
+     getfem::dx_export exp(fname, ascii, append);
+     exp.exporting(*pmesh, mesh_name);
+     exp.write_mesh();
+     if (edges) exp.exporting_mesh_edges();
+     if (serie_name.size()) exp.serie_add_object(serie_name,mesh_name);
+     );
 
 
-    /*@GET ('export to pos', @str filename[, @str name])
+  /*@GET ('export to pos', @str filename[, @str name])
     Exports a mesh to a POS file .
 
     See also MESH_FEM:GET('export to pos'), SLICE:GET('export to pos').@*/
-    sub_command
-      ("export to pos", 1, 2, 0, 0,
-       std::string fname = in.pop().to_string();
-       std::string name = "";
-       if (in.remaining()) name = in.pop().to_string();
-
-       getfem::pos_export exp(fname);
-       exp.write(*pmesh,name);
-       );
-
-
-    /*@GET z = ('memsize')
-      Return the amount of memory (in bytes) used by the mesh.@*/
-    sub_command
-      ("memsize", 0, 0, 0, 1,
-       out.pop().from_integer(int(pmesh->memsize()));
-       );
+  sub_command
+    ("export to pos", 1, 2, 0, 0,
+     std::string fname = in.pop().to_string();
+     std::string name = "";
+     if (in.remaining()) name = in.pop().to_string();
+     getfem::pos_export exp(fname);
+     exp.write(*pmesh,name);
+     );
 
 
-    /*@GET ('display')
-      displays a short summary for a @tmesh object.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfMesh object in dimension " << int(pmesh->dim())
-       << " with " << pmesh->nb_points() << " points and "
-       << pmesh->convex_index().card() << " elements\n";
-       );
+  /*@GET z = ('memsize')
+    Return the amount of memory (in bytes) used by the mesh.@*/
+  sub_command
+    ("memsize", 0, 0, 0, 1,
+     out.pop().from_integer(int(pmesh->memsize()));
+     );
 
-  }
 
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-  const getfem::mesh *pmesh = extract_mesh_object(m_in.pop());
-  std::string init_cmd      = m_in.pop().to_string();
+  /*@GET ('display')
+    displays a short summary for a @tmesh object.@*/
+  sub_command
+    ("display", 0, 0, 0, 0,
+     infomsg() << "gfMesh object in dimension " << int(pmesh->dim())
+     << " with " << pmesh->nb_points() << " points and "
+     << pmesh->convex_index().card() << " elements\n";
+     );
+
+} // build_sub_command_table
+
+
+void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
+  const getfem::mesh *pmesh = extract_mesh_object(in.pop());
+  std::string init_cmd      = in.pop().to_string();
   std::string cmd           = cmd_normalize(init_cmd);
-
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, pmesh);
-  }
-  else bad_cmd(init_cmd);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, pmesh);
+  } else
+    bad_cmd(init_cmd);
 
 }

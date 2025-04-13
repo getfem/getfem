@@ -92,11 +92,9 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
   General function for modifying mesh_im objects
   @*/
 
-void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
 
   getfem::mesh_im *mim = to_meshim_object(in.pop());
   std::string cmd = in.pop().to_string();

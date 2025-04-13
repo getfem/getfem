@@ -20,8 +20,7 @@
 ===========================================================================*/
 // $Id: gf_mesher_object_get.cc 3468 2010-02-24 20:12:15Z renard $
 
-#include <getfemint_misc.h>
-#include <getfemint_workspace.h>
+#include <getfemint.h>
 #include <getfem/getfem_mesher.h>
 
 using namespace getfemint;
@@ -31,80 +30,30 @@ using namespace getfemint;
 @*/
 
 
-// Object for the declaration of a new sub-command.
+void gf_mesher_object_get(getfemint::mexargs_in& in,
+                          getfemint::mexargs_out& out) {
 
-struct sub_gf_mesher_object_get : virtual public dal::static_stored_object {
-  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
-  virtual void run(getfemint::mexargs_in& in,
-                   getfemint::mexargs_out& out,
-                   const getfem::pmesher_signed_distance &paf) = 0;
-};
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
 
-typedef std::shared_ptr<sub_gf_mesher_object_get> psub_command;
+  getfem::pmesher_signed_distance paf = to_mesher_object(in.pop());
+  std::string init_cmd                = in.pop().to_string();
+  std::string cmd                     = cmd_normalize(init_cmd);
 
-// Function to avoid warning in macro with unused arguments.
-template <typename T> static inline void dummy_func(T &) {}
-
-#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mesher_object_get {                         \
-      virtual void run(getfemint::mexargs_in& in,                           \
-                       getfemint::mexargs_out& out,                         \
-                       const getfem::pmesher_signed_distance &paf)          \
-      { dummy_func(in); dummy_func(out); dummy_func(paf); code }            \
-    };                                                                      \
-    psub_command psubc = std::make_shared<subc>();                          \
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
-    subc_tab[cmd_normalize(name)] = psubc;                                  \
-  }
-
-
-
-void gf_mesher_object_get(getfemint::mexargs_in& m_in,
-                          getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-
+  if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
     /*@GET s = ('char')
       Output a (unique) string representation of the @tmo.
 
       This can be used to perform comparisons between two
       different @tmo objects.
-      This function is to be completed.
-      @*/
-    sub_command
-      ("char", 0, 0, 0, 1,
-       GMM_ASSERT1(false, "Sorry, function to be done");
-       // std::string s = ...;
-       // out.pop().from_string(s.c_str());
-       );
-
-
+      This function is to be completed.@*/
+   GMM_ASSERT1(false, "Sorry, function to be done");
+   // std::string s = ...;
+   // out.pop().from_string(s.c_str());
+  } else if (check_cmd(cmd, "display", in, out, 0, 0, 0, 0)) {
     /*@GET ('display')
       displays a short summary for a @tmo object.@*/
-    sub_command
-      ("display", 0, 0, 0, 0,
-       infomsg() << "gfMesherObject object\n";
-       );
-  }
-
-
-
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
-
-  getfem::pmesher_signed_distance paf = to_mesher_object(m_in.pop());
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
-
-  auto it = subc_tab.find(cmd);
-  if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, paf);
-  }
-  else bad_cmd(init_cmd);
+    infomsg() << "gfMesherObject object\n";
+  } else
+    bad_cmd(init_cmd);
 
 }

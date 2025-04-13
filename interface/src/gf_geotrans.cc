@@ -50,7 +50,7 @@ as a string, which may be:
 void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
+    THROW_BADARG("Wrong number of input arguments");
   }
   std::string cmd = in.pop().to_string();
   id_type id = store_geotrans_object(bgeot::geometric_trans_descriptor(cmd));

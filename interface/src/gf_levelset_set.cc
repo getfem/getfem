@@ -29,11 +29,10 @@ using namespace getfemint;
   General function for modification of LEVELSET objects.
 @*/
 
-void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
   getfem::level_set *pls = to_levelset_object(in.pop());
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
@@ -80,5 +79,6 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     else{
       pls->simplify(in.pop().to_scalar());
     }
-  } else bad_cmd(cmd);
+  } else
+    bad_cmd(cmd);
 }

@@ -79,7 +79,8 @@ static void filter_lawname(std::string &lawname) {
 }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@SET ('clear')
     Clear the model.@*/
   sub_command
@@ -4099,7 +4100,7 @@ void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
 void gf_model_set(getfemint::mexargs_in& in,
                   getfemint::mexargs_out& out) {
 
-  static std::map<std::string, psub_command > subc_tab;
+  static std::map<std::string, psub_command> subc_tab;
   if (subc_tab.empty())
     build_sub_command_table(subc_tab);
 
@@ -4115,7 +4116,7 @@ void gf_model_set(getfemint::mexargs_in& in,
               subcmd->arg_in_min, subcmd->arg_in_max,
               subcmd->arg_out_min, subcmd->arg_out_max);
     subcmd->run(in, out, md);
-  }
-  else bad_cmd(init_cmd);
+  } else
+    bad_cmd(init_cmd);
 
 }

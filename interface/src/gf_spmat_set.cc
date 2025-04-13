@@ -104,14 +104,13 @@ spmat_do_clear(gsparse &gsp, SUBI &ii, SUBI &jj, T) {
   gmm::clear(gmm::sub_matrix(gsp.wsc(T()), ii, jj));
 }
 
+
 /*@GFDOC
    Modification of the content of a getfem sparse matrix.
  @*/
 
 
-
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_spmat_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -138,153 +137,155 @@ template <typename T> static inline void dummy_func(T &) {}
   }
 
 
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@SET ('clear'[, @list I[, @list J]])
+    Erase the non-zero entries of the matrix.
 
-void gf_spmat_set(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
-
-  if (subc_tab.empty()) {
-
-    /*@SET ('clear'[, @list I[, @list J]])
-      Erase the non-zero entries of the matrix.
-
-      The optional arguments `I` and `J` may be specified to clear a
-      sub-matrix instead of the entire matrix.@*/
-    sub_command
-      ("clear", 0, 2, 0, 0,
-       if (in.remaining()) {
-         sub_index ii = in.pop().to_sub_index().check_range(gsp.nrows());
-         sub_index jj = in.remaining() ?
-           in.pop().to_sub_index().check_range(gsp.ncols()) : ii.check_range(gsp.ncols());
-         if (!gsp.is_complex()) spmat_do_clear(gsp, ii, jj, scalar_type());
-         else                   spmat_do_clear(gsp, ii, jj, complex_type());
-       } else {
-         gmm::sub_interval ii(0,gsp.nrows());
-         gmm::sub_interval jj(0,gsp.ncols());
-         if (!gsp.is_complex()) spmat_do_clear(gsp, ii, jj, scalar_type());
-         else                   spmat_do_clear(gsp, ii, jj, complex_type());
-       }
-       );
+    The optional arguments `I` and `J` may be specified to clear a
+    sub-matrix instead of the entire matrix.@*/
+  sub_command
+    ("clear", 0, 2, 0, 0,
+     if (in.remaining()) {
+       sub_index ii = in.pop().to_sub_index().check_range(gsp.nrows());
+       sub_index jj = in.remaining() ?
+         in.pop().to_sub_index().check_range(gsp.ncols()) : ii.check_range(gsp.ncols());
+       if (!gsp.is_complex()) spmat_do_clear(gsp, ii, jj, scalar_type());
+       else                   spmat_do_clear(gsp, ii, jj, complex_type());
+     } else {
+       gmm::sub_interval ii(0,gsp.nrows());
+       gmm::sub_interval jj(0,gsp.ncols());
+       if (!gsp.is_complex()) spmat_do_clear(gsp, ii, jj, scalar_type());
+       else                   spmat_do_clear(gsp, ii, jj, complex_type());
+     }
+     );
 
 
-    /*@SET ('scale', @scalar v)
-      Multiplies the matrix by a scalar value `v`.@*/
-    sub_command
-      ("scale", 1, 1, 0, 0,
-       gsp.to_wsc();
-       if (!gsp.is_complex() && in.front().is_complex()) gsp.to_complex();
-       if (!gsp.is_complex()) {
-         gmm::scale(gsp.real_wsc(), in.pop().to_scalar());
-       } else {
-         gmm::scale(gsp.cplx_wsc(), in.pop().to_scalar(complex_type()));
-       }
-       );
+  /*@SET ('scale', @scalar v)
+    Multiplies the matrix by a scalar value `v`.@*/
+  sub_command
+    ("scale", 1, 1, 0, 0,
+     gsp.to_wsc();
+     if (!gsp.is_complex() && in.front().is_complex()) gsp.to_complex();
+     if (!gsp.is_complex()) {
+       gmm::scale(gsp.real_wsc(), in.pop().to_scalar());
+     } else {
+       gmm::scale(gsp.cplx_wsc(), in.pop().to_scalar(complex_type()));
+     }
+     );
 
 
-    /*@SET ('transpose')
-      Transpose the matrix.@*/
-    sub_command
-      ("transpose", 0, 0, 0, 0,
-       if (!gsp.is_complex())
-         gf_spmat_set_transpose(gsp, TRANSP, scalar_type());
-       else gf_spmat_set_transpose(gsp, TRANSP, complex_type());
-       );
+  /*@SET ('transpose')
+    Transpose the matrix.@*/
+  sub_command
+    ("transpose", 0, 0, 0, 0,
+     if (!gsp.is_complex())
+       gf_spmat_set_transpose(gsp, TRANSP, scalar_type());
+     else gf_spmat_set_transpose(gsp, TRANSP, complex_type());
+     );
 
 
-    /*@SET ('conjugate')
-      Conjugate each element of the matrix.@*/
-    sub_command
-      ("conjugate", 0, 0, 0, 0,
-       if (!gsp.is_complex())
-         gf_spmat_set_transpose(gsp, CONJ, scalar_type());
-       else gf_spmat_set_transpose(gsp, CONJ, complex_type());
-       );
+  /*@SET ('conjugate')
+    Conjugate each element of the matrix.@*/
+  sub_command
+    ("conjugate", 0, 0, 0, 0,
+     if (!gsp.is_complex())
+       gf_spmat_set_transpose(gsp, CONJ, scalar_type());
+     else gf_spmat_set_transpose(gsp, CONJ, complex_type());
+     );
 
 
-    /*@SET ('transconj')
-      Transpose and conjugate the matrix.@*/
-    sub_command
-      ("transconj", 0, 0, 0, 0,
-       if (!gsp.is_complex())
-         gf_spmat_set_transpose(gsp, TRANSCONJ, scalar_type());
-       else gf_spmat_set_transpose(gsp, TRANSCONJ, complex_type());
-       );
+  /*@SET ('transconj')
+    Transpose and conjugate the matrix.@*/
+  sub_command
+    ("transconj", 0, 0, 0, 0,
+     if (!gsp.is_complex())
+       gf_spmat_set_transpose(gsp, TRANSCONJ, scalar_type());
+     else gf_spmat_set_transpose(gsp, TRANSCONJ, complex_type());
+     );
 
 
-    /*@SET ('to_csc')
-      Convert the matrix to CSC storage.
+  /*@SET ('to_csc')
+    Convert the matrix to CSC storage.
 
-      CSC storage is recommended for matrix-vector multiplications.@*/
-    sub_command
-      ("to_csc", 0, 0, 0, 0,
-       gsp.to_csc();
-       );
-
-
-    /*@SET ('to_wsc')
-      Convert the matrix to WSC storage.
-
-      Read and write operation are quite fast with WSC storage.@*/
-    sub_command
-      ("to_wsc", 0, 0, 0, 0,
-       gsp.to_wsc();
-       );
+    CSC storage is recommended for matrix-vector multiplications.@*/
+  sub_command
+    ("to_csc", 0, 0, 0, 0,
+     gsp.to_csc();
+     );
 
 
-    /*@SET ('to_complex')
-      Store complex numbers.@*/
-    sub_command
-      ("to_complex", 0, 0, 0, 0,
-       gsp.to_complex();
-       );
+  /*@SET ('to_wsc')
+    Convert the matrix to WSC storage.
+
+    Read and write operation are quite fast with WSC storage.@*/
+  sub_command
+    ("to_wsc", 0, 0, 0, 0,
+     gsp.to_wsc();
+     );
 
 
-    /*@SET ('diag', @dmat D [, @ivec E])
-      Change the diagonal (or sub-diagonals) of the matrix.
-
-      If `E` is given, `D` might be a matrix and each column of `E` will
-      contain the sub-diagonal number that will be filled with the
-      corresponding column of `D`.@*/
-    sub_command
-      ("diag", 1, 2, 0, 0,
-       spmat_set_diag(gsp, in, false);
-       );
+  /*@SET ('to_complex')
+    Store complex numbers.@*/
+  sub_command
+    ("to_complex", 0, 0, 0, 0,
+     gsp.to_complex();
+     );
 
 
-    /*@SET ('assign', @ivec I, @ivec J, @mat V)
-      Copy V into the sub-matrix 'M(I,J)'.
+  /*@SET ('diag', @dmat D [, @ivec E])
+    Change the diagonal (or sub-diagonals) of the matrix.
 
-      `V` might be a sparse matrix or a full matrix.@*/
-    sub_command
-      ("assign", 3, 3, 0, 0,
-       spmat_set_or_add_sub_matrix(gsp, in, false);
-       );
+    If `E` is given, `D` might be a matrix and each column of `E` will
+    contain the sub-diagonal number that will be filled with the
+    corresponding column of `D`.@*/
+  sub_command
+    ("diag", 1, 2, 0, 0,
+     spmat_set_diag(gsp, in, false);
+     );
 
 
-    /*@SET ('add', @ivec I, @ivec J, @mat V)
+  /*@SET ('assign', @ivec I, @ivec J, @mat V)
+    Copy V into the sub-matrix 'M(I,J)'.
+
+    `V` might be a sparse matrix or a full matrix.@*/
+  sub_command
+    ("assign", 3, 3, 0, 0,
+     spmat_set_or_add_sub_matrix(gsp, in, false);
+     );
+
+
+  /*@SET ('add', @ivec I, @ivec J, @mat V)
     Add `V` to the sub-matrix 'M(I,J)'.
 
     `V` might be a sparse matrix or a full matrix.@*/
-    sub_command
-      ("add", 3, 3, 0, 0,
-       spmat_set_or_add_sub_matrix(gsp, in, true);
-       );
+  sub_command
+    ("add", 3, 3, 0, 0,
+     spmat_set_or_add_sub_matrix(gsp, in, true);
+     );
 
-  }
+} // build_sub_command_table
 
-  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
-  gsparse &gsp = *(to_spmat_object(m_in.pop()));
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+void gf_spmat_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
+  gsparse &gsp         = *(to_spmat_object(in.pop()));
+  std::string init_cmd = in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, gsp);
-  }
-  else bad_cmd(init_cmd);
-
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    subcmd->run(in, out, gsp);
+  } else
+    bad_cmd(init_cmd);
 
 }

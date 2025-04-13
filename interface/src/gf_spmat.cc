@@ -169,158 +169,161 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+  /*@INIT SM = ('empty', @int m [, @int n])
+    Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
+    `m x n`. If `n` is omitted, the matrix dimension is `m x m`.@*/
+  sub_command
+    ("empty", 1, 2, 0, 1,
+     size_type m = in.pop().to_integer(1,INT_MAX); size_type  n = m;
+     if (in.remaining()) n = in.pop().to_integer(1, INT_MAX);
+     gsp->allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
+     );
 
 
-void gf_spmat(getfemint::mexargs_in& m_in,
-              getfemint::mexargs_out& m_out) {
-  static std::map<std::string, psub_command > subc_tab;
+  /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J=I]])
+    Duplicate a matrix `K` (which might be an @tsp@MATLAB{ or a native matlab
+    sparse matrix}). If index `I` and/or `J` are given, the matrix will
+    be a submatrix of `K`. For example::
 
-  if (subc_tab.empty()) {
+      @MATLAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
+      @SCILAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
+      @PYTHON{m = SPMAT:INIT('copy', SPMAT:INIT('empty',50,50), range(40), [6, 7, 8, 3, 10])}
 
-    /*@INIT SM = ('empty', @int m [, @int n])
-      Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
-      `m x n`. If `n` is omitted, the matrix dimension is `m x m`.@*/
-    sub_command
-      ("empty", 1, 2, 0, 1,
-       size_type m = in.pop().to_integer(1,INT_MAX); size_type  n = m;
-       if (in.remaining()) n = in.pop().to_integer(1, INT_MAX);
-       gsp->allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
-       );
-
-    /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J=I]])
-      Duplicate a matrix `K` (which might be an @tsp@MATLAB{ or a native matlab
-      sparse matrix}). If index `I` and/or `J` are given, the matrix will
-      be a submatrix of `K`. For example::
-
-        @MATLAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
-        @SCILAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
-        @PYTHON{m = SPMAT:INIT('copy', SPMAT:INIT('empty',50,50), range(40), [6, 7, 8, 3, 10])}
-
-      will return a 40x5 matrix.@*/
-    sub_command
-      ("copy", 1, 3, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
-       if (!A->is_complex()) {
-         copy_spmat(*A, *gsp, in, scalar_type());
-       } else {
-         copy_spmat(*A, *gsp, in, complex_type());
-       }
-       );
-
-     /*@INIT SM = ('identity', @int n)
-       Create a `n x n` identity matrix.@*/
-    sub_command
-      ("identity", 1, 1, 0, 1,
-       size_type n = in.pop().to_integer(1, INT_MAX);
-       gsp->real_wsc(new gsparse::t_wscmat_r(n,n));
-       gmm::copy(gmm::identity_matrix(), gsp->real_wsc());
-       );
+    will return a 40x5 matrix.@*/
+  sub_command
+    ("copy", 1, 3, 0, 1,
+     std::shared_ptr<gsparse> A = in.pop().to_sparse();
+     if (!A->is_complex()) {
+       copy_spmat(*A, *gsp, in, scalar_type());
+     } else {
+       copy_spmat(*A, *gsp, in, complex_type());
+     }
+     );
 
 
-     /*@INIT SM = ('mult', @tspmat A, @tspmat B)
-       Create a sparse matrix as the product of the sparse matrices `A` and
-       `B`. It requires that `A` and `B` be both real or both complex, you
-       may have to use ``SPMAT:SET('to_complex')`` @*/
-    sub_command
-      ("mult", 2, 2, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
-       std::shared_ptr<gsparse> B = in.pop().to_sparse();
-       size_type m = A->nrows(); size_type n = B->ncols();
-
-       if (A->is_complex() != B->is_complex())
-         THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
-       if (!A->is_complex()) gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
-       else gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
-       if (A->storage() == gsparse::CSCMAT
-           && B->storage() == gsparse::CSCMAT) {
-         if (!A->is_complex())
-           gmm::mult(A->real_csc(),B->real_csc(), gsp->real_wsc());
-         else
-           gmm::mult(A->cplx_csc(),B->cplx_csc(), gsp->cplx_wsc());
-       }
-       else if (A->storage() == gsparse::CSCMAT
-                && B->storage() == gsparse::WSCMAT) {
-         if (!A->is_complex())
-           gmm::mult(A->real_csc(),B->real_wsc(), gsp->real_wsc());
-         else
-           gmm::mult(A->cplx_csc(),B->cplx_wsc(), gsp->cplx_wsc());
-       }
-       else if (A->storage() == gsparse::WSCMAT
-                && B->storage() == gsparse::CSCMAT) {
-         if (!A->is_complex())
-           gmm::mult(A->real_wsc(),B->real_csc(), gsp->real_wsc());
-         else
-           gmm::mult(A->cplx_wsc(),B->cplx_csc(), gsp->cplx_wsc());
-       }
-       else if (A->storage() == gsparse::WSCMAT
-                && B->storage() == gsparse::WSCMAT) {
-         if (!A->is_complex())
-           gmm::mult(A->real_wsc(),B->real_wsc(), gsp->real_wsc());
-         else
-           gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp->cplx_wsc());
-       } else THROW_INTERNAL_ERROR;
-       );
-
-     /*@INIT SM = ('add', @tspmat A, @tspmat B)
-       Create a sparse matrix as the sum of the sparse matrices `A` and `B`.
-       Adding a real matrix with a complex matrix is possible.@*/
-    sub_command
-      ("add", 2, 2, 0, 1,
-       std::shared_ptr<gsparse> A = in.pop().to_sparse();
-       std::shared_ptr<gsparse> B = in.pop().to_sparse();
-       size_type m = A->nrows(); size_type n = A->ncols();
-       if (A->is_complex() != B->is_complex()) {
-         gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
-         if (A->is_complex())
-           gf_spmat_add(*gsp, *B, *A, scalar_type(), complex_type());
-         else gf_spmat_add(*gsp, *A, *B, scalar_type(), complex_type());
-       } else if (A->is_complex()) {
-         gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
-         gf_spmat_add(*gsp, *A, *B, complex_type(), complex_type());
-       } else {
-         gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
-         gf_spmat_add(*gsp, *A, *B, scalar_type(), scalar_type());
-       }
-       );
-
-     /*@INIT SM = ('diag', @dmat D [, @ivec E [, @int n [,@int m]]])
-       Create a diagonal matrix. If `E` is given, `D` might be a matrix and
-       each column of `E` will contain the sub-diagonal number that will be
-       filled with the corresponding column of `D`.@*/
-    sub_command
-      ("diag", 1, 4, 0, 1,
-       spmat_set_diag(*gsp, in, true);
-       );
-
-    /*@INIT SM = ('load','hb'|'harwell-boeing'|'mm'|'matrix-market', @str filename)
-      Read a sparse matrix from an Harwell-Boeing or a Matrix-Market file
-      @MATLAB{See also ``::UTIL('load matrix')``}.@*/
-    sub_command
-      ("load", 2, 2, 1, 1,
-       load_spmat(in, *gsp);
-       );
-
-  }
+  /*@INIT SM = ('identity', @int n)
+    Create a `n x n` identity matrix.@*/
+  sub_command
+    ("identity", 1, 1, 0, 1,
+     size_type n = in.pop().to_integer(1, INT_MAX);
+     gsp->real_wsc(new gsparse::t_wscmat_r(n,n));
+     gmm::copy(gmm::identity_matrix(), gsp->real_wsc());
+     );
 
 
-  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
+  /*@INIT SM = ('mult', @tspmat A, @tspmat B)
+    Create a sparse matrix as the product of the sparse matrices `A` and
+    `B`. It requires that `A` and `B` be both real or both complex, you
+    may have to use ``SPMAT:SET('to_complex')``.@*/
+  sub_command
+    ("mult", 2, 2, 0, 1,
+     std::shared_ptr<gsparse> A = in.pop().to_sparse();
+     std::shared_ptr<gsparse> B = in.pop().to_sparse();
+     size_type m = A->nrows(); size_type n = B->ncols();
 
-  auto gsp = std::make_shared<gsparse>();
+     if (A->is_complex() != B->is_complex())
+       THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
+     if (!A->is_complex()) gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
+     else gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
+     if (A->storage() == gsparse::CSCMAT
+         && B->storage() == gsparse::CSCMAT) {
+       if (!A->is_complex())
+         gmm::mult(A->real_csc(),B->real_csc(), gsp->real_wsc());
+       else
+         gmm::mult(A->cplx_csc(),B->cplx_csc(), gsp->cplx_wsc());
+     }
+     else if (A->storage() == gsparse::CSCMAT
+              && B->storage() == gsparse::WSCMAT) {
+       if (!A->is_complex())
+         gmm::mult(A->real_csc(),B->real_wsc(), gsp->real_wsc());
+       else
+         gmm::mult(A->cplx_csc(),B->cplx_wsc(), gsp->cplx_wsc());
+     }
+     else if (A->storage() == gsparse::WSCMAT
+              && B->storage() == gsparse::CSCMAT) {
+       if (!A->is_complex())
+         gmm::mult(A->real_wsc(),B->real_csc(), gsp->real_wsc());
+       else
+         gmm::mult(A->cplx_wsc(),B->cplx_csc(), gsp->cplx_wsc());
+     }
+     else if (A->storage() == gsparse::WSCMAT
+              && B->storage() == gsparse::WSCMAT) {
+       if (!A->is_complex())
+         gmm::mult(A->real_wsc(),B->real_wsc(), gsp->real_wsc());
+       else
+         gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp->cplx_wsc());
+     } else THROW_INTERNAL_ERROR;
+     );
 
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
 
+  /*@INIT SM = ('add', @tspmat A, @tspmat B)
+    Create a sparse matrix as the sum of the sparse matrices `A` and `B`.
+    Adding a real matrix with a complex matrix is possible.@*/
+  sub_command
+    ("add", 2, 2, 0, 1,
+     std::shared_ptr<gsparse> A = in.pop().to_sparse();
+     std::shared_ptr<gsparse> B = in.pop().to_sparse();
+     size_type m = A->nrows(); size_type n = A->ncols();
+     if (A->is_complex() != B->is_complex()) {
+       gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
+       if (A->is_complex())
+         gf_spmat_add(*gsp, *B, *A, scalar_type(), complex_type());
+       else gf_spmat_add(*gsp, *A, *B, scalar_type(), complex_type());
+     } else if (A->is_complex()) {
+       gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
+       gf_spmat_add(*gsp, *A, *B, complex_type(), complex_type());
+     } else {
+       gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
+       gf_spmat_add(*gsp, *A, *B, scalar_type(), scalar_type());
+     }
+     );
+
+
+  /*@INIT SM = ('diag', @dmat D [, @ivec E [, @int n [,@int m]]])
+    Create a diagonal matrix. If `E` is given, `D` might be a matrix and
+    each column of `E` will contain the sub-diagonal number that will be
+    filled with the corresponding column of `D`.@*/
+  sub_command
+    ("diag", 1, 4, 0, 1,
+     spmat_set_diag(*gsp, in, true);
+     );
+
+
+  /*@INIT SM = ('load','hb'|'harwell-boeing'|'mm'|'matrix-market', @str filename)
+    Read a sparse matrix from an Harwell-Boeing or a Matrix-Market file
+    @MATLAB{See also ``::UTIL('load matrix')``}.@*/
+  sub_command
+    ("load", 2, 2, 1, 1,
+     load_spmat(in, *gsp);
+     );
+
+  } // build_sub_command_table
+
+
+void gf_spmat(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  static std::map<std::string, psub_command> subc_tab;
+  if (subc_tab.empty())
+    build_sub_command_table(subc_tab);
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+
+  std::string init_cmd = in.pop().to_string();
+  std::string cmd      = cmd_normalize(init_cmd);
   auto it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
-    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-              it->second->arg_in_max, it->second->arg_out_min,
-              it->second->arg_out_max);
-    it->second->run(m_in, m_out, gsp);
-  }
-  else bad_cmd(init_cmd);
-
-  id_type id = store_spmat_object(gsp);
-  m_out.pop().from_object_id(id, SPMAT_CLASS_ID);
+    auto subcmd = it->second;
+    check_cmd(cmd, it->first.c_str(), in, out,
+              subcmd->arg_in_min, subcmd->arg_in_max,
+              subcmd->arg_out_min, subcmd->arg_out_max);
+    auto gsp = std::make_shared<gsparse>();
+    subcmd->run(in, out, gsp);
+    id_type id = store_spmat_object(gsp);
+    out.pop().from_object_id(id, SPMAT_CLASS_ID);
+  } else
+    bad_cmd(init_cmd);
 
 }
 

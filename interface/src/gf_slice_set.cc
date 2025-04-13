@@ -33,12 +33,12 @@ using namespace getfemint;
 
 
 void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
-  getfem::stored_mesh_slice *sl = to_slice_object(in.pop());
 
-  std::string cmd                  = in.pop().to_string();
+  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+
+  getfem::stored_mesh_slice *sl = to_slice_object(in.pop());
+  std::string cmd               = in.pop().to_string();
+
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 0)) {
     /*@SET ('pts', @dmat P)
     Replace the points of the slice.

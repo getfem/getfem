@@ -86,7 +86,8 @@ static void filter_lawname(std::string &lawname) {
 }
 
 
-void build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
+static void
+build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   /*@GET b = ('is_complex')
     Return 0 is the model is real, 1 if it is complex.@*/
   sub_command

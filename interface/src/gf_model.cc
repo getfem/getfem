@@ -39,9 +39,9 @@ using namespace getfemint;
   and the `complex` models.
 @*/
 
-void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
+void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
+  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
 
   if (in.front().is_string()) {
     std::string cmd = in.pop().to_string();
