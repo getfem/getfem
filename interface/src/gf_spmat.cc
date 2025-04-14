@@ -141,7 +141,6 @@ void load_spmat(mexargs_in& in, gsparse &gsp) {
 
 
 // Object for the declaration of a new sub-command.
-
 struct sub_gf_spmat : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
@@ -195,11 +194,8 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   sub_command
     ("copy", 1, 3, 0, 1,
      std::shared_ptr<gsparse> A = in.pop().to_sparse();
-     if (!A->is_complex()) {
-       copy_spmat(*A, *gsp, in, scalar_type());
-     } else {
-       copy_spmat(*A, *gsp, in, complex_type());
-     }
+     if (A->is_complex()) copy_spmat(*A, *gsp, in, complex_type());
+     else                 copy_spmat(*A, *gsp, in, scalar_type());
      );
 
 
@@ -227,33 +223,33 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
        THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
      if (!A->is_complex()) gsp->real_wsc(new gsparse::t_wscmat_r(m,n));
      else gsp->cplx_wsc(new gsparse::t_wscmat_c(m,n));
-     if (A->storage() == gsparse::CSCMAT
-         && B->storage() == gsparse::CSCMAT) {
-       if (!A->is_complex())
-         gmm::mult(A->real_csc(),B->real_csc(), gsp->real_wsc());
-       else
-         gmm::mult(A->cplx_csc(),B->cplx_csc(), gsp->cplx_wsc());
+     if (A->storage() == gsparse::CSCMAT &&
+         B->storage() == gsparse::CSCMAT) {
+       if (A->is_complex()) gmm::mult(A->cplx_csc(),
+                                      B->cplx_csc(), gsp->cplx_wsc());
+       else                 gmm::mult(A->real_csc(),
+                                      B->real_csc(), gsp->real_wsc());
      }
-     else if (A->storage() == gsparse::CSCMAT
-              && B->storage() == gsparse::WSCMAT) {
-       if (!A->is_complex())
-         gmm::mult(A->real_csc(),B->real_wsc(), gsp->real_wsc());
-       else
-         gmm::mult(A->cplx_csc(),B->cplx_wsc(), gsp->cplx_wsc());
+     else if (A->storage() == gsparse::CSCMAT &&
+              B->storage() == gsparse::WSCMAT) {
+       if (A->is_complex()) gmm::mult(A->cplx_csc(),
+                                      B->cplx_wsc(), gsp->cplx_wsc());
+       else                 gmm::mult(A->real_csc(),
+                                      B->real_wsc(), gsp->real_wsc());
      }
-     else if (A->storage() == gsparse::WSCMAT
-              && B->storage() == gsparse::CSCMAT) {
-       if (!A->is_complex())
-         gmm::mult(A->real_wsc(),B->real_csc(), gsp->real_wsc());
-       else
-         gmm::mult(A->cplx_wsc(),B->cplx_csc(), gsp->cplx_wsc());
+     else if (A->storage() == gsparse::WSCMAT &&
+              B->storage() == gsparse::CSCMAT) {
+       if (A->is_complex()) gmm::mult(A->cplx_wsc(),
+                                      B->cplx_csc(), gsp->cplx_wsc());
+       else                 gmm::mult(A->real_wsc(),
+                                      B->real_csc(), gsp->real_wsc());
      }
-     else if (A->storage() == gsparse::WSCMAT
-              && B->storage() == gsparse::WSCMAT) {
-       if (!A->is_complex())
-         gmm::mult(A->real_wsc(),B->real_wsc(), gsp->real_wsc());
-       else
-         gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp->cplx_wsc());
+     else if (A->storage() == gsparse::WSCMAT &&
+              B->storage() == gsparse::WSCMAT) {
+       if (A->is_complex()) gmm::mult(A->cplx_wsc(),
+                                      B->cplx_wsc(), gsp->cplx_wsc());
+       else                 gmm::mult(A->real_wsc(),
+                                      B->real_wsc(), gsp->real_wsc());
      } else THROW_INTERNAL_ERROR;
      );
 
@@ -299,7 +295,7 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
      load_spmat(in, *gsp);
      );
 
-  } // build_sub_command_table
+} // build_sub_command_table
 
 
 void gf_spmat(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
