@@ -53,15 +53,18 @@ function varargout = %objid_e(varargin)
     // gfModel
     varargout = gf_model_get(gf_obj,other_param);
   case 15 then
+    // gfMumpsContext
+    varargout = gf_mumps_context_get(gf_obj,other_param);
+  case 16 then
     // gfPrecond
     varargout = gf_precond_get(gf_obj,other_param);
-  case 16 then
+  case 17 then
     // gfSlice
     varargout = gf_slice_get(gf_obj,other_param);
-  case 17 then
+  case 18 then
     // gfSpmat
     varargout = gf_spmat_get(gf_obj,other_param);
-  case 18 then
+  case 19 then
     // gfPoly
     // No gf_poly_get function
   else

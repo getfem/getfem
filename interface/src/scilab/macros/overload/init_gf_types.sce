@@ -18,3 +18,4 @@ gfMeshLevelSet   = gf_mesh_levelset;
 gfMesherObject   = gf_mesher_object;
 gfContStruct  	 = gf_cont_struct;
 gfGlobalFunction = gf_global_function;
+gfMumpsContext   = gf_mumps_context;

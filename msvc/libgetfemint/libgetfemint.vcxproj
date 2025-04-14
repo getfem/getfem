@@ -74,6 +74,9 @@
     <ClCompile Include="..\..\interface\src\gf_model.cc" />
     <ClCompile Include="..\..\interface\src\gf_model_get.cc" />
     <ClCompile Include="..\..\interface\src\gf_model_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mumps_context.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mumps_context_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mumps_context_set.cc" />
     <ClCompile Include="..\..\interface\src\gf_poly.cc" />
     <ClCompile Include="..\..\interface\src\gf_precond.cc" />
     <ClCompile Include="..\..\interface\src\gf_precond_get.cc" />
@@ -93,7 +96,6 @@
     <ClInclude Include="..\..\interface\src\getfemint_convex_structure.h" />
     <ClInclude Include="..\..\interface\src\getfemint_global_function.h" />
     <ClInclude Include="..\..\interface\src\getfemint_gsparse.h" />
-    <ClInclude Include="..\..\interface\src\getfemint_gsparse_misc.h" />
     <ClInclude Include="..\..\interface\src\getfemint_integ.h" />
     <ClInclude Include="..\..\interface\src\getfemint_levelset.h" />
     <ClInclude Include="..\..\interface\src\getfemint_matelem.h" />
@@ -112,6 +114,7 @@
     <ClInclude Include="..\..\interface\src\getfemint_pgt.h" />
     <ClInclude Include="..\..\interface\src\getfemint_poly.h" />
     <ClInclude Include="..\..\interface\src\getfemint_gprecond.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_gmumps.h" />
     <ClInclude Include="..\..\interface\src\getfemint_std.h" />
     <ClInclude Include="..\..\interface\src\getfemint_workspace.h" />
     <ClInclude Include="..\..\interface\src\getfem_interface.h" />

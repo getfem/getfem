@@ -531,6 +531,9 @@ if(ENABLE_PYTHON)
         interface/src/gf_model.cc
         interface/src/gf_model_get.cc
         interface/src/gf_model_set.cc
+        interface/src/gf_mumps_context.cc
+        interface/src/gf_mumps_context_set.cc
+        interface/src/gf_mumps_context_get.cc
         interface/src/gf_eltm.cc
         interface/src/gf_mesher_object.cc
         interface/src/gf_mesher_object_get.cc
@@ -560,6 +563,7 @@ if(ENABLE_PYTHON)
         interface/src/getfemint_workspace.h
         interface/src/getfemint_workspace.cc
         interface/src/getfemint_gprecond.h
+        interface/src/getfemint_gmumps.h
         interface/src/getfemint_levelset.h
         interface/src/getfemint_levelset.cc
         interface/src/getfemint_gsparse.h

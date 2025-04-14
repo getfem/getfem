@@ -1,7 +1,8 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2003-2020 Yves Renard, Julien Pommier
+ Copyright (C) 2003-2025 Yves Renard, Julien Pommier
+               2025-2025 Konstantinos Poulios
 
  This file is a part of GetFEM
 
@@ -66,12 +67,8 @@ extern "C" {
 
 namespace gmm {
 
-#define ICNTL(I) icntl[(I)-1]
-#define INFO(I) info[(I)-1]
-#define INFOG(I) infog[(I)-1]
-#define RINFOG(I) rinfog[(I)-1]
-
   template <typename T> struct ij_sparse_matrix {
+    typedef typename number_traits<T>::magnitude_type R;
     std::vector<int> irn;
     std::vector<int> jcn;
     std::vector<T> a;
@@ -98,12 +95,14 @@ namespace gmm {
       irn.swap(jcn);
     }
 
-    template <typename L> ij_sparse_matrix(const L& A, bool sym_) {
+    template <typename L> ij_sparse_matrix(const L& A, bool sym_)
+      : sym(sym_)
+    {
       size_type nz = nnz(A);
-      sym = sym_;
       irn.reserve(nz); jcn.reserve(nz); a.reserve(nz);
-      build_from(A,  typename principal_orientation_type<typename
-                 linalg_traits<L>::sub_orientation>::potype());
+      build_from(A, typename principal_orientation_type
+                             <typename linalg_traits<L>::sub_orientation>
+                             ::potype());
     }
   };
 
@@ -139,12 +138,12 @@ namespace gmm {
   };
 
 
-  template <typename MUMPS_STRUCT>
-  static inline bool mumps_error_check(MUMPS_STRUCT &id) {
-    if (id.INFO(1) < 0) {
-      switch (id.INFO(1)) {
+  static inline bool
+  mumps_error_check(int INFO1, int INFO2) {
+    if (INFO1 < 0) {
+      switch (INFO1) {
         case -2:
-          GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
+          GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << INFO2
                       << " is out of range");
           break;
         case -6 : case -10 :
@@ -152,19 +151,150 @@ namespace gmm {
           return false;
         case -9:
           GMM_ASSERT1(false, "Solve with MUMPS failed: error "
-                      << id.INFO(1) << ", increase ICNTL(14)");
+                      << INFO1 << ", increase ICNTL(14)");
           break;
         case -13 :
           GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
           break;
         default :
           GMM_ASSERT1(false, "Solve with MUMPS failed with error "
-                      << id.INFO(1));
+                      << INFO1);
           break;
       }
     }
     return true;
   }
+
+  template <typename MUMPS_STRUCT>
+  [[deprecated("Use updated error handling mechanism")]]
+  static inline bool mumps_error_check(MUMPS_STRUCT &id) {
+    return mumps_error_check(id.info[0], id.info[1]);
+  }
+
+
+  /**
+   * The MUMPS interface is controlled by the JOB parameter.
+   *
+   * The following values are possible:
+   * - JOB= 1: performs the analysis phase.
+   * - JOB= 2: performs the factorization phase.
+   * - JOB= 3: computes the solution.
+   * - JOB= 4: combines the actions of JOB= 1 with those of JOB= 2.
+   * - JOB= 5: combines the actions of JOB=2 and JOB= 3.
+   * - JOB= 6: combines the actions of calls with JOB= 1, JOB= 2, and JOB= 3.
+   * - JOB= 7: save / restore feature: saves MUMPS internal data to disk.
+   * - JOB= 8: save / restore feature: restores MUMPS internal data from disk.
+   * - JOB= 9: computes before the solution phase a possible distribution for
+   *           the right-hand sides.
+   * - JOB=-1: initializes an instance of the package.
+   * - JOB=-2: terminates an instance of the package.
+   * - JOB=-3: save / restore feature: removes data saved to disk.
+   * - JOB=-4: after factorization or solve phases, frees all MUMPS internal
+   *           data structures except the ones from analysis.
+   *
+   * MUMPS structure parameter and information vector sizes
+   * ICNTL(60) CNTL(15) INFO(80) INFOG(80) RINFO(20) RINFOG(20)
+   */
+
+   /** MUMPS context
+
+   This class encapsulates the context of a MUMPS computation. It allocates a
+   a copy of the system matrix and vector (used both for right-hand sides and
+   solutions) and stores the MUMPS internal data structure.
+
+   To solve a linear system in one step, the "analyze_factorize_and_solve"
+   function has to be used. Calling just "solve" will not run the analysis
+   and factorization phases.
+
+   */
+  template <typename T>
+  class mumps_context {
+    typedef typename mumps_interf<T>::value_type MUMPS_T;
+    typedef typename number_traits<T>::magnitude_type MUMPS_R;
+    typedef typename mumps_interf<T>::MUMPS_STRUC_C MUMPS_STRUC;
+    MUMPS_STRUC id;
+    std::unique_ptr<ij_sparse_matrix<T> > pK;
+    std::vector<T> rhs_or_sol;
+    int rank; // MPI rank
+
+  public:
+
+    inline void run_job(int job) {
+      id.job = job;
+      mumps_interf<T>::mumps_c(id);
+    }
+
+    mumps_context(bool sym=false) : id(), rank(0) {
+#ifdef GMM_USES_MPI
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+      id.job = -1;
+      id.par = 1;
+      id.sym = sym ? 2 : 0;
+      id.comm_fortran = -987654; // USE_COMM_WORLD
+      run_job(-1); // JOB_INIT
+    }
+
+    ~mumps_context() { run_job(-2); } // JOB_END
+
+    inline int &ICNTL(int I) { return id.icntl[I-1]; }
+    inline MUMPS_R &CNTL(int I) { return id.cntl[I-1]; }
+    inline const int &INFO(int I) { return id.info[I-1]; }
+    inline const int &INFOG(int I) { return id.infog[I-1]; }
+    inline const MUMPS_R &RINFO(int I) { return id.rinfo[I-1]; }
+    inline const MUMPS_R &RINFOG(int I) { return id.rinfog[I-1]; }
+    //inline int MPI_rank() const { return rank; }
+
+    template <typename MAT>
+    inline void set_matrix(const MAT &K, bool distributed) {
+      static_assert(std::is_same<typename linalg_traits<MAT>::value_type,
+                                 T>::value,
+                    "value_type of MAT and T must be the same");
+      if (!distributed && rank != 0)
+        return;
+      pK = std::make_unique< ij_sparse_matrix<T> >(K, id.sym);
+      id.n = int(gmm::mat_nrows(K));
+      if (distributed) {
+        id.nz_loc = int(pK->irn.size());
+        id.irn_loc = &(pK->irn[0]);
+        id.jcn_loc = &(pK->jcn[0]);
+        id.a_loc = (MUMPS_T*)(&(pK->a[0]));
+      } else {
+        id.nz = int(pK->irn.size());
+        id.irn = &(pK->irn[0]);
+        id.jcn = &(pK->jcn[0]);
+        id.a = (MUMPS_T *)(&(pK->a[0]));
+      }
+    }
+
+    template <typename VEC>
+    inline void set_vector(const VEC &rhs) {
+      static_assert(std::is_same<typename linalg_traits<VEC>::value_type,
+                                 T>::value,
+                    "value_type of MAT and T must be the same");
+      const int nrhs = int(gmm::vect_size(rhs)/id.n);
+      GMM_ASSERT2(size_type(nrhs*id.n) == gmm::vect_size(rhs),
+                  "Size of rhs (" << gmm::vect_size(rhs) << ") must be an "
+                  "integer multiple of the matrix size (" << id.n << ")");
+      rhs_or_sol.resize(gmm::vect_size(rhs));
+      gmm::copy(rhs, rhs_or_sol);
+      if (rank == 0) {
+        id.nrhs = nrhs;
+        id.rhs = (MUMPS_T*)(&rhs_or_sol[0]);
+        id.lrhs = id.n;
+      }
+    }
+
+    const std::vector<T> &vector() const { return rhs_or_sol; }
+
+    inline void analyze() { run_job(1); }
+    inline void factorize() { run_job(2); }
+    inline void analyze_and_factorize() { run_job(4); }
+    inline void solve() { run_job(3); }
+    inline void factorize_and_solve() { run_job(5); }
+    inline void analyze_factorize_and_solve() { run_job(6); }
+    inline bool error_check() { return mumps_error_check(INFO(1), INFO(2)); }
+  };
 
 
   /** MUMPS solve interface
@@ -175,90 +305,38 @@ namespace gmm {
                    bool sym = false, bool distributed = false) {
 
     typedef typename linalg_traits<MAT>::value_type T;
-    typedef typename mumps_interf<T>::value_type MUMPS_T;
-    GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
 
-    std::vector<T> rhs(gmm::vect_size(B));
-    gmm::copy(B, rhs);
-    const int nrhs = int(rhs.size()/gmm::mat_nrows(A));
-    GMM_ASSERT2(nrhs*gmm::mat_nrows(A) == rhs.size(),
-                "Size of rhs must be an integer multiple of the matrix size");
+    const int nrows = int(gmm::mat_nrows(A));
+    GMM_ASSERT2(size_type(nrows) == gmm::mat_ncols(A), "Non-square matrix");
 
-    ij_sparse_matrix<T> AA(A, sym);
-
-    const int JOB_INIT = -1;
-    const int JOB_END = -2;
-    const int USE_COMM_WORLD = -987654;
-
-    typename mumps_interf<T>::MUMPS_STRUC_C id;
-
-    int rank(0);
-#ifdef GMM_USES_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-
-    id.job = JOB_INIT;
-    id.par = 1;
-    id.sym = sym ? 2 : 0;
-    id.comm_fortran = USE_COMM_WORLD;
-    mumps_interf<T>::mumps_c(id);
-
-    if (rank == 0 || distributed) {
-      id.n = int(gmm::mat_nrows(A));
-      if (distributed) {
-        id.nz_loc = int(AA.irn.size());
-        id.irn_loc = &(AA.irn[0]);
-        id.jcn_loc = &(AA.jcn[0]);
-        id.a_loc = (MUMPS_T*)(&(AA.a[0]));
-      } else {
-        id.nz = int(AA.irn.size());
-        id.irn = &(AA.irn[0]);
-        id.jcn = &(AA.jcn[0]);
-        id.a = (MUMPS_T*)(&(AA.a[0]));
-      }
-      if (rank == 0) {
-        id.nrhs = nrhs;
-        id.rhs = (MUMPS_T*)(&(rhs[0]));
-        id.lrhs = id.n;
-      }
-    }
-
-    id.ICNTL(1) = -1; // output stream for error messages
-    id.ICNTL(2) = -1; // output stream for other messages
-    id.ICNTL(3) = -1; // output stream for global information
-    id.ICNTL(4) = 0;  // verbosity level
-
-    if (distributed)
-      id.ICNTL(5) = 0;  // assembled input matrix (default)
-
-    id.ICNTL(14) += 80; /* small boost to the workspace size as we have encountered some problem
-                           who did not fit in the default settings of mumps..
-                           by default, ICNTL(14) = 15 or 20
-                        */
-    //cout << "ICNTL(14): " << id.ICNTL(14) << "\n";
-
-    if (distributed)
-      id.ICNTL(18) = 3; // strategy for distributed input matrix
-
-    // id.ICNTL(22) = 1;   /* enables out-of-core support */
-
-    id.job = 6;
-    mumps_interf<T>::mumps_c(id);
-    bool ok = mumps_error_check(id);
-
-    id.job = JOB_END;
-    mumps_interf<T>::mumps_c(id);
+    bool ok=false;
+    {
+      mumps_context<T> mumps_ctx(sym);
+      mumps_ctx.set_matrix(A, distributed);
+      mumps_ctx.set_vector(B);
+      mumps_ctx.ICNTL(1) = -1;   // output stream for error messages
+      mumps_ctx.ICNTL(2) = -1;   // output stream for other messages
+      mumps_ctx.ICNTL(3) = -1;   // output stream for global information
+      mumps_ctx.ICNTL(4) = 0;    // verbosity level
+      if (distributed)
+        mumps_ctx.ICNTL(5) = 0;  // assembled input matrix (default)
+      mumps_ctx.ICNTL(14) += 80; // small boost to the workspace size as we have encountered
+                                 // some problems that did not fit in the default settings of
+                                 // mumps... ICNTL(14) = 15 or 20
+      if (distributed)
+        mumps_ctx.ICNTL(18) = 3; // strategy for distributed input matrix
+        //mumps_ctx.ICNTL(22) = 1; // enables out-of-core support
+      mumps_ctx.analyze_factorize_and_solve();
+      ok = mumps_ctx.error_check();
 
 #ifdef GMM_USES_MPI
-    MPI_Bcast(&(rhs[0]),id.n,gmm::mpi_type(T()),0,MPI_COMM_WORLD);
+      MPI_Bcast(&(mumps_ctx.vector()[0]),
+                nrows, gmm::mpi_type(T()), 0, MPI_COMM_WORLD);
 #endif
-
-    gmm::copy(rhs, X);
-
+      gmm::copy(mumps_ctx.vector(), X);
+    } // end scope of mumps_ctx, destructor calls mumps job=-2
     return ok;
-
   }
-
 
 
   /** MUMPS solve interface for distributed matrices
@@ -269,7 +347,6 @@ namespace gmm {
                                       const VECTB &B, bool sym = false) {
     return MUMPS_solve(A, X_, B, sym, true);
   }
-
 
 
   template<typename T>
@@ -285,80 +362,31 @@ namespace gmm {
   T MUMPS_determinant(const MAT &A, int &exponent,
                       bool sym = false, bool distributed = false) {
     exponent = 0;
-    typedef typename mumps_interf<T>::value_type MUMPS_T;
     typedef typename number_traits<T>::magnitude_type R;
-    GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
 
-    ij_sparse_matrix<T> AA(A, sym);
+    const int nrows = int(gmm::mat_nrows(A));
+    GMM_ASSERT2(nrows == int(gmm::mat_ncols(A)), "Non-square matrix");
 
-    const int JOB_INIT = -1;
-    const int JOB_END = -2;
-    const int USE_COMM_WORLD = -987654;
-
-    typename mumps_interf<T>::MUMPS_STRUC_C id;
-
-    int rank(0);
-#ifdef GMM_USES_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-
-    id.job = JOB_INIT;
-    id.par = 1;
-    id.sym = sym ? 2 : 0;
-    id.comm_fortran = USE_COMM_WORLD;
-    mumps_interf<T>::mumps_c(id);
-
-    if (rank == 0 || distributed) {
-      id.n = int(gmm::mat_nrows(A));
-      if (distributed) {
-        id.nz_loc = int(AA.irn.size());
-        id.irn_loc = &(AA.irn[0]);
-        id.jcn_loc = &(AA.jcn[0]);
-        id.a_loc = (MUMPS_T*)(&(AA.a[0]));
-      } else {
-        id.nz = int(AA.irn.size());
-        id.irn = &(AA.irn[0]);
-        id.jcn = &(AA.jcn[0]);
-        id.a = (MUMPS_T*)(&(AA.a[0]));
-      }
-    }
-
-    id.ICNTL(1) = -1; // output stream for error messages
-    id.ICNTL(2) = -1; // output stream for other messages
-    id.ICNTL(3) = -1; // output stream for global information
-    id.ICNTL(4) = 0;  // verbosity level
-
+    mumps_context<T> mumps_ctx(sym);
+    mumps_ctx.set_matrix(A, distributed);
+    mumps_ctx.ICNTL(4) = 0;    // verbosity level
     if (distributed)
-      id.ICNTL(5) = 0;  // assembled input matrix (default)
-
-//    id.ICNTL(14) += 80; // small boost to the workspace size
-
+      mumps_ctx.ICNTL(5) = 0;  // assembled input matrix (default)
+    mumps_ctx.ICNTL(14) += 80; // small boost to the workspace size
     if (distributed)
-      id.ICNTL(18) = 3; // strategy for distributed input matrix
+      mumps_ctx.ICNTL(18) = 3; // strategy for distributed input matrix
+    mumps_ctx.ICNTL(31) = 1;   // only factorization, no solution to follow
+    mumps_ctx.ICNTL(33) = 1;   // request determinant calculation
 
-    id.ICNTL(31) = 1;   // only factorization, no solution to follow
-    id.ICNTL(33) = 1;   // request determinant calculation
+    mumps_ctx.analyze_and_factorize();
 
-    id.job = 4; // abalysis (job=1) + factorization (job=2)
-    mumps_interf<T>::mumps_c(id);
-    mumps_error_check(id);
-
-    T det = real_or_complex(std::complex<R>(id.RINFOG(12),id.RINFOG(13)));
-    exponent = id.INFOG(34);
-
-    id.job = JOB_END;
-    mumps_interf<T>::mumps_c(id);
-
+    T det = real_or_complex(std::complex<R>(mumps_ctx.RINFOG(12),
+                                            mumps_ctx.RINFOG(13)));
+    exponent = mumps_ctx.INFOG(34);
     return det;
   }
 
-#undef ICNTL
-#undef INFO
-#undef INFOG
-#undef RINFOG
-
 }
-
 
 #endif // GMM_MUMPS_INTERFACE_H
 

@@ -55,6 +55,9 @@ void gf_mesh_im_data_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_mumps_context(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_mumps_context_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_mumps_context_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
@@ -171,6 +174,9 @@ char* getfem_interface_main(int config_id, const char *function,
     subc_tab["spmat_get"] = gf_spmat_get;
     subc_tab["spmat_set"] = gf_spmat_set;
     subc_tab["linsolve"] = gf_linsolve;
+    subc_tab["mumps_context"] = gf_mumps_context;
+    subc_tab["mumps_context_get"] = gf_mumps_context_get;
+    subc_tab["mumps_context_set"] = gf_mumps_context_set;
     subc_tab["util"] = gf_util;
     subc_tab["exit"] = gf_exit;
   }

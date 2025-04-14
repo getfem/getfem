@@ -31,6 +31,7 @@
 #include <getfemint_workspace.h>
 #include <getfemint_gprecond.h>
 #include <getfemint_gsparse.h>
+#include <getfemint_gmumps.h>
 
 //#ifdef MAINTAINER_MODE
 # ifdef HAVE_CSIGNAL
@@ -1050,6 +1051,7 @@ namespace getfemint {
     case MESH_LEVELSET_CLASS_ID:    return "gfMeshLevelSet";
     case MESHER_OBJECT_CLASS_ID:    return "gfMesherObject";
     case MODEL_CLASS_ID:            return "gfModel";
+    case MUMPS_CONTEXT_CLASS_ID:    return "gfMumpsContext";
     case PRECOND_CLASS_ID:          return "gfPrecond";
     case SLICE_CLASS_ID:            return "gfSlice";
     case SPMAT_CLASS_ID:            return "gfSpmat";
@@ -1320,6 +1322,15 @@ namespace getfemint {
   DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_model_object,
                                   getfem::model,
                                   MODEL_CLASS_ID)
+
+  // Functions for MUMPS_CONTEXT_CLASS_ID (writable)
+  DEFINE_IS_X_OBJECT_FUNCTION(is_mumps_context_object, MUMPS_CONTEXT_CLASS_ID)
+  DEFINE_STORE_X_OBJECT_FUNCTION(store_mumps_context_object,
+                                 gmumps,
+                                 MUMPS_CONTEXT_CLASS_ID)
+  DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_mumps_context_object,
+                                  gmumps,
+                                  MUMPS_CONTEXT_CLASS_ID)
 
   // Functions for PRECOND_CLASS_ID (writable)
   DEFINE_IS_X_OBJECT_FUNCTION(is_precond_object, PRECOND_CLASS_ID)

@@ -110,14 +110,22 @@ mumps_solver(gsparse &gsp,
     nrhs = b.getn();
   } else // check whether b is in fact a vector of proper size
     in.last_popped().check_dimensions(b, nrows);
+  bool sym = false;
+  if (in.remaining() && in.front().is_string()) {
+    std::string opt = in.pop().to_string();
+    if (cmd_strmatch(opt, "sym"))
+      sym = true;
+    else
+      THROW_BADARG("unknown linsolve option: " << opt);
+  }
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
   gsp.to_csc();
 # if GETFEM_PARA_LEVEL > 1
   double t_ref = MPI_Wtime();
-  gmm::MUMPS_distributed_matrix_solve(gsp.csc(T()), x, b);
+  gmm::MUMPS_distributed_matrix_solve(gsp.csc(T()), x, b, sym);
   if (getfem::MPI_IS_MASTER()) cout << "MUMPS solve time " << MPI_Wtime()-t_ref << endl;
 # else
-  gmm::MUMPS_solve(gsp.csc(T()), x, b);
+  gmm::MUMPS_solve(gsp.csc(T()), x, b, sym);
 # endif
 }
 #endif
@@ -137,22 +145,22 @@ void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
   if (check_cmd(cmd, "gmres", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('gmres', @tsp M, @vec b[, @int restart][, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
-    Solve `M.X = b` with the generalized minimum residuals method.
+      Solve `M.X = b` with the generalized minimum residuals method.
 
-    Optionally using `P` as preconditioner. The default value of the
-    restart parameter is 50.@*/
+      Optionally using `P` as preconditioner. The default value of the
+      restart parameter is 50.@*/
     iterative_gmm_solver(GMM_GMRES, in, out);
   } else if (check_cmd(cmd, "cg", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('cg', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
-    Solve `M.X = b` with the conjugated gradient method.
+      Solve `M.X = b` with the conjugated gradient method.
 
-    Optionally using `P` as preconditioner.@*/
+      Optionally using `P` as preconditioner.@*/
     iterative_gmm_solver(GMM_CG, in, out);
   } else if (check_cmd(cmd, "bicgstab", in, out, 2, 30, 0, 1)) {
     /*@FUNC X = ('bicgstab', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
-    Solve `M.X = b` with the bi-conjugated gradient stabilized method.
+      Solve `M.X = b` with the bi-conjugated gradient stabilized method.
 
-    Optionally using `P` as a preconditioner.@*/
+      Optionally using `P` as a preconditioner.@*/
     iterative_gmm_solver(GMM_BICGSTAB, in, out);
 #if defined(GMM_USES_SUPERLU)
   } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 2)) {
@@ -166,9 +174,9 @@ void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     else                  superlu_solver(gsp, in, out, scalar_type());
   } else if (check_cmd(cmd, "superlu", in, out, 2, 2, 0, 2)) {
     /*@FUNC @CELL{U, cond} = ('superlu', @tsp M, @vec b)
-    Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
+      Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
-    The condition number estimate `cond` is returned with the solution `U`.@*/
+      The condition number estimate `cond` is returned with the solution `U`.@*/
     std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
     gsparse &gsp = *pgsp;
     if (!gsp.is_complex() && in.front().is_complex())
@@ -178,12 +186,15 @@ void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 #endif
 
 #if defined(GMM_USES_MUMPS)
-  } else if (check_cmd(cmd, "mumps", in, out, 2, 2, 0, 1)) {
-    /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)
-    Solve `M.U = b` using the MUMPS solver.
+  } else if (check_cmd(cmd, "mumps", in, out, 2, 3, 0, 1)) {
+    /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b, ... ['sym'])
+      Solve `M.U = b` using the MUMPS solver.
 
-    The right hand side `b` can optionally by a matrix with several columns
-    in order to solve multiple right hand sides at once.@*/
+      The right hand side `b` can optionally by a matrix with several columns
+      in order to solve multiple right hand sides at once.
+
+      If the option `sym` is provided, the symmetric version of the MUMPS
+      solver will be used.@*/
     std::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
     gsparse &gsp = *pgsp;
     if (!gsp.is_complex() && in.front().is_complex())

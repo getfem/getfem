@@ -163,6 +163,13 @@
       </varlistentry>
 
       <varlistentry>
+        <term>mumps_context</term>
+        <listitem>
+          <para>mumps context (or gfMumpsContext object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>global_function</term>
         <listitem>
           <para>global function descriptor</para>

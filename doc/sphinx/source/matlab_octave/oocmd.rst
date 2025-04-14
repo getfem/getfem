@@ -14,10 +14,10 @@ The toolbox comes with a set of |octv| / |mlab| objects `mathworks-oo`_, (look a
 than the getfem object handles, which are flagged by |octv| / |mlab| as objects.
 
 In order to use these objects, you have to call their constructors: ``gfMesh``,
-``gfMeshFem``, ``gfGeoTrans``, ``gfFem``, ``gfInteg``.  These constructor just
+``gfMeshFem``, ``gfGeoTrans``, ``gfFem``, ``gfInteg``.  These constructors just
 call the corresponding |gfm| function (i.e.  ``gf_mesh``, ``gf_mesh_fem``, ...),
-and convert the structure returned by these function into a |octv| / |mlab| object. There
-is also a ``gfObject`` function which converts any getfem handle into the
+and convert the structure returned by these functions into a |octv| / |mlab| object.
+There is also a ``gfObject`` function which converts any getfem handle into the
 corresponding |octv| / |mlab| object.
 
 With such object, the most interesting feature is that you do not have to call
@@ -95,4 +95,4 @@ Avalaible object types are :envvar:`gfCvStruct`, :envvar:`gfGeoTrans`,
 :envvar:`gfEltm`, :envvar:`gfInteg`, :envvar:`gfFem`, :envvar:`gfMesh`,
 :envvar:`gfMeshFem`, :envvar:`gfMeshIm`, :envvar:`gfMdBrick`,
 :envvar:`gfMdState`, :envvar:`gfModel`, :envvar:`gfSpmat`, :envvar:`gfPrecond`,
-and :envvar:`gfSlice`.
+:envvar:`gfMumpsContext`, and :envvar:`gfSlice`.

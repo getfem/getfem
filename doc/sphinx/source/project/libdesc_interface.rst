@@ -7,8 +7,8 @@
 .. _dp-libdesc_interface:
 
 
-Interface with scripts languages (Python, Scilab and Matlab)
-------------------------------------------------------------
+Interface with scripting languages (Python, Scilab and Matlab)
+--------------------------------------------------------------
 
 A simplified (but rather complete) interface of |gf| is provided, so that it is possible to use getfem in some script languages.
 
@@ -54,7 +54,8 @@ All the files in the directory :file:`interface\src`. A short description of mai
   how to send and receive arrays, and object handles, from
   ``getfem_interface_main()``. This file provide such functionnality.
 
-* :file:`getfemint_gsparse.h`, :file:`getfemint_precond.h`, etc.
+* :file:`getfemint_gsparse.h`, :file:`getfemint_gprecond.h`,
+  :file:`getfemint_gmumps.h`, etc.
 
   Files specific to an interfaced object if needed.
   (getfemint_gsparse which export some kind of mutable sparse matrix that can
@@ -157,10 +158,10 @@ To make all the things work automatically, a certain number of rules have to be 
      ...
    );
 
-  The first three line are a c++ commentary which describes the call of the
+  The first three lines are a C++ comment which describes the call of the
   method/function with a special syntax and also gives a description of the
   method/function which will be included in the documentations. The first
-  line of this commentary is important since it will be analyzed to produce
+  line of this comment is important since it will be analyzed to produce
   the right interface for Python, Octave, Matlab and Scilab.
 
   The syntax for the description of the call of a method/function is the
@@ -201,20 +202,21 @@ To make all the things work automatically, a certain number of rules have to be 
         - ``@list``   : a list.
 
   Moreover, ``@tobj`` refers to an object defined by the interface.
-  For instance, ou can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
+  For instance, you can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
   There are some authorized abbreviations:
 
         - ``@tcs``  for  ``@tcont_struct``
         - ``@tmf``  for  ``@tmesh_fem``
         - ``@tgt``  for  ``@tgeotrans``
         - ``@tgf``  for  ``@tglobal_function``
-	- ``@tmo``  for  ``@tmesher_object``
-        - ``@tmls``  for  ``@tmesh_levelset``
-	- ``@tmim``  for  ``@tmesh_im``
+        - ``@tmo``  for  ``@tmesher_object``
+        - ``@tmls`` for  ``@tmesh_levelset``
+        - ``@tmim`` for  ``@tmesh_im``
         - ``@tls``  for  ``@tlevelset``
         - ``@tsl``  for  ``@tslice``
         - ``@tsp``  for  ``@tspmat``
-        - ``@tpre``  for  ``@tprecond``
+        - ``@tpre`` for  ``@tprecond``
+        - ``@tmct`` for  ``@tmumps_context``
 
 
   Three dots at the end of the parameter list (``...``) mean that

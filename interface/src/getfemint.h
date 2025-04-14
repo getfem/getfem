@@ -65,6 +65,7 @@ namespace getfemint {
                  MESH_LEVELSET_CLASS_ID,
                  MESHER_OBJECT_CLASS_ID,
                  MODEL_CLASS_ID,
+                 MUMPS_CONTEXT_CLASS_ID,
                  PRECOND_CLASS_ID,
                  SLICE_CLASS_ID,
                  SPMAT_CLASS_ID,
@@ -794,6 +795,12 @@ namespace getfemint {
   bool is_model_object(const mexarg_in &p);
   id_type store_model_object(const std::shared_ptr<getfem::model> &shp);
   getfem::model *to_model_object(const mexarg_in &p);
+
+  // Functions for MUMPS_CONTEXT_CLASS_ID
+  class gmumps;
+  bool is_mumps_context_object(const mexarg_in &p);
+  id_type store_mumps_context_object(const std::shared_ptr<gmumps> &shp);
+  gmumps *to_mumps_context_object(const mexarg_in &p);
 
   // Functions for PRECOND_CLASS_ID
   class gprecond_base;

@@ -71,6 +71,9 @@ PSEUDO_MFUNCTIONS =                \
 	gf_model.cc                \
 	gf_model_get.cc            \
 	gf_model_set.cc            \
+	gf_mumps_context.cc        \
+	gf_mumps_context_get.cc    \
+	gf_mumps_context_set.cc    \
 	gf_slice.cc                \
 	gf_slice_get.cc            \
 	gf_slice_set.cc            \
@@ -105,6 +108,7 @@ libgetfemint_la_SOURCES =       \
 	getfemint_workspace.h   \
 	getfemint_workspace.cc  \
 	getfemint_gprecond.h    \
+	getfemint_gmumps.h      \
 	getfemint_levelset.h    \
 	getfemint_levelset.cc   \
 	getfemint_gsparse.h     \

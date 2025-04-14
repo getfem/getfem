@@ -311,6 +311,7 @@ def FilterDoc(d, language, objects, commands, set_replace = set()):
     d = d.replace('@tsl',    'slice')
     d = d.replace('@tsp',    'spmat')
     d = d.replace('@tpre',   'precond')
+    d = d.replace('@tmct',   'mumps_context')
 
   elif (language == 'python'):
     d = d.replace('\\', '\\\\')
@@ -393,6 +394,7 @@ def FilterDoc(d, language, objects, commands, set_replace = set()):
     d = d.replace('@tsl',    'Slice')
     d = d.replace('@tsp',    'SpMat')
     d = d.replace('@tpre',   'Mrecond')
+    d = d.replace('@tmct',   'mumps_context')
 
   return d
 
@@ -1216,6 +1218,7 @@ elif (option == 'matlab-doc'):
   print('`global_function`      global function descriptor')
   print('`mesher_object`        mesher object descriptor')
   print('`cont_struct`          continuation-structure descriptor')
+  print('`mumps_context`        mumps context descriptor (or gfMumpsContext object)')
   print('=====================  ==================================================')
   print('') 
   print('Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::')
@@ -1539,6 +1542,14 @@ elif (option == 'scilab-com'):
   mfile.write('      </varlistentry>\n\n')
   mfile.write('    </variablelist>\n\n')
 
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>mumps_context</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>mumps context descriptor (or gfMumpsContext object)</para>\n')
+  mfile.write('        </listitem>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('    </variablelist>\n\n')
+
   mfile.write('    <para>Arguments listed between square brackets are optional. Lists between braces indicate</para>\n')
   mfile.write('    <para>that the argument must match one of the elements of the list. For example:</para>\n\n')
 
@@ -1738,6 +1749,7 @@ elif (option == 'scilab-doc-rst'):
   print('`global_function`      global function descriptor')
   print('`mesher_object`        mesher object descriptor')
   print('`cont_struct`          continuation-structure descriptor')
+  print('`mumps_context`        mumps context descriptor (or gfMumpsContext object)')
   print('=====================  ==================================================')
   print('')
   print('Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::')

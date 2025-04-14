@@ -65,6 +65,9 @@ Functions
 * ``gf_model`` : create a |mlab_md| object.
 * ``gf_model_get`` : retrieve information from a |mlab_md| object.
 * ``gf_model_set`` : modify a |mlab_md| object.
+* ``gf_mumps_context`` : create a |mlab_mumps| object.
+* ``gf_mumps_context_get`` : retrieve information from a |mlab_mumps| object.
+* ``gf_mumps_context_set`` : modify a |mlab_mumps| object.
 * ``gf_global_function`` : create a gfGlobalFunction object.
 * ``gf_model_get`` : retrieve information from a gfGlobalFunction object.
 * ``gf_model_set`` : modify a GlobalFunction object.

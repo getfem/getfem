@@ -79,6 +79,7 @@
 .. |mlab_gt| replace:: gfGeoTrans
 .. |mlab_pc| replace:: gfPrecond
 .. |mlab_md| replace:: gfModel
+.. |mlab_mumps| replace:: gfMumpsContext
 .. |mlab_fem| replace:: gfFem
 .. |mlab_int| replace:: gfInteg
 .. |mlab_mbr| replace:: gfMdBrick

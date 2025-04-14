@@ -114,6 +114,7 @@ Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfMeshImData\*.m";  
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfMeshLevelSet\*.m";   DestDir: "{app}\@gfMeshLevelSet";   Flags: ignoreversion
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfMesherObject\*.m";   DestDir: "{app}\@gfMesherObject";   Flags: ignoreversion
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfModel\*.m";          DestDir: "{app}\@gfModel";          Flags: ignoreversion
+Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfMumpsContext\*.m";   DestDir: "{app}\@gfMumpsContext";   Flags: ignoreversion
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfPrecond\*.m";        DestDir: "{app}\@gfPrecond";        Flags: ignoreversion
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfSlice\*.m";          DestDir: "{app}\@gfSlice";          Flags: ignoreversion
 Source: "C:\msys\home\yves\getfem-5.2\interface\src\matlab\@gfSpmat\*.m";          DestDir: "{app}\@gfSpmat";          Flags: ignoreversion
