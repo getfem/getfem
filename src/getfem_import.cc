@@ -73,6 +73,9 @@ namespace getfem {
       case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
         pgt = bgeot::parallelepiped_geotrans(3,2);
       } break;
+      case 13: { /* 2ND ORDER PRISM (18-NODE) */
+        pgt = bgeot::prism_geotrans(3,2);
+      } break;
       case 14: { /* 2ND ORDER PYRAMID (14-NODE) */
         pgt = bgeot::pyramid_QK_geotrans(2);
       } break;
@@ -84,6 +87,9 @@ namespace getfem {
       } break;
       case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
         pgt = bgeot::Q2_incomplete_geotrans(3);
+      } break;
+      case 18: { /* INCOMPLETE 2ND ORDER PRISM (15-NODE) */
+        pgt = bgeot::prism_incomplete_P2_geotrans();
       } break;
       case 19: { /* INCOMPLETE 2ND ORDER PYRAMID (13-NODE) */
         pgt = bgeot::pyramid_Q2_incomplete_geotrans();
@@ -146,6 +152,9 @@ namespace getfem {
       case 12: { /* 2ND ORDER HEXAHEDRON (27-NODE) */
         nodes.resize(27);
       } break;
+      case 13: { /* 2ND ORDER PRISM (18-NODE) */
+        nodes.resize(18);
+      } break;
       case 14: { /* 2ND ORDER PYRAMID (14-NODE) */
         nodes.resize(14);
       } break;
@@ -157,6 +166,9 @@ namespace getfem {
       } break;
       case 17: { /* INCOMPLETE 2ND ORDER HEXAHEDRON (20-NODE) */
         nodes.resize(20);
+      } break;
+      case 18: { /* INCOMPLETE 2ND ORDER PRISM (15-NODE) */
+        nodes.resize(15);
       } break;
       case 19: { /* INCOMPLETE 2ND ORDER PYRAMID (13-NODE) */
         nodes.resize(13);
@@ -409,6 +421,9 @@ namespace getfem {
           ci.nodes[6] = tmp_nodes[7];
           ci.nodes[7] = tmp_nodes[6];
         } break;
+        case 6 : { /* First order prism */
+          // no reordering
+        } break;
         case 7 : { /* first order pyramid */
           //ci.nodes[0] = tmp_nodes[0];
           ci.nodes[1] = tmp_nodes[2];
@@ -481,6 +496,26 @@ namespace getfem {
           ci.nodes[25] = tmp_nodes[19];
           ci.nodes[26] = tmp_nodes[6];
         } break;
+        case 13: { /* Second order prism (18-node) */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[6];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[9];
+          ci.nodes[5] = tmp_nodes[2];
+          ci.nodes[6] = tmp_nodes[8];
+          ci.nodes[7] = tmp_nodes[15];
+          ci.nodes[8] = tmp_nodes[10];
+          ci.nodes[9] = tmp_nodes[16];
+          ci.nodes[10] = tmp_nodes[17];
+          //ci.nodes[11] = tmp_nodes[11];
+          ci.nodes[12] = tmp_nodes[3];
+          ci.nodes[13] = tmp_nodes[12];
+          ci.nodes[14] = tmp_nodes[4];
+          ci.nodes[15] = tmp_nodes[13];
+          ci.nodes[16] = tmp_nodes[14];
+          ci.nodes[17] = tmp_nodes[5];
+        } break;
         case 14: { /* Second order pyramid */
           //ci.nodes[0] = tmp_nodes[0];
           ci.nodes[1] = tmp_nodes[5];
@@ -528,6 +563,23 @@ namespace getfem {
           ci.nodes[17] = tmp_nodes[7];
           ci.nodes[18] = tmp_nodes[19];
           ci.nodes[19] = tmp_nodes[6];
+        } break;
+        case 18: { /* Incomplete second order prism (15-node) */
+          //ci.nodes[0] = tmp_nodes[0];
+          ci.nodes[1] = tmp_nodes[6];
+          ci.nodes[2] = tmp_nodes[1];
+          ci.nodes[3] = tmp_nodes[7];
+          ci.nodes[4] = tmp_nodes[9];
+          ci.nodes[5] = tmp_nodes[2];
+          ci.nodes[6] = tmp_nodes[8];
+          ci.nodes[7] = tmp_nodes[10];
+          ci.nodes[8] = tmp_nodes[11];
+          ci.nodes[9] = tmp_nodes[3];
+          ci.nodes[10] = tmp_nodes[12];
+          ci.nodes[11] = tmp_nodes[4];
+          ci.nodes[12] = tmp_nodes[13];
+          ci.nodes[13] = tmp_nodes[14];
+          ci.nodes[14] = tmp_nodes[5];
         } break;
         case 19: { /* Incomplete second order pyramid */
           //ci.nodes[0] = tmp_nodes[0];
