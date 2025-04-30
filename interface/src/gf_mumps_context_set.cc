@@ -93,8 +93,11 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       Run the MUMPS solve job (only) for the @tmct object.
 
       The analysis and factorization jobs need to be run first
-      before calling this function.@*/
+      before calling this function.
+
+      It returns the solution vector (on all processes if MPI is used).@*/
     pctx->solve();
+    pctx->mpi_broadcast(); // make the solution available on all processes
     if (out.remaining()) {
       if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
       else                    out.pop().from_dcvector(pctx->vector_r());
@@ -103,11 +106,27 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
     /*@SET ('analyze and factorize')
       Run the MUMPS analysis and factorization jobs for the @tmct object.@*/
     pctx->analyze_and_factorize();
+  } else if (check_cmd(cmd, "factorize and solve", in, out, 0, 0, 0, 1)) {
+    /*@SET SOL = ('factorize and solve')
+      Run the MUMPS factorization and solve jobs for the @tmct object.
+
+      The analysis job needs to be run first before calling this function.
+
+      It returns the solution vector (on all processes if MPI is used).@*/
+    pctx->factorize_and_solve();
+    pctx->mpi_broadcast(); // make the solution available on all processes
+    if (out.remaining()) {
+      if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
+      else                    out.pop().from_dcvector(pctx->vector_r());
+    }
   } else if (check_cmd(cmd, "analyze factorize and solve", in, out, 0, 0, 0, 1)) {
     /*@SET SOL = ('analyze factorize and solve')
       Run the MUMPS analysis, factorization and solve jobs for the @tmct
-      object. It returns the solution vector.@*/
+      object.
+
+      It returns the solution vector (on all processes if MPI is used).@*/
     pctx->analyze_factorize_and_solve();
+    pctx->mpi_broadcast(); // make the solution available on all processes
     if (out.remaining()) {
       if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
       else                    out.pop().from_dcvector(pctx->vector_r());

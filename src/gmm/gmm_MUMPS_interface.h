@@ -250,10 +250,12 @@ namespace gmm {
       static_assert(std::is_same<typename linalg_traits<MAT>::value_type,
                                  T>::value,
                     "value_type of MAT and T must be the same");
+      GMM_ASSERT2(gmm::mat_nrows(K) == gmm::mat_ncols(K), "Non-square matrix");
+      id.n = int(gmm::mat_nrows(K)); // MUMPS needs id.n only on rank 0, but
+                                     // we want to use it also in set_vector()
       if (!distributed && rank != 0)
         return;
       pK = std::make_unique< ij_sparse_matrix<T> >(K, id.sym);
-      id.n = int(gmm::mat_nrows(K));
       if (distributed) {
         id.nz_loc = int(pK->irn.size());
         id.irn_loc = &(pK->irn[0]);
@@ -272,6 +274,8 @@ namespace gmm {
       static_assert(std::is_same<typename linalg_traits<VEC>::value_type,
                                  T>::value,
                     "value_type of MAT and T must be the same");
+      GMM_ASSERT2(id.n > 0,
+                  "System size not defined, need to call set_matrix first.");
       const int nrhs = int(gmm::vect_size(rhs)/id.n);
       GMM_ASSERT2(size_type(nrhs*id.n) == gmm::vect_size(rhs),
                   "Size of rhs (" << gmm::vect_size(rhs) << ") must be an "
@@ -294,6 +298,13 @@ namespace gmm {
     inline void factorize_and_solve() { run_job(5); }
     inline void analyze_factorize_and_solve() { run_job(6); }
     inline bool error_check() { return mumps_error_check(INFO(1), INFO(2)); }
+
+    inline void mpi_broadcast() {
+#ifdef GMM_USES_MPI
+      MPI_Bcast(&(rhs_or_sol[0]), int(rhs_or_sol.size()),
+                gmm::mpi_type(T()), 0, MPI_COMM_WORLD);
+#endif
+    }
   };
 
 
@@ -305,9 +316,6 @@ namespace gmm {
                    bool sym = false, bool distributed = false) {
 
     typedef typename linalg_traits<MAT>::value_type T;
-
-    const int nrows = int(gmm::mat_nrows(A));
-    GMM_ASSERT2(size_type(nrows) == gmm::mat_ncols(A), "Non-square matrix");
 
     bool ok=false;
     {
@@ -328,11 +336,7 @@ namespace gmm {
         //mumps_ctx.ICNTL(22) = 1; // enables out-of-core support
       mumps_ctx.analyze_factorize_and_solve();
       ok = mumps_ctx.error_check();
-
-#ifdef GMM_USES_MPI
-      MPI_Bcast(&(mumps_ctx.vector()[0]),
-                nrows, gmm::mpi_type(T()), 0, MPI_COMM_WORLD);
-#endif
+      mumps_ctx.mpi_broadcast();
       gmm::copy(mumps_ctx.vector(), X);
     } // end scope of mumps_ctx, destructor calls mumps job=-2
     return ok;
@@ -363,9 +367,6 @@ namespace gmm {
                       bool sym = false, bool distributed = false) {
     exponent = 0;
     typedef typename number_traits<T>::magnitude_type R;
-
-    const int nrows = int(gmm::mat_nrows(A));
-    GMM_ASSERT2(nrows == int(gmm::mat_ncols(A)), "Non-square matrix");
 
     mumps_context<T> mumps_ctx(sym);
     mumps_ctx.set_matrix(A, distributed);

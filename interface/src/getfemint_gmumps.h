@@ -140,6 +140,10 @@ namespace getfemint {
                      : pmumps_ctx_r->error_check();
     }
 
+    inline void mpi_broadcast() {
+      return complex ? pmumps_ctx_c->mpi_broadcast()
+                     : pmumps_ctx_r->mpi_broadcast();
+    }
   };
 
 }
