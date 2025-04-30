@@ -216,6 +216,7 @@ namespace gmm {
     std::unique_ptr<ij_sparse_matrix<T> > pK;
     std::vector<T> rhs_or_sol;
     int rank; // MPI rank
+    int nrows_;
 
   public:
 
@@ -224,7 +225,7 @@ namespace gmm {
       mumps_interf<T>::mumps_c(id);
     }
 
-    mumps_context(bool sym=false) : id(), rank(0) {
+    mumps_context(bool sym=false) : id(), rank(0), nrows_(0) {
 #ifdef GMM_USES_MPI
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
@@ -237,6 +238,7 @@ namespace gmm {
 
     ~mumps_context() { run_job(-2); } // JOB_END
 
+    inline int nrows() const { return nrows_; }
     inline int &ICNTL(int I) { return id.icntl[I-1]; }
     inline MUMPS_R &CNTL(int I) { return id.cntl[I-1]; }
     inline const int &INFO(int I) { return id.info[I-1]; }
@@ -251,10 +253,10 @@ namespace gmm {
                                  T>::value,
                     "value_type of MAT and T must be the same");
       GMM_ASSERT2(gmm::mat_nrows(K) == gmm::mat_ncols(K), "Non-square matrix");
-      id.n = int(gmm::mat_nrows(K)); // MUMPS needs id.n only on rank 0, but
-                                     // we want to use it also in set_vector()
+      nrows_ = int(gmm::mat_nrows(K));
       if (!distributed && rank != 0)
         return;
+      id.n = nrows_;
       pK = std::make_unique< ij_sparse_matrix<T> >(K, id.sym);
       if (distributed) {
         id.nz_loc = int(pK->irn.size());
@@ -274,10 +276,10 @@ namespace gmm {
       static_assert(std::is_same<typename linalg_traits<VEC>::value_type,
                                  T>::value,
                     "value_type of MAT and T must be the same");
-      GMM_ASSERT2(id.n > 0,
+      GMM_ASSERT2(nrows() > 0,
                   "System size not defined, need to call set_matrix first.");
-      const int nrhs = int(gmm::vect_size(rhs)/id.n);
-      GMM_ASSERT2(size_type(nrhs*id.n) == gmm::vect_size(rhs),
+      const int nrhs = int(gmm::vect_size(rhs)/nrows());
+      GMM_ASSERT2(size_type(nrhs*nrows()) == gmm::vect_size(rhs),
                   "Size of rhs (" << gmm::vect_size(rhs) << ") must be an "
                   "integer multiple of the matrix size (" << id.n << ")");
       rhs_or_sol.resize(gmm::vect_size(rhs));

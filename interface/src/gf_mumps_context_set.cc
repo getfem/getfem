@@ -29,6 +29,34 @@ using namespace getfemint;
   General function for modifying mumps_context objects
 */
 
+inline void return_mumps_solution(getfemint::mexargs_out& out,
+                                  const gmumps *pctx) {
+  if (out.remaining()) {
+    if (pctx->is_complex()) {
+      int nrhs = int(pctx->vector_c().size()) / pctx->nrows();
+      GMM_ASSERT1(nrhs * pctx->nrows() == int(pctx->vector_c().size()),
+                  "Inconsistent dimensions in MUMPS context object");
+      if (nrhs == 1)
+        out.pop().from_dcvector(pctx->vector_c());
+      else {
+        carray x = out.pop().create_carray(pctx->nrows(), nrhs);
+        gmm::copy(pctx->vector_c(), x);
+      }
+    } else {
+      int nrhs = int(pctx->vector_r().size()) / pctx->nrows();
+      GMM_ASSERT1(nrhs * pctx->nrows() == int(pctx->vector_r().size()),
+                  "Inconsistent dimensions in MUMPS context object");
+      if (nrhs == 1)
+        out.pop().from_dcvector(pctx->vector_r());
+      else {
+        darray x = out.pop().create_darray(pctx->nrows(), nrhs);
+        gmm::copy(pctx->vector_r(), x);
+      }
+    }
+  }
+}
+
+
 void gf_mumps_context_set(getfemint::mexargs_in& in,
                           getfemint::mexargs_out& out) {
 
@@ -58,8 +86,21 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
   } else if (check_cmd(cmd, "vector", in, out, 1, 1, 0, 0)) {
     /*@SET ('vector', @vec b)
       Set the right hand side @vec b for the @tmct object.@*/
-    if (pctx->is_complex()) pctx->set_vector_c(in.pop().to_carray());
-    else                    pctx->set_vector_r(in.pop().to_darray());
+    if (pctx->is_complex()) {
+      carray b = in.pop().to_carray();
+      if (b.getn() != 1 && b.getm() != 1) // multiple rhs
+        in.last_popped().check_dimensions(b, pctx->nrows(), -1);
+      else // check whether b is in fact a vector of proper size
+        in.last_popped().check_dimensions(b, pctx->nrows());
+      pctx->set_vector_c(b);
+    } else {
+      darray b = in.pop().to_darray();
+      if (b.getn() != 1 && b.getm() != 1) // multiple rhs
+        in.last_popped().check_dimensions(b, pctx->nrows(), -1);
+      else // check whether b is in fact a vector of proper size
+        in.last_popped().check_dimensions(b, pctx->nrows());
+      pctx->set_vector_r(b);
+    }
   } else if (check_cmd(cmd, "ICNTL", in, out, 2, 2, 0, 0)) {
     /*@SET ('ICNTL', @int ind, @int val)
       Set the integer option at 1-based index `ind` in the ICNTL vector
@@ -98,10 +139,7 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->solve();
     pctx->mpi_broadcast(); // make the solution available on all processes
-    if (out.remaining()) {
-      if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
-      else                    out.pop().from_dcvector(pctx->vector_r());
-    }
+    return_mumps_solution(out, pctx);
   } else if (check_cmd(cmd, "analyze and factorize", in, out, 0, 0, 0, 0)) {
     /*@SET ('analyze and factorize')
       Run the MUMPS analysis and factorization jobs for the @tmct object.@*/
@@ -115,10 +153,7 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->factorize_and_solve();
     pctx->mpi_broadcast(); // make the solution available on all processes
-    if (out.remaining()) {
-      if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
-      else                    out.pop().from_dcvector(pctx->vector_r());
-    }
+    return_mumps_solution(out, pctx);
   } else if (check_cmd(cmd, "analyze factorize and solve", in, out, 0, 0, 0, 1)) {
     /*@SET SOL = ('analyze factorize and solve')
       Run the MUMPS analysis, factorization and solve jobs for the @tmct
@@ -127,10 +162,7 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->analyze_factorize_and_solve();
     pctx->mpi_broadcast(); // make the solution available on all processes
-    if (out.remaining()) {
-      if (pctx->is_complex()) out.pop().from_dcvector(pctx->vector_c());
-      else                    out.pop().from_dcvector(pctx->vector_r());
-    }
+    return_mumps_solution(out, pctx);
    } else
      bad_cmd(init_cmd);
 }

@@ -65,6 +65,8 @@ namespace getfemint {
 //      if (!complex) THROW_ERROR("This is not a complex number context");
 //      return *pmumps_ctx_c;
 //    }
+    int nrows() const
+      { return complex ? pmumps_ctx_c->nrows() : pmumps_ctx_r->nrows(); }
     int &ICNTL(int I)
       { return complex ? pmumps_ctx_c->ICNTL(I) : pmumps_ctx_r->ICNTL(I); }
     const int &ICNTL(int I) const
