@@ -85,14 +85,14 @@ namespace getfemint {
       { return complex ? pmumps_ctx_c->RINFOG(I) : pmumps_ctx_r->RINFOG(I); }
 
     template<typename MAT>
-    void set_matrix_r(const MAT& mat) {
+    void set_matrix_r(const MAT& mat, bool distributed=false) {
       if (complex) THROW_ERROR("This is not a real number context.");
-      pmumps_ctx_r->set_matrix(mat, false);
+      pmumps_ctx_r->set_matrix(mat, distributed);
     }
     template<typename MAT>
-    void set_matrix_c(const MAT& mat) {
+    void set_matrix_c(const MAT& mat, bool distributed=false) {
       if (!complex) THROW_ERROR("This is not a complex number context.");
-      pmumps_ctx_c->set_matrix(mat, false);
+      pmumps_ctx_c->set_matrix(mat, distributed);
     }
     template<typename VEC>
     void set_vector_r(const VEC& vec) {

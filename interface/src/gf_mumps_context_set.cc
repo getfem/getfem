@@ -66,22 +66,32 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
   std::string init_cmd = in.pop().to_string();
   std::string cmd      = cmd_normalize(init_cmd);
 
-  if (check_cmd(cmd, "matrix", in, out, 1, 1, 0, 0)) {
+  bool distributed_matrix =
+    check_cmd(cmd, "distributed matrix", in, out, 1, 1, 0, 0);
+  if (distributed_matrix ||
+      check_cmd(cmd, "matrix", in, out, 1, 1, 0, 0)) {
     /*@SET ('matrix', @mat A)
       Set the matrix @mat A for the @tmct object.@*/
+    /*@SET ('distributed matrix', @mat A)
+      Set the matrix @mat A for the @tmct object distributed over all
+      processes. It also sets ICNTL(5) to 0 and ICNTL(18) to 3.@*/
     std::shared_ptr<gsparse> pmat = in.pop().to_sparse();
     if (pctx->is_complex()) {
       if (!pmat->is_complex()) THROW_ERROR("Complex number matrix expected");
       if (pmat->storage() == gsparse::CSCMAT)
-        pctx->set_matrix_c(pmat->cplx_csc());
+        pctx->set_matrix_c(pmat->cplx_csc(), distributed_matrix);
       else if (pmat->storage() == gsparse::WSCMAT)
-        pctx->set_matrix_c(pmat->cplx_wsc());
+        pctx->set_matrix_c(pmat->cplx_wsc(), distributed_matrix);
     } else {
       if (pmat->is_complex())  THROW_ERROR("Real number matrix expected");
       if (pmat->storage() == gsparse::CSCMAT)
-        pctx->set_matrix_r(pmat->real_csc());
+        pctx->set_matrix_r(pmat->real_csc(), distributed_matrix);
       else if (pmat->storage() == gsparse::WSCMAT)
-        pctx->set_matrix_r(pmat->real_wsc());
+        pctx->set_matrix_r(pmat->real_wsc(), distributed_matrix);
+    }
+    if (distributed_matrix) {
+      pctx->ICNTL(5) = 0;  // assembled input matrix (default)
+      pctx->ICNTL(18) = 3; // strategy for distributed input matrix
     }
   } else if (check_cmd(cmd, "vector", in, out, 1, 1, 0, 0)) {
     /*@SET ('vector', @vec b)
@@ -121,6 +131,10 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
     if (ind <= 0 || ind > 15)
       THROW_BADARG("Invalid CNTL parameter index" << ind);
     pctx->CNTL(ind) = in.pop().to_scalar();
+  } else if (check_cmd(cmd, "error check", in, out, 0, 0, 0, 0)) {
+    /*@SET ('error check')
+      Check the error status of the @tmct object.@*/
+    pctx->error_check();
   } else if (check_cmd(cmd, "analyze", in, out, 0, 0, 0, 0)) {
     /*@SET ('analyze')
       Run the MUMPS analysis job for the @tmct object.@*/
@@ -134,10 +148,12 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       Run the MUMPS solve job (only) for the @tmct object.
 
       The analysis and factorization jobs need to be run first
-      before calling this function.
+      before calling this function. An error check is performed after
+      the solve.
 
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->solve();
+    pctx->error_check();
     pctx->mpi_broadcast(); // make the solution available on all processes
     return_mumps_solution(out, pctx);
   } else if (check_cmd(cmd, "analyze and factorize", in, out, 0, 0, 0, 0)) {
@@ -149,19 +165,22 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
       Run the MUMPS factorization and solve jobs for the @tmct object.
 
       The analysis job needs to be run first before calling this function.
+      An error check is performed after the solve.
 
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->factorize_and_solve();
+    pctx->error_check();
     pctx->mpi_broadcast(); // make the solution available on all processes
     return_mumps_solution(out, pctx);
   } else if (check_cmd(cmd, "analyze factorize and solve", in, out, 0, 0, 0, 1)) {
     /*@SET SOL = ('analyze factorize and solve')
       Run the MUMPS analysis, factorization and solve jobs for the @tmct
-      object.
+      object. An error check is also performed after the solve.
 
       It returns the solution vector (on all processes if MPI is used).@*/
     pctx->analyze_factorize_and_solve();
     pctx->mpi_broadcast(); // make the solution available on all processes
+    pctx->error_check();
     return_mumps_solution(out, pctx);
    } else
      bad_cmd(init_cmd);

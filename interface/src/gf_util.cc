@@ -131,6 +131,17 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
      getfem::set_num_threads(in.pop().to_integer(0, 100));
      );
 
+  /*@FUNC tl = ('mpi parallelism level')
+    Return the level of MPI parallelism GetFEM is compiled with.
+
+    0 means no MPI parallelism,
+    1 means assembly is parallelized, and
+    2 means that both assembly and solve (with MUMPS) are MPI parallel.@*/
+  sub_command
+    ("mpi parallelism level", 0, 0, 0, 1,
+       out.pop().from_integer(int(GETFEM_PARA_LEVEL));
+     );
+
 } // build_sub_command_table
 
 

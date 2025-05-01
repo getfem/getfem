@@ -46,7 +46,13 @@ void gf_mumps_context_get(getfemint::mexargs_in& in,
       The @tmct object in the scripting API cannot return
       a reference to the ija matrix stored in C++. It just
       displays information about the stored matrix.@*/
-    infomsg() << "...\n";
+    infomsg() << "This object does not provide access to the stored matrix\n";
+  } else if (check_cmd(cmd, "distributed matrix", in, out, 0, 0, 0, 0)) {
+    /*@GET K = ('distributed matrix')
+      The @tmct object in the scripting API cannot return
+      a reference to the ija matrix stored in C++. It just
+      displays information about the stored matrix.@*/
+    infomsg() << "This object does not provide access to the stored matrix\n";
   } else if (check_cmd(cmd, "vector", in, out, 0, 0, 0, 1)) {
     /*@GET vec = ('vector')
       Outputs a copy of the vector stored in the @tmct object.
