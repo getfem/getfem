@@ -413,9 +413,9 @@ namespace getfem {
 
     void add_generic_expression(const std::string &expr, const mesh_im &mim,
                                 size_type region,
-				const std::string &secondary_domain = "") const {
+                                const std::string &secondary_domain = "") const {
       generic_expressions.push_back(gen_expr(expr, mim, region,
-					     secondary_domain));
+                                             secondary_domain));
     }
     void add_external_load(size_type ib, scalar_type e) const
     { bricks[ib].external_load = e; }
@@ -460,10 +460,10 @@ namespace getfem {
 
     void clear_assembly_assignments(void) { assignments.clear(); }
     void add_assembly_assignments(const std::string &dataname,
-				  const std::string &expr,
-				  size_type rg = size_type(-1),
-				  size_type order = 1,
-				  bool before = false);
+                                  const std::string &expr,
+                                  size_type rg = size_type(-1),
+                                  size_type order = 1,
+                                  bool before = false);
 
     /* function to be called by Dirichlet bricks */
     void add_real_dof_constraint(const std::string &varname, size_type dof,
@@ -1689,7 +1689,7 @@ namespace getfem {
    bool is_coercive = false, const std::string &brickname = "",
    bool return_if_nonlin = false) {
     return add_linear_term(md, mim, expr, region, is_sym,
-		    is_coercive, brickname, return_if_nonlin);
+                           is_coercive, brickname, return_if_nonlin);
   }
 
   /** Add a nonlinear term given by the weak form language expression `expr`
@@ -1714,7 +1714,7 @@ namespace getfem {
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, const std::string &brickname = "") {
     return add_nonlinear_term(md, mim, expr, region,
-			      is_sym, is_coercive, brickname);
+                              is_sym, is_coercive, brickname);
   }
 
 
@@ -1741,7 +1741,7 @@ namespace getfem {
    const std::string &directdataname = std::string(),
    bool return_if_nonlin = false) {
     return add_source_term(md, mim, expr, region, brickname,
-		    directvarname, directdataname, return_if_nonlin);
+                           directvarname, directdataname, return_if_nonlin);
   }
 
   /** Adds a linear term given by a weak form language expression like

@@ -31,7 +31,7 @@
 
 /*! @mainpage GetFEM reference documentation.
 
-  <center><img src="http://download.gna.org/getfem/html/homepage/_static/logo_getfem_small.png"></center>
+  <center><img src="https://getfem.org/_static/logo_getfem_small.png"></center>
  
   @section intro Introduction
  
@@ -39,7 +39,7 @@
  
   @section Terminology
  
-  This is just a short summary of the terms employed in getfem.
+  This is just a short summary of the terms employed in GetFEM.
 
   The @link mesh mesh@endlink is composed of @link convexes
   convexes@endlink. What we call convexes can be simple line segments,
@@ -68,7 +68,7 @@
   associated geometrical point) are the <b>degrees of freedom
   (dof)</b>. The FEM is said to be <i>Lagrangian</i> when each of its basis
   functions is equal to one at its attached geometrical point, and is
-  null at the geometrical points of others basis functions. This is an
+  zero at the geometrical points of others basis functions. This is an
   important property as it is very easy to <i>interpolate</i> an arbitrary
   function on the finite elements space.
 
@@ -129,17 +129,20 @@
   form a continuous sequence (starting from 0), you have to use the
   getfem::getfem_mesh::optimize_structure member function.
 
-  Most of the example programs of getfem now uses @link bricks model bricks@endlink. 
-  Connecting these basic blocks one to each other, solvers for many PDE problems can be built.
+  Historically, GetFEM models where built by combining so called model
+  bricks,  which are predefined PDE terms available in GetFEM.
+  Nowadays it is recommended to use the General Weak Form Language (GWFL)
+  instead, which is as easy, more flexible and more transparent.
 
   @section Examples
   
-  - @link laplacian.cc tests/laplacian.cc@endlink: solve the laplace equation.
-  - @link elastostatic.cc tests/elastostatic.cc@endlink: solve a static linear elasticity problem.
-  - @link helmholtz.cc tests/helmholtz.cc@endlink: scalar wave equation, with robin boundary conditions.
-  - @link stokes.cc tests/stokes.cc@endlink: the Stokes equation (incompressible viscuous fluid).
-  - @link nonlinear_elastostatic.cc tests/nonlinear_elastostatic.cc@endlink: large strain elastostatic problem (torsion of a bar).
-  - @link icare.cc contrib/icare/icare.cc@endlink: Navier-Stokes equation (fluid flow around an obstacle).
+    @link thermo_elasticity_electrical_coupling.cc tests/thermo_elasticity_electrical_coupling.cc@endlink: solve a multiphysics problem with GWFL.
+  - @link laplacian.cc tests/laplacian.cc@endlink: solve the Laplace equation with the old bricks system.
+  - @link elastostatic.cc tests/elastostatic.cc@endlink: solve a static linear elasticity problem with the old bricks system.
+  - @link helmholtz.cc tests/helmholtz.cc@endlink: solve a scalar wave equation, with robin boundary conditions, with the old bricks system.
+  - @link stokes.cc tests/stokes.cc@endlink: solve the Stokes equation (incompressible viscuous fluid) with the old bricks system.
+  - @link nonlinear_elastostatic.cc tests/nonlinear_elastostatic.cc@endlink: solve a large strain elastostatic problem (torsion of a bar) with the old bricks system.
+  - @link icare.cc contrib/icare/icare.cc@endlink: solve the Navier-Stokes equation (fluid flow around an obstacle)  with the old bricks system.
 */
 
 /**@file getfem_config.h
@@ -154,12 +157,12 @@
 
 #include "bgeot_config.h"
 
-// Parallelisation options
+// Parallelization options
 
-// GETFEM_PARA_LEVEL is the parallelisation level of Getfem
+// GETFEM_PARA_LEVEL is the MPI parallelisation level of GetFEM
 //    0 - Sequential
-//    1 - Only the resolution of linear systems are parallelized
-//    2 - Assembly procedures are also parallelized
+//    1 - Only the assembly procedures are parallelized
+//    2 - Assembly procedures and linear solves (with MUMPS) are parallelized
 #if !defined(GETFEM_PARA_LEVEL)
 # define GETFEM_PARA_LEVEL 0
 #endif

@@ -758,7 +758,7 @@ namespace getfemint {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE, GFI_COMPLEX);
     else
-      arg = checked_gfi_array_create_2(1,dim, GFI_DOUBLE, GFI_COMPLEX);
+      arg = checked_gfi_array_create_2(1, dim, GFI_DOUBLE, GFI_COMPLEX);
     return carray(arg);
   }
 
@@ -790,7 +790,7 @@ namespace getfemint {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE);
     else
-      arg = checked_gfi_array_create_2(1,dim, GFI_DOUBLE);
+      arg = checked_gfi_array_create_2(1, dim, GFI_DOUBLE);
     return darray(arg);
   }
 
@@ -807,7 +807,7 @@ namespace getfemint {
   mexarg_out::create_darray(unsigned n,unsigned m,unsigned p) {
     int sz[3];
     sz[0] = n; sz[1] = m; sz[2] = p;
-    arg = checked_gfi_array_create(3,sz,GFI_DOUBLE);
+    arg = checked_gfi_array_create(3, sz, GFI_DOUBLE);
     return darray(arg);
   }
 
@@ -841,7 +841,7 @@ namespace getfemint {
   mexarg_out::create_iarray(unsigned n,unsigned m,unsigned p) {
     int sz[3];
     sz[0] = n; sz[1] = m; sz[2] = p;
-    arg = checked_gfi_array_create(3,sz,GFI_INT32);
+    arg = checked_gfi_array_create(3, sz, GFI_INT32);
     return iarray(arg);
   }
 
