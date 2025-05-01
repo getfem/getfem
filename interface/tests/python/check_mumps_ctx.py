@@ -59,13 +59,18 @@ ctx1.set_vector(rhs)
 ctx1.analyze()
 ctx1.factorize()
 x1 = ctx1.solve()
-#print(x1)
+#print("x1 =", x1)
 
 ctx1.set_vector(2*rhs)
 x1_times_two = ctx1.solve()
-#print(x1_times_two)
+#print("2*x1 =", x1_times_two)
 
 assert np.allclose(x1, x1_times_two/2)
+
+ctx1.set_vector(np.vstack((rhs,2*rhs)).T)
+x1,x1_times_two = np.unstack(ctx1.solve(), axis=1)
+#print("x1 =", x1, "2*x1 =", x1_times_two)
+
 
 ctx2.set_matrix(K2)
 ctx2.set_vector(rhs)
@@ -73,11 +78,11 @@ ctx2.set_vector(rhs)
 ctx2.analyze()
 ctx2.factorize()
 x2 = ctx2.solve()
-#print(x2)
+#print("x2 =", x2)
 
 ctx2.set_vector(2*rhs)
 x2_times_two = ctx2.solve()
-#print(x2_times_two)
+#print("2*x2 =", x2_times_two)
 
 assert np.allclose(x2, x2_times_two/2)
 
@@ -100,13 +105,13 @@ ctx3.set_vector(rhs_cplx)
 ctx3.analyze()
 ctx3.factorize()
 x3 = ctx3.solve()
-#print(x3)
-#print(rhs_cplx)
-#print(K3.mult(x3))
+#print("x3 =", x3)
+#print("rhs_cplx =", rhs_cplx)
+#print("K3.mult(x3) =", K3.mult(x3))
 assert np.allclose(rhs_cplx, K3.mult(x3))
 
 ctx3.set_vector(2*rhs_cplx)
 x3_times_two = ctx3.solve()
-#print(x3_times_two)
+#print("2*x3 =", x3_times_two)
 
 assert np.allclose(x3, x3_times_two/2)
