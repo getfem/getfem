@@ -67,44 +67,96 @@ extern "C" {
 
 namespace gmm {
 
-  template <typename T> struct ij_sparse_matrix {
+  template <typename T>
+  struct ij_sparse_matrix {
     typedef typename number_traits<T>::magnitude_type R;
     std::vector<int> irn;
     std::vector<int> jcn;
     std::vector<T> a;
-    bool sym;
 
-    template <typename L> void store(const L& l, size_type i) {
-       typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-         ite = vect_const_end(l);
-       for (; it != ite; ++it) {
-         int ir = (int)i + 1, jc = (int)it.index() + 1;
-         if (*it != T(0) && (!sym || ir >= jc))
-         { irn.push_back(ir); jcn.push_back(jc); a.push_back(*it); }
-       }
+    static const std::vector<size_type> no_sel;
+
+    // input 0-based, output 1-based
+    void build_indices_vector(const std::vector<size_type> &inp,
+                              std::vector<int> &out) {
+      if (inp.empty())
+        for (size_type i = 0; i < out.size(); ++i) out[i] = int(i+1);
+      else
+        for (size_type i = 0; i < inp.size(); ++i) out[inp[i]] = int(i+1);
     }
 
-    template <typename L> void build_from(const L& l, row_major) {
-      for (size_type i = 0; i < mat_nrows(l); ++i)
-        store(mat_const_row(l, i), i);
+    // build an i,j,a matrix from matrix A, optionally performing row and
+    // column selection/permutation on A, and optionally keeping only the
+    // lower triangle part of the resulting matrix (after permutations)
+    template <typename L>
+    void build_from(const L& A, row_major,
+                    bool lower_triangular=false,
+                    const std::vector<size_type> &rows=no_sel,
+                    const std::vector<size_type> &cols=no_sel) {
+      std::vector<int> row_ind(mat_nrows(A),0), col_ind(mat_nrows(A),0);
+      build_indices_vector(rows, row_ind);
+      build_indices_vector(cols, col_ind);
+      for (size_type i = 0; i < mat_nrows(A); ++i) {
+        const int ir = row_ind[i];
+        if (ir > 0) {
+          auto row = mat_const_row(A, i);
+          auto it = vect_const_begin(row), ite = vect_const_end(row);
+          for (; it != ite; ++it) {
+            const int jc = col_ind[it.index()];
+            if (jc > 0 && (*it != T(0))
+                       && (!lower_triangular || ir >= jc)) {
+              irn.push_back(ir);
+              jcn.push_back(jc);
+              a.push_back(*it);
+            }
+          }
+        }
+      }
     }
 
-    template <typename L> void build_from(const L& l, col_major) {
-      for (size_type i = 0; i < mat_ncols(l); ++i)
-        store(mat_const_col(l, i), i);
-      irn.swap(jcn);
+    template <typename L>
+    void build_from(const L& A, col_major,
+                    bool lower_triangular=false,
+                    const std::vector<size_type> &rows=no_sel,
+                    const std::vector<size_type> &cols=no_sel) {
+      std::vector<int> row_ind(mat_nrows(A),0), col_ind(mat_nrows(A),0);
+      build_indices_vector(rows, row_ind);
+      build_indices_vector(cols, col_ind);
+      for (size_type j = 0; j < mat_ncols(A); ++j) {
+        const int jc = col_ind[j];
+        if (jc >0) {
+          auto col = mat_const_col(A, j);
+          auto it = vect_const_begin(col), ite = vect_const_end(col);
+          for (; it != ite; ++it) {
+            const int ir = row_ind[it.index()];
+            if (ir > 0 && (*it != T(0))
+                       && (!lower_triangular || ir >= jc)) {
+              irn.push_back(ir);
+              jcn.push_back(jc);
+              a.push_back(*it);
+            }
+          }
+        }
+      }
     }
 
-    template <typename L> ij_sparse_matrix(const L& A, bool sym_)
-      : sym(sym_)
-    {
-      size_type nz = nnz(A);
-      irn.reserve(nz); jcn.reserve(nz); a.reserve(nz);
+    template <typename L>
+    ij_sparse_matrix(const L& A, bool lower_triangular=false,
+                     const std::vector<size_type> &rows=no_sel,
+                     const std::vector<size_type> &cols=no_sel)
+    { // do not reserve nnz(A) entires in case only a sub-matrix is used
+      //size_type nz = nnz(A);
+      //irn.reserve(nz); jcn.reserve(nz); a.reserve(nz);
       build_from(A, typename principal_orientation_type
                              <typename linalg_traits<L>::sub_orientation>
-                             ::potype());
+                             ::potype(),
+                 lower_triangular, rows, cols);
     }
   };
+
+  template<typename T> const std::vector<size_type>
+  ij_sparse_matrix<T>::no_sel= std::vector<size_type>();
+
 
   /* ********************************************************************* */
   /*   MUMPS solve interface                                               */
@@ -202,6 +254,10 @@ namespace gmm {
    a copy of the system matrix and vector (used both for right-hand sides and
    solutions) and stores the MUMPS internal data structure.
 
+   The symmetry option, 0 for unsymmetric (default), 1 for symmetric positive
+   definite, and 2 for general symmetric, is passed to the constructor and
+   cannot be changed later.
+
    To solve a linear system in one step, the "analyze_factorize_and_solve"
    function has to be used. Calling just "solve" will not run the analysis
    and factorization phases.
@@ -225,13 +281,13 @@ namespace gmm {
       mumps_interf<T>::mumps_c(id);
     }
 
-    mumps_context(bool sym=false) : id(), rank(0), nrows_(0) {
+    mumps_context(int sym=0) : id(), rank(0), nrows_(0) {
 #ifdef GMM_USES_MPI
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
       id.job = -1;
       id.par = 1;
-      id.sym = sym ? 2 : 0;
+      id.sym = sym;
       id.comm_fortran = -987654; // USE_COMM_WORLD
       run_job(-1); // JOB_INIT
     }
@@ -247,8 +303,14 @@ namespace gmm {
     inline const MUMPS_R &RINFOG(int I) { return id.rinfog[I-1]; }
     //inline int MPI_rank() const { return rank; }
 
+    // Row/column index vectors are expected to be 0-based, the conversion to
+    // 1-based indexing, required by MUMPS, is done inside ij_sparse_matrix
     template <typename MAT>
-    inline void set_matrix(const MAT &K, bool distributed) {
+    inline void set_matrix(const MAT &K, bool distributed,
+                           const std::vector<size_type> &
+                             rows=ij_sparse_matrix<T>::no_sel,
+                           const std::vector<size_type> &
+                             cols=ij_sparse_matrix<T>::no_sel) {
       static_assert(std::is_same<typename linalg_traits<MAT>::value_type,
                                  T>::value,
                     "value_type of MAT and T must be the same");
@@ -257,7 +319,7 @@ namespace gmm {
       if (!distributed && rank != 0)
         return;
       id.n = nrows_;
-      pK = std::make_unique< ij_sparse_matrix<T> >(K, id.sym);
+      pK = std::make_unique< ij_sparse_matrix<T> >(K, id.sym > 0, rows, cols);
       if (distributed) {
         id.nz_loc = int(pK->irn.size());
         id.irn_loc = &(pK->irn[0]);
@@ -321,7 +383,7 @@ namespace gmm {
 
     bool ok=false;
     {
-      mumps_context<T> mumps_ctx(sym);
+      mumps_context<T> mumps_ctx(sym ? 2 : 0); // General symmetric (2) or unsymmetric (0)
       mumps_ctx.set_matrix(A, distributed);
       mumps_ctx.set_vector(B);
       mumps_ctx.ICNTL(1) = -1;   // output stream for error messages
@@ -350,7 +412,7 @@ namespace gmm {
    */
   template <typename MAT, typename VECTX, typename VECTB>
   bool MUMPS_distributed_matrix_solve(const MAT &A, VECTX &X_,
-                                      const VECTB &B, bool sym = false) {
+                                      const VECTB &B, bool sym=false) {
     return MUMPS_solve(A, X_, B, sym, true);
   }
 
@@ -364,14 +426,14 @@ namespace gmm {
   /** Evaluate matrix determinant with MUMPS
    *  Works only with sparse or skyline matrices
    */
-  template <typename MAT, typename T = typename linalg_traits<MAT>::value_type>
+  template <typename MAT, typename T=typename linalg_traits<MAT>::value_type>
   T MUMPS_determinant(const MAT &A, int &exponent,
-                      bool sym = false, bool distributed = false) {
+                      bool sym=false, bool distributed=false) {
     exponent = 0;
     typedef typename number_traits<T>::magnitude_type R;
 
-    mumps_context<T> mumps_ctx(sym);
-    mumps_ctx.set_matrix(A, distributed);
+    mumps_context<T> mumps_ctx(sym ?  2 : 0); // General symmetric (2)
+    mumps_ctx.set_matrix(A, distributed);     // or unsymmetric (0)
     mumps_ctx.ICNTL(4) = 0;    // verbosity level
     if (distributed)
       mumps_ctx.ICNTL(5) = 0;  // assembled input matrix (default)

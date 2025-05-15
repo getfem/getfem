@@ -45,17 +45,18 @@ namespace getfemint {
   class gmumps : virtual public dal::static_stored_object {
     std::unique_ptr<gmm::mumps_context<scalar_type> > pmumps_ctx_r;
     std::unique_ptr<gmm::mumps_context<complex_type> > pmumps_ctx_c;
-    bool symmetric, complex;
+    int sym_option;
+    bool complex;
   public:
-    gmumps(bool is_symmetric_, bool is_complex_)
-      : symmetric(is_symmetric_),  complex(is_complex_) {
-      // MUMPS is initiated in the constructor of gmm::mumps_context
+    gmumps(int sym_option_, bool is_complex_)
+      : sym_option(sym_option_),  complex(is_complex_)
+    { // MUMPS is initiated in the constructor of gmm::mumps_context
       if (complex)
-        pmumps_ctx_c = std::make_unique<gmm::mumps_context<complex_type> >(symmetric);
+        pmumps_ctx_c = std::make_unique<gmm::mumps_context<complex_type> >(sym_option);
       else
-        pmumps_ctx_r = std::make_unique<gmm::mumps_context<scalar_type> >(symmetric);
+        pmumps_ctx_r = std::make_unique<gmm::mumps_context<scalar_type> >(sym_option);
     }
-    bool is_symmetric() const { return symmetric; }
+    bool symmetry_type() const { return sym_option; }
     bool is_complex() const { return complex; }
 //    gmm::mumps_context<scalar_type> &context_r() {
 //      if (complex) THROW_ERROR("This is not a real number context");
@@ -85,14 +86,22 @@ namespace getfemint {
       { return complex ? pmumps_ctx_c->RINFOG(I) : pmumps_ctx_r->RINFOG(I); }
 
     template<typename MAT>
-    void set_matrix_r(const MAT& mat, bool distributed=false) {
+    void set_matrix_r(const MAT& mat, bool distributed=false,
+                      const std::vector<size_type> &
+                        rows=gmm::ij_sparse_matrix<scalar_type>::no_sel,
+                      const std::vector<size_type> &
+                        cols=gmm::ij_sparse_matrix<scalar_type>::no_sel) {
       if (complex) THROW_ERROR("This is not a real number context.");
-      pmumps_ctx_r->set_matrix(mat, distributed);
+      pmumps_ctx_r->set_matrix(mat, distributed, rows, cols);
     }
     template<typename MAT>
-    void set_matrix_c(const MAT& mat, bool distributed=false) {
+    void set_matrix_c(const MAT& mat, bool distributed=false,
+                      const std::vector<size_type> &
+                        rows=gmm::ij_sparse_matrix<complex_type>::no_sel,
+                      const std::vector<size_type> &
+                        cols=gmm::ij_sparse_matrix<complex_type>::no_sel) {
       if (!complex) THROW_ERROR("This is not a complex number context.");
-      pmumps_ctx_c->set_matrix(mat, distributed);
+      pmumps_ctx_c->set_matrix(mat, distributed, rows, cols);
     }
     template<typename VEC>
     void set_vector_r(const VEC& vec) {

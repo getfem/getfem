@@ -30,18 +30,23 @@ using namespace getfemint;
 void gf_mumps_context(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   if (check_cmd("MumpsContext", "MumpsContext", in, out, 0, 2, 0, 1)) {
     /*@INIT CTX = ('.init', @str sym, @str datatype)
-      The argument `sym` should be 'symmetric' or 'unsymmetric' or empty.
-      Default value is 'unsymmetric'.
-      The argument `datatype` should be 'real' or 'complex' or empty.
-      Default value is 'real'.@*/
-    bool sym(false);
+      The argument `sym` should be 'symmetric' or 'general symmetric',
+      'symmetric positive definite', 'unsymmetric', or empty.
+      Default value (empty) is 'unsymmetric' (MUMPS option 0).
+      The option 'symmetric' is equivalent to 'general symmetric'
+      (MUMPS option 2). The argument `datatype` should be 'real' or
+      'complex' or empty. Default value (empty) is 'real'.@*/
+    int sym(0);
     if (in.remaining()) {
       if (in.front().is_string()) {
         std::string opt = in.pop().to_string();
-        if (cmd_strmatch(opt, "symmetric"))
-          sym = true;
+        if (cmd_strmatch(opt, "symmetric") ||
+            cmd_strmatch(opt, "general symmetric"))
+          sym = 2;
+        else if (cmd_strmatch(opt, "symmetric positive definite"))
+          sym = 1;
         else if (cmd_strmatch(opt, "unsymmetric"))
-          sym = false;
+          sym = 0;
         else
           THROW_BADARG("invalid symmetry option: " << opt);
       } else

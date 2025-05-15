@@ -66,30 +66,61 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
   std::string init_cmd = in.pop().to_string();
   std::string cmd      = cmd_normalize(init_cmd);
 
-  bool distributed_matrix =
-    check_cmd(cmd, "distributed matrix", in, out, 1, 1, 0, 0);
-  if (distributed_matrix ||
-      check_cmd(cmd, "matrix", in, out, 1, 1, 0, 0)) {
-    /*@SET ('matrix', @mat A)
-      Set the matrix @mat A for the @tmct object.@*/
-    /*@SET ('distributed matrix', @mat A)
-      Set the matrix @mat A for the @tmct object distributed over all
-      processes. It also sets ICNTL(5) to 0 and ICNTL(18) to 3.@*/
+  const bool distr_mat =
+    check_cmd(cmd, "distributed matrix", in, out, 1, 3, 0, 0);
+  if (distr_mat || check_cmd(cmd, "matrix", in, out, 1, 3, 0, 0)) {
+    /*@SET ('matrix', @mat A[, @vec rows[, @vec cols]])
+      Set @mat A(rows,cols) as the matrix for the @tmct object.
+
+      Optional vectors @vec rows and @vec cols are used for selecting
+      and/or permuting rows and columns from input matrix @mat A.
+      They are 0-based in Python and 1-based in Matlab/Octave.@*/
+
+    /*@SET ('distributed matrix', @mat A[, @vec rows[, @vec cols]])
+      Set @mat A(rows,cols) as the matrix A for the @tmct object,
+      distributed over all processes.
+      It also sets ICNTL(5) to 0 and ICNTL(18) to 3.
+
+      Optional vectors @vec rows and @vec cols are used for selecting
+      and/or permuting rows and columns from input matrix @mat A.
+      They are 0-based in Python and 1-based in Matlab/Octave.@*/
+
     std::shared_ptr<gsparse> pmat = in.pop().to_sparse();
+
+    std::vector<size_type> rows, cols;
+    if (in.remaining()) {
+      iarray rows_ = in.pop().to_iarray();
+      for (size_type j=0; j < rows_.size(); ++j)
+        rows.push_back(rows_[j]-config::base_index()); // convert to 0-base
+    }
+    if (in.remaining()) {
+      iarray cols_ = in.pop().to_iarray();
+      for (size_type j=0; j < cols_.size(); ++j)
+        cols.push_back(cols_[j]-config::base_index()); // convert to 0-base
+    }
+
+    if (!(rows.empty() && cols.empty())) {
+      if (rows.size()  != cols.size())
+        THROW_ERROR("Set matrix must be square");
+    } else if (!rows.empty()) {
+      if (rows.size()  != pmat->ncols())
+        THROW_ERROR("Set matrix must be square");
+    }
+
     if (pctx->is_complex()) {
       if (!pmat->is_complex()) THROW_ERROR("Complex number matrix expected");
       if (pmat->storage() == gsparse::CSCMAT)
-        pctx->set_matrix_c(pmat->cplx_csc(), distributed_matrix);
+        pctx->set_matrix_c(pmat->cplx_csc(), distr_mat, rows, cols);
       else if (pmat->storage() == gsparse::WSCMAT)
-        pctx->set_matrix_c(pmat->cplx_wsc(), distributed_matrix);
+        pctx->set_matrix_c(pmat->cplx_wsc(), distr_mat, rows, cols);
     } else {
       if (pmat->is_complex())  THROW_ERROR("Real number matrix expected");
       if (pmat->storage() == gsparse::CSCMAT)
-        pctx->set_matrix_r(pmat->real_csc(), distributed_matrix);
+        pctx->set_matrix_r(pmat->real_csc(), distr_mat, rows, cols);
       else if (pmat->storage() == gsparse::WSCMAT)
-        pctx->set_matrix_r(pmat->real_wsc(), distributed_matrix);
+        pctx->set_matrix_r(pmat->real_wsc(), distr_mat, rows, cols);
     }
-    if (distributed_matrix) {
+    if (distr_mat) {
       pctx->ICNTL(5) = 0;  // assembled input matrix (default)
       pctx->ICNTL(18) = 3; // strategy for distributed input matrix
     }

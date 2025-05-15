@@ -226,7 +226,7 @@ namespace getfem {
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) {
       bool present;
       size_type i = bgeot::mesh_structure::add_convex(pgt->structure(),
-                                                       ipts, &present);
+                                                      ipts, &present);
       gtab[i] = pgt; trans_exists[i] = true;
       if (!present) { cvs_v_num[i] = act_counter(); touch(); }
       return i;
