@@ -485,10 +485,10 @@ namespace getfem {
       ga_predef_function(ga_der_atan, 2, "-2*t/sqr(1+t*t)");
     PREDEF_FUNCTIONS["DER_PDFUNC1_ATAN2"] =
       ga_predef_function(ga_der_t_atan2, 2, "-2*t*u/sqr(sqr(u)+sqr(t))",
-                         "(sqrt(t)-sqr(u))/sqr(sqr(u)+sqr(t))");
+                         "(sqr(t)-sqr(u))/sqr(sqr(u)+sqr(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC2_ATAN2"] =
       ga_predef_function(ga_der_u_atan2, 2,
-                         "(sqrt(t)-sqr(u))/sqr(sqr(u)+sqr(t))",
+                         "(sqr(t)-sqr(u))/sqr(sqr(u)+sqr(t))",
                          "2*t*u/sqr(sqr(u)+sqr(t))");
 
 
