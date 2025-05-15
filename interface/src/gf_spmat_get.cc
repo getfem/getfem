@@ -42,7 +42,8 @@ void copydiags(const MAT &M, const std::vector<size_type> &v,
 }
 
 template <typename T> static void
-gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in,
+                                getfemint::mexargs_out& out, T) {
   size_type n,m;
   if (!in.remaining()) {
     m = gsp.nrows(); n = gsp.ncols();
@@ -215,8 +216,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     rows and columns that are to be extracted.@*/
   sub_command
     ("full", 0, 2, 0, 1,
-     if (gsp.is_complex()) gf_spmat_get_full(gsp, in, out, complex_type());
-     else gf_spmat_get_full(gsp, in, out, scalar_type());
+     if (gsp.is_complex())
+       gf_spmat_get_full(gsp, in, out, complex_type());
+     else
+       gf_spmat_get_full(gsp, in, out, scalar_type());
      );
 
 
@@ -226,9 +229,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     For matrix-matrix multiplications, see SPMAT:INIT('mult').@*/
   sub_command
     ("mult", 1, 1, 0, 1,
-     if (!gsp.is_complex())
+     if (gsp.is_complex())
+       gf_spmat_mult_or_tmult(gsp, in, out, false, complex_type());
+     else
        gf_spmat_mult_or_tmult(gsp, in, out, false, scalar_type());
-     else gf_spmat_mult_or_tmult(gsp, in, out, false, complex_type());
      );
 
 
@@ -237,9 +241,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     vector `V`.@*/
   sub_command
     ("tmult", 1, 1, 0, 1,
-     if (!gsp.is_complex())
+     if (gsp.is_complex())
+       gf_spmat_mult_or_tmult(gsp, in, out, true, complex_type());
+     else
        gf_spmat_mult_or_tmult(gsp, in, out, true, scalar_type());
-     else gf_spmat_mult_or_tmult(gsp, in, out, true, complex_type());
      );
 
 
@@ -249,9 +254,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     If `E` is used, return the sub-diagonals whose ranks are given in E.@*/
   sub_command
     ("diag", 0, 1, 0, 1,
-     if (!gsp.is_complex())
+     if (gsp.is_complex())
+       gf_spmat_get_diag(gsp, in, out, complex_type());
+     else
        gf_spmat_get_diag(gsp, in, out, scalar_type());
-     else gf_spmat_get_diag(gsp, in, out, complex_type());
      );
 
 
@@ -290,10 +296,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   sub_command
     ("csc_ind", 0, 0, 0, 2,
      gsp.to_csc();
-     if (!gsp.is_complex())
-       gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
-     else
+     if (gsp.is_complex())
        gf_spmat_get_data(gsp.csc(complex_type()), out, 0);
+     else
+       gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
      );
 
 
@@ -304,10 +310,10 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
   sub_command
     ("csc_val", 0, 0, 0, 1,
      gsp.to_csc();
-     if (!gsp.is_complex())
-       gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
-     else
+     if (gsp.is_complex())
        gf_spmat_get_data(gsp.csc(complex_type()), out, 1);
+     else
+       gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
      );
 
 
@@ -342,21 +348,24 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     ("save", 2, 2, 0, 0,
      std::string fmt = in.pop().to_string();
      int ifmt;
-     if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing")) ifmt = 0;
-     else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market")) ifmt = 1;
-     else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
+     if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing"))
+       ifmt = 0;
+     else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market"))
+       ifmt = 1;
+     else
+       THROW_BADARG("unknown sparse matrix file-format : " << fmt);
      std::string fname = in.pop().to_string();
      gsp.to_csc();
-     if (!gsp.is_complex()) {
-       if (ifmt == 0)
-         gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
-       else
-         gmm::MatrixMarket_save(fname.c_str(), gsp.csc(scalar_type()));
-     } else {
+     if (gsp.is_complex()) {
        if (ifmt == 0)
          gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(complex_type()));
        else
          gmm::MatrixMarket_save(fname.c_str(), gsp.csc(complex_type()));
+     } else {
+       if (ifmt == 0)
+         gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
+       else
+         gmm::MatrixMarket_save(fname.c_str(), gsp.csc(scalar_type()));
      }
      );
 
@@ -371,11 +380,11 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     ("char", 0, 0, 0, 1,
      std::stringstream s;
      if (gsp.storage() == getfemint::gsparse::WSCMAT) {
-       if (!gsp.is_complex()) s << gsp.wsc(scalar_type());
-       else                   s << gsp.wsc(complex_type());
+       if (gsp.is_complex()) s << gsp.wsc(complex_type());
+       else                  s << gsp.wsc(scalar_type());
      } else {
-       if (!gsp.is_complex()) s << gsp.csc(scalar_type());
-       else                   s << gsp.csc(complex_type());
+       if (gsp.is_complex()) s << gsp.csc(complex_type());
+       else                  s << gsp.csc(scalar_type());
      }
      out.pop().from_string(s.str().c_str());
      );
