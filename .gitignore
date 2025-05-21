@@ -82,6 +82,9 @@ Makefile
 /interface/src/octave/gf_mesh_get.m
 /interface/src/octave/gf_mesh_im.m
 /interface/src/octave/gf_mesh_im_data.m
+/interface/src/octave/gf_mumps_context.m
+/interface/src/octave/gf_mumps_context_get.m
+/interface/src/octave/gf_mumps_context_set.m
 /interface/src/octave/gf_mesh_im_data_get.m
 /interface/src/octave/gf_mesh_im_data_set.m
 /interface/src/octave/gf_mesh_im_get.m
@@ -126,6 +129,9 @@ Makefile
 /interface/src/matlab/gf_mesh_fem_get.m
 /interface/src/matlab/gf_mesh_fem_set.m
 /interface/src/matlab/gf_mesh_get.m
+/interface/src/matlab/gf_mumps_context.m
+/interface/src/matlab/gf_mumps_context_get.m
+/interface/src/matlab/gf_mumps_context_set.m
 /interface/src/matlab/gf_mesh_im.m
 /interface/src/matlab/gf_mesh_im_data.m
 /interface/src/matlab/gf_mesh_im_data_get.m

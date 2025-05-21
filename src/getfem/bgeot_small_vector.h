@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2000-2020 Julien Pommier
+ Copyright (C) 2000-2025 Julien Pommier
 
  This file is a part of GetFEM
 
@@ -203,9 +203,9 @@ namespace bgeot {
       : std::vector<T>(a.size())
     { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
 #else
-  /** container for small vectors of POD (Plain Old Data) types. Should be as fast as
-      std::vector<T> while beeing smaller and uses copy-on-write. The gain is especially
-      valuable on 64 bits architectures.
+  /** container for small vectors of POD (Plain Old Data) types. Should be as
+      fast as std::vector<T> while beeing smaller and uses copy-on-write.
+      The gain is especially valuable on 64 bits architectures.
   */
   template<typename T> class small_vector : public static_block_allocator {
     typedef block_allocator::node_id node_id;
@@ -221,10 +221,14 @@ namespace bgeot {
     typedef T *iterator;
     typedef const T * const_iterator;
 
-    reference operator[](size_type l)
-    { GMM_ASSERT2(l <=size(), "out of range, l="<<l<<"size="<<size()); return base()[l]; }
-    value_type operator[](size_type l) const
-    { GMM_ASSERT2(l <= size(), "out of range, l="<<l<<"size="<<size()); return const_base()[l]; }
+    reference operator[](size_type l) {
+      GMM_ASSERT2(l <= size(), "out of range, ind=" << l << " size=" << size());
+      return base()[l];
+    }
+    value_type operator[](size_type l) const {
+      GMM_ASSERT2(l <= size(), "out of range, ind=" << l << " size=" << size());
+      return const_base()[l];
+    }
     value_type at(size_type l) const { return const_base()[l]; }
     iterator begin() { return base(); }
     const_iterator begin() const { return const_base(); }

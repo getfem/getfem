@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2013-2020 Yves Renard
+ Copyright (C) 2013-2025 Yves Renard
 
  This file is a part of GetFEM
 
@@ -679,7 +679,7 @@ namespace getfem {
                  rated_box_index_compare> rated_boxes;
         for (const auto &box : bset) {
           scalar_type rating = scalar_type(1);
-          for (size_type i = 0; i < m.dim(); ++i) {
+          for (size_type i = 0; i < target_mesh.dim(); ++i) {
             scalar_type h = box->max->at(i) - box->min->at(i);
             if (h > scalar_type(0)) {
               scalar_type r = std::min(box->max->at(i) - P[i],
@@ -694,7 +694,6 @@ namespace getfem {
         for (const auto &p : rated_boxes)
           boxes.push_back(p.second);
       }
-
 
       scalar_type best_dist(1e10);
       size_type best_cv(-1);
@@ -756,6 +755,7 @@ namespace getfem {
           d.second = pwi.workspace().assembled_tensor();
         }
       }
+
       return ret_type;
     }
 
