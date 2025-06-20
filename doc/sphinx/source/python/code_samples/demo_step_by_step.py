@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: UTF8 -*-
 
-import numpy as np
-
 # import basic modules
+import numpy as np
 import getfem as gf
 
 # creation of a simple cartesian mesh
