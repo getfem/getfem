@@ -26,7 +26,7 @@ using namespace getfemint;
 
 /*@GFDOC
   General function for querying information about a mumps_context object.
-*/
+@*/
 
 void gf_mumps_context_get(getfemint::mexargs_in& in,
                           getfemint::mexargs_out& out) {

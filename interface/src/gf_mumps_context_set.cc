@@ -27,7 +27,7 @@ using namespace getfemint;
 
 /*@GFDOC
   General function for modifying mumps_context objects
-*/
+@*/
 
 inline void return_mumps_solution(getfemint::mexargs_out& out,
                                   const gmumps *pctx) {

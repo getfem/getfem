@@ -26,7 +26,7 @@ using namespace getfemint;
 
 /*GFDOC
   This object is used for setting up a MUMPS context.
-*/
+@*/
 void gf_mumps_context(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   if (check_cmd("MumpsContext", "MumpsContext", in, out, 0, 2, 0, 1)) {
     /*@INIT CTX = ('.init', @str sym, @str datatype)
