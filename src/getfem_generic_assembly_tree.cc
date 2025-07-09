@@ -218,19 +218,19 @@ namespace getfem {
   //=========================================================================
 
   void ga_tree_node::mult_test(const pga_tree_node n0, const pga_tree_node n1) {
-    
+
     size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
     if (test0 && test1 && (test0 == test1 || test0 >= 3 || test1 >= 3))
       ga_throw_error(expr, pos,
                      "Incompatibility of test functions in product.");
     GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
                 "internal error");
-    
+
     test_function_type = test0 + test1;
-    
+
     size_type st = nb_test_functions();
     bgeot::multi_index mi(st);
-    
+
     switch (test0) {
     case 1: mi[0] = n0->t.sizes()[0]; break;
     case 2: mi[st-1] = n0->t.sizes()[0]; break;
@@ -241,7 +241,7 @@ namespace getfem {
     case 2: mi[st-1] = n1->t.sizes()[0]; break;
     case 3: mi[0] = n1->t.sizes()[0]; mi[1] = n1->t.sizes()[1]; break;
     }
-    
+
     if (n0->name_test1.size()) {
       name_test1 = n0->name_test1; qdim1 = n0->qdim1;
       interpolate_name_test1 = n0->interpolate_name_test1;
@@ -287,7 +287,7 @@ namespace getfem {
       root->parent = nullptr;
     }
   }
-  
+
   void ga_tree::add_name(const char *name, size_type length, size_type pos,
                          pstring expr) {
     while (current_node && current_node->node_type != GA_NODE_OP)
@@ -302,7 +302,7 @@ namespace getfem {
       root->parent = nullptr;
     }
   }
-  
+
   void ga_tree::add_sub_tree(ga_tree &sub_tree) {
     if (current_node &&
         (current_node->node_type == GA_NODE_PARAMS ||
@@ -326,7 +326,7 @@ namespace getfem {
     }
     sub_tree.root = sub_tree.current_node = nullptr;
   }
-  
+
   void ga_tree::add_params(size_type pos, pstring expr) {
     GMM_ASSERT1(current_node, "internal error");
     while (current_node && current_node->parent &&
@@ -342,7 +342,7 @@ namespace getfem {
     new_node->adopt_child(current_node);
     current_node = new_node;
   }
-  
+
   void ga_tree::add_matrix(size_type pos, pstring expr) {
     while (current_node && current_node->node_type != GA_NODE_OP)
       current_node = current_node->parent;
@@ -357,7 +357,7 @@ namespace getfem {
     }
     current_node->nbc1 = current_node->nbc2 = current_node->nbc3 = 0;
   }
-  
+
   void ga_tree::add_op(GA_TOKEN_TYPE op_type, size_type pos,
                        pstring expr) {
     while (current_node && current_node->parent &&
@@ -396,7 +396,7 @@ namespace getfem {
       current_node = nullptr;
     }
   }
-  
+
   void ga_tree::clear_node(pga_tree_node pnode) {
     if (pnode) {
       pga_tree_node parent = pnode->parent;
@@ -411,7 +411,7 @@ namespace getfem {
     }
     clear_node_rec(pnode);
   }
-  
+
   void ga_tree::clear_children(pga_tree_node pnode) {
     for (pga_tree_node &child : pnode->children)
       clear_node_rec(child);
@@ -446,7 +446,7 @@ namespace getfem {
       pnode_new->accept_child(j);
     }
   }
-  
+
   void ga_tree::duplicate_with_operation(pga_tree_node pnode,
                                          GA_TOKEN_TYPE op_type) {
     pga_tree_node newop = new ga_tree_node(op_type, pnode->pos, pnode->expr);
@@ -480,7 +480,7 @@ namespace getfem {
       root = newnode;
     newnode->adopt_child(pnode);
   }
-  
+
   bool sub_tree_are_equal
   (const pga_tree_node pnode1, const pga_tree_node pnode2,
    const ga_workspace &workspace, int version) {
@@ -1126,7 +1126,7 @@ namespace getfem {
       str << pnode->name;
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
-      
+
     case GA_NODE_MACRO_PARAM:
       if (pnode->nbc2 == 1) str << "Grad_";
       if (pnode->nbc2 == 2) str << "Hess_";
@@ -1141,12 +1141,12 @@ namespace getfem {
       str << "Reshape";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
-      
+
     case GA_NODE_CROSS_PRODUCT:
       str << "Cross_product";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
-      
+
     case GA_NODE_SWAP_IND:
       str << "Swap_indices";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
@@ -1244,7 +1244,7 @@ namespace getfem {
         str << "," << pnode->elementary_target;
       str << ")";
     } else if (is_secondary)
-      str << ")";    
+      str << ")";
     else if (is_xfem_plus || is_xfem_minus)
       str << ")";
 
@@ -1284,7 +1284,7 @@ namespace getfem {
   int ga_check_name_validity(const std::string &name) {
     if (name.compare(0, 11, "Derivative_") == 0)
       return 2;
-    
+
     const ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance(0);
     const ga_spec_function_tab &SPEC_FUNCTIONS
@@ -1299,7 +1299,7 @@ namespace getfem {
 
     if (PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end())
       return 1;
-    
+
     if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end())
       return 1;
 
@@ -1360,7 +1360,7 @@ namespace getfem {
     if (!pnode) return;
     for (pga_tree_node &child : pnode->children)
       ga_replace_macro_params(tree, child, children);
-    
+
     if (pnode->node_type == GA_NODE_MACRO_PARAM) {
       size_type po = pnode->nbc2;
       size_type pt = pnode->nbc3;
@@ -1405,11 +1405,11 @@ namespace getfem {
       }
     }
   }
-  
+
   static void ga_expand_macro(ga_tree &tree, pga_tree_node pnode,
                               const ga_macro_dictionary &macro_dict) {
     if (!pnode) return;
-    
+
     if (pnode->node_type == GA_NODE_PARAMS) {
 
       for (size_type i = 1; i < pnode->children.size(); ++i)
@@ -1482,7 +1482,7 @@ namespace getfem {
     if (!pnode) return;
     for (pga_tree_node &child : pnode->children)
       ga_mark_macro_params_rec(child, params);
-    
+
     if (pnode->node_type == GA_NODE_NAME ||
         pnode->node_type == GA_NODE_INTERPOLATE ||
         pnode->node_type == GA_NODE_ELEMENTARY ||
@@ -1513,7 +1513,7 @@ namespace getfem {
         }
     }
   }
-  
+
   static void ga_mark_macro_params(ga_macro &gam,
                                    const std::vector<std::string> &params,
                                    const ga_macro_dictionary &macro_dict) {
@@ -1549,8 +1549,8 @@ namespace getfem {
     GMM_ASSERT1(it != macros.end(), "Undefined macro (at this level)");
     macros.erase(it);
   }
-  
-  
+
+
   //=========================================================================
   // Syntax analysis for the generic assembly language
   //=========================================================================
@@ -1654,7 +1654,7 @@ namespace getfem {
             if (params.size())
               ga_mark_macro_params(gam, params, macro_dict);
             macro_dict.add_macro(gam);
-            
+
             // cout << "macro \"" << gam.name() << "\" registered with "
             //      << gam.nb_params() << " params  := "
             //      << ga_tree_to_string(gam.tree()) << endl;
@@ -1743,7 +1743,7 @@ namespace getfem {
                              "variable name.");
             tree.current_node->name
               = std::string(&((*expr)[token_pos]), token_length);
-            
+
             t_type = ga_get_token(*expr, pos, token_pos, token_length);
             tree.current_node->interpolate_name = "";
             if (t_type == GA_COMMA) {
@@ -1799,12 +1799,12 @@ namespace getfem {
               ga_throw_error(expr, pos,
                              "Third argument of Elementary_transformation "
                              "should be a variable or data name.");
-              
+
               tree.current_node->elementary_target =
                 std::string(&((*expr)[token_pos]), token_length);
               t_type = ga_get_token(*expr, pos, token_pos, token_length);
             }
-            
+
             if (t_type != GA_RPAR)
               ga_throw_error(expr, pos-1, "Missing a parenthesis after "
                              "Elementary_transformation arguments.");
@@ -2151,10 +2151,10 @@ namespace getfem {
     if (t == GA_END) return;
     pos = 0;
     pstring nexpr(new std::string(expr));
-    
+
     t = ga_read_term(nexpr, pos, tree, macro_dict);
     if (tree.root) ga_expand_macro(tree, tree.root, macro_dict);
-    
+
     switch (t) {
     case GA_RPAR:
       ga_throw_error(nexpr, pos-1, "Unbalanced parenthesis.");
@@ -2169,7 +2169,7 @@ namespace getfem {
       break;
     }
   }
-  
+
   // Syntax analysis of a string. Conversion to a tree.
   // Do not register the macros (but expand them).
   void ga_read_string(const std::string &expr, ga_tree &tree,
