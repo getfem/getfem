@@ -249,7 +249,7 @@ namespace getfem {
       name_test1 = n1->name_test1; qdim1 = n1->qdim1;
       interpolate_name_test1 = n1->interpolate_name_test1;
     }
-    
+
     if (n0->name_test2.size()) {
       name_test2 = n0->name_test2; qdim2 = n0->qdim2;
       interpolate_name_test2 = n0->interpolate_name_test2;
@@ -432,19 +432,43 @@ namespace getfem {
     delete pnode;
   }
 
+  size_type ga_tree_count_nodes(pga_tree_node pnode) {
+    size_type count = 0;
+    if (pnode) {
+      count++;
+      for (pga_tree_node child : pnode->children)
+        count += ga_tree_count_nodes(child);
+    }
+    return count;
+  }
+
+  void ga_tree_copy_node_rec(pga_tree_node pnode,
+                             pga_tree_node &pnode_new,
+                             std::vector<pga_tree_node> &preallocated_nodes) {
+    GMM_ASSERT1(pnode_new == nullptr, "Internal error");
+    GMM_ASSERT1(preallocated_nodes.size() > 0,
+                "Internal error, too small preallocation of nodes");
+    pnode_new = preallocated_nodes.back();
+    *pnode_new = *pnode;
+    preallocated_nodes.pop_back();
+    pnode_new->parent = nullptr;
+    for (size_type j = 0; j < pnode_new->children.size(); ++j) {
+      pnode_new->children[j] = nullptr;
+      ga_tree_copy_node_rec(pnode->children[j], pnode_new->children[j],
+                            preallocated_nodes);
+      pnode_new->accept_child(j);
+    }
+  }
+
   // This function allocates a new node "pnode_new", copies the content of "pnode"
   // into the newly allocated node (including deep copies of all of its children)
   void ga_tree::copy_node(pga_tree_node pnode,
                           pga_tree_node &pnode_new) {
-    GMM_ASSERT1(pnode_new == nullptr, "Internal error");
-    pnode_new = new ga_tree_node();
-    *pnode_new = *pnode;
-    pnode_new->parent = nullptr;
-    for (size_type j = 0; j < pnode_new->children.size(); ++j) {
-      pnode_new->children[j] = nullptr;
-      copy_node(pnode->children[j], pnode_new->children[j]);
-      pnode_new->accept_child(j);
-    }
+    const size_type count = ga_tree_count_nodes(pnode);
+    std::vector<pga_tree_node> preallocated_nodes(count);
+    for (size_type i=0; i < count; ++i) // heap pre-allocation for performance reasons
+      preallocated_nodes[i] = new ga_tree_node();
+    ga_tree_copy_node_rec(pnode, pnode_new, preallocated_nodes);
   }
 
   void ga_tree::duplicate_with_operation(pga_tree_node pnode,
