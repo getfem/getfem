@@ -1861,7 +1861,7 @@ namespace getfem {
     vtype = VECTORIAL_PRIMAL_TYPE;
 
     bgeot::pconvex_ref cvn
-      = bgeot::simplex_of_reference(nc, bgeot::short_type(k+2));
+      = bgeot::simplex_of_reference(nc, bgeot::short_type(k+nc));
 
     size_type nddl = (k+nc+1);
     for (unsigned i = 1; i < nc; ++i) nddl *= (k+i);
