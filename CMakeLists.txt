@@ -450,6 +450,11 @@ set(HEADERS
 # Create the library target
 if(BUILD_SHARED_LIBS)
   add_library(libgetfem SHARED ${SOURCES})
+  if(WIN32 AND MSVC)
+    set_target_properties(libgetfem PROPERTIES
+      WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+  endif()
 else()
   add_library(libgetfem STATIC ${SOURCES})
 endif()
@@ -673,7 +678,6 @@ endif()
 
 if(NOT ENABLE_MULTITHREADED_BLAS)
   if(WIN32)
-    # Sur Windows, pas besoin de dl et dlsym
     set(GETFEM_FORCE_SINGLE_THREAD_BLAS 0)
   else()
     find_library(DL_LIB NAMES dl)
