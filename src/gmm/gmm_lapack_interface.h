@@ -135,9 +135,9 @@ namespace gmm {
   getrs_interface(lu_solve, 'N', cgetrs_, BLAS_C)
   getrs_interface(lu_solve, 'N', zgetrs_, BLAS_Z)
   getrs_interface(lu_solve_transposed, 'T', sgetrs_, BLAS_S)
-  getrs_interface(lu_solve_transposed, 'T', sgetrs_, BLAS_D)
-  getrs_interface(lu_solve_transposed, 'T', sgetrs_, BLAS_C)
-  getrs_interface(lu_solve_transposed, 'T', sgetrs_, BLAS_Z)
+  getrs_interface(lu_solve_transposed, 'T', dgetrs_, BLAS_D)
+  getrs_interface(lu_solve_transposed, 'T', cgetrs_, BLAS_C)
+  getrs_interface(lu_solve_transposed, 'T', zgetrs_, BLAS_Z)
 
   /* ********************************************************************* */
   /* LU inverse.                                                           */
