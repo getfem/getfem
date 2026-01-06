@@ -45,17 +45,18 @@ namespace gmm {
   /**
      QR factorization using Householder method (complex and real version).
   */
-  template <typename MAT1>
-  void qr_factor(const MAT1 &A_) {
-    MAT1 &A = const_cast<MAT1 &>(A_);
-    typedef typename linalg_traits<MAT1>::value_type T;
+  template <typename MAT>
+  void qr_factor(const MAT &A_) {
+    MAT &A = const_cast<MAT &>(A_);
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
 
     const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
 
     std::vector<T> W(m), V(m);
     // skip the last reflection for *real* square matrices (m-1 limit)
-    // lapack does the same in dlarfg.f but not in zlarfg.f
+    // lapack does the same in {sd}larfg.f but not in {cz}larfg.f
     const size_type jmax = (m==n && !is_complex(T())) ? m-1
                                                       : n;
     for (size_type j = 0; j < jmax; ++j) {
@@ -65,8 +66,14 @@ namespace gmm {
       for (size_type i = j; i < m; ++i) V[i-j] = A(i, j);
       house_vector(V);
 
-      row_house_update(sub_matrix(A, SUBI, SUBJ), V, W);
-      for (size_type i = j+1; i < m; ++i) A(i, j) = V[i-j];
+      R Vnorm2 = vect_norm2_sqr(V);
+      if (Vnorm2 > R(1) || gmm::imag(A(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+        auto subA = sub_matrix(A, SUBI, SUBJ);
+        gmm::mult(conjugated(subA),
+                  scaled(V, T(R(-2)/Vnorm2)), W);
+        rank_one_update(subA, V, W);
+        for (size_type i = j+1; i < m; ++i) A(i, j) = V[i-j];
+      }
     }
   }
 
@@ -78,6 +85,8 @@ namespace gmm {
   void apply_house_right(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
     const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_ncols(A), "dimensions mismatch");
     if (m == 0) return;
@@ -90,9 +99,13 @@ namespace gmm {
       V.resize(m-j);
       for (size_type i = j+1; i < m; ++i)
         V[i-j] = QR(i, j);
-      col_house_update(sub_matrix(A, sub_interval(0, mat_nrows(A)),
-                                     sub_interval(j, m-j)),
-                       V, W);
+      R Vnorm2 = vect_norm2_sqr(V);
+      if (Vnorm2 > R(1) || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+        auto subA = sub_matrix(A, sub_interval(0, mat_nrows(A)),
+                                  sub_interval(j, m-j));
+        gmm::mult(subA, scaled(V, T(R(-2)/Vnorm2)), W);
+        rank_one_update(subA, W, V);
+      }
     }
   }
 
@@ -103,6 +116,8 @@ namespace gmm {
   void apply_house_left(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
     const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_nrows(A), "dimensions mismatch");
     if (m == 0) return;
@@ -113,10 +128,16 @@ namespace gmm {
                                                       : n;
     for (size_type j = 0; j < jmax; ++j) {
       V.resize(m-j);
-      for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
-      row_house_update(sub_matrix(A, sub_interval(j, m-j),
-                                     sub_interval(0, mat_ncols(A))),
-                       V, W);
+      for (size_type i = j+1; i < m; ++i)
+        V[i-j] = QR(i, j);
+      R Vnorm2 = vect_norm2_sqr(V);
+      if (Vnorm2 > R(1) || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+        auto subA = sub_matrix(A, sub_interval(j, m-j),
+                                  sub_interval(0, mat_ncols(A)));
+        gmm::mult(conjugated(subA),
+                  scaled(V, T(R(-2)/Vnorm2)), W);
+        rank_one_update(subA, V, W);
+      }
     }
   }
 
