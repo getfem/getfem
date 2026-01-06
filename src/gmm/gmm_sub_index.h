@@ -43,7 +43,7 @@
 namespace gmm {
 
   /* ******************************************************************** */
-  /*		sub indices                               		  */
+  /*            sub indices                                               */
   /* ******************************************************************** */
 
   struct basic_index : public std::vector<size_t> {
@@ -67,11 +67,11 @@ namespace gmm {
       for ( ; it != ite; ++it) i = std::max(i, *it);
       resize(i+1); std::fill(begin(), end(), size_type(-1));
       for (it = pbi->begin(), i = 0; it != ite; ++it, ++i)
-	std::vector<size_t>::operator[](*it) = i;
+        std::vector<size_t>::operator[](*it) = i;
     }
     void swap(size_type i, size_type j) {
       std::swap(std::vector<size_t>::operator[](i),
-		std::vector<size_t>::operator[](j));
+                std::vector<size_t>::operator[](j));
     }
     
   };
@@ -99,42 +99,45 @@ namespace gmm {
     mutable pbasic_index ind;
     mutable pbasic_index rind;
 
-    void comp_extr(void) {
+    void comp_extr() {
       std::vector<size_t>::const_iterator it = ind->begin(), ite = ind->end();
       if (it != ite) { first_=last_= *it; ++it; } else { first_=last_= 0; }
-      for (; it != ite; ++it) 
-	{ first_ = std::min(first_, *it); last_ = std::max(last_, *it); }
+      for (; it != ite; ++it) {
+        first_ = std::min(first_, *it);
+        last_ = std::max(last_, *it);
+      }
     }
 
-    inline void test_rind(void) const
+    inline void test_rind() const
     { if (!rind) rind = index_generator::create_rindex(ind); }
-    size_type size(void) const { return ind->size(); }
-    size_type first(void) const { return first_; }
-    size_type last(void) const { return last_; }
+    size_type size() const { return ind->size(); }
+    size_type first() const { return first_; }
+    size_type last() const { return last_; }
     size_type index(size_type i) const { return (*ind)[i]; }
     size_type rindex(size_type i) const {
       test_rind();
-      if (i < rind->size()) return (*rind)[i]; else return size_type(-1);
+      if (i < rind->size()) return (*rind)[i];
+      else return size_type(-1);
     }
    
-    const_iterator  begin(void) const { return  ind->begin(); }
-    const_iterator    end(void) const { return  ind->end();   }
-    const_iterator rbegin(void) const { test_rind(); return rind->begin(); }
-    const_iterator   rend(void) const { test_rind(); return rind->end();   }
+    const_iterator  begin() const { return ind->begin(); }
+    const_iterator    end() const { return ind->end();   }
+    const_iterator rbegin() const { test_rind(); return rind->begin(); }
+    const_iterator   rend() const { test_rind(); return rind->end();   }
 
     sub_index() : ind(0), rind(0) {}
     template <typename IT> sub_index(IT it, IT ite)
-      : ind(index_generator::create_index(it, ite)),
-	rind(0) { comp_extr(); }
+      : ind(index_generator::create_index(it, ite)), rind(0)
+    { comp_extr(); }
     template <typename CONT> sub_index(const CONT &c)
-      : ind(index_generator::create_index(c.begin(), c.end())),
-	rind(0) { comp_extr(); }
+      : ind(index_generator::create_index(c.begin(), c.end())), rind(0)
+    { comp_extr(); }
     ~sub_index() {
       index_generator::unattach(rind);
       index_generator::unattach(ind);
     }
     sub_index(const sub_index &si) : first_(si.first_), last_(si.last_),
-				     ind(si.ind), rind(si.rind)
+                                     ind(si.ind), rind(si.rind)
     { index_generator::attach(rind); index_generator::attach(ind); }
     sub_index &operator =(const sub_index &si) {
       index_generator::unattach(rind);
@@ -177,11 +180,11 @@ namespace gmm {
   struct sub_interval {
     size_type min, max; 
 
-    size_type size(void) const { return max - min; }
-    size_type first(void) const { return min; }
-    size_type last(void) const { return max; }
+    size_type size() const { return max - min; }
+    size_type first() const { return min; }
+    size_type last() const { return max; }
     size_type index(size_type i) const { return min + i; }
-    size_type step(void) const { return 1; }
+    size_type step() const { return 1; }
     size_type rindex(size_type i) const
     { if (i >= min && i < max) return i - min; return size_type(-1); }
     sub_interval(size_type mi, size_type l) : min(mi), max(mi+l) {}
@@ -194,19 +197,22 @@ namespace gmm {
   struct sub_slice {
     size_type min, max, N;
 
-    size_type size(void) const { return (max - min) / N; }
-    size_type first(void) const { return min; }
-    size_type last(void) const { return (min == max) ? max : max+1-N; }
-    size_type step(void) const { return N; }
+    size_type size() const { return (max - min) / N; }
+    size_type first() const { return min; }
+    size_type last() const { return (min == max) ? max : max+1-N; }
+    size_type step() const { return N; }
     size_type index(size_type i) const { return min + N * i; }
     size_type rindex(size_type i) const { 
-      if (i >= min && i < max)
-	{ size_type j = (i - min); if (j % N == 0) return j / N; }
+      if (i >= min && i < max) {
+        size_type j = (i - min);
+        if (j % N == 0)
+          return j / N;
+      }
       return size_type(-1);
     }
     sub_slice(size_type mi, size_type l, size_type n)
       : min(mi), max(mi+l*n), N(n) {}
-    sub_slice(void) {}
+    sub_slice() {}
   };
 
   inline std::ostream &operator << (std::ostream &o, const sub_slice &si) {

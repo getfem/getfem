@@ -104,7 +104,7 @@ namespace gmm {
     simple_vector_ref(const simple_vector_ref<CPT> &cr)
       : begin_(cr.begin_),end_(cr.end_),origin(cr.origin),size_(cr.size_) {}
 
-    simple_vector_ref(void) {}
+    simple_vector_ref() {}
 
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, begin_, end_, i); }
@@ -261,7 +261,7 @@ namespace gmm {
 
     porigin_type origin;
    
-    tab_ref_with_origin(void) {}
+    tab_ref_with_origin() {}
     template <class PT> tab_ref_with_origin(const IT &b, const IT &e, PT p)
       : gmm::tab_ref<IT>(b,e), origin(porigin_type(p)) {}
     tab_ref_with_origin(const IT &b, const IT &e, porigin_type p)
@@ -323,7 +323,7 @@ namespace gmm {
 
     porigin_type origin;
     
-    tab_ref_reg_spaced_with_origin(void) {}
+    tab_ref_reg_spaced_with_origin() {}
     tab_ref_reg_spaced_with_origin(const IT &b, size_type n, size_type s,
 				   const porigin_type p)
       : gmm::tab_ref_reg_spaced<IT>(b,n,s), origin(p) {}
@@ -384,7 +384,7 @@ namespace gmm {
 
     porigin_type origin;
 
-    tab_ref_index_ref_with_origin(void) {}
+    tab_ref_index_ref_with_origin() {}
     tab_ref_index_ref_with_origin(const IT &b, const ITINDEX &bi,
 				  const ITINDEX &ei, porigin_type p)
       : gmm::tab_ref_index_ref<IT, ITINDEX>(b, bi, ei), origin(p) {}
@@ -480,7 +480,7 @@ namespace gmm {
     bool operator >=(const iterator &ii) const
     { return (*this - ii) >= difference_type(0); }
 
-    dense_compressed_iterator(void) {}
+    dense_compressed_iterator() {}
     dense_compressed_iterator(const dense_compressed_iterator<MIT,MIT,MPT> &ii)
       : it(ii.it), N(ii.N), nrows(ii.nrows), ncols(ii.ncols), i(ii.i),
 	origin(ii.origin)  {}
@@ -507,10 +507,10 @@ namespace gmm {
     typedef std::bidirectional_iterator_tag iterator_category;
     typedef cs_vector_ref_iterator<PT1, PT2, shift> iterator;
     
-    cs_vector_ref_iterator(void) {}
+    cs_vector_ref_iterator() {}
     cs_vector_ref_iterator(PT1 p1, PT2 p2) : pr(p1), ir(p2) {}
 
-    inline size_type index(void) const { return (*ir) - shift; }
+    inline size_type index() const { return (*ir) - shift; }
     iterator &operator ++() { ++pr; ++ir; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator &operator --() { --pr; --ir; return *this; }
@@ -534,12 +534,12 @@ namespace gmm {
 
     cs_vector_ref(PT1 pt1, PT2 pt2, size_type nnz, size_type ns)
       : pr(pt1), ir(pt2), n(nnz), size_(ns) {}
-    cs_vector_ref(void) {}
+    cs_vector_ref() {}
 
-    size_type size(void) const { return size_; }
+    size_type size() const { return size_; }
     
-    const_iterator begin(void) const { return const_iterator(pr, ir); }
-    const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
+    const_iterator begin() const { return const_iterator(pr, ir); }
+    const_iterator end() const { return const_iterator(pr+n, ir+n); }
     
     value_type operator[](size_type i) const
     { return linalg_traits<this_type>::access(pr, begin(), end(),i); }
@@ -621,7 +621,7 @@ namespace gmm {
     bool operator > (const iterator &i) const { return (jc >  i.jc); }
     bool operator >=(const iterator &i) const { return (jc >= i.jc); }
 
-    sparse_compressed_iterator(void) {}
+    sparse_compressed_iterator() {}
     sparse_compressed_iterator(PT1 p1, PT2 p2, PT3 p3, size_type nn,
 			       const value_type *o)
       : pr(p1), ir(p2), jc(p3), n(nn), origin(o) { }
@@ -638,10 +638,10 @@ namespace gmm {
     typedef typename std::iterator_traits<PT1>::value_type value_type;
     csc_matrix_ref(PT1 pt1, PT2 pt2, PT3 pt3, size_type nrr, size_type ncc)
       : pr(pt1), ir(pt2), jc(pt3), nc(ncc), nr(nrr) {}
-    csc_matrix_ref(void) {}
+    csc_matrix_ref() {}
     
-    size_type nrows(void) const { return nr; }
-    size_type ncols(void) const { return nc; }
+    size_type nrows() const { return nr; }
+    size_type ncols() const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
       { return mat_col(*this, j)[i]; }
@@ -705,10 +705,10 @@ namespace gmm {
     typedef typename std::iterator_traits<PT1>::value_type value_type;
     csr_matrix_ref(PT1 pt1, PT2 pt2, PT3 pt3, size_type nrr, size_type ncc)
       : pr(pt1), ir(pt2), jc(pt3), nc(ncc), nr(nrr) {}
-    csr_matrix_ref(void) {}
+    csr_matrix_ref() {}
     
-    size_type nrows(void) const { return nr; }
-    size_type ncols(void) const { return nc; }
+    size_type nrows() const { return nr; }
+    size_type ncols() const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
       { return mat_row(*this, i)[j]; }
@@ -844,13 +844,13 @@ namespace gmm {
       iterator p = begin_, e = begin_+nbc*nbl;
       while (p < e) { *p = a; p += nbl+1; }
     }
-    inline size_type nrows(void) const { return nbl; }
-    inline size_type ncols(void) const { return nbc; }
+    inline size_type nrows() const { return nbl; }
+    inline size_type ncols() const { return nbc; }
 
-    iterator begin(void) { return begin_; }
-    const_iterator begin(void) const { return begin_; }
-    iterator end(void) { return begin_+nbl*nbc; }
-    const_iterator end(void) const { return begin_+nbl*nbc; }
+    iterator begin() { return begin_; }
+    const_iterator begin() const { return begin_; }
+    iterator end() { return begin_+nbl*nbc; }
+    const_iterator end() const { return begin_+nbl*nbc; }
 
     array2D_col_reference(PT begin__, size_type nrows_, size_type ncols_)
       : begin_(begin__), nbl(nrows_), nbc(ncols_) {}
@@ -970,13 +970,13 @@ namespace gmm {
       iterator p = begin_, e = begin_+nbc*nbl;
       while (p < e) { *p = a; p += nbc+1; }
     }
-    inline size_type nrows(void) const { return nbl; }
-    inline size_type ncols(void) const { return nbc; }
+    inline size_type nrows() const { return nbl; }
+    inline size_type ncols() const { return nbc; }
 
-    iterator begin(void) { return begin_; }
-    const_iterator begin(void) const { return begin_; }
-    iterator end(void) { return begin_+nbl*nbc; }
-    const_iterator end(void) const { return begin_+nbl*nbc; }
+    iterator begin() { return begin_; }
+    const_iterator begin() const { return begin_; }
+    iterator end() { return begin_+nbl*nbc; }
+    const_iterator end() const { return begin_+nbl*nbc; }
 
     array2D_row_reference(PT begin__, size_type nrows_, size_type ncols_)
       : begin_(begin__), nbl(nrows_), nbc(ncols_) {}
