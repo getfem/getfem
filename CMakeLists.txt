@@ -52,6 +52,7 @@ elseif(NOT BUILD_SHARED_LIBS AND BUILD_LIBRARY_TYPE STREQUAL "SHARED")
   set(BUILD_LIBRARY_TYPE "STATIC")
 endif()
 
+add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
 set(WITH_OPTIMIZATION "-O2" CACHE STRING "Set the optimization level (default: -O2)")
 set(GETFEM_PARA_LEVEL 0 CACHE STRING "Set the GETFEM_PARA_LEVEL option (default: 0)")
 
@@ -106,6 +107,7 @@ if(ENABLE_MUMPS)
   set(MUMPS_LIBS "")
   if(GETFEM_PARA_LEVEL LESS_EQUAL 1) # try to find "?mumps_seq" named libs first
     if(NOT BUILD_SHARED_LIBS)
+      message("NOT BUILD SHARED_LIBS")
       find_library(SMUMPS_STATIC_LIB NAMES libsmumps_seq.a libsmumps.a smumps.lib PATHS ${MUMPS_LIB_DIR})
       find_library(DMUMPS_STATIC_LIB NAMES libdmumps_seq.a libdmumps.a dmumps.lib PATHS ${MUMPS_LIB_DIR})
       find_library(CMUMPS_STATIC_LIB NAMES libcmumps_seq.a libcmumps.a cmumps.lib PATHS ${MUMPS_LIB_DIR})
@@ -119,18 +121,28 @@ if(ENABLE_MUMPS)
       set(MUMPS_LIBS ${SMUMPS_STATIC_LIB} ${DMUMPS_STATIC_LIB} ${CMUMPS_STATIC_LIB} ${ZMUMPS_STATIC_LIB}
                      ${MUMPS_COMMON_STATIC_LIB} ${PORD_STATIC_LIB} ${MPISEQ_STATIC_LIB})
     else()
+      message("NOT BUILD STATIC_LIBS")
       find_library(SMUMPS_LIB NAMES smumps_seq smumps PATHS ${MUMPS_LIB_DIR})
       find_library(DMUMPS_LIB NAMES dmumps_seq dmumps PATHS ${MUMPS_LIB_DIR})
       find_library(CMUMPS_LIB NAMES cmumps_seq cmumps PATHS ${MUMPS_LIB_DIR})
       find_library(ZMUMPS_LIB NAMES zmumps_seq zmumps PATHS ${MUMPS_LIB_DIR})
       find_library(MUMPS_COMMON_LIB NAMES mumps_common PATHS ${MUMPS_LIB_DIR})
       find_library(PORD_LIB NAMES pord PATHS ${MUMPS_LIB_DIR})
-      find_library(MPISEQ_LIB NAMES mpiseq mpiseq_seq PATHS ${MUMPS_LIB_DIR})
+      find_library(MPISEQ_LIB NAMES mpiseq PATHS ${MUMPS_LIB_DIR})
+
       if (SMUMPS_LIB AND DMUMPS_LIB AND CMUMPS_LIB AND ZMUMPS_LIB
-          AND MUMPS_COMMON_LIB AND PORD_LIB AND MPISEQ_LIB)
+          AND MUMPS_COMMON_LIB AND PORD_LIB)
         set(MUMPS_LIBS ${SMUMPS_LIB} ${DMUMPS_LIB} ${CMUMPS_LIB} ${ZMUMPS_LIB}
-                       ${MUMPS_COMMON_LIB} ${PORD_LIB} ${MPISEQ_LIB})
+                       ${MUMPS_COMMON_LIB} ${PORD_LIB})
       endif()
+
+      if(MPISEQ_LIB)
+          list(APPEND MUMPS_LIBS ${MPISEQ_LIB})
+      else()
+          message(WARNING "The library mpiseq was not found and will be ignored.")
+      endif()
+      message(STATUS "MUMPS_LIBS = ${MUMPS_LIBS}")
+
     endif()
   else() # GETFEM_PARA_LEVEL = 2
     if(NOT BUILD_SHARED_LIBS)
@@ -438,11 +450,20 @@ set(HEADERS
 # Create the library target
 if(BUILD_SHARED_LIBS)
   add_library(libgetfem SHARED ${SOURCES})
+  if(WIN32 AND MSVC)
+    set_target_properties(libgetfem PROPERTIES
+      WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+  endif()
 else()
   add_library(libgetfem STATIC ${SOURCES})
 endif()
 set_target_properties(libgetfem PROPERTIES OUTPUT_NAME "getfem")
 set_target_properties(libgetfem PROPERTIES VERSION ${GETFEM_VERSION})
+
+if(MSVC)
+  target_compile_options(libgetfem PRIVATE /FIiso646.h)
+endif()
 
 target_sources(libgetfem
                PUBLIC FILE_SET header_set1 TYPE HEADERS
@@ -656,18 +677,21 @@ else()
 endif()
 
 if(NOT ENABLE_MULTITHREADED_BLAS)
-  find_library(DL_LIB NAMES dl)
-  set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
-    check_library_exists(dl dlsym "" HAVE_DLSYM)
-  set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
-  if(HAVE_DLSYM)
-    target_link_libraries(libgetfem PRIVATE ${DL_LIB})
+  if(WIN32)
+    set(GETFEM_FORCE_SINGLE_THREAD_BLAS 0)
   else()
-    message(FATAL_ERROR
-            "Could not find dlsym function required for forcing singlethreaded BLAS")
+    find_library(DL_LIB NAMES dl)
+    set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
+    check_library_exists(dl dlsym "" HAVE_DLSYM)
+    set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
+    if(HAVE_DLSYM)
+      target_link_libraries(libgetfem PRIVATE ${DL_LIB})
+    else()
+      message(FATAL_ERROR
+              "Could not find dlsym function required for forcing singlethreaded BLAS")
+    endif()
+    set(GETFEM_FORCE_SINGLE_THREAD_BLAS 1)
   endif()
-  # single threaded blas by default
-  set(GETFEM_FORCE_SINGLE_THREAD_BLAS 1)
 endif()
 
 
@@ -690,10 +714,22 @@ configure_file(cmake/gmm_arch_config.h.in ${CMAKE_BINARY_DIR}/gmm/gmm_arch_confi
 configure_file(cmake/getfem_arch_config.h.in ${CMAKE_BINARY_DIR}/getfem/getfem_arch_config.h)
 
 if(GENERATE_GETFEM_IM_LIST_H)
+find_program(Perl_EXECUTABLE perl REQUIRED)
+file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/cubature/make_getfem_im_list" MGF_SCRIPT)
+file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/cubature" MGF_ARG)
+file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/src/getfem" MGF_WORKDIR)
+file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/src/getfem/getfem_im_list.h" MGF_OUTPUT)
+
+message(STATUS "Perl_EXECUTABLE = ${Perl_EXECUTABLE}")
+message(STATUS "MGF_SCRIPT = ${MGF_SCRIPT}")
+message(STATUS "MGF_ARG = ${MGF_ARG}")
+message(STATUS "MGF_WORKDIR = ${MGF_WORKDIR}")
+message(STATUS "MGF_OUTPUT = ${MGF_OUTPUT}")
+
 add_custom_command(
-  OUTPUT ${CMAKE_SOURCE_DIR}/src/getfem/getfem_im_list.h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/getfem/
-  COMMAND perl ${CMAKE_SOURCE_DIR}/cubature/make_getfem_im_list ${CMAKE_SOURCE_DIR}/cubature
+  OUTPUT MGF_OUTPUT
+  WORKING_DIRECTORY MGF_WORKDIR 
+  COMMAND ${Perl_EXECUTABLE} ${MGF_SCRIPT} ${MGF_ARG}
   COMMENT "Generating getfem_im_list.h")
 endif()
 
