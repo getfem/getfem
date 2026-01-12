@@ -1,0 +1,122 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  INSTALL_PREFIX: 'C:\opt'
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # this includes the MSVC compiler, python, cmake, ninja
+    runs-on: windows-latest
+
+    steps:
+    - name: Create installation directory
+      shell: pwsh
+      run: |
+        If(!(test-path -PathType container ${{ env.INSTALL_PREFIX }}))
+        {
+          New-Item -ItemType Directory -Path ${{ env.INSTALL_PREFIX }}
+        }
+
+    - name: Intall Intel Fortran Essentials
+      shell: pwsh
+      run: |
+        $URL1 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/79e069e4-f844-43df-8d73-3674c024b043/intel-fortran-compiler-2025.3.1.15_offline.exe"
+        $URL3 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae5e7015-6604-4fa2-804f-596f675804cc/intel-onemkl-2025.3.0.460_offline.exe"
+        $TempDir = $env:TEMP
+        curl.exe --url $URL1 --retry 5 --retry-delay 5 --output "$TempDir\intel-fortran-compiler.exe"
+        curl.exe --url $URL3 --retry 5 --retry-delay 5 --output "$TempDir\intel-onemkl.exe"
+        Start-Process -Wait -FilePath "$TempDir\intel-fortran-compiler.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
+        Start-Process -Wait -FilePath "$TempDir\intel-onemkl.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
+
+    - name: Build MUMPS
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+        echo store MKLROOT=%MKLROOT%
+        echo store CMPLR_ROOT=%CMPLR_ROOT%
+        echo MKLROOT=%MKLROOT%>> "%GITHUB_ENV%"
+        echo CMPLR_ROOT=%CMPLR_ROOT%>> "%GITHUB_ENV%"
+        REM Build MUMPS with Intel Fortran
+        echo Building MUMPS...
+        git clone https://github.com/scivision/mumps.git
+        cd mumps
+        cmake -B build ^
+          -DMUMPS_parallel=OFF ^
+          -DBUILD_COMPLEX=ON ^
+          -DBUILD_COMPLEX16=ON ^
+          -G Ninja ^
+          -DCMAKE_BUILD_TYPE="%BUILD_TYPE%" ^
+          -DCMAKE_INSTALL_PREFIX="%INSTALL_PREFIX%" ^
+          -DCMAKE_Fortran_COMPILER=ifx
+        cmake --build build
+        cmake --install build
+        cd ..
+
+    - name: Enter MSVC dev mode
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Build Qhull
+      shell: pwsh
+      run: |
+        # Build Qhull
+        echo "Building Qhull..."
+        git clone https://github.com/qhull/qhull.git
+        cd qhull
+        git checkout 2020.2
+        cmake -B build `
+          -G Ninja `
+          -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" `
+          -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}"
+        cmake --build build
+        cmake --install build
+        cd ..
+
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5  # Official action for Python setup
+      with:
+        python-version: '3.14'
+    - name: Install numpy
+      shell: pwsh
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy
+        python -c "import sys; print(sys.version)"
+        python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
+
+    - name: Build and install GetFEM
+      shell: cmd
+      run: |
+        echo "Building GetFEM..."
+        echo "%MKLROOT%\env\vars.bat"
+        call "%MKLROOT%\env\vars.bat"
+        echo "%CMPLR_ROOT%\env\vars.bat"
+        call "%CMPLR_ROOT%\env\vars.bat"
+        cmake -B build ^
+          -G Ninja ^
+          -DENABLE_PYTHON=ON ^
+          -DGENERATE_GETFEM_IM_LIST_H=OFF ^
+          -DENABLE_MULTITHREADED_BLAS=ON ^
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON ^
+          -DMUMPS_LIB_DIR="${{ env.INSTALL_PREFIX }}\lib" ^
+          -DMUMPS_INC_DIR="${{ env.INSTALL_PREFIX }}\include" ^
+          -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" ^
+          -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" ^
+          -DBLA_VENDOR=Intel10_64lp_seq
+        cmake --build build
+        cmake --install build
+
+    - name: Verify installations
+      shell: pwsh
+      run: |
+        echo "Verifying installed libraries..."
+        dir "C:\opt\lib"
+        dir "C:\opt\bin"
+        echo "Build completed successfully!"
