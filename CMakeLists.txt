@@ -52,6 +52,10 @@ elseif(NOT BUILD_SHARED_LIBS AND BUILD_LIBRARY_TYPE STREQUAL "SHARED")
   set(BUILD_LIBRARY_TYPE "STATIC")
 endif()
 
+if(MSVC)
+  add_compile_definitions(_CRT_SECURE_NO_DEPRECATE)
+endif()
+
 set(WITH_OPTIMIZATION "-O2" CACHE STRING "Set the optimization level (default: -O2)")
 set(GETFEM_PARA_LEVEL 0 CACHE STRING "Set the GETFEM_PARA_LEVEL option (default: 0)")
 
