@@ -694,10 +694,11 @@ configure_file(cmake/gmm_arch_config.h.in ${CMAKE_BINARY_DIR}/gmm/gmm_arch_confi
 configure_file(cmake/getfem_arch_config.h.in ${CMAKE_BINARY_DIR}/getfem/getfem_arch_config.h)
 
 if(GENERATE_GETFEM_IM_LIST_H)
+find_program(Perl_EXECUTABLE perl REQUIRED)
 add_custom_command(
   OUTPUT ${CMAKE_SOURCE_DIR}/src/getfem/getfem_im_list.h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/getfem/
-  COMMAND perl ${CMAKE_SOURCE_DIR}/cubature/make_getfem_im_list ${CMAKE_SOURCE_DIR}/cubature
+  COMMAND ${Perl_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cubature/make_getfem_im_list ${CMAKE_SOURCE_DIR}/cubature
   COMMENT "Generating getfem_im_list.h")
 endif()
 
