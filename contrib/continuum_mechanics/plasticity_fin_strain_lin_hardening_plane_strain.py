@@ -141,6 +141,7 @@ mfout2 = gf.MeshFem(mesh)
 mfout2.set_classical_discontinuous_fem(disp_fem_order)
 
 mim = gf.MeshIm(mesh, integration_degree)
+mim_red = gf.MeshIm(mesh, integration_degree-2) # for selective integration
 
 mimd1 = gf.MeshImData(mim)
 mimd4 = gf.MeshImData(mim, -1, 4)
@@ -176,8 +177,9 @@ md.add_macro("gamma", "gamma0+ksi*Norm(devlogbetr)")
 md.add_macro("devlogbe", "(1-2*ksi)*devlogbetr")
 md.add_macro("tauD2d", "mu*[1,0,0;0,1,0]*devlogbe*[1,0;0,1;0,0]")
 
-md.add_nonlinear_term\
-   (mim, "((tauH*Id(2)+tauD2d)*Inv(F')):Grad_Test_u")
+md.add_nonlinear_term(mim_red, "(tauH*Inv(F')):Grad(Test_u)")
+md.add_nonlinear_term(mim, "(tauD2d*Inv(F')):Grad(Test_u)")
+#md.add_nonlinear_term(mim, "((tauH*Id(2)+tauD2d)*Inv(F')):Grad(Test_u)")
 
 md.add_macro("sigmaD", "(mu/J*devlogbe)")
 md.add_macro("sigma", "tauH/J*Id(3)+mu/J*devlogbe")
@@ -200,18 +202,18 @@ with open(f"{resultspath}/tension_plane_strain.dat", "w") as f1:
 
       starttime = time.process_time()
       md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
-               "lsearch", "simplest", "alpha max ratio", 100, "alpha min", 1, "alpha mult", 0.6,
-               "alpha threshold res", 1e9)
+               "lsearch", "simplest", "alpha max ratio", 10, "alpha min", 0.1, "alpha mult", 0.6,
+               "alpha threshold res", 1e3)
       print("STEP %i COMPLETED IN %f SEC" % (step, time.process_time()-starttime))
 
       F = gf.asm_generic(mim, 0, "dirmult", XP_RG, md)
-      print("Displacement %g, total force %g" % (md.variable("disp"), F))
+      print("Displacement %g, total force %g" % (md.variable("disp")[0], F))
       A = gf.asm_generic(mim, 0, "Norm(J*Inv(F')*[1;0])", XP_RG, md)
       V = gf.asm_generic(mim, 0, "1", -1, md)
       sigma11 = gf.asm_generic(mim, 0, "sigma(1,1)", -1, md)/V
       gamma = gf.asm_generic(mim, 0, "gamma", -1, md)/V
       f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
-               % (md.variable("disp"), F, A, F/A, sigma11, gamma))
+               % (md.variable("disp")[0], F, A, F/A, sigma11, gamma))
       f1.flush()
 
       output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
