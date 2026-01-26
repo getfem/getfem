@@ -96,12 +96,14 @@ namespace gmm {
   void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward()
   { while(itb!=itbe && index()==size_type(-1)) --itb; }
 
+
   template <typename PT, typename SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef V * CPT;
     typedef typename select_ref<typename linalg_traits<V>::const_iterator,
-            typename linalg_traits<V>::iterator, PT>::ref_type iterator;
+                                typename linalg_traits<V>::iterator,
+                                PT>::ref_type
+      iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
@@ -110,20 +112,23 @@ namespace gmm {
     SUBI si;
 
     size_type size() const { return si.size(); }
-   
+
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }
 
-    sparse_sub_vector(V &v, const SUBI &s) : begin_(vect_begin(v)),
-       end_(vect_end(v)), origin(linalg_origin(v)), si(s) {}
-    sparse_sub_vector(const V &v, const SUBI &s) 
+    sparse_sub_vector(V &v, const SUBI &s)
+      : begin_(vect_begin(v)), end_(vect_end(v)),
+        origin(linalg_origin(v)), si(s) {}
+    sparse_sub_vector(const V &v, const SUBI &s)
       : begin_(vect_begin(const_cast<V &>(v))),
         end_(vect_end(const_cast<V &>(v))),
         origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     sparse_sub_vector() {}
-    sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
-      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin), si(cr.si) {} 
+    sparse_sub_vector(const sparse_sub_vector<V *, SUBI> &cr)
+      : begin_(cr.begin_), end_(cr.end_),
+        origin(cr.origin), si(cr.si) {}
   };
+
 
   template <typename IT, typename MIT, typename SUBI, typename ORG,
             typename PT> inline
@@ -136,10 +141,11 @@ namespace gmm {
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
+
   template <typename IT, typename MIT, typename SUBI, typename ORG,
             typename PT> inline
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-                    ORG o, const sparse_sub_vector<PT, SUBI> *, 
+                    ORG o, const sparse_sub_vector<PT, SUBI> *,
                     linalg_modifiable) {
     typedef sparse_sub_vector<PT, SUBI> VECT;
     typedef typename linalg_traits<VECT>::V_reference ref_t;
@@ -147,7 +153,7 @@ namespace gmm {
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
-  
+
   template <typename IT, typename MIT, typename SUBI, typename ORG,
             typename PT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
@@ -158,6 +164,7 @@ namespace gmm {
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
+
   template <typename IT, typename MIT, typename SUBI, typename ORG,
             typename PT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
@@ -180,23 +187,33 @@ namespace gmm {
             typename linalg_traits<V>::index_sorted>::bool_type index_sorted;
     typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
-    typedef typename select_ref<const origin_type *, origin_type *,
-                                PT>::ref_type porigin_type;
+    typedef typename select_ref<const origin_type *,
+                                origin_type *,
+                                PT>::ref_type
+      porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename select_ref<value_type, typename
-            linalg_traits<V>::reference, PT>::ref_type reference;
+    typedef typename select_ref<value_type,
+                                typename linalg_traits<V>::reference,
+                                PT>::ref_type
+      reference;
     typedef typename select_ref<typename linalg_traits<V>::const_iterator,
-            typename linalg_traits<V>::iterator, PT>::ref_type pre_iterator;
-    typedef typename select_ref<abstract_null_type, 
+                                typename linalg_traits<V>::iterator,
+                                PT>::ref_type
+      pre_iterator;
+    typedef typename select_ref<abstract_null_type,
                                 sparse_sub_vector_iterator<pre_iterator,
                                                            pre_iterator, SUBI>,
-                                PT>::ref_type iterator;
-    typedef sparse_sub_vector_iterator<typename linalg_traits<V>
-            ::const_iterator, pre_iterator, SUBI> const_iterator;
+                                PT>::ref_type
+      iterator;
+    typedef sparse_sub_vector_iterator
+            <typename linalg_traits<V>::const_iterator, pre_iterator, SUBI>
+      const_iterator;
     typedef abstract_sparse storage_type;
+
     static size_type size(const this_type &v) { return v.size(); }
+
     static iterator begin(this_type &v) {
       iterator it;
       it.itb = v.begin_;
@@ -208,6 +225,7 @@ namespace gmm {
         it.forward();
       return it;
     }
+
     static const_iterator begin(const this_type &v) {
       const_iterator it;
       it.itb = v.begin_;
@@ -219,6 +237,7 @@ namespace gmm {
         it.forward();
       return it;
     }
+
     static iterator end(this_type &v) {
       iterator it;
       it.itb = v.end_;
@@ -230,6 +249,7 @@ namespace gmm {
         it.forward();
       return it;
     }
+
     static const_iterator end(const this_type &v) {
       const_iterator it;
       it.itb = v.end_;
@@ -241,8 +261,13 @@ namespace gmm {
         it.forward();
       return it;
     }
-    static origin_type* origin(this_type &v) { return v.origin; }
-    static const origin_type* origin(const this_type &v) { return v.origin; }
+
+    static origin_type* origin(this_type &v)
+    { return v.origin; }
+
+    static const origin_type* origin(const this_type &v)
+    { return v.origin; }
+
     static void clear(origin_type* o, const iterator &begin_,
                       const iterator &end_) {
       std::deque<size_type> ind;
@@ -251,18 +276,24 @@ namespace gmm {
       for (; !(ind.empty()); ind.pop_back())
         access(o, begin_, end_, ind.back()) = value_type(0);
     }
-    static void do_clear(this_type &v) { clear(v.origin, begin(v), end(v)); }
+
+    static void do_clear(this_type &v)
+    { clear(v.origin, begin(v), end(v)); }
+
     static value_type access(const origin_type *o, const const_iterator &it,
                              const const_iterator &ite, size_type i)
     { return linalg_traits<V>::access(o, it.itb, ite.itb, it.si.index(i)); }
+
     static reference access(origin_type *o, const iterator &it,
                             const iterator &ite, size_type i)
     { return linalg_traits<V>::access(o, it.itb, ite.itb, it.si.index(i)); }
   };
 
-  template <typename PT, typename SUBI> std::ostream &operator <<
-  (std::ostream &o, const sparse_sub_vector<PT, SUBI>& m)
+  template <typename PT, typename SUBI>
+  std::ostream &operator <<(std::ostream &o,
+                            const sparse_sub_vector<PT, SUBI>& m)
   { gmm::write(o,m); return o; }
+
 
   /* ********************************************************************* */
   /*            skyline sub-vectors                                        */
@@ -337,7 +368,9 @@ namespace gmm {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * pV;
     typedef typename select_ref<typename linalg_traits<V>::const_iterator,
-            typename linalg_traits<V>::iterator, PT>::ref_type iterator;
+                                typename linalg_traits<V>::iterator,
+                                PT>::ref_type
+      iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
@@ -346,7 +379,7 @@ namespace gmm {
     SUBI si;
 
     size_type size() const { return si.size(); }
-   
+
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }
 
@@ -389,7 +422,7 @@ namespace gmm {
     set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     update_for_sub_skyline(it.itb, itbe, it.si);
   }
-  
+
   template <typename IT, typename MIT, typename SUBI, typename ORG,
             typename PT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
@@ -412,7 +445,7 @@ namespace gmm {
     IT itb = it.itb;
     set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    update_for_sub_skyline(itb, it.itb, it.si);   
+    update_for_sub_skyline(itb, it.itb, it.si);
   }
 
 
@@ -424,18 +457,24 @@ namespace gmm {
     typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *,
-                                origin_type *, PT>::ref_type porigin_type;
+                                origin_type *,
+                                PT>::ref_type
+      porigin_type;
     typedef V * pV;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename select_ref<value_type, typename
-            linalg_traits<V>::reference, PT>::ref_type reference;
+    typedef typename select_ref<value_type,
+                                typename linalg_traits<V>::reference,
+                                PT>::ref_type
+      reference;
     typedef typename linalg_traits<V>::const_iterator const_V_iterator;
-    typedef typename linalg_traits<V>::iterator V_iterator;    
+    typedef typename linalg_traits<V>::iterator V_iterator;
     typedef typename select_ref<const_V_iterator,
-                                V_iterator, PT>::ref_type pre_iterator;
-    typedef typename select_ref<abstract_null_type, 
+                                V_iterator,
+                                PT>::ref_type
+      pre_iterator;
+    typedef typename select_ref<abstract_null_type,
                                 skyline_sub_vector_iterator<pre_iterator,
                                                             pre_iterator, SUBI>,
                                 PT>::ref_type iterator;
@@ -510,7 +549,7 @@ namespace gmm {
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_index_ref_with_origin<iterator,
       sub_index::const_iterator, V> vector_type;
-  }; 
+  };
 
   template <typename PT>
   struct svrt_ir<PT, unsorted_sub_index, abstract_dense> {
@@ -518,14 +557,14 @@ namespace gmm {
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_index_ref_with_origin<iterator,
       unsorted_sub_index::const_iterator, V> vector_type;
-  }; 
+  };
 
   template <typename PT>
   struct svrt_ir<PT, sub_interval, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_with_origin<iterator, V> vector_type;
-  }; 
+  };
 
   template <typename PT>
   struct svrt_ir<PT, sub_slice, abstract_dense> {
