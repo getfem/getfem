@@ -398,7 +398,7 @@ namespace gmm {
 
     std::vector<R> norms(nc);
     std::vector<bool> c_ortho(nc), booked(nr);
-    std::vector< std::set<size_type> > nnzs(mat_nrows(B));
+    std::vector< std::set<size_type> > nnzs(nr+1); // 0,1,...,nr non-zeros
 
     if (!skip_init) {
 
