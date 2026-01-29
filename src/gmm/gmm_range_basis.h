@@ -379,27 +379,6 @@ namespace gmm {
       columns.erase(ind[*it]);
   }
 
-  template <typename L> size_type nnz_eps(const L& l, double eps) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    size_type res(0);
-    for (; it != ite; ++it) if (gmm::abs(*it) >= eps) ++res;
-    return res;
-  }
-
-  template <typename L>
-  bool reserve__rb(const L& l, std::vector<bool> &b, double eps) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    bool ok = true;
-    for (; it != ite; ++it)
-      if (gmm::abs(*it) >= eps && b[it.index()]) ok = false;
-    if (ok) {
-      for (it = vect_const_begin(l); it != ite; ++it)
-        if (gmm::abs(*it) >= eps) b[it.index()] = true;
-    }
-    return ok;
-  }
 
   template <typename Mat>
   void range_basis(const Mat &B, std::set<size_type> &columns,
@@ -409,31 +388,51 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type nc = mat_ncols(B), nr = mat_nrows(B);
-
-    std::vector<R> norms(nc);
-    std::vector<bool> c_ortho(nc), booked(nr);
-    std::vector< std::set<size_type> > nnzs(nr+1); // 0,1,...,nr non-zeros
-
+    std::vector<bool> c_ortho(nc);
     if (!skip_init) {
 
+      std::vector<R> norms(nc);
       R norm_max = R(0);
       for (size_type i = 0; i < nc; ++i) {
-        norms[i] = vect_norminf(mat_col(B, i));
+        norms[i] = vect_norminf(mat_const_col(B, i));
         norm_max = std::max(norm_max, norms[i]);
       }
 
       columns.clear();
+      std::vector< std::set<size_type> > nnzs(nr+1); // 0,1,...,nr non-zeros
       for (size_type i = 0; i < nc; ++i)
         if (norms[i] > norm_max*R(EPS)) {
           columns.insert(i);
-          nnzs[nnz_eps(mat_col(B, i), R(EPS) * norms[i])].insert(i);
+          size_type nnz_eps(0);
+          { // count how many non-zeros are in column i
+            const auto eps = R(EPS) * norms[i];
+            const auto col = mat_const_col(B, i);
+            const auto ite = vect_const_end(col);
+            for (auto it = vect_const_begin(col); it != ite; ++it)
+              if (gmm::abs(*it) >= eps)
+                ++nnz_eps;
+          }
+          nnzs[nnz_eps].insert(i);
         }
 
+      std::vector<bool> booked(nr);
       for (size_type i = 1; i < nr; ++i)
         for (std::set<size_type>::iterator it = nnzs[i].begin();
-             it != nnzs[i].end(); ++it)
-          if (reserve__rb(mat_col(B, *it), booked, R(EPS) * norms[*it]))
+             it != nnzs[i].end(); ++it) {
+          const auto eps = R(EPS) * norms[*it];
+          const auto col = mat_const_col(B, *it);
+          const auto ite = vect_const_end(col);
+          bool reserve__rb = true;
+          for (auto it1 = vect_const_begin(col); it1 != ite; ++it1)
+            if (gmm::abs(*it1) >= eps && booked[it1.index()])
+              reserve__rb = false;
+          if (reserve__rb) {
+            for (auto it1 = vect_const_begin(col); it1 != ite; ++it1)
+              if (gmm::abs(*it1) >= eps)
+                booked[it1.index()] = true;
             c_ortho[*it] = true;
+          }
+        }
     }
 
     size_type sizesm[7] = {125, 200, 350, 550, 800, 1100, 1500}, actsize;
