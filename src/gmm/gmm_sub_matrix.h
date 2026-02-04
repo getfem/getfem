@@ -82,6 +82,7 @@ namespace gmm {
   struct gen_sub_row_matrix_iterator {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
+    typedef typename const_pointer<PT>::pointer CPT;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename select_ref<typename linalg_traits<M>::const_row_iterator,
                                 typename linalg_traits<M>::row_iterator,
@@ -122,6 +123,9 @@ namespace gmm {
     gen_sub_row_matrix_iterator() {}
     gen_sub_row_matrix_iterator
       (const gen_sub_row_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
+      : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
+    gen_sub_row_matrix_iterator
+      (const gen_sub_row_matrix_iterator<CPT, SUBI1, SUBI2> &itm)
       : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
     gen_sub_row_matrix_iterator(const value_type &iter, const SUBI1 &s1,
                                 const SUBI2 &s2, size_type i)
@@ -257,6 +261,7 @@ namespace gmm {
   struct gen_sub_col_matrix_iterator {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
+    typedef typename const_pointer<PT>::pointer CPT;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename select_ref<typename linalg_traits<M>::const_col_iterator,
                                 typename linalg_traits<M>::col_iterator,
@@ -297,6 +302,9 @@ namespace gmm {
     gen_sub_col_matrix_iterator() {}
     gen_sub_col_matrix_iterator
       (const gen_sub_col_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
+      : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
+    gen_sub_col_matrix_iterator
+      (const gen_sub_col_matrix_iterator<CPT, SUBI1, SUBI2> &itm)
       : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
     gen_sub_col_matrix_iterator(const value_type &iter, const SUBI1 &s1,
                                 const SUBI2 &s2, size_type i)
