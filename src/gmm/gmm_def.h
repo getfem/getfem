@@ -301,20 +301,24 @@ namespace gmm {
   // select_ref<C1, C2, L *> return C1 if L is a const reference,
   //                                C2 otherwise.
   // select_ref<C1, C2, const L *> return C2 in any case. 
-  template <typename C1, typename C2, typename REF> struct select_ref_
-  { typedef abstract_null_type ref_type; };
+  template <typename C1, typename C2, typename REF>
+  struct select_ref_ { typedef abstract_null_type ref_type; };
+
   template <typename C1, typename C2, typename L>
   struct select_ref_<C1, C2, const L &> { typedef C1 ref_type; };
+
   template <typename C1, typename C2, typename L>
   struct select_ref_<C1, C2, L &> { typedef C2 ref_type; };
-  template <typename C1, typename C2, typename PT> struct select_ref {
+
+  template <typename C1, typename C2, typename PT>
+  struct select_ref {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_ref_<C1, C2, 
       typename mref_type<PT>::return_type>::ref_type ref_type;
   };
+
   template <typename C1, typename C2, typename L>
-  struct select_ref<C1, C2, const L *>
-  { typedef C1 ref_type; };
+  struct select_ref<C1, C2, const L *> { typedef C1 ref_type; };
 
 
   template<typename R> struct is_a_reference_

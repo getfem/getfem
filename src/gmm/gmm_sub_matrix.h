@@ -121,6 +121,7 @@ namespace gmm {
     bool operator >=(const iterator &i) const { return (ii >= i.ii); }
 
     gen_sub_row_matrix_iterator() {}
+    // one of the following two constructors is the copy constructor
     gen_sub_row_matrix_iterator
       (const gen_sub_row_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
       : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
@@ -300,6 +301,7 @@ namespace gmm {
     bool operator >=(const iterator &i) const { return (ii >= i.ii); }
 
     gen_sub_col_matrix_iterator() {}
+    // one of the following two constructors is the copy constructor
     gen_sub_col_matrix_iterator
       (const gen_sub_col_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
       : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}

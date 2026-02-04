@@ -49,12 +49,13 @@ namespace gmm {
   /*************************************************************************/
 
 
-  template<typename T, typename V> class ref_elt_vector {
+  template<typename T, typename V>
+  class ref_elt_vector {
 
     V *pm;
     size_type l;
 
-    public :
+  public :
 
     operator T() const { return pm->r(l); }
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
@@ -88,12 +89,14 @@ namespace gmm {
     std::complex<T> operator /(std::complex<T> v) { return T(*this)/ v; }
   };
 
-  template<typename T, typename V> class ref_elt_vector<std::complex<T>,V> {
+
+  template<typename T, typename V>
+  class ref_elt_vector<std::complex<T>,V> {
 
     V *pm;
     size_type l;
 
-    public :
+  public :
 
     operator std::complex<T>() const { return pm->r(l); }
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
@@ -210,6 +213,7 @@ namespace gmm {
   typename number_traits<T>::magnitude_type
   imag(const ref_elt_vector<T, V> &re) { return gmm::imag(T(re)); }
 
+
   /*************************************************************************/
   /*                                                                       */
   /* Class dsvector: sparse vector optimized for random write operations   */
@@ -221,7 +225,8 @@ namespace gmm {
 
   template<typename T> class dsvector;
 
-  template<typename T> struct dsvector_iterator {
+  template<typename T>
+  struct dsvector_iterator {
     size_type i;    // Current index.
     T* p;           // Pointer to the current position.
     dsvector<T> *v; // Pointer to the vector.
@@ -265,7 +270,8 @@ namespace gmm {
   };
 
 
-  template<typename T> struct dsvector_const_iterator {
+  template<typename T>
+  struct dsvector_const_iterator {
     size_type i;          // Current index.
     const T* p;           // Pointer to the current position.
     const dsvector<T> *v; // Pointer to the vector.
@@ -315,7 +321,8 @@ namespace gmm {
      Read and write access have a constant complexity depending only on the
      vector size.
   */
-  template<typename T> class dsvector {
+  template<typename T>
+  class dsvector {
 
     typedef dsvector_iterator<T>       iterator;
     typedef dsvector_const_iterator<T> const_iterator;
@@ -530,7 +537,11 @@ namespace gmm {
       }
     }
 
-    void clear() { if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0; }
+    void clear() {
+      if (root_ptr)
+        rec_del(root_ptr, depth);
+      root_ptr = 0;
+    }
 
     void next_pos(const_pointer &pp, size_type &i) const {
       if (!root_ptr || i >= n) { pp = 0, i = size_type(-1); return; }
@@ -600,7 +611,9 @@ namespace gmm {
     ~dsvector() { if (root_ptr) rec_del(root_ptr, depth); root_ptr = 0; }
   };
 
-  template <typename T> struct linalg_traits<dsvector<T>> {
+
+  template <typename T>
+  struct linalg_traits<dsvector<T>> {
     typedef dsvector<T> this_type;
     typedef this_type origin_type;
     typedef linalg_false is_reference;
@@ -630,23 +643,27 @@ namespace gmm {
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
-  template<typename T> std::ostream &operator <<
-  (std::ostream &o, const dsvector<T>& v) { gmm::write(o,v); return o; }
+  template<typename T>
+  std::ostream &operator <<(std::ostream &o, const dsvector<T>& v)
+  { gmm::write(o,v); return o; }
 
   /******* Optimized operations for dsvector<T> ****************************/
 
-  template <typename T> inline void copy(const dsvector<T> &v1,
-                                         dsvector<T> &v2) {
+  template <typename T> inline
+  void copy(const dsvector<T> &v1, dsvector<T> &v2) {
     GMM_ASSERT2(v1.size() == v2.size(), "dimensions mismatch");
     v2 = v1;
   }
-  template <typename T> inline void copy(const dsvector<T> &v1,
-                                         const dsvector<T> &v2) {
+
+  template <typename T> inline
+  void copy(const dsvector<T> &v1, const dsvector<T> &v2) {
     GMM_ASSERT2(v1.size() == v2.size(), "dimensions mismatch");
     v2 = const_cast<dsvector<T> &>(v1);
   }
- template <typename T> inline
-  void copy(const dsvector<T> &v1, const simple_vector_ref<dsvector<T> *> &v2){
+
+  template <typename T> inline
+  void copy(const dsvector<T> &v1,
+            const simple_vector_ref<dsvector<T> *> &v2) {
     simple_vector_ref<dsvector<T> *>
       *svr = const_cast<simple_vector_ref<dsvector<T> *> *>(&v2);
     dsvector<T>
@@ -654,24 +671,29 @@ namespace gmm {
     GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
     *pv = v1; svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
+
   template <typename T> inline
   void copy(const simple_vector_ref<const dsvector<T> *> &v1,
             dsvector<T> &v2)
   { copy(*(v1.origin), v2); }
+
   template <typename T> inline
   void copy(const simple_vector_ref<dsvector<T> *> &v1, dsvector<T> &v2)
   { copy(*(v1.origin), v2); }
+
   template <typename T> inline
   void copy(const simple_vector_ref<dsvector<T> *> &v1,
             const simple_vector_ref<dsvector<T> *> &v2)
   { copy(*(v1.origin), v2); }
+
   template <typename T> inline
   void copy(const simple_vector_ref<const dsvector<T> *> &v1,
             const simple_vector_ref<dsvector<T> *> &v2)
   { copy(*(v1.origin), v2); }
 
-  template <typename T>
-  inline size_type nnz(const dsvector<T>& l) { return l.nnz(); }
+  template <typename T> inline
+  size_type nnz(const dsvector<T>& l) { return l.nnz(); }
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -681,8 +703,9 @@ namespace gmm {
   /*                                                                       */
   /*************************************************************************/
 
-  template<typename T> struct wsvector_iterator
-    : public std::map<size_type, T>::iterator {
+  template<typename T>
+  struct wsvector_iterator : public std::map<size_type, T>::iterator {
+
     typedef typename std::map<size_type, T>::iterator base_it_type;
     typedef T                   value_type;
     typedef value_type*         pointer;
@@ -699,8 +722,10 @@ namespace gmm {
     wsvector_iterator(const base_it_type &it) : base_it_type(it) {}
   };
 
-  template<typename T> struct wsvector_const_iterator
+  template<typename T>
+  struct wsvector_const_iterator
     : public std::map<size_type, T>::const_iterator {
+
     typedef typename std::map<size_type, T>::const_iterator base_it_type;
     typedef T                   value_type;
     typedef const value_type*   pointer;
@@ -724,7 +749,9 @@ namespace gmm {
      sparse vector built upon std::map.
      Read and write access are quite fast (log n)
   */
-  template<typename T> class wsvector : public std::map<size_type, T> {
+  template<typename T>
+  class wsvector : public std::map<size_type, T> {
+
   public:
 
     typedef typename std::map<int, T>::size_type size_type;
@@ -779,14 +806,16 @@ namespace gmm {
     wsvector() { init(0); }
   };
 
-  template<typename T>  void wsvector<T>::clean(double eps) {
+  template<typename T>
+  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = it, ite = this->end();
     while (it != ite) {
       ++itf; if (gmm::abs(it->second) <= eps) this->erase(it); it = itf;
     }
   }
 
-  template<typename T>  void wsvector<T>::resize(size_type n) {
+  template<typename T>
+  void wsvector<T>::resize(size_type n) {
     if (n < nbl) {
       iterator it = this->begin(), itf = it, ite = this->end();
       while (it != ite) { ++itf; if (it->first >= n) this->erase(it); it=itf; }
@@ -794,7 +823,9 @@ namespace gmm {
     nbl = n;
   }
 
-  template <typename T> struct linalg_traits<wsvector<T> > {
+  template <typename T>
+  struct linalg_traits<wsvector<T> > {
+
     typedef wsvector<T> this_type;
     typedef this_type origin_type;
     typedef linalg_false is_reference;
@@ -824,8 +855,10 @@ namespace gmm {
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
-  template<typename T> std::ostream &operator <<
-  (std::ostream &o, const wsvector<T>& v) { gmm::write(o,v); return o; }
+  template<typename T>
+  std::ostream &operator <<(std::ostream &o, const wsvector<T>& v)
+  { gmm::write(o,v); return o; }
+
 
   /******* Optimized BLAS for wsvector<T> **********************************/
 
