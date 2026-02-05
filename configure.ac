@@ -744,26 +744,26 @@ AM_CONDITIONAL(LAPACK, test x$acx_lapack_ok = xyes)
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
-dnl ---------------------------multithread-blas--------------------------
+dnl ------------------------force-singlethread-blas--------------------------
 
-multithread_blas=NO
-AC_ARG_ENABLE(multithread-blas,
-   [AS_HELP_STRING([--enable-multithread-blas],[enable openblas to be multithreaded])],
+force_singlethread_blas=YES
+AC_ARG_ENABLE(force-singlethread-blas,
+   [AS_HELP_STRING([--enable-force-singlethread-blas],[enable switching to single threaded openblas at runtime])],
    [ case $enableval in
-        yes | "") multithread_blas=YES;;
-        no) multithread_blas=NO;;
-        *) AC_MSG_ERROR([bad value ${enableval} for --enable-multithread-blas], [multithread_blas=NO]) ;;
+        yes | "") force_singlethread_blas=YES;;
+        no) force_singlethread_blas=NO;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-force-singlethread-blas], [force_singlethread_blas=YES]) ;;
      esac
 ])
 
-if test x$multithread_blas = xNO; then
+if test x$force_singlethread_blas = xYES; then
   AC_CHECK_LIB(dl, dlsym, [acx_dl_ok=yes; DL_LIBS="-ldl"])
   if test x"$acx_dl_ok" = xyes; then
-    AC_DEFINE(GETFEM_FORCE_SINGLE_THREAD_BLAS,,[enable openblas to be multithreaded])
+    AC_DEFINE(GETFEM_FORCE_SINGLE_THREAD_BLAS,,[enable switching to single threaded openblas at runtime])
     LIBS="$DL_LIBS $LIBS"
   fi
 fi;
-dnl --------------------------end of multithread-blas--------------------
+dnl ------------------------end of force-singlethread-blas-------------------
 
 
 

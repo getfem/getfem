@@ -35,8 +35,8 @@ option(ENABLE_QHULL "Enable Qhull support" ON)
 # Configure options for enabling/disabling linear solvers (at least one is required)
 option(ENABLE_SUPERLU "Enable SuperLU support" ON) # might be turned off by cmake if SuperLU is not found
 option(ENABLE_MUMPS "Enable MUMPS support" ON)     # might be turned off by cmake if MUMPS is not found
-# Configure option for enabling/disabling multithreaded BLAS (requires the dl library)
-option(ENABLE_MULTITHREADED_BLAS "Enable multithreaded blas support" OFF)
+# Configure option for forcing single threaded BLAS at runtime (requires the dl library)
+option(ENABLE_FORCE_SINGLETHREAD_BLAS "Enable switching to singlethreaded blas at runtime" ON)
 option(GENERATE_GETFEM_IM_LIST_H "Run perl script that (re-)generates header file with integration methods" ON)
 
 option(BUILD_SHARED_LIBS "Build libraries as SHARED, equivalent to BUILD_LIBRARY_TYPE=SHARED" ON)
@@ -659,7 +659,7 @@ else()
   message("Building with Qhull explicitly disabled")
 endif()
 
-if(NOT ENABLE_MULTITHREADED_BLAS)
+if(ENABLE_FORCE_SINGLETHREAD_BLAS)
   find_library(DL_LIB NAMES dl)
   set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
     check_library_exists(dl dlsym "" HAVE_DLSYM)
@@ -686,7 +686,7 @@ message(STATUS "  ENABLE_OPENMP: ${ENABLE_OPENMP}")
 message(STATUS "  ENABLE_SUPERLU: ${ENABLE_SUPERLU}")
 message(STATUS "  ENABLE_MUMPS: ${ENABLE_MUMPS}")
 message(STATUS "  ENABLE_QHULL: ${ENABLE_QHULL}")
-message(STATUS "  ENABLE_MULTITHREADED_BLAS: ${ENABLE_MULTITHREADED_BLAS}")
+message(STATUS "  ENABLE_FORCE_SINGLETHREAD_BLAS: ${ENABLE_FORCE_SINGLETHREAD_BLAS}")
 message(STATUS "GetFEM version ${GETFEM_VERSION}")
 
 # Generate configuration header files for gmm and getfem
