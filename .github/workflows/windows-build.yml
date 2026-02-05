@@ -25,11 +25,11 @@ jobs:
     - name: Intall Intel Fortran Essentials
       shell: pwsh
       run: |
-        $URL1 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/79e069e4-f844-43df-8d73-3674c024b043/intel-fortran-compiler-2025.3.1.15_offline.exe"
-        $URL3 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae5e7015-6604-4fa2-804f-596f675804cc/intel-onemkl-2025.3.0.460_offline.exe"
+        $URL1 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/039121f2-d488-4bc1-a5bb-97528e3a4b86/intel-fortran-compiler-2025.3.2.26_offline.exe"
+        $URL2 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae472ff5-aa01-4a72-a452-ce7b559ef041/intel-onemkl-2025.3.1.10_offline.exe"
         $TempDir = $env:TEMP
         curl.exe --url $URL1 --retry 5 --retry-delay 5 --output "$TempDir\intel-fortran-compiler.exe"
-        curl.exe --url $URL3 --retry 5 --retry-delay 5 --output "$TempDir\intel-onemkl.exe"
+        curl.exe --url $URL2 --retry 5 --retry-delay 5 --output "$TempDir\intel-onemkl.exe"
         Start-Process -Wait -FilePath "$TempDir\intel-fortran-compiler.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
         Start-Process -Wait -FilePath "$TempDir\intel-onemkl.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
 
@@ -120,9 +120,10 @@ jobs:
     - name: Copy dependencies
       shell: cmd
       run: |
-        echo "Copying libifcoremd.dll and libmmd.dll"
-        copy "C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\bin\libifcoremd.dll" C:\opt\lib\site-packages\getfem\
-        copy "C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\bin\libmmd.dll"      C:\opt\lib\site-packages\getfem\
+        echo "Copying libifcoremd.dll, libmmd.dll, svml_dispmd.dll"
+        copy "%CMPLR_ROOT%\bin\libifcoremd.dll" C:\opt\lib\site-packages\getfem\
+        copy "%CMPLR_ROOT%\bin\libmmd.dll"      C:\opt\lib\site-packages\getfem\
+        copy "%CMPLR_ROOT%\bin\svml_dispmd.dll" C:\opt\lib\site-packages\getfem\
 
     - name: Upload built libraries as artifact
       uses: actions/upload-artifact@v4
