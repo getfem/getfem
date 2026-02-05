@@ -52,7 +52,9 @@ jobs:
           -G Ninja ^
           -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" ^
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" ^
-          -DCMAKE_Fortran_COMPILER=ifx
+          -DCMAKE_Fortran_COMPILER=ifx ^
+          -DCMAKE_Fortran_STANDARD_LIBRARIES="" ^
+          -DMKL_LINK=static
         cmake --build build
         cmake --install build
         cd ..
@@ -81,7 +83,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5  # Official action for Python setup
       with:
-        python-version: '3.12'
+        python-version: '3.14'
     - name: Install numpy
       shell: cmd
       run: |
@@ -101,32 +103,30 @@ jobs:
         cmake -B build ^
           -G Ninja ^
           -DENABLE_PYTHON=ON ^
+          -DBUILD_SHARED_LIBS=OFF ^
           -DGENERATE_GETFEM_IM_LIST_H=OFF ^
-          -DENABLE_MULTITHREADED_BLAS=ON ^
+          -DENABLE_FORCE_SINGLETHREAD_BLAS=OFF ^
           -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON ^
           -DMUMPS_LIB_DIR="${{ env.INSTALL_PREFIX }}\lib" ^
           -DMUMPS_INC_DIR="${{ env.INSTALL_PREFIX }}\include" ^
+          -DQHULL_LIB=qhullstatic_r ^
           -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" ^
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" ^
-          -DBLA_VENDOR=Intel10_64lp_seq
+          -DBLA_VENDOR=Intel10_64lp_seq ^
+          -DBLA_STATIC=ON
         cmake --build build
         cmake --install build
 
-    - name: Verify installations
+    - name: Copy dependencies
       shell: cmd
       run: |
-        echo "Verifying installed libraries..."
-        dir "C:\opt\lib"
-        dir "C:\opt\bin"
-        echo "Build completed successfully!"
+        echo "Copying libifcoremd.dll and libmmd.dll"
+        copy "C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\bin\libifcoremd.dll" C:\opt\lib\site-packages\getfem\
+        copy "C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\bin\libmmd.dll"      C:\opt\lib\site-packages\getfem\
 
     - name: Upload built libraries as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: getfem-windows-build
+        name: getfem-python-interface-windows
         path: |
-          C:\opt\bin\getfem.dll
-          C:\opt\lib\getfem.lib
           C:\opt\lib\site-packages
-          C:\opt\include\getfem
-          C:\opt\include\gmm
