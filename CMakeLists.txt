@@ -498,9 +498,6 @@ endif()
 
 # Build python interface
 if(ENABLE_PYTHON)
-  if(NOT BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "Building the python interface requires shared libraries")
-  else()
     set(INTERFACE_SOURCES
         interface/src/getfem_interface.h
         interface/src/getfem_interface.cc
@@ -613,7 +610,6 @@ print(sysconfig.get_path('purelib', scheme, vars={'base': '${CMAKE_INSTALL_PREFI
     message("Python3_SITELIB = ${Python3_SITELIB} (not used)")
     message("PYTHON_SITE_PACKAGES = ${PYTHON_SITE_PACKAGES} (used)")
     message("Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS} (used)")
-  endif()
 endif()
 
 if(ENABLE_OCTAVE)
@@ -643,17 +639,17 @@ set(GMM_USES_BLAS 1)
 set(GMM_USES_LAPACK 1)
 
 if(ENABLE_QHULL)
-#  find_library(QHULL_R_LIB qhull_r)
-#  message(STATUS "QHULL_R_LIB = ${QHULL_R_LIB}")
-#  target_link_libraries(libgetfem PRIVATE ${QHULL_R_LIB})
-  find_package(Qhull REQUIRED COMPONENTS qhull_r)
+  # Set default to qhull_r, user can override with any Qhull library name
+  set(QHULL_LIB "qhull_r" CACHE STRING "Qhull library name to link against")
+  message(STATUS "Looking for Qhull library: ${QHULL_LIB}")
+  find_package(Qhull REQUIRED COMPONENTS ${QHULL_LIB})
   if(Qhull_FOUND)
     set(GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H 1)
-    target_link_libraries(libgetfem PRIVATE Qhull::qhull_r)
-    message(STATUS "Building with Qhull support")
+    target_link_libraries(libgetfem PRIVATE Qhull::${QHULL_LIB})
+    message(STATUS "Building with Qhull support (${QHULL_LIB})")
   else()
     set(ENABLE_QHULL OFF)
-    message(WARNING "Building without Qhull support")
+    message(WARNING "Qhull not found. Building without Qhull support")
   endif()
 else()
   message("Building with Qhull explicitly disabled")
