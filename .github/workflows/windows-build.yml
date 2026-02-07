@@ -41,7 +41,6 @@ jobs:
         echo store CMPLR_ROOT=%CMPLR_ROOT%
         echo MKLROOT=%MKLROOT%>> "%GITHUB_ENV%"
         echo CMPLR_ROOT=%CMPLR_ROOT%>> "%GITHUB_ENV%"
-        REM Build MUMPS with Intel Fortran
         echo Building MUMPS...
         git clone https://github.com/scivision/mumps.git
         cd mumps
@@ -124,6 +123,11 @@ jobs:
         copy "%CMPLR_ROOT%\bin\libifcoremd.dll" C:\opt\lib\site-packages\getfem\
         copy "%CMPLR_ROOT%\bin\libmmd.dll"      C:\opt\lib\site-packages\getfem\
         copy "%CMPLR_ROOT%\bin\svml_dispmd.dll" C:\opt\lib\site-packages\getfem\
+        REM apply a brilliant hack to workaround some not so brilliant
+        REM *stochastic* dll load fails in post-2024 releases of libmmd.dll
+        set tt=C:\opt\lib\site-packages\getfem\__init__.py
+        set qq=__import__(\"ctypes\").CDLL(__import__(\"os\").path.join(__import__(\"os\").path.dirname(__import__(\"os\").path.abspath(__file__)),\"libmmd.dll\"))\n
+        python -c "lines=open(r'%tt%').readlines(); lines.insert(-1, '%qq%'); open(r'%tt%', 'w').writelines(lines)"
 
     - name: Upload built libraries as artifact
       uses: actions/upload-artifact@v4
