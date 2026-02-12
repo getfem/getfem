@@ -57,6 +57,18 @@ namespace getfem {
     return s2;
   }
 
+  template<class VECT> VECT remove_dof_unused(VECT V, dal::bit_vector dof_used, size_type Q) {
+    size_type cnt = 0;
+    for (dal::bv_visitor d(dof_used); !d.finished(); ++d, ++cnt ) {
+      if (cnt !=d)
+        for (size_type q=0; q < Q; ++q) {
+          V[cnt*Q + q] = V[d*Q + q];
+        }
+    }
+    V.resize(Q*dof_used.card());
+    return V;
+  }
+
   /** @brief VTK/VTU export.
 
       export class to VTK/VTU file format
@@ -211,15 +223,9 @@ namespace getfem {
       if (&mf != &(*pmf)) {
         interpolation(mf, *pmf, U, V);
       } else gmm::copy(U,V);
-      size_type cnt = 0;
-      for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d, ++cnt) {
-        if (cnt != d)
-          for (size_type q=0; q < Q; ++q) {
-            V[cnt*Q + q] = V[d*Q + q];
-          }
-      }
-      V.resize(Q*pmf_dof_used.card());
-      write_dataset_(V, name, qdim);
+      std::vector<scalar_type> W(Q*pmf_dof_used.card());
+      gmm::copy(remove_dof_unused(V, pmf_dof_used, Q), W);
+      write_dataset_(W, name, qdim);
     }
   }
 
