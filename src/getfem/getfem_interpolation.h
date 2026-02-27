@@ -56,18 +56,16 @@ namespace getfem {
   class mesh_trans_inv : public bgeot::geotrans_inv {
 
   protected :
-    typedef std::set<size_type>::const_iterator set_iterator;
-    typedef std::map<size_type,size_type>::const_iterator map_iterator;
-
     const mesh &msh;
-    std::vector<std::set<size_type> > pts_cvx;
+    std::vector<std::set<size_type> > pts_in_cvx;
     std::vector<base_node> ref_coords;
+    // optional renumbering of point indices to point ids
     std::map<size_type,size_type> ids;
 
   public :
 
     size_type nb_points_on_convex(size_type i) const
-    { return pts_cvx[i].size(); }
+    { return pts_in_cvx[i].size(); }
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
     size_type point_on_convex(size_type cv, size_type i) const;
     const std::vector<base_node> &reference_coords() const { return ref_coords; }
