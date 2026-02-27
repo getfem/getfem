@@ -191,7 +191,7 @@ namespace bgeot {
     }
 
     /// Number of points.
-    size_type nb_points(void) const { return tree.nb_points(); }
+    size_type nb_points() const { return tree.nb_points(); }
     /// Add point p to the list of points.
     size_type add_point(base_node p) { return tree.add_point(p); }
     void add_point_with_id(base_node p,size_type id)

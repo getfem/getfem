@@ -505,9 +505,9 @@ namespace getfem {
     newnode->adopt_child(pnode);
   }
 
-  bool sub_tree_are_equal
-  (const pga_tree_node pnode1, const pga_tree_node pnode2,
-   const ga_workspace &workspace, int version) {
+  bool sub_tree_are_equal(const pga_tree_node pnode1,
+                          const pga_tree_node pnode2,
+                          const ga_workspace &workspace, int version) {
 
     size_type ntype1 = pnode1->node_type;
     if (ntype1 == GA_NODE_ZERO) ntype1 = GA_NODE_CONSTANT;

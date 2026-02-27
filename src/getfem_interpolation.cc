@@ -45,7 +45,7 @@ namespace getfem {
   size_type mesh_trans_inv::point_on_convex(size_type cv, size_type i) const {
     set_iterator it = pts_cvx[cv].begin();
     for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j) {}
-    GMM_ASSERT1(it != pts_cvx[cv].end(), "internal error");    
+    GMM_ASSERT1(it != pts_cvx[cv].end(), "internal error");
     return *it;
   }
 
@@ -74,25 +74,29 @@ namespace getfem {
         if (mult > scalar_type(1) && !(cv_on_bound.is_in(j))) continue;
         bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
         bounding_box(min, max, msh.points_of_convex(j), pgt);
-        for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
+        for (size_type k=0; k < min.size(); ++k) {
+          min[k] -= EPS;
+          max[k] += EPS;
+        }
         if (extrapolation == 2) {
           if (mult == scalar_type(1))
             for (short_type f = 0; f < msh.nb_faces_of_convex(j); ++f) {
               size_type neighbor_cv = msh.neighbor_of_convex(j, f);
               if (!all_convexes && neighbor_cv != size_type(-1)) {
                 // check if the neighbor is also contained in rg_source ...
-                if (!rg_source.is_in(neighbor_cv)) 
+                if (!rg_source.is_in(neighbor_cv))
                   cv_on_bound.add(j); // ... if not, treat the element as a boundary one
-              }
-              else // boundary element of the overall mesh
+              } else // boundary element of the overall mesh
                 cv_on_bound.add(j);
             }
           if (cv_on_bound.is_in(j)) {
             scalar_type h = scalar_type(0);
             for (size_type k=0; k < min.size(); ++k)
               h = std::max(h, max[k] - min[k]);
-            for (size_type k=0; k < min.size(); ++k)
-              { min[k]-=mult*h; max[k]+=mult*h; }
+            for (size_type k=0; k < min.size(); ++k) {
+              min[k] -= mult*h;
+              max[k] += mult*h;
+            }
           }
         }
         points_in_box(boxpts, min, max);
@@ -107,10 +111,12 @@ namespace getfem {
                                       projection_into_element);
             bool toadd = extrapolation || gicisin;
             double isin = pgt->convex_ref()->is_in(pt_ref);
-            
+
             if (toadd && !(npt[ind])) {
-              if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
-              else toadd = false;
+              if (isin < dist[ind])
+                pts_cvx[cvx_pts[ind]].erase(ind);
+              else
+                toadd = false;
             }
             if (toadd) {
 //               if (mult > 1.5) {
@@ -118,7 +124,8 @@ namespace getfem {
 //                      << " cv = " << j << " mult = " << mult << endl;
 //               }
               ref_coords[ind] = pt_ref;
-              dist[ind] = isin; cvx_pts[ind] = j;
+              dist[ind] = isin;
+              cvx_pts[ind] = j;
               pts_cvx[j].insert(ind);
               npt.sup(ind);
             }
