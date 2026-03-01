@@ -69,6 +69,46 @@ namespace getfem {
     std::vector<double> dist(nbpts);
     dal::bit_vector remaining_pts, cv_on_bound;
     remaining_pts.add(0, nbpts);
+
+    bool identity_map = all_convexes && (nbpts == msh.nb_points());
+
+    // check for any overlapping mesh points
+    dal::bv_visitor ip(msh.points_index()); // used only for identity map
+    for (const bgeot::index_node_pair &ind_node : tree.points()) {
+      size_type mesh_pt(-1);
+      if (identity_map) {
+        GMM_ASSERT1(!ip.finished(), "internal error, not enouph points in mesh?");
+        base_node diff(msh.points()[ip]);
+        gmm::add(gmm::scaled(ind_node.n, -1.0), diff);
+        if (gmm::vect_norm2(diff) < EPS) {
+          mesh_pt = ip;
+          ++ip;
+        } else // give up identity map
+          identity_map = false;
+      }
+      if (!identity_map)
+        mesh_pt = msh.search_point(ind_node.n, 1e-6); // check within a tiny radius
+      if (mesh_pt != size_type(-1)) {
+        size_type cv = msh.first_convex_of_point(mesh_pt);
+        if (cv != size_type(-1)) {
+          bgeot::pgeometric_trans pgt = msh.trans_of_convex(cv);
+          gic.init(msh.points_of_convex(cv), pgt);
+          base_node pt_ref;
+          bool converged; // following invert should be trivial, converge in 1 iter
+          if (gic.invert(ind_node.n, pt_ref, converged, EPS,
+                         projection_into_element)) { // this should always be true
+            double isin = pgt->convex_ref()->is_in(pt_ref);
+            size_type ind = ind_node.i;
+            pts_in_cvx[cv].insert(ind); // output
+            ref_coords[ind] = pt_ref;   // output
+            cvx_of_pt[ind] = cv;        // ephemeral
+            dist[ind] = isin;           // ephemeral, should be zero or negative
+            remaining_pts.sup(ind);     // ephemeral
+          }
+        }
+      }
+    }
+
     scalar_type mult = scalar_type(1);
     do {
       for (dal::bv_visitor j(rg_source.index()); !j.finished(); ++j) {
