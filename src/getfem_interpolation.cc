@@ -60,12 +60,13 @@ namespace getfem {
 
     size_type nbpts = nb_points();
     size_type nbcvx = msh.nb_allocated_convex();
-    ref_coords.resize(nbpts);
     pts_in_cvx.clear();
     pts_in_cvx.resize(nbcvx);
+    ref_coords.resize(nbpts);
 
-    std::vector<double> dist(nbpts);
+    // ephemeral data containters
     std::vector<size_type> cvx_of_pt(nbpts);
+    std::vector<double> dist(nbpts);
     dal::bit_vector remaining_pts, cv_on_bound;
     remaining_pts.add(0, nbpts);
     scalar_type mult = scalar_type(1);
@@ -129,8 +130,8 @@ namespace getfem {
 //               }
               pts_in_cvx[j].insert(ind); // output
               ref_coords[ind] = pt_ref;  // output
-              dist[ind] = isin;          // ephemeral
               cvx_of_pt[ind] = j;        // ephemeral
+              dist[ind] = isin;          // ephemeral
               remaining_pts.sup(ind);    // ephemeral
             }
           }

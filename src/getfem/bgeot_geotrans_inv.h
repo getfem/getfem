@@ -153,7 +153,9 @@ namespace bgeot {
     if (geotrans_changed) {
       P = pgt->structure()->dim();
       pc.resize(pgt->nb_points() , P);
-      K.resize(N,P); B.resize(N,P); CS.resize(P,P);
+      K.resize(N,P);
+      B.resize(N,P);
+      CS.resize(P,P);
       G.resize(N, pgt->nb_points());
     }
     vectors_to_base_matrix(G, nodes);
@@ -164,10 +166,8 @@ namespace bgeot {
       }
       // computation of the pseudo inverse
       update_B();
-    } else {
-      if (pgt->complexity() > 1)
-        update_linearization();
-    }
+    } else if (pgt->complexity() > 1)
+      update_linearization();
   }
 
 
@@ -182,7 +182,7 @@ namespace bgeot {
     scalar_type EPS;
     geotrans_inv_convex gic;
   public :
-    void clear(void) { tree.clear(); }
+    void clear() { tree.clear(); }
     /// Add the points contained in c to the list of points.
     template<class CONT> void add_points(const CONT &c) {
       tree.reserve(std::distance(c.begin(),c.end()));
@@ -208,7 +208,7 @@ namespace bgeot {
     /** Search all the points in the convex cv, which is the transformation
      *  of the convex cref via the geometric transformation pgt.
      *
-     *  IMPORTANT : It is assumed that the whole convex is include in the
+     *  IMPORTANT : It is assumed that the whole convex is included in the
      *  minmax box of its nodes times a factor 1.2. If the transformation is
      *  linear, the factor is 1.0.
      *

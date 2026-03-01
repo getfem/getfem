@@ -59,8 +59,8 @@ namespace bgeot {
       base_small_vector v;
       bool operator()(size_type i1, size_type i2) const;
       component_comp(const dal::dynamic_tas<base_node> &vbn_,
-		     const base_node &c_, unsigned dim);
-	  component_comp() : vbn(0), c(0) {}
+                     const base_node &c_, unsigned dim);
+      component_comp() : vbn(0), c(0) {}
     };
     typedef std::set<size_type, component_comp> sorter;
 
@@ -69,15 +69,15 @@ namespace bgeot {
     scalar_type eps, prec_factor, max_radius;
     unsigned dim_;
 
-    void add_sorter(void) const;
+    void add_sorter() const;
 
   public :
 
     /// reset the array, remove all points
-    void clear(void);
+    void clear();
 
     /** Search a node in the array. return its index if it exists
-	or size_type(-1) otherwise.
+        or size_type(-1) otherwise.
     */
     size_type search_node(const base_node &pt, const scalar_type radius=0) const;
     /** Add a point to the array or use an existing point, located within
@@ -92,8 +92,8 @@ namespace bgeot {
     size_type add(const base_node &pt) { return add_node(pt); }
     void sup_node(size_type i);
     void sup(size_type i) { sup_node(i); }
-    void resort(void) { sorters = std::vector<sorter>(); }
-    dim_type dim(void) const { return dim_type(dim_); }
+    void resort() { sorters = std::vector<sorter>(); }
+    dim_type dim() const { return dim_type(dim_); }
     void translation(const base_small_vector &V);
     void transformation(const base_matrix &M);
 

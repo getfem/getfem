@@ -97,8 +97,7 @@ namespace bgeot
       gmm::mult(gmm::transposed(K), K, CS);
       bgeot::lu_inverse(&(*(CS.begin())), P);
       gmm::mult(K, CS, B);
-    }
-    else {
+    } else {
       // L'inversion peut être optimisée par le non calcul global de B
       // et la resolution d'un système linéaire.
       base_matrix KT(K.nrows(), K.ncols());
@@ -178,7 +177,8 @@ namespace bgeot
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
-                                          base_node& x, scalar_type IN_EPS,
+                                          base_node& xref,
+                                          scalar_type IN_EPS,
                                           bool &converged,
                                           bool /* throw_except */,
                                           bool project_into_element) {
@@ -200,19 +200,19 @@ namespace bgeot
       if (has_linearized_approx) {
 
         add(xreal, gmm::scaled(P_lin, -1.0), diff);
-        mult(K_ref_B_transp_lin, diff, x);
-        gmm::add(P_ref_lin, x);
+        mult(K_ref_B_transp_lin, diff, xref);
+        gmm::add(P_ref_lin, xref);
 
-        if (project_into_element) project_into_convex(x, pgt);
-        res0 = gmm::vect_dist2(pgt->transform(x, G), xreal);
+        if (project_into_element) project_into_convex(xref, pgt);
+        res0 = gmm::vect_dist2(pgt->transform(xref, G), xreal);
       }
 
-      if (res < res0) gmm::copy(x0_ref, x);
+      if (res < res0) gmm::copy(x0_ref, xref);
       if (res < IN_EPS)
-        x *= 0.999888783; // For pyramid element to avoid the singularity
+        xref *= 0.999888783; // For pyramid element to avoid the singularity
     }
     
-    add(pgt->transform(x, G), gmm::scaled(xreal, -1.0), diff);
+    add(pgt->transform(xref, G), gmm::scaled(xreal, -1.0), diff);
     scalar_type res = gmm::vect_norm2(diff);
     scalar_type res0 = std::numeric_limits<scalar_type>::max();
     scalar_type factor = 1.0;
@@ -223,28 +223,27 @@ namespace bgeot
         // relaxed convergence criterion depending on the size and position
         // of the real element
         converged = (res < gmm::mat_maxnorm(G) * IN_EPS/100.);
-        return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
+        return (pgt->convex_ref()->is_in(xref) < IN_EPS) && (res < IN_EPS);
       }
       if (res > res0) {
-        add(gmm::scaled(x0_ref, factor), x);
-        x0_real = pgt->transform(x, G);
+        add(gmm::scaled(x0_ref, factor), xref);
+        x0_real = pgt->transform(xref, G);
         add(x0_real, gmm::scaled(xreal, -1.0), diff);
         factor *= 0.5;
-      }
-      else {
+      } else {
         if (factor < 1.0-IN_EPS) factor *= 2.0;
         res0 = res;
       }
-      pgt->poly_vector_grad(x, pc);
+      pgt->poly_vector_grad(xref, pc);
       update_B();
       mult(transposed(B), diff, x0_ref);
-      add(gmm::scaled(x0_ref, -factor), x);
-      if (project_into_element) project_into_convex(x, pgt);
-      x0_real = pgt->transform(x, G);
+      add(gmm::scaled(x0_ref, -factor), xref);
+      if (project_into_element) project_into_convex(xref, pgt);
+      x0_real = pgt->transform(xref, G);
       add(x0_real, gmm::scaled(xreal, -1.0), diff);
       res = gmm::vect_norm2(diff);
     }
-    return (pgt->convex_ref()->is_in(x) < IN_EPS) && (res < IN_EPS);
+    return (pgt->convex_ref()->is_in(xref) < IN_EPS) && (res < IN_EPS);
   }
 
 }  /* end of namespace bgeot.                                             */

@@ -126,7 +126,8 @@ namespace bgeot {
       bool present;
       size_type i = mesh_structure::add_convex(pgt->structure(), ipts,
                                                &present);
-      gtab[i] = pgt; trans_exists[i] = true;
+      gtab[i] = pgt;
+      trans_exists[i] = true;
       return i;
     }
 
