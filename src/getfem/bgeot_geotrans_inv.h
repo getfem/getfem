@@ -138,8 +138,8 @@ namespace bgeot {
     bool invert_nonlin(const base_node& n, base_node& n_ref,
                        scalar_type IN_EPS, bool &converged, bool throw_except,
                        bool project_into_element);
-    void update_B();
-    void update_linearization();
+    bool update_B(); // returns true if successful
+    void update_linearization(); // TODO: return success state
 
     friend class geotrans_inv_convex_bfgs;
   };

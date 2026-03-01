@@ -91,11 +91,13 @@ namespace bgeot
            (gmm::vect_norm2(y) < IN_EPS);
   }
 
-  void geotrans_inv_convex::update_B() {
+  bool geotrans_inv_convex::update_B() {
     if (P != N) {
       pgt->compute_K_matrix(G, pc, K);
       gmm::mult(gmm::transposed(K), K, CS);
-      bgeot::lu_inverse(&(*(CS.begin())), P);
+      double det = bgeot::lu_inverse(&(*(CS.begin())), P, false);
+      if (det == 0)
+        return false;
       gmm::mult(K, CS, B);
     } else {
       // L'inversion peut être optimisée par le non calcul global de B
@@ -104,8 +106,12 @@ namespace bgeot
       pgt->compute_K_matrix(G, pc, KT);
       gmm::copy(gmm::transposed(KT), K);
       gmm::copy(K, B);
-      bgeot::lu_inverse(&(*(K.begin())), P); B.swap(K);
+      double det = bgeot::lu_inverse(&(*(K.begin())), P, false);
+      if (det == 0)
+        return false;
+      B.swap(K);
     }
+    return true;
   }
 
   class geotrans_inv_convex_bfgs {
@@ -182,9 +188,9 @@ namespace bgeot
                                           bool &converged,
                                           bool /* throw_except */,
                                           bool project_into_element) {
-    converged = true;
-    base_node x0_ref(P), diff(N);
-
+    converged = false;
+    base_node x0_ref(P), x0_real(N), diff(N);
+    scalar_type maxnormG = gmm::mat_maxnorm(G); // element size
     { // find initial guess
       x0_ref = pgt->geometric_nodes()[0];
       scalar_type res = gmm::vect_dist2(mat_col(G, 0), xreal);
@@ -193,6 +199,18 @@ namespace bgeot
         if (res0 < res) {
           res = res0;
           x0_ref = pgt->geometric_nodes()[j];
+        }
+      }
+      if (res < maxnormG * IN_EPS/100.) {
+        gmm::copy(x0_ref, xref);
+        if (project_into_element) project_into_convex(xref, pgt);
+        x0_real = pgt->transform(xref, G);
+        add(x0_real, gmm::scaled(xreal, -1.0), diff);
+        res = gmm::vect_norm2(diff);
+        if (res < maxnormG * IN_EPS/100. &&
+            pgt->convex_ref()->is_in(xref) < IN_EPS) {
+          converged = true;
+          return true;
         }
       }
 
@@ -208,7 +226,7 @@ namespace bgeot
       }
 
       if (res < res0) gmm::copy(x0_ref, xref);
-      if (res < IN_EPS)
+      if (res < IN_EPS)      // TODO: fix this too intrusive hack
         xref *= 0.999888783; // For pyramid element to avoid the singularity
     }
     
@@ -217,13 +235,12 @@ namespace bgeot
     scalar_type res0 = std::numeric_limits<scalar_type>::max();
     scalar_type factor = 1.0;
 
-    base_node x0_real(N);
-    while (res > IN_EPS/100.) {
-      if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) {
+    while (res >= maxnormG * IN_EPS/100.) {
+      if ((gmm::abs(res - res0) < IN_EPS/100.) || (factor < IN_EPS)) { // stalled?
         // relaxed convergence criterion depending on the size and position
         // of the real element
-        converged = (res < gmm::mat_maxnorm(G) * IN_EPS/100.);
-        return (pgt->convex_ref()->is_in(xref) < IN_EPS) && (res < IN_EPS);
+        converged = (res < maxnormG * IN_EPS/100.);
+        return converged && (pgt->convex_ref()->is_in(xref) < IN_EPS);
       }
       if (res > res0) {
         add(gmm::scaled(x0_ref, factor), xref);
@@ -235,7 +252,10 @@ namespace bgeot
         res0 = res;
       }
       pgt->poly_vector_grad(xref, pc);
-      update_B();
+      if (!update_B()) {
+        converged = false;
+        return false;
+      }
       mult(transposed(B), diff, x0_ref);
       add(gmm::scaled(x0_ref, -factor), xref);
       if (project_into_element) project_into_convex(xref, pgt);
@@ -243,7 +263,8 @@ namespace bgeot
       add(x0_real, gmm::scaled(xreal, -1.0), diff);
       res = gmm::vect_norm2(diff);
     }
-    return (pgt->convex_ref()->is_in(xref) < IN_EPS) && (res < IN_EPS);
+    converged = true;
+    return (pgt->convex_ref()->is_in(xref) < IN_EPS);
   }
 
 }  /* end of namespace bgeot.                                             */

@@ -225,7 +225,7 @@ namespace bgeot {
     case 1:
       {
         scalar_type det = *A;
-        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        GMM_ASSERT1(!doassert || det != scalar_type(0), "Non invertible matrix");
         *A = scalar_type(1)/det;
         return det;
       }
@@ -233,7 +233,7 @@ namespace bgeot {
       {
         scalar_type a = *A, b = A[2], c = A[1], d = A[3];
         scalar_type det = a * d - b * c;
-        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        GMM_ASSERT1(!doassert || det != scalar_type(0), "Non invertible matrix");
         *A++ =  d/det;  *A++ /= -det; *A++ /= -det;  *A =  a/det;
         return det;
       }
@@ -242,7 +242,7 @@ namespace bgeot {
         scalar_type a0 = A[4]*A[8] - A[5]*A[7], a1 = A[5]*A[6] - A[3]*A[8];
         scalar_type a2 = A[3]*A[7] - A[4]*A[6];
         scalar_type det =  A[0] * a0 + A[1] * a1 + A[2] * a2;
-        GMM_ASSERT1(det != scalar_type(0), "Non invertible matrix");
+        GMM_ASSERT1(!doassert || det != scalar_type(0), "Non invertible matrix");
         scalar_type a3 = (A[2]*A[7] - A[1]*A[8]), a6 = (A[1]*A[5] - A[2]*A[4]);
         scalar_type a4 = (A[0]*A[8] - A[2]*A[6]), a7 = (A[2]*A[3] - A[0]*A[5]);
         scalar_type a5 = (A[1]*A[6] - A[0]*A[7]), a8 = (A[0]*A[4] - A[1]*A[3]);
@@ -258,8 +258,8 @@ namespace bgeot {
         std::copy(A, A+NN, __aux1().begin());
         __ipvt_aux().resize(N);
         size_type info = lu_factor(&(*(__aux1().begin())), __ipvt_aux(), N);
-        if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "
-                                  << info);
+        GMM_ASSERT1(!doassert || !info, "Non invertible matrix, pivot = "
+                                        << info);
         if (!info) lu_inverse(&(*(__aux1().begin())), __ipvt_aux(), A, N);
         return lu_det(&(*(__aux1().begin())), __ipvt_aux(), N);
       }
