@@ -41,7 +41,7 @@
 
 #include "gmm_kernel.h"
 
-
+#include <cstdint>
 typedef int int_t;
 
 /* because slu_util.h defines TRUE, FALSE, EMPTY ... */
