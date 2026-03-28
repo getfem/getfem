@@ -38,9 +38,7 @@ This is the kernel of getfem.
 */
 #pragma once
 
-#ifdef GETFEM_HAS_OPENMP
-  #include <atomic>
-#endif
+#include <atomic>
 #include <memory>
 #include <set>
 #include <vector>
@@ -430,14 +428,9 @@ namespace getfem
 
     omp_distribute<std::set<size_type>, true_thread_policy> partitions;
     omp_distribute<size_type, true_thread_policy> current_partition;
-#ifdef GETFEM_HAS_OPENMP
     std::atomic<size_type> nb_user_threads;
-    std::atomic<bool> partitions_updated{false};
-#else
-    size_type nb_user_threads;
-    bool partitions_updated{false};
-#endif
     thread_behaviour behaviour = thread_behaviour::partition_threads;
+    std::atomic<bool> partitions_updated{false};
     size_type nb_partitions;
     bool partitions_set_by_user = false;
 
