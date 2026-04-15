@@ -166,7 +166,7 @@ md.add_initialized_data('nu', nu)
 md.add_initialized_data('alpha_th', alpha_th)
 md.add_initialized_data('T0', T0)
 md.add_macro('sigma',
-             'E/(1+nu)*( nu/(1-nu)*(Div(u)-3*alpha_th*T)*Id(2)'
+             'E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'
                        '+(Sym(Grad(u))-alpha_th*T*Id(2)) )')
 md.add_linear_term(mim, 't*sigma:Grad(Test_u)')
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
