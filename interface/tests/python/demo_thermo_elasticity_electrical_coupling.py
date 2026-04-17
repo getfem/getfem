@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C)  2015-2020 Yves Renard.
+# Copyright (C) 2015-2020 Yves Renard.
 #
 # This file is a part of GetFEM
 #
@@ -70,9 +70,10 @@ kappa = 4.         # Thermal conductivity (W/(cm K))
 D = 10.            # Heat transfer coefficient (W/(K cm^2))
 air_temp = 20.     # Temperature of the air in oC.
 alpha_th = 16.6E-6 # Thermal expansion coefficient (/K).
-T0 = 20.           # Reference temperature in oC.
-rho_0 = 1.754E-8   # Resistance temperature coefficient at T0 = 20oC
+T0 = 20.           # Reference temperature in deg C.
+rho_0 = 1.754E-8   # Resistance temperature coefficient at T0 = 20 deg C
 alpha = 0.0039     # Second resistance temperature coefficient.
+
 
 #
 # Numerical parameters
@@ -83,8 +84,10 @@ elements_degree = 2       # Degree of the finite element methods
 export_mesh = False       # Export the mesh after mesh generation or not
 solve_in_two_steps = 2    # Solve the elasticity problem separately (1)
                           # or in a coupled way (0) or both and compare (2)
+
+
 #
-# Mesh generation. Meshes can also been imported from several formats.
+# Mesh generation. Meshes can also be imported in various formats.
 #
 
 mo1 = gf.MesherObject('rectangle', [0., 0.], [100., 25.])
@@ -97,6 +100,7 @@ mo  = gf.MesherObject('set minus', mo1, mo5)
 print('Mesh generation')
 gf.util('trace level', 2)   # No trace for mesh generation
 mesh = gf.Mesh('generate', mo, h, 2)
+
 
 #
 # Boundary selection
@@ -113,7 +117,6 @@ fb8 = mesh.outer_faces_in_ball([75., 12.5], 8.+0.01*h) # Right hole boundary
 
 RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
 HOLE1_BOUND = 6; HOLE2_BOUND = 7; HOLE3_BOUND = 8;
-
 mesh.set_region( RIGHT_BOUND, fb2)
 mesh.set_region(  LEFT_BOUND, fb3)
 mesh.set_region(   TOP_BOUND, fb4)
@@ -126,10 +129,8 @@ mesh.region_subtract( RIGHT_BOUND, HOLE_BOUND)
 mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
 mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
 mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
-
 mesh.region_merge(HOLE1_BOUND, HOLE2_BOUND)
 mesh.region_merge(HOLE1_BOUND, HOLE3_BOUND)
-
 np.testing.assert_array_equal(mesh.region(HOLE_BOUND), mesh.region(HOLE1_BOUND))
 
 if (export_mesh):
@@ -137,8 +138,9 @@ if (export_mesh):
     print('\nYou can view the mesh for instance with');
     print('mayavi2 -d mesh.vtu -f ExtractEdges -m Surface \n');
 
+
 #
-# Definition of finite elements methods and integration method
+# Definition of finite element methods and integration method
 #
 
 mfu = gf.MeshFem(mesh, 2)  # Finite element for the elastic displacement
@@ -160,7 +162,7 @@ md.add_fem_variable('T', mft)   # Temperature
 md.add_fem_variable('V', mft)   # Electric potential
 md.add_initialized_data('t', t)
 
-# Membrane elastic deformation
+# Membrane elastic deformation and thermal expansion
 md.add_initialized_data('E', E)
 md.add_initialized_data('nu', nu)
 md.add_initialized_data('alpha_th', alpha_th)
@@ -191,6 +193,7 @@ md.add_linear_term(mim, 't*D*(T-T_air).Test_T', TOP_BOUND)
 md.add_linear_term(mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND)
 # Joule heating term
 md.add_nonlinear_term(mim, '-t/rho * Norm_sqr(Grad(V))*Test_T')
+
 
 #
 # Model solve
