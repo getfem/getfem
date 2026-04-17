@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Yves Renard
+# Copyright (C) 2015-2026 Yves Renard
 #
 # This file is a part of GetFEM
 #
@@ -24,7 +24,7 @@ $SIG{INT} = 'catch';
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 
 print TMPF <<""
-epsilon = 1.;
+t = 1.;
 E = 21E6;
 nu = 0.3;
 F = 100E2;
@@ -35,7 +35,7 @@ alpha_th = 16.6E-6;
 T0 = 20.;
 rho_0 = 1.754E-8;
 alpha = 0.0039;
-h = 4.;
+h = 2.;
 elements_degree = 2;
 export_mesh = 1;
 solve_in_two_steps = 1;
@@ -49,7 +49,7 @@ while (<F>) {
   #print $_; #uncomment this line in case of problem..
   if ($_ =~ /L2 norm of temperature/) {
     ($a, $b) = split('=', $_);
-    if (abs($b - 964) > 2) { print "\nWrong temperature norm\n"; $er = 1; }
+    if (abs($b - 964) > 2) { print "\nWrong temperature norm\n"; print $b; $er = 1; }
   }
 }
 close(F); if ($?) { `rm -f $tmp`; exit(1); }

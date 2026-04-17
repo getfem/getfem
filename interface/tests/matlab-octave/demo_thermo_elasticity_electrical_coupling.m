@@ -1,4 +1,4 @@
-% Copyright (C) 2015-2020 Yves Renard.
+% Copyright (C) 2015-2026 Yves Renard.
 %
 % This file is a part of GetFEM
 %
@@ -37,9 +37,9 @@ clear all;
 % Electric problem: The potential is prescribed to be 0V at the right
 %   boundary and 0.1V at the left boundary.
 % Thermal problem: A thermal insulation condition is prescribed at the
-%   left and hole boudnaries. The remaining boundary and the plate front
-%   and back surfaces are supposed to be transfer heat by convection
-%   with respect to the surrounding air at 20 deg C.
+%   left, right, and hole boudnaries. The remaining boundary and the
+%   plate front and back surfaces are supposed to transfer heat by
+%   convection with respect to the surrounding air at 20 deg C.
 % Coupling terms:
 %   - Joule heating: source term  1/rho ||Grad_V||^2
 %   - Dependance of the thermal resistivity on temperature :
@@ -63,11 +63,11 @@ nu = 0.3;           % Poisson ratio
 F = 100E2;          % Force density at the right boundary (N/cm^2)
 kappa = 4.;         % Thermal conductivity (W/(cm K))
 D = 10;             % Heat transfer coefficient (W/(K cm^2))
-air_temp = 20;      % Temperature of the air in oC.
-alpha_th = 16.6E-6; % Thermal expansion coefficient (/K).
-T0 = 20;            % Reference temperature in deg C.
-rho_0 = 1.754E-8;   % Resistance temperature coefficient at T0 = 20 degC
-alpha = 0.0039;     % Second resistance temperature coefficient.
+air_temp = 20;      % Temperature of the air in deg C
+alpha_th = 16.6E-6; % Thermal expansion coefficient (1/K)
+T0 = 20;            % Reference temperature in deg C
+rho_0 = 1.754E-8;   % Resistivity at T0
+alpha = 0.0039;     % Resistivity-temperature coefficient
 
 
 %
@@ -189,9 +189,9 @@ if (solve_in_two_steps)
   gf_model_set(md, 'disable_variable', 'u');
   disp(['First problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-  gf_model_set(md, 'enable variable', 'u');
-  gf_model_set(md, 'disable variable', 'T');
-  gf_model_set(md, 'disable variable', 'V');
+  gf_model_set(md, 'enable_variable', 'u');
+  gf_model_set(md, 'disable_variable', 'T');
+  gf_model_set(md, 'disable_variable', 'V');
   disp(['Second problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 else

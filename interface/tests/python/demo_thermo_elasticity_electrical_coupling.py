@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2015-2020 Yves Renard.
+# Copyright (C) 2015-2026 Yves Renard.
 #
 # This file is a part of GetFEM
 #
@@ -42,9 +42,9 @@ import getfem as gf
 # Electric problem: The potential is prescribed to be 0V at the right
 #   boundary and 0.1V at the left boundary.
 # Thermal problem: A thermal insulation condition is prescribed at the
-#   left and hole boudnaries. The remaining boundary and the plate front
-#   and back surfaces are supposed to be transfer heat by convection
-#   with respect to the surrounding air at 20 deg C.
+#   left, right, and hole boudnaries. The remaining boundary and the
+#   plate front and back surfaces are supposed to transfer heat by
+#   convection with respect to the surrounding air at 20 deg C.
 # Coupling terms:
 #   - Joule heating: source term  1/rho ||Grad_V||^2
 #   - Dependance of the thermal resistivity on temperature :
@@ -68,11 +68,11 @@ nu = 0.3           # Poisson ratio
 F = 100E2          # Force density at the right boundary (N/cm^2)
 kappa = 4.         # Thermal conductivity (W/(cm K))
 D = 10.            # Heat transfer coefficient (W/(K cm^2))
-air_temp = 20.     # Temperature of the air in oC.
-alpha_th = 16.6E-6 # Thermal expansion coefficient (/K).
-T0 = 20.           # Reference temperature in deg C.
-rho_0 = 1.754E-8   # Resistance temperature coefficient at T0 = 20 deg C
-alpha = 0.0039     # Second resistance temperature coefficient.
+air_temp = 20.     # Temperature of the air in deg C
+alpha_th = 16.6E-6 # Thermal expansion coefficient (1/K)
+T0 = 20.           # Reference temperature in deg C
+rho_0 = 1.754E-8   # Resistivity at T0
+alpha = 0.0039     # Resistivity-temperature coefficient
 
 
 #
@@ -230,7 +230,7 @@ if (solve_in_two_steps == 2):
 # Solution export
 #
 
-#VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambdastar', 'cmu', mfvm) #wrong
+print("L2 norm of temperature =", np.sqrt(gf.asm_generic(mim, 0, "sqr(T)", -1, md)))
 VM = md.local_projection(mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))", mfvm)
 #VM = md.local_projection(mim, "sqrt(1.5)*Norm_sqr([1,0;0,1;0,0]*sigma*[1,0,0;0,1,0]-1/3*Trace(sigma)*Id(3))", mfvm)
 CO = md.interpolation('-t/rho * Grad(V)', mfvm).reshape(2, mfvm.nbdof(), order='F')

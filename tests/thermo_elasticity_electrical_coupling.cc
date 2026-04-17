@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2015-2020 Yves Renard.
+ Copyright (C) 2015-2026 Yves Renard.
 
  This file is a part of GetFEM
 
@@ -34,89 +34,88 @@
 
   Elastic problem: The plate is clamped at rhe left boundary and a
     traction density of force F is prescribed at the right boundary.
+    Plane stress conditions are assumed.
   Electric problem: The potential is prescribed to be 0V at the right
     boundary and 0.1V at the left boundary.
   Thermal problem: A thermal insulation condition is prescribed at the
-    left and hole boudnaries. The remaining boundary and the plate itself
-    is supposed to be submitted to heat transfer with respect to the
-    air at 20oC.
+    left, right, and hole boudnaries. The remaining boundary and the
+    plate front and back surfaces are supposed to transfer heat by
+    convection with respect to the surrounding air at 20 deg C.
   Coupling terms:
-    - Joule heating: source term  sigma|Grad_V|^2
-    - Dependance of the thermal conductivity in temperature :
-      sigma = 1/(rho_0(1+alpha(theta-T0)))
-      with T0 = 20oC, rho_0 the resistance temperature coefficient at T0
-      and alpha the second resistance temperature coefficient.
+    - Joule heating: source term  1/rho ||Grad_V||^2
+    - Dependance of the thermal resistivity on temperature :
+      rho = rho_0(1+alpha(T-T0))
+      with T0 = 20 deg C, rho_0 the resistivity at T0
+      and alpha the resistivity-temperature coefficient.
     - Thermal expansion:
-      stress_tensor = clambdastar div(u) I + 2 cmu epsilon(u) - beta theta I
-      with beta = alpha_th E/(1-2nu), alpha_th being the thermal
-      expansion coefficient.
+      stress_tensor = E/(1+nu) ( nu/(1-nu) (div(u) - 2 alpha_th DT) I
+                                + (epsilon(u) - alpha_th DT I) )
+      with alpha_th being the thermal expansion coefficient.
   The first two coupling terms are nonlinear ones.
 */
 
 #include "getfem/getfem_model_solvers.h" // Include Getfem models and solvers
-#include "getfem/getfem_export.h"  // Export in various format, including vtk
-#include "gmm/gmm.h"                  // Include Gmm matrix interface library
-#include "getfem/getfem_mesher.h"     // Experimental meshing facilities
+#include "getfem/getfem_export.h"        // Export in various format, including vtu
+#include "getfem/getfem_mesher.h"        // Experimental meshing facilities
 #include "getfem/getfem_generic_assembly.h"
 
 
-using std::endl; using std::cout; using std::cerr;
-using std::ends; using std::cin;
+using std::cout;
+using std::endl;
 
 /* some GetFEM types that we will be using */
+using bgeot::dim_type;
 using bgeot::size_type;
 using bgeot::base_node;
 using bgeot::base_small_vector;
-typedef getfem::model_real_plain_vector plain_vector;
 
 
 int main(int argc, char *argv[]) {
   GETFEM_MPI_INIT(argc, argv);
-  bgeot::md_param PARAM; // Small tool which reads a parameter file
-  PARAM.read_command_line(argc, argv);
 
 
   //
   // Physical parameters
   //
-  double epsilon = PARAM.real_value("epsilon", "Thickness of the plate (cm)");
-  double E = PARAM.real_value("E", "Young Modulus (N/cm^2)");
-  double nu = PARAM.real_value("nu", "Poisson ratio");
-  double clambda = E*nu/((1+nu)*(1-2*nu)); // First Lame coefficient (N/cm^2)
-  double cmu = E/(2*(1+nu));               // Second Lame coefficient (N/cm^2)
-  double clambdastar = 2*clambda*cmu/(clambda+2*cmu); // Lame coefficient
-                                                 // for Plane stress (N/cm^2)
-  double F = PARAM.real_value("F",
-                              "Force density at the right boundary (N/cm^2)");
-  double kappa = PARAM.real_value("kappa", "Thermal conductivity (W/(cm K))");
-  double D = PARAM.real_value("D", "Heat transfer coefficient (W/(K cm^2))");
-  double air_temp = PARAM.real_value("air_temp",
-                                     "Temperature of the air in oC");
-  double alpha_th = PARAM.real_value("alpha_th",
-                                     "Thermal expansion coefficient (/K)");
-  double T0 = PARAM.real_value("T0", "Reference temperature in oC");
-  double rho_0 = PARAM.real_value("rho_0",
-                                  "Resistance temperature coefficient at T0");
-  double alpha = PARAM.real_value("alpha",
-                                  "Second resistance temperature coefficient");
+
+  bgeot::md_param PARAM; // Small tool which reads a parameter file
+  PARAM.read_command_line(argc, argv);
+  double t = PARAM.real_value("t", "Thickness of the plate (cm)"),
+         E = PARAM.real_value("E", "Young Modulus (N/cm^2)"),
+         nu = PARAM.real_value("nu", "Poisson ratio"),
+         F = PARAM.real_value("F",
+                              "Force density at the right boundary (N/cm^2)"),
+         kappa = PARAM.real_value("kappa", "Thermal conductivity (W/(cm K))"),
+         D = PARAM.real_value("D", "Heat transfer coefficient (W/(K cm^2))"),
+         air_temp = PARAM.real_value("air_temp",
+                                     "Temperature of the air in deg C"),
+         alpha_th = PARAM.real_value("alpha_th",
+                                     "Thermal expansion coefficient (1/K)"),
+         T0 = PARAM.real_value("T0", "Reference temperature in deg C"),
+         rho_0 = PARAM.real_value("rho_0", "Resistivity at T0"),
+         alpha = PARAM.real_value("alpha", "Resistivity-temperature coefficient");
+
 
   //
   // Numerical parameters
   //
+
   double h = PARAM.real_value("h", "Approximate mesh size");
-  bgeot::dim_type elements_degree = 
-    bgeot::dim_type(PARAM.int_value("elements_degree",
-                                    "Degree of the finite element methods"));
-  bool export_mesh =
-    (PARAM.int_value("export_mesh",
-                     "Draw the mesh after mesh generation or not") != 0);
-  bool solve_in_two_steps =
-    (PARAM.int_value("solve_in_two_steps",
-                     "Solve the elasticity pb separately or not") != 0);
+  dim_type elements_degree
+             = dim_type(PARAM.int_value("elements_degree",
+                                        "Degree of the finite element methods"));
+  bool export_mesh
+         = (PARAM.int_value("export_mesh",
+                            "Export the mesh after mesh generation or not") != 0),
+       solve_in_two_steps
+         = (PARAM.int_value("solve_in_two_steps",
+                            "Solve the elasticity pb separately or not") != 0);
+
 
   //
-  // Mesh generation. Meshes can also been imported from several formats.
+  // Mesh generation. Meshes can also be imported in various formats.
   //
+
   getfem::mesh mesh;
   getfem::pmesher_signed_distance
     mo1 = getfem::new_mesher_rectangle(base_node(0., 0.), base_node(100., 25.)),
@@ -130,39 +129,33 @@ int main(int argc, char *argv[]) {
   std::vector<getfem::base_node> fixed;
   getfem::build_mesh(mesh, mo, h, fixed, 2, -2);
 
+
   //
-  // Boundary selection.
+  // Boundary selection
   //
-  
+
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  getfem::mesh_region fb1
-    = getfem::select_faces_in_box(mesh, border_faces, base_node(1., 1.),
-                                 base_node(99., 24.));
-  getfem::mesh_region fb2
-    = getfem::select_faces_of_normal(mesh, border_faces,
-                                     base_small_vector( 1., 0.), 0.01);
-  getfem::mesh_region fb3
-    = getfem::select_faces_of_normal(mesh, border_faces,
-                                     base_small_vector(-1., 0.), 0.01);
-  getfem::mesh_region fb4
-    = getfem::select_faces_of_normal(mesh, border_faces,
-                                     base_small_vector(0.,  1.), 0.01);
-  getfem::mesh_region fb5
-    = getfem::select_faces_of_normal(mesh, border_faces,
-                                     base_small_vector(0., -1.), 0.01);
-  getfem::mesh_region fb6
-    = getfem::select_faces_in_ball(mesh, border_faces, base_node(25., 12.5),
-                                   8.+0.01*h);
-  getfem::mesh_region fb7
-    = getfem::select_faces_in_ball(mesh, border_faces, base_node(50., 12.5),
-                                   8.+0.01*h);
-  getfem::mesh_region fb8
-    = getfem::select_faces_in_ball(mesh, border_faces, base_node(75., 12.5),
-                                   8.+0.01*h);
+  getfem::mesh_region
+    fb1 = getfem::select_faces_in_box(mesh, border_faces,
+                                      base_node(1., 1.), base_node(99., 24.)),
+    fb2 = getfem::select_faces_of_normal(mesh, border_faces,
+                                         base_small_vector( 1., 0.), 0.01),
+    fb3 = getfem::select_faces_of_normal(mesh, border_faces,
+                                         base_small_vector(-1., 0.), 0.01),
+    fb4 = getfem::select_faces_of_normal(mesh, border_faces,
+                                         base_small_vector(0.,  1.), 0.01),
+    fb5 = getfem::select_faces_of_normal(mesh, border_faces,
+                                         base_small_vector(0., -1.), 0.01),
+    fb6 = getfem::select_faces_in_ball(mesh, border_faces,
+                                       base_node(25., 12.5), 8.+0.01*h),
+    fb7 = getfem::select_faces_in_ball(mesh, border_faces,
+                                       base_node(50., 12.5), 8.+0.01*h),
+    fb8 = getfem::select_faces_in_ball(mesh, border_faces,
+                                       base_node(75., 12.5), 8.+0.01*h);
 
-  size_type RIGHT_BOUND = 1, LEFT_BOUND = 2, TOP_BOUND = 3, BOTTOM_BOUND = 4;
-  size_type HOLE_BOUND = 5, HOLE1_BOUND = 6, HOLE2_BOUND = 7, HOLE3_BOUND = 8;
+  size_type RIGHT_BOUND=1, LEFT_BOUND=2, TOP_BOUND=3, BOTTOM_BOUND=4,
+            HOLE_BOUND=5, HOLE1_BOUND=6, HOLE2_BOUND=7, HOLE3_BOUND=8;
   mesh.region( RIGHT_BOUND) = getfem::mesh_region::subtract(fb2, fb1);
   mesh.region(  LEFT_BOUND) = getfem::mesh_region::subtract(fb3, fb1);
   mesh.region(   TOP_BOUND) = getfem::mesh_region::subtract(fb4, fb1);
@@ -188,15 +181,16 @@ int main(int argc, char *argv[]) {
   }
 
   if (export_mesh) {
-    getfem::vtk_export exp("mesh.vtk", false);
+    getfem::vtu_export exp("mesh.vtu", false);
     exp.exporting(mesh);
     exp.write_mesh();
     cout << "\nYou can view the mesh for instance with\n";
-    cout << "mayavi2 -d mesh.vtk -f ExtractEdges -m Surface\n" << endl;
+    cout << "mayavi2 -d mesh.vtu -f ExtractEdges -m Surface\n" << endl;
   }
 
+
   //
-  // Definition of finite elements methods and integration method
+  // Definition of finite element methods and integration method
   //
 
   getfem::mesh_fem mfu(mesh, 2); // Finite element for the elastic displacement
@@ -209,7 +203,7 @@ int main(int argc, char *argv[]) {
   mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
   getfem::mesh_im  mim(mesh);     // Integration method
-  mim.set_integration_method(bgeot::dim_type(2*elements_degree));
+  mim.set_integration_method(2*elements_degree);
 
 
   //
@@ -217,71 +211,58 @@ int main(int argc, char *argv[]) {
   //
 
   getfem::model md;
-  md.add_fem_variable("u", mfu);       // Displacement of the structure
-  md.add_fem_variable("theta", mft);   // Temperature
-  md.add_fem_variable("V", mft);       // Electric potential
+  md.add_fem_variable("u", mfu);   // Displacement of the structure
+  md.add_fem_variable("T", mft);   // Temperature
+  md.add_fem_variable("V", mft);   // Electric potential
+  md.add_initialized_scalar_data("t", t);
 
-  // Membrane elastic deformation
-  md.add_initialized_scalar_data("cmu", cmu);
-  md.add_initialized_scalar_data("clambdastar", clambdastar);
-  getfem::add_isotropic_linearized_elasticity_brick
-    (md, mim, "u", "clambdastar", "cmu");
+  // Membrane elastic deformation and thermal expansion
+  md.add_initialized_scalar_data("E", E);
+  md.add_initialized_scalar_data("nu", nu);
+  md.add_initialized_scalar_data("alpha_th", alpha_th);
+  md.add_initialized_scalar_data("T0", T0);
+  md.add_macro("sigma", "E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)"
+                        "+(Sym(Grad(u))-alpha_th*T*Id(2)) )");
+  getfem::add_linear_term(md, mim, "t*sigma:Grad(Test_u)");
   getfem::add_Dirichlet_condition_with_multipliers
-    (md, mim, "u", bgeot::dim_type(elements_degree-1), LEFT_BOUND);
-  md.add_initialized_fixed_size_data("Fdata", base_small_vector(F*epsilon,0.));
-  getfem::add_source_term_brick(md, mim, "u", "Fdata", RIGHT_BOUND);
+    (md, mim, "u", elements_degree-1, LEFT_BOUND);
+  md.add_initialized_scalar_data("F", F);
+  getfem::add_linear_term(md, mim, "-t*F*Test_u(1)", RIGHT_BOUND);
 
-  // Electrical field
-  std::string sigmaeps = "(eps/(rho_0*(1+alpha*(theta-T0))))";
-  md.add_initialized_scalar_data("eps", epsilon);
+  // Electric field
   md.add_initialized_scalar_data("rho_0", rho_0);
   md.add_initialized_scalar_data("alpha", alpha);
-  md.add_initialized_scalar_data("T0", T0);
-  getfem::add_nonlinear_term
-    (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
+  md.add_macro("rho", "rho_0*(1+alpha*(T-T0))");
+  getfem::add_nonlinear_term(md, mim, "t/rho * Grad(V).Grad(Test_V)");
   getfem::add_Dirichlet_condition_with_multipliers
-    (md, mim, "V", bgeot::dim_type(elements_degree-1), RIGHT_BOUND);
+    (md, mim, "V", elements_degree-1, RIGHT_BOUND);
   md.add_initialized_scalar_data("DdataV", 0.1);
   getfem::add_Dirichlet_condition_with_multipliers
-    (md, mim, "V", bgeot::dim_type(elements_degree-1), LEFT_BOUND, "DdataV");
-  
+    (md, mim, "V", elements_degree-1, LEFT_BOUND, "DdataV");
+
   // Thermal problem
-  md.add_initialized_scalar_data("kaeps", kappa*epsilon);
-  getfem::add_generic_elliptic_brick(md, mim, "theta", "kaeps");
-  md.add_initialized_scalar_data("D2", D*2);
-  md.add_initialized_scalar_data("D2airt", air_temp*D*2);
-  getfem::add_mass_brick(md, mim, "theta", "D2");
-  getfem::add_source_term_brick(md, mim, "theta", "D2airt");
-  md.add_initialized_scalar_data("Deps", D/epsilon);
-  md.add_initialized_scalar_data("Depsairt", air_temp*D/epsilon);
-  getfem::add_Fourier_Robin_brick(md, mim, "theta", "Deps", TOP_BOUND);
-  getfem::add_source_term_brick(md, mim, "theta", "Depsairt", TOP_BOUND);
-  getfem::add_Fourier_Robin_brick(md, mim, "theta", "Deps", BOTTOM_BOUND);
-  getfem::add_source_term_brick(md, mim, "theta", "Depsairt", BOTTOM_BOUND);
-
-
-
+  md.add_initialized_scalar_data("kappaT", kappa);
+  md.add_initialized_scalar_data("D", D);
+  md.add_initialized_scalar_data("T_air", air_temp);
+  getfem::add_linear_term(md, mim,
+                          "t*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T");
+  getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", TOP_BOUND);
+  getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", BOTTOM_BOUND);
   // Joule heating term
-  getfem::add_nonlinear_term
-     (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
-
-  // Thermal expansion term
-  md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
-  getfem::add_linear_term
-    (md, mim, "beta*(T0-theta)*Trace(Grad_Test_u)");
+  getfem::add_nonlinear_term(md, mim, "-t/rho * Norm_sqr(Grad(V))*Test_T");
 
 
   //
   // Model solve
   //
-  gmm::iteration iter(1E-9, 1, 100);
 
+  gmm::iteration iter(1E-9, 1, 100);
   if (solve_in_two_steps) {
     md.disable_variable("u");
     cout << "First problem with " << md.nb_dof() << " dofs" << endl;
     getfem::standard_solve(md, iter);
     md.enable_variable("u");
-    md.disable_variable("theta");
+    md.disable_variable("T");
     md.disable_variable("V");
     cout << "Second problem with " << md.nb_dof() << " dofs" << endl;
     iter.init();
@@ -295,38 +276,35 @@ int main(int argc, char *argv[]) {
   //
   // Solution export
   //
-  plain_vector U(mfu.nb_dof()); gmm::copy(md.real_variable("u"), U);
-  plain_vector V(mft.nb_dof()); gmm::copy(md.real_variable("V"), V);
-  plain_vector THETA(mft.nb_dof()); gmm::copy(md.real_variable("theta"),THETA);
-  plain_vector VM(mfvm.nb_dof());
-  getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
-    (md, "u", "clambdastar", "cmu", mfvm, VM, false);
-  plain_vector CO(mfvm.nb_dof() * 2);
-  getfem::ga_interpolation_Lagrange_fem(md, "-"+sigmaeps+"*Grad_V",  mfvm, CO);
+
+  getfem::model_real_plain_vector VM(mfvm.nb_dof()), CO(mfvm.nb_dof() * 2);
+  getfem::ga_local_projection // needs a discontinuous mesh_fem
+    (md, mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))",
+     mfvm, VM);
+  getfem::ga_interpolation_Lagrange_fem(md, "-t/rho * Grad(V)", mfvm, CO);
   
-  getfem::vtk_export exp("displacement_with_von_mises.vtk", false);
+  getfem::vtu_export exp("displacement_with_von_mises.vtu", false);
   exp.exporting(mfu);
-  exp.write_point_data(mfu, U, "elastostatic displacement");
+  exp.write_point_data(mfu, md.real_variable("u"), "elastostatic displacement");
   exp.write_point_data(mfvm, VM, "Von Mises stress");
   cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
-    "-d displacement_with_von_mises.vtk -f WarpVector -m Surface\n" << endl;
-  
-  getfem::vtk_export exp2("temperature.vtk", false);
-  exp2.exporting(mft);
-  exp2.write_point_data(mft, THETA, "Temperature");
-  cout << "mayavi2 -d temperature.vtk -f WarpScalar -m Surface\n" << endl;
+    "-d displacement_with_von_mises.vtu -f WarpVector -m Surface\n" << endl;
 
-  getfem::vtk_export exp3("electric_potential.vtk", false);
+  getfem::vtu_export exp2("temperature.vtu", false);
+  exp2.exporting(mft);
+  exp2.write_point_data(mft, md.real_variable("T"), "Temperature");
+  cout << "mayavi2 -d temperature.vtu -f WarpScalar -m Surface\n" << endl;
+
+  getfem::vtu_export exp3("electric_potential.vtu", false);
   exp3.exporting(mft);
-  exp3.write_point_data(mft, V, "Electric potential");
-  cout << "mayavi2 -d electric_potential.vtk -f WarpScalar -m Surface\n"
+  exp3.write_point_data(mft, md.real_variable("V"), "Electric potential");
+  cout << "mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface\n"
        << endl;
 
-  cout << "L2 norm of temperature = " << getfem::asm_L2_norm(mim, mft, THETA) << endl;
-  
+  cout << "L2 norm of temperature = "
+       << getfem::asm_L2_norm(mim, mft, md.real_variable("T")) << endl;
+
   GETFEM_MPI_FINALIZE;
-  
+
   return 0; 
 }
-
-
