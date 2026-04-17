@@ -238,6 +238,7 @@ mfvm.export_to_vtu('displacement_with_von_mises.vtu', mfvm,  VM, 'Von Mises Stre
                                                       mfu, md.variable('u'), 'Displacements')
 mft.export_to_vtu('temperature.vtu', mft, md.variable('T'), 'Temperature')
 mft.export_to_vtu('electric_potential.vtu', mft, md.variable('V'), 'Electric potential')
-print('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
+print('You can view solutions with for instance:')
+print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
 print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
 print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')

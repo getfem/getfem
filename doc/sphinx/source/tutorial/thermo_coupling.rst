@@ -460,21 +460,21 @@ Model definition
 
 It is not strictly mandatory to use the model object in |gf|, but it is indeed a very powerful object.
 It is used to gather all defined variables (unknowns) and data, whether these are defined in a finite element space, on integration points, or globally.
-It also gathers all PDE terms that involve the various variables and data, numbers the degrees of freedom from all unknowns and combines all assembled terms in a global tangent system, consistently.
+It also gathers all PDE terms that involve the various variables and data, numbers the degrees of freedom from all unknowns, and combines all assembled terms into a global tangent system consistently.
 
-The user can either add predefined PDE terms, so called model bricks, or preferably add linear/nonlinear terms using symbolic expressions written in the generic weak form language (GWFL), see :ref:`ud-gasm-high-transf`.
+For each model object, the user can add predefined PDE terms, so-called model bricks, or preferably add linear/nonlinear terms using symbolic expressions written in the generic weak form language (GWFL) (see :ref:`ud-gasm-high`).
 The added terms can involve a single variable or several variables with arbitrary couplings.
 The model object automates the assembly of the (tangent) linear system (see :ref:`ud-model-object` for more details).
 
-The alternative to using the model object, is to use lower level assembly procedures directly and incorporate their results into the overall (tangent) linear system manually.
-The model object allows a rapid implementation of a model, since all common boundary conditions, PDE terms, mutliplier enforced constrains, etc. can easily be provided in very compact form, as GWFL expressions.
-Many common terms are predefined in so called bricks, however nowadays, these are somewhat obsolete, as the use of GWFL is as compact and at the same time more transparent.
+The alternative to using the model object is to use lower-level assembly procedures directly and incorporate their results into the overall (tangent) linear system manually.
+However, it is generally highly recommended to use the framework of the model object, as it allows for rapid implementation of a model.
+All common boundary conditions, PDE terms, multiplier- enforced constraints, etc., can be easily provided in a very compact form as GWFL expressions.
+Many common terms are predefined in so-called bricks; however, nowadays these are somewhat obsolete, as the use of GWFL is almost as compact and at the same time more transparent.
 There are a few specific model bricks that act directly on the discretized system, such as the explicit matrix brick and the explicit rhs brick, which provide operations that cannot be expressed in GWFL.
-In general, it is highly recommended to use the framework of the model object.
 
-When defining a model object, there are two options to choose among: real-number and complex-number model versions.
-Complex-number models are reserved for special applications (some electromagnetism problems for instance) where it is advantageous to solve a complex-number linear system.
-They support most but not all features available in the real-number model version.
+When defining a model object, there are two options to choose from: real-number and complex-number model versions.
+Complex-number models are reserved for special applications (e.g., some electromagnetism problems) where it is advantageous to solve a complex-number linear system.
+They support most, but not all, features available in the real-number model version.
 
 Let us declare a real-number model with the three variables corresponding to the three unknown fields:
 
@@ -497,7 +497,7 @@ Let us declare a real-number model with the three variables corresponding to the
 
          md=gf.Model('real');
          md.add_fem_variable('u', mfu)
-         md.add_fem_variable('theta', mft)
+         md.add_fem_variable('T', mft)
          md.add_fem_variable('V', mft)
 
    * - .. raw:: html
@@ -517,35 +517,38 @@ Plane stress elastic deformation problem
 
 Let us now begin by the elastic deformation problem.
 We will use the `add_linear_term` function of the model object to add a linear term to the model by means of a GWFL symbolic expression.
-Specically for the plane stress problem we will add the term
+Specifically for the plane stress problem we will add the term
 
 .. math::
 
-  \int_{\Omega} t \dfrac{E\nu}{1\!+\!\nu}\left(\dfrac{\nu}{1\!-\!\nu} (\mbox{div}(u) - 2\alpha_{th}(T\!-\!T_0)) I +  (\varepsilon(u) - \alpha_{th}(T\!-\!T_0) I)\right)\!\!:\!\varepsilon(\delta u)\ d\Omega
+  \int_{\Omega} t\ \sigma\!:\!\varepsilon(\delta u)\ d\Omega
 
-to the tangent linear system.
+to the tangent linear system, with
+
+.. math::
+
+  \sigma = \dfrac{E\nu}{1\!+\!\nu}\left(\dfrac{\nu}{1\!-\!\nu} (\mbox{div}(u) - 2\alpha_{th}(T\!-\!T_0)) I +  (\varepsilon(u) - \alpha_{th}(T\!-\!T_0) I)\right)
+
 In order to add this term, global scalar data corresponding to the elastic constants :math:`E` and :math:`\nu`, as well as the constants :math:`t`, :math:`T_0`, and :math:`\alpha_{th}`, have to be added to the model first.
 If any of these data were not constant, it is also possible to define them as a finite element field or at integration points directly (not shown here).
-Note that this term, directly incorporated the thermomechanical coupling between the displacement and temperature field.
+Note that this term, already incorporates the thermomechanical coupling between the displacement and temperature fields.
 For the isothermal case, one could alternatively also use a predefined brick, a black-box term, added to the model with the `add_isotropic_linearized_elasticity_brick` function.
+Terms provided by GWFL expressions are unambigouous, and they are compiled into a list of optimized assembly instructions which are executed on each Gauss point.
 
-....
-
-Concerning the coupling term
-
-.. math::
-
-   \int_{\Omega} (\betaT I) :\varepsilon(\delta_u)dx,
-
-there is no predefined brick and we use directly a GWFL term `add_linear_term(md mim, "beta*theta*Div_Test_u)"`. See :ref:`ud-gasm-high` for more details on GWFL. Basically, the principle is that the assembly string is compiled into a list of optimized assembly instructions which are executed on each Gauss point.
+The second term to add to the elasticity problem is the external load on the right boundary, corresponding to the term
 
 .. math::
 
   - \int_{\Gamma_N} t\ F\cdot \delta u\ d\Gamma
 
+This term is added to the model using the `add_linear_term` function with the GWFL expression `"-t*F*Test_u(1)"`, and the region number `RIGHT_BOUND=1`.
+The predefined brick term alternative to this expression would be by using the function `add_source_term_brick` (not used here).
 
+A predefined brick will be used for the Dirichlet condition on the left boundary.
+There are several options to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`), but here the function `add_Dirichlet_condition_with_multipliers` will be used.
+It would be rather easy to achieve the same effect just with an appropriate GWFL expression and the generic `add_linear_term` function, but the more specific function spares the user from defining the Lagrange multiplier variable, as this is taken care of internally inside the `add_Dirichlet_condition_with_multipliers` function.
 
-The following program allows to take into account the whole elastic deformation equation. Note the use of specific brick to prescribe the Dirichlet condition on the left boundary. There is several option to prescribe a Dirichlet condition (see :ref:`ud-model-Dirichlet`).
+The following snippets show the definition of the entire elastic deformation equation with thermal expansion.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
@@ -556,80 +559,53 @@ The following program allows to take into account the whole elastic deformation 
    * - C++
      - .. code-block:: c++
 
+         md.add_initialized_scalar_data("t", t);
+         md.add_initialized_scalar_data("E", E);
+         md.add_initialized_scalar_data("nu", nu);
+         md.add_initialized_scalar_data("alpha_th", alpha_th);
+         md.add_initialized_scalar_data("T0", T0);
+         md.add_macro("sigma", "E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)"
+                               "+(Sym(Grad(u))-alpha_th*T*Id(2)) )");
+         getfem::add_linear_term(md, mim, "t*sigma:Grad(Test_u)");
+         getfem::add_Dirichlet_condition_with_multipliers
+           (md, mim, "u", elements_degree-1, LEFT_BOUND);
+         md.add_initialized_scalar_data("F", F);
+         getfem::add_linear_term(md, mim, "-t*F*Test_u(1)", RIGHT_BOUND);
 
    * - Python
      - .. code-block:: python
 
+         md.add_initialized_data('t', t)
+         md.add_initialized_data('E', E)
+         md.add_initialized_data('nu', nu)
+         md.add_initialized_data('alpha_th', alpha_th)
+         md.add_initialized_data('T0', T0)
+         md.add_macro('sigma',
+                      'E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'
+                                '+(Sym(Grad(u))-alpha_th*T*Id(2)) )')
+         md.add_linear_term(mim, 't*sigma:Grad(Test_u)')
+         md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
+         md.add_initialized_data('F', F)
+         md.add_linear_term(mim, '-t*F*Test_u(1)', RIGHT_BOUND)
 
    * - .. raw:: html
 
          Matlab<br>Octave<br>Scilab
      - .. code-block:: matlab
 
-.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+         gf_model_set(md, 'add_initialized_data', 't', t);
+         gf_model_set(md, 'add_initialized_data', 'E', E);
+         gf_model_set(md, 'add_initialized_data', 'nu', nu);
+         gf_model_set(md, 'add_initialized_data', 'alpha_th', alpha_th);
+         gf_model_set(md, 'add_initialized_data', 'T0', T0);
+         gf_model_set(md, 'add_macro', 'sigma',...
+                                       ['E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'...
+                                        '+(Sym(Grad(u))-alpha_th*T*Id(2)) )']);
+         gf_model_set(md, 'add_linear_term', mim, 't*sigma:Grad(Test_u)');
+         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
+         gf_model_set(md, 'add_initialized_data', 'F', F);
+         gf_model_set(md, 'add_linear_term', mim, '-t*F*Test_u(1)', RIGHT_BOUND);
 
-========== ================================================================================================================
-**C++**    .. code-block:: c++
-
-                md.add_initialized_scalar_data("cmu", cmu);
-                md.add_initialized_scalar_data("clambdastar", clambdastar);
-                md.add_initialized_scalar_data("T0", T0);
-                getfem::add_isotropic_linearized_elasticity_brick
-                  (md, mim, "u", "clambdastar", "cmu");
-                getfem::add_Dirichlet_condition_with_multipliers
-                  (md, mim, "u", bgeot::dim_type(elements_degree-1), LEFT_BOUND);
-                md.add_initialized_fixed_size_data("Fdata", base_small_vector(F*epsilon,0.));
-                getfem::add_source_term_brick(md, mim, "u", "Fdata", RIGHT_BOUND);
-
-                md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
-                getfem::add_linear_term(md, mim, "beta*(T0-theta)*Div_Test_u");
----------- ----------------------------------------------------------------------------------------------------------------
-**Python** .. code-block:: python
-
-                md.add_initialized_data('cmu', [cmu])
-                md.add_initialized_data('clambdastar', [clambdastar])
-                md.add_initialized_data('T0', [T0])
-                md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'clambdastar', 'cmu')
-
-                md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
-                md.add_initialized_data('Fdata', [F*epsilon, 0])
-                md.add_source_term_brick(mim, 'u', 'Fdata', RIGHT_BOUND)
-
-                md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
-                md.add_linear_term(mim, 'beta*(T0-theta)*Div_Test_u')
----------- ----------------------------------------------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab
-
-                gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
-                gf_model_set(md, 'add initialized data', 'clambdastar', [clambdastar]);
-                gf_model_set(md, 'add initialized data', 'T0', [T0]);
-                gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambdastar', 'cmu');
-
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
-                gf_model_set(md, 'add initialized data', 'Fdata', [F*epsilon, 0]);
-                gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
-
-                gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
-========== ================================================================================================================
-
-.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
-
-========== ================================================================================================================
-**Matlab** .. code-block:: matlab
-
-                gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
-                gf_model_set(md, 'add initialized data', 'clambdastar', [clambdastar]);
-                gf_model_set(md, 'add initialized data', 'T0', [T0]);
-                gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambdastar', 'cmu');
-
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
-                gf_model_set(md, 'add initialized data', 'Fdata', [F*epsilon, 0]);
-                gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
-
-                gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear term', mim, 'beta*(T0-theta)*Div_Test_u');
-========== ================================================================================================================
 
 .. raw:: latex
 
@@ -638,113 +614,99 @@ The following program allows to take into account the whole elastic deformation 
 Electric potential problem
 **************************
 
-Similarly, the following program take into account the electric potential equation. Note the definition of the  electrical conductivity :math:`\sigma` and again the use of GWFL terms.
+Similarly, the following snippets define the electric potential equations.
+Note the definition of the electric resistivity function :math:`\rho(T)` as a macro, and again the heavy use of GWFL expression inside the functions `add_linear_term` and `add_nonlinear_term`.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-========== ===========================================================================
-**C++**    .. code-block:: c++
+.. list-table::
+   :header-rows: 0
+   :stub-columns: 1
 
-                std::string sigmaeps = "(eps/(rho_0*(1+alpha*(theta-T0))))";
-                md.add_initialized_scalar_data("eps", epsilon);
-                md.add_initialized_scalar_data("rho_0", rho_0);
-                md.add_initialized_scalar_data("alpha", alpha);
-                getfem::add_nonlinear_term
-                  (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
-                getfem::add_Dirichlet_condition_with_multipliers
-                  (md, mim, "V", bgeot::dim_type(elements_degree-1), RIGHT_BOUND);
-                md.add_initialized_scalar_data("DdataV", 0.1);
-                getfem::add_Dirichlet_condition_with_multipliers
-                  (md, mim, "V", bgeot::dim_type(elements_degree-1), LEFT_BOUND, "DdataV");
----------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python
+   * - C++
+     - .. code-block:: c++
 
-                sigmaeps = '(eps/(rho_0*(1+alpha*(theta-T0))))'
-                md.add_initialized_data('eps', [epsilon])
-                md.add_initialized_data('rho_0', [rho_0])
-                md.add_initialized_data('alpha', [alpha])
-                md.add_nonlinear_term(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
-                md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
-                md.add_initialized_data('DdataV', [0.1])
-                md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
----------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab
+         md.add_initialized_scalar_data("rho_0", rho_0);
+         md.add_initialized_scalar_data("alpha", alpha);
+         md.add_macro("rho", "rho_0*(1+alpha*(T-T0))");
+         getfem::add_nonlinear_term(md, mim, "t/rho * Grad(V).Grad(Test_V)");
+         getfem::add_Dirichlet_condition_with_multipliers
+           (md, mim, "V", elements_degree-1, RIGHT_BOUND);
+         md.add_initialized_scalar_data("DdataV", 0.1);
+         getfem::add_Dirichlet_condition_with_multipliers
+           (md, mim, "V", elements_degree-1, LEFT_BOUND, "DdataV");
 
-                sigmaps = '(eps/(rho_0*(1+alpha*(theta-T0))))';
-                gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
-                gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
-                gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add nonlinear term', mim, sigmaeps+'*(Grad_V.Grad_Test_V)');
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
-                gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
----------- ---------------------------------------------------------------------------
-**Matlab** .. code-block:: matlab
+   * - Python
+     - .. code-block:: python
 
-                sigmaps = '(eps/(rho_0*(1+alpha*(theta-T0))))';
-                gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
-                gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
-                gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
-                gf_model_set(md, 'add nonlinear term', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
-                gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
-                gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
-========== ===========================================================================
+         md.add_initialized_data('rho_0', rho_0)
+         md.add_initialized_data('alpha', alpha)
+         md.add_macro('rho', 'rho_0*(1+alpha*(T-T0))')
+         md.add_nonlinear_term(mim, 't/rho * Grad(V).Grad(Test_V)')
+         md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
+         md.add_initialized_data('DdataV', 0.1)
+         md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
+
+   * - .. raw:: html
+
+         Matlab<br>Octave<br>Scilab
+     - .. code-block:: matlab
+
+         gf_model_set(md, 'add_initialized_data', 'rho_0', rho_0);
+         gf_model_set(md, 'add_initialized_data', 'alpha', alpha);
+         gf_model_set(md, 'add_macro', 'rho', 'rho_0*(1+alpha*(T-T0))');
+         gf_model_set(md, 'add_nonlinear_term', mim, 't/rho * Grad(V).Grad(Test_V)');
+         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
+         gf_model_set(md, 'add_initialized_data', 'DdataV', 0.1);
+         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
+
 
 Thermal problem
 ***************
 
-Now, the program to take into account the thermal problem:
+Finally, the definition of the thermal problem is done in the following snippets:
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-========== ===========================================================================
-**C++**    .. code-block:: c++
+.. list-table::
+   :header-rows: 0
+   :stub-columns: 1
 
-                md.add_initialized_scalar_data("kaeps", kappa*epsilon);
-                getfem::add_generic_elliptic_brick(md, mim, "theta", "kaeps");
-                md.add_initialized_scalar_data("D2", D*2);
-                md.add_initialized_scalar_data("D2airt", air_temp*D*2);
-                getfem::add_mass_brick(md, mim, "theta", "D2");
-                getfem::add_source_term_brick(md, mim, "theta", "D2airt");
+   * - C++
+     - .. code-block:: c++
 
-                getfem::add_nonlinear_term
-                  (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
----------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python
+         md.add_initialized_scalar_data("kappaT", kappa);
+         md.add_initialized_scalar_data("D", D);
+         md.add_initialized_scalar_data("T_air", air_temp);
+         getfem::add_linear_term(md, mim,
+                                 "t*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T");
+         getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", TOP_BOUND);
+         getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", BOTTOM_BOUND);
+         getfem::add_nonlinear_term(md, mim, "-t/rho * Norm_sqr(Grad(V))*Test_T");
 
-                md.add_initialized_data('kaeps', [kappa*epsilon])
-                md.add_generic_elliptic_brick(mim, 'theta', 'kaeps')
-                md.add_initialized_data('D2', [D*2])
-                md.add_initialized_data('D2airt', [air_temp*D*2])
-                md.add_mass_brick(mim, 'theta', 'D2')
-                md.add_source_term_brick(mim, 'theta', 'D2airt')
+   * - Python
+     - .. code-block:: python
 
-                md.add_nonlinear_term(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
----------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab
+         md.add_initialized_data('kappaT', kappa)
+         md.add_initialized_data('D', D)
+         md.add_initialized_data('T_air', air_temp)
+         md.add_linear_term(mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T')
+         md.add_linear_term(mim, 't*D*(T-T_air).Test_T', TOP_BOUND)
+         md.add_linear_term(mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND)
+         md.add_nonlinear_term(mim, '-t/rho * Norm_sqr(Grad(V))*Test_T')
 
-                gf_model_set(md, 'add initialized data', 'kaeps', [kappa*epsilon]);
-                gf_model_set(md, 'add generic elliptic brick', mim, 'theta', 'kaeps');
-                gf_model_set(md, 'add initialized data', 'D2', [D*2]);
-                gf_model_set(md, 'add initialized data', 'D2airt', [air_temp*D*2]);
-                gf_model_set(md, 'add mass brick', mim, 'theta', 'D2');
-                gf_model_set(md, 'add source term brick', mim, 'theta', 'D2airt');
+   * - .. raw:: html
 
-                gf_model_set(md, 'add nonlinear term', mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta');
----------- ---------------------------------------------------------------------------
-**Matlab** .. code-block:: matlab
+         Matlab<br>Octave<br>Scilab
+     - .. code-block:: matlab
 
-                gf_model_set(md, 'add initialized data', 'kaeps', [kappa*epsilon]);
-                gf_model_set(md, 'add generic elliptic brick', mim, 'theta', 'kaeps');
-                gf_model_set(md, 'add initialized data', 'D2', [D*2]);
-                gf_model_set(md, 'add initialized data', 'D2airt', [air_temp*D*2]);
-                gf_model_set(md, 'add mass brick', mim, 'theta', 'D2');
-                gf_model_set(md, 'add source term brick', mim, 'theta', 'D2airt');
-
-                gf_model_set(md, 'add nonlinear term', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);
-========== ===========================================================================
-
+         gf_model_set(md, 'add_initialized_data', 'kappaT', kappa);
+         gf_model_set(md, 'add_initialized_data', 'D', D);
+         gf_model_set(md, 'add_initialized_data', 'T_air', air_temp);
+         gf_model_set(md, 'add_linear_term', mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T');
+         gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', TOP_BOUND);
+         gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND);
+         gf_model_set(md, 'add_nonlinear_term', mim, '-t/rho * Norm_sqr(Grad(V))*Test_T');
 
 Model solve
 ***********
@@ -753,196 +715,211 @@ Once the model is correctly defined, we can simply solve it by:
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-========== ===========================================================================
-**C++**    .. code-block:: c++
+.. list-table::
+   :header-rows: 0
+   :stub-columns: 1
 
-                gmm::iteration iter(1E-9, 1, 100);
-                getfem::standard_solve(md, iter);
----------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python
+   * - C++
+     - .. code-block:: c++
 
-                md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
----------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab
+         gmm::iteration iter(1E-9, 1, 100);
+         getfem::standard_solve(md, iter);
 
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
----------- ---------------------------------------------------------------------------
-**Matlab** .. code-block:: matlab
+   * - Python
+     - .. code-block:: python
 
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-========== ===========================================================================
+         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
-Since the problem is globally nonlinear, a Newton method is used to iteratively solve the problem. It needs a few iterations (about 4 in that case).
+   * - .. raw:: html
+
+         Matlab<br>Octave<br>Scilab
+     - .. code-block:: matlab
+
+         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
+
+
+Since the problem has some nonlinear terms, a Newton method is used to iteratively solve the problem.
+It takes just a few iterations (about 4 in this case) to converge at the prescribed residual threshold.
 
 
 Model solve with two steps
 **************************
 
-Another option to solve the problem is to solve first the thermal and electric potential problems. Indeed, in our model, the thermal and  electric potential do not depend on the deformation. Once the  thermal and electric potential problem, we then solve the deformation problem. This can be done as follows:
+Another option to solve the problem is to solve first the thermal and electric potential problems.
+Indeed, in our model, the thermal and electric potential equations do not depend on the deformation.
+Once the thermal and electric potential problems are solved, then we can solve the deformation problem.
+This can be done as follows:
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-========== ===========================================================================
-**C++**    .. code-block:: c++
+.. list-table::
+   :header-rows: 0
+   :stub-columns: 1
 
-                gmm::iteration iter(1E-9, 1, 100);
-                md.disable_variable("u");
-                getfem::standard_solve(md, iter);
-                md.enable_variable("u");
-                md.disable_variable("theta");
-                md.disable_variable("V");
-                iter.init();
-                getfem::standard_solve(md, iter);
----------- ---------------------------------------------------------------------------
-**Python** .. code-block:: python
+   * - C++
+     - .. code-block:: c++
 
-                md.disable_variable('u')
-                md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
-                md.enable_variable('u')
-                md.disable_variable('theta')
-                md.disable_variable('V')
-                md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
----------- ---------------------------------------------------------------------------
-**Scilab** .. code-block:: matlab
+         gmm::iteration iter(1E-9, 1, 100);
+         md.disable_variable("u");
+         getfem::standard_solve(md, iter);
+         md.enable_variable("u");
+         md.disable_variable("T");
+         md.disable_variable("V");
+         iter.init();
+         getfem::standard_solve(md, iter);
 
-                gf_model_set(md, 'disable variable', 'u');
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-                gf_model_set(md, 'enable variable', 'u');
-                gf_model_set(md, 'disable variable', 'theta');
-                gf_model_set(md, 'disable variable', 'V');
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
----------- ---------------------------------------------------------------------------
-**Matlab** .. code-block:: matlab
+   * - Python
+     - .. code-block:: python
 
-                gf_model_set(md, 'disable variable', 'u');
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-                gf_model_set(md, 'enable variable', 'u');
-                gf_model_set(md, 'disable variable', 'theta');
-                gf_model_set(md, 'disable variable', 'V');
-                gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-========== ===========================================================================
+         md.disable_variable('u')
+         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+         md.enable_variable('u')
+         md.disable_variable('T')
+         md.disable_variable('V')
+         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
+   * - .. raw:: html
+
+         Matlab<br>Octave<br>Scilab
+     - .. code-block:: matlab
+
+         gf_model_set(md, 'disable_variable', 'u');
+         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
+         gf_model_set(md, 'enable_variable', 'u');
+         gf_model_set(md, 'disable_variable', 'T');
+         gf_model_set(md, 'disable_variable', 'V');
+         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 
 
 Export/visualization of the solution
 ************************************
 
-The finite element problem is now solved. We can plot the solution as follows. Note that for the C++ and Python programs, it is necessary to use an external graphical post-processor. Note also that arbitrary quantities can be post-processed using the generic interpolation (see `ga_interpolation_Lagrange_fem` below). It is also possible to make complex exports and slices (see :ref:`ud-export`).
+The finite element problem is now solved.
+We can plot the solution as follows.
+Note that for the C++ and Python programs, it is necessary to use an external graphical post-processor.
+Note also that arbitrary quantities can be post-processed using the generic interpolation (see `ga_interpolation_Lagrange_fem` below).
+It is also possible to make complex exports and slices (see :ref:`ud-export`).
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-========== =====================================================================================================================================================
-**C++**    .. code-block:: c++
+.. list-table::
+   :header-rows: 0
+   :stub-columns: 1
 
-                plain_vector U(mfu.nb_dof()); gmm::copy(md.real_variable("u"), U);
-                plain_vector V(mft.nb_dof()); gmm::copy(md.real_variable("V"), V);
-                plain_vector THETA(mft.nb_dof()); gmm::copy(md.real_variable("theta"),THETA);
-                plain_vector VM(mfvm.nb_dof());
-                getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
-                  (md, "u", "clambdastar", "cmu", mfvm, VM, false);
-                plain_vector CO(mfvm.nb_dof() * 2);
-                getfem::ga_interpolation_Lagrange_fem(md, "-"+sigmaeps+"*Grad_V",  mfvm, CO);
+   * - C++
+     - .. code-block:: c++
 
-                getfem::vtu_export exp("displacement_with_von_mises.vtu", false);
-                exp.exporting(mfu);
-                exp.write_point_data(mfu, U, "elastostatic displacement");
-                exp.write_point_data(mfvm, VM, "Von Mises stress");
-                cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
-                  "-d displacement_with_von_mises.vtu -f WarpVector -m Surface\n" << endl;
+         getfem::model_real_plain_vector VM(mfvm.nb_dof()), CO(mfvm.nb_dof() * 2);
+         getfem::ga_local_projection // needs a discontinuous mesh_fem
+           (md, mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))",
+            mfvm, VM);
+         getfem::ga_interpolation_Lagrange_fem(md, "-t/rho * Grad(V)", mfvm, CO);
 
-                getfem::vtu_export exp2("temperature.vtu", false);
-                exp2.exporting(mft);
-                exp2.write_point_data(mft, THETA, "Temperature");
-                cout << "mayavi2 -d temperature.vtu -f WarpScalar -m Surface\n" << endl;
+         getfem::vtu_export exp("displacement_with_von_mises.vtu", false);
+         exp.exporting(mfu);
+         exp.write_point_data(mfu, md.real_variable("u"), "elastostatic displacement");
+         exp.write_point_data(mfvm, VM, "Von Mises stress");
+         cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
+           "-d displacement_with_von_mises.vtu -f WarpVector -m Surface\n" << endl;
 
-                getfem::vtu_export exp3("electric_potential.vtu", false);
-                exp3.exporting(mft);
-                exp3.write_point_data(mft, V, "Electric potential");
-                cout << "mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface\n"
-                     << endl;
-                }
----------- -----------------------------------------------------------------------------------------------------------------------------------------------------
-**Python** .. code-block:: python
+         getfem::vtu_export exp2("temperature.vtu", false);
+         exp2.exporting(mft);
+         exp2.write_point_data(mft, md.real_variable("T"), "Temperature");
+         cout << "mayavi2 -d temperature.vtu -f WarpScalar -m Surface\n" << endl;
 
-                U = md.variable('u')
-                V = md.variable('V')
-                THETA = md.variable('theta')
-                VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambdastar', 'cmu', mfvm)
-                CO = np.reshape(md.interpolation('-'+sigmaeps+'*Grad_V', mfvm), (2, mfvm.nbdof()), 'F')
+         getfem::vtu_export exp3("electric_potential.vtu", false);
+         exp3.exporting(mft);
+         exp3.write_point_data(mft, md.real_variable("V"), "Electric potential");
+         cout << "mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface\n"
+              << endl;
+         }
 
-                mfvm.export_to_vtu('displacement_with_von_mises.vtu', mfvm,
-                                   VM, 'Von Mises Stresses', mfu, U, 'Displacements')
-                print ('You can view solutions with for instance:')
-                print ('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
-                mft.export_to_vtu('temperature.vtu', mft, THETA, 'Temperature')
-                print ('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
-                mft.export_to_vtu('electric_potential.vtu', mft, V, 'Electric potential')
-                print ('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
-========== =====================================================================================================================================================
+   * - Python
+     - .. code-block:: python
 
-.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+         VM = md.local_projection(mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))", mfvm)
+         CO = md.interpolation('-t/rho * Grad(V)', mfvm).reshape(2, mfvm.nbdof(), order='F')
+         mfvm.export_to_vtu('displacement_with_von_mises.vtu', mfvm,  VM, 'Von Mises Stresses',
+                                                               mfu, md.variable('u'), 'Displacements')
+         mft.export_to_vtu('temperature.vtu', mft, md.variable('T'), 'Temperature')
+         mft.export_to_vtu('electric_potential.vtu', mft, md.variable('V'), 'Electric potential')
+         print('You can view solutions with for instance:')
+         print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
+         print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
+         print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
 
-========== =====================================================================================================================================================
-**Scilab** .. code-block:: matlab
+   * - .. raw:: html
 
-                U = gf_model_get(md, 'variable', 'u');
-                V = gf_model_get(md, 'variable', 'V');
-                THETA = gf_model_get(md, 'variable', 'theta');
-                VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
-                CO = matrix(gf_model_get(md, 'interpolation', '-'+sigmaeps+'*Grad_V', mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+         Matlab<br>Octave
+     - .. code-block:: matlab
 
-                hh = scf(2);
-                hh.color_map = jetcolormap(255);
-                subplot(3,1,1);
-                gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar(min(VM),max(VM));
-                title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
-                subplot(3,1,2);
-                drawlater;
-                gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar(min(V),max(V));
-                gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'deformed_mesh','off', 'deformation_mf', mfu, ...
-                        'deformation', U, 'deformation_scale', 100, 'refine', 8);
-                title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
-                drawnow;
-                subplot(3,1,3);
-                gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar(min(THETA),max(THETA));
-                title('Temperature in °C (on the deformed configuration, scale factor x100)');
+         U = gf_model_get(md, 'variable', 'u');
+         VM = gf_model_get(md, 'local_projection', mim,...
+                           'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
+         CO = reshape(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
+                      [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+         figure(2);
+         subplot(3,1,1);
+         gf_plot(mfvm, VM, 'mesh', 'off', 'disp_options', 'off',...
+                           'deformed_mesh','off', 'deformation', U,... 
+                           'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+         colorbar;
+         title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
+         subplot(3,1,2);
+         hold on;
+         gf_plot(mft, gf_model_get(md, 'variable', 'V'), 'mesh', 'off', 'disp_options', 'off',...
+                                                         'deformed_mesh','off',...
+                                                         'deformation', U, 'deformation_mf', mfu,...
+                                                         'deformation_scale', 100, 'refine', 8);
+         colorbar;
+         gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'disp_options', 'off',...
+                           'deformed_mesh', 'off', 'deformation', U, 'deformation_mf', mfu,
+                           'deformation_scale', 100, 'refine', 8);
+         colorbar;
+         title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
+         hold off;
+         subplot(3,1,3);
+         gf_plot(mft, gf_model_get(md, 'variable', 'T'), 'mesh', 'off', 'disp_options', 'off',...
+                                                         'deformed_mesh', 'off',...
+                                                         'deformation', U, 'deformation_mf', mfu,...
+                                                         'deformation_scale', 100, 'refine', 8);
+         colorbar;
+         title('Temperature in ^oC (on the deformed configuration, scale factor x100)');
 
-========== =====================================================================================================================================================
+   * - Scilab
+     - .. code-block:: matlab
 
-.. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+         U = gf_model_get(md, 'variable', 'u');
+         V = gf_model_get(md, 'variable', 'V');
+         T = gf_model_get(md, 'variable', 'T');
+         VM = gf_model_get(md, 'local_projection', mim,...
+                           'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
+         CO = matrix(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
+                     [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
 
-========== =====================================================================================================================================================
-**Matlab** .. code-block:: matlab
-
-                U = gf_model_get(md, 'variable', 'u');
-                V = gf_model_get(md, 'variable', 'V');
-                THETA = gf_model_get(md, 'variable', 'theta');
-                VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
-                CO = reshape(gf_model_get(md, 'interpolation', ['-' sigmaeps '*Grad_V'], mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
-
-                figure(2);
-                subplot(3,1,1);
-                gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar;
-                title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
-                subplot(3,1,2);
-                hold on;
-                gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar;
-                gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', ...
-                        mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar;
-                title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
-                hold off;
-                subplot(3,1,3);
-                gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-                colorbar;
-                title('Temperature in ?C (on the deformed configuration, scale factor x100)');
-
-========== =====================================================================================================================================================
+         hh = scf(2);
+         hh.color_map = jetcolormap(255);
+         subplot(3,1,1);
+         gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh', 'off',...
+                           'deformation', U, 'deformation_mf', mfu,...
+                           'deformation_scale', 100, 'refine', 8);
+         colorbar(min(VM),max(VM));
+         title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
+         subplot(3,1,2);
+         drawlater;
+         gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh', 'off', 'deformation', U,...
+                         'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+         colorbar(min(V),max(V));
+         gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off',...
+                 'deformed_mesh','off', 'deformation_mf', mfu, ...
+                 'deformation', U, 'deformation_scale', 100, 'refine', 8);
+         title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
+         drawnow;
+         subplot(3,1,3);
+         gf_plot(mft, T, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U,...
+                         'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+         colorbar(min(T),max(T));
+         title('Temperature in °C (on the deformed configuration, scale factor x100)');
 
 
 .. _tut-fig-solthermo:

@@ -157,7 +157,7 @@ gf_model_set(md, 'add_macro', 'sigma',...
                               ['E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'...
                                '+(Sym(Grad(u))-alpha_th*T*Id(2)) )']);
 gf_model_set(md, 'add_linear_term', mim, 't*sigma:Grad(Test_u)');
-gf_model_set(md, 'add_Dirichlet_condition with_multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
+gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
 gf_model_set(md, 'add_initialized_data', 'F', F);
 gf_model_set(md, 'add_linear_term', mim, '-t*F*Test_u(1)', RIGHT_BOUND);
 
@@ -208,7 +208,8 @@ figure(2);
 subplot(3,1,1);
 gf_plot(mfvm, VM, 'mesh', 'off', 'disp_options', 'off',...
                   'deformed_mesh','off', 'deformation', U,... 
-                  'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
+                  'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+colorbar;
 title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
 subplot(3,1,2);
 hold on;
