@@ -34,6 +34,10 @@ static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in,
                        bool do_clear=true) {
   unsigned boundary_num  = in.pop().to_integer(1);
   iarray v               = in.pop().to_iarray();
+  if (v.ndim() == 1 && v.getn() == 1 && v.getp() == 1 && v.getq() == 1) {
+    // assume input is a flat list of convexes, convert vector to row matrix
+    v.reshape(1,v.getm());
+  }
 
   getfem::mesh_region &rg = mesh.region(boundary_num);
   if (do_clear) rg.clear();
