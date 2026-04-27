@@ -113,40 +113,35 @@ For Python, |gf| can just be imported globally, and typically numpy needs to be 
 For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab/Octave, it is only recommended to call `gf_workspace('clear all')` to ensure there are no leftover |gf| variables in memory.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+                    
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+                             #include "getfem/getfem_model_solvers.h"
+                             #include "getfem/getfem_export.h"
+                             #include "getfem/getfem_mesher.h"
+                             #include "getfem/getfem_generic_assembly.h"
 
-   * - C++
-     - .. code-block:: c++
+                             using std::cout; using std::endl;
+                             using bgeot::dim_type;
+                             using bgeot::size_type;
+                             using bgeot::base_node;
+                             using bgeot::base_small_vector;
 
-         #include "getfem/getfem_model_solvers.h"
-         #include "getfem/getfem_export.h"
-         #include "getfem/getfem_mesher.h"
-         #include "getfem/getfem_generic_assembly.h"
+                             int main() {
+               
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-         using std::cout; using std::endl;
-         using bgeot::dim_type;
-         using bgeot::size_type;
-         using bgeot::base_node;
-         using bgeot::base_small_vector;
+                             import getfem as gf
+                             import numpy as np
 
-         int main() {
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - Python
-     - .. code-block:: python
-
-         import getfem as gf
-         import numpy as np
-
-   * - .. raw:: html
-
-         Matlab<br>Octave<br>Scilab
-
-     - .. code-block:: matlab
-
-         gf_workspace('clear all');
+                             gf_workspace('clear all');
+                         
+========================== ================================================
 
 
 Parameters of the model
@@ -201,51 +196,47 @@ The mesh for this geometry is produced by combining geometrical primitives with 
 In the following, `h` stands for the mesh size and `2` is the degree of the mesh (this means that the transformation is of degree two, we used curved edges). In order to get isoparametric elements, the parameter `elements_degree`, used later in the definition of finite element spaces, needs also to be set equal to 2. Otherwise subparametric or superparametric elements will be produced.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
+                    
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+                              getfem::mesh mesh;
+                              getfem::pmesher_signed_distance
+                                mo1 = getfem::new_mesher_rectangle(base_node(0., 0.), base_node(100., 25.)),
+                                mo2 = getfem::new_mesher_ball(base_node(25., 12.5), 8.),
+                                mo3 = getfem::new_mesher_ball(base_node(50., 12.5), 8.),
+                                mo4 = getfem::new_mesher_ball(base_node(75., 12.5), 8.),
+                                mo5 = getfem::new_mesher_union(mo2, mo3, mo4),
+                                mo = getfem::new_mesher_setminus(mo1, mo5);
 
-   * - C++
-     - .. code-block:: c++
+                              std::vector<getfem::base_node> fixed;
+                              getfem::build_mesh(mesh, mo, h, fixed, 2, -2);
 
-         getfem::mesh mesh;
-         getfem::pmesher_signed_distance
-           mo1 = getfem::new_mesher_rectangle(base_node(0., 0.), base_node(100., 25.)),
-           mo2 = getfem::new_mesher_ball(base_node(25., 12.5), 8.),
-           mo3 = getfem::new_mesher_ball(base_node(50., 12.5), 8.),
-           mo4 = getfem::new_mesher_ball(base_node(75., 12.5), 8.),
-           mo5 = getfem::new_mesher_union(mo2, mo3, mo4),
-           mo = getfem::new_mesher_setminus(mo1, mo5);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-         std::vector<getfem::base_node> fixed;
-         getfem::build_mesh(mesh, mo, h, fixed, 2, -2);
+                             mo1 = gf.MesherObject('rectangle', [0., 0.], [100., 25.])
+                             mo2 = gf.MesherObject('ball', [25., 12.5], 8.)
+                             mo3 = gf.MesherObject('ball', [50., 12.5], 8.)
+                             mo4 = gf.MesherObject('ball', [75., 12.5], 8.)
+                             mo5 = gf.MesherObject('union', mo2, mo3, mo4)
+                             mo  = gf.MesherObject('set_minus', mo1, mo5)
 
-   * - Python
-     - .. code-block:: python
+                             mesh = gf.Mesh('generate', mo, h, 2)
 
-          mo1 = gf.MesherObject('rectangle', [0., 0.], [100., 25.])
-          mo2 = gf.MesherObject('ball', [25., 12.5], 8.)
-          mo3 = gf.MesherObject('ball', [50., 12.5], 8.)
-          mo4 = gf.MesherObject('ball', [75., 12.5], 8.)
-          mo5 = gf.MesherObject('union', mo2, mo3, mo4)
-          mo  = gf.MesherObject('set_minus', mo1, mo5)
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-          mesh = gf.Mesh('generate', mo, h, 2)
+                             mo1 = gf_mesher_object('rectangle', [0 0], [100 25]);
+                             mo2 = gf_mesher_object('ball', [25 12.5], 8);
+                             mo3 = gf_mesher_object('ball', [50 12.5], 8);
+                             mo4 = gf_mesher_object('ball', [75 12.5], 8);
+                             mo5 = gf_mesher_object('union', mo2, mo3, mo4);
+                             mo  = gf_mesher_object('set_minus', mo1, mo5);
 
-   * - .. raw:: html
+                             mesh = gf_mesh('generate', mo, h, 2);
+========================== ================================================
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         mo1 = gf_mesher_object('rectangle', [0 0], [100 25]);
-         mo2 = gf_mesher_object('ball', [25 12.5], 8);
-         mo3 = gf_mesher_object('ball', [50 12.5], 8);
-         mo4 = gf_mesher_object('ball', [75 12.5], 8);
-         mo5 = gf_mesher_object('union', mo2, mo3, mo4);
-         mo  = gf_mesher_object('set_minus', mo1, mo5);
-
-         mesh = gf_mesh('generate', mo, h, 2);
 
 .. _tut-fig-meshthermo:
 .. figure:: images/mesh_thermo.png
@@ -268,75 +259,70 @@ These boundary numbers will be used in the definitions of different terms in the
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             getfem::mesh_region border_faces;
+                             getfem::outer_faces_of_mesh(mesh, border_faces);
+                             getfem::mesh_region
+                                fb1 = getfem::select_faces_in_box(mesh, border_faces,
+                                                                  base_node(1., 1.), base_node(99., 24.)),
+                                fb2 = getfem::select_faces_of_normal(mesh, border_faces,
+                                                                     base_small_vector( 1., 0.), 0.01),
+                                fb3 = getfem::select_faces_of_normal(mesh, border_faces,
+                                                                     base_small_vector(-1., 0.), 0.01),
+                                fb4 = getfem::select_faces_of_normal(mesh, border_faces,
+                                                                     base_small_vector(0.,  1.), 0.01),
+                                fb5 = getfem::select_faces_of_normal(mesh, border_faces,
+                                                                     base_small_vector(0., -1.), 0.01);
 
-         getfem::mesh_region border_faces;
-         getfem::outer_faces_of_mesh(mesh, border_faces);
-         getfem::mesh_region
-           fb1 = getfem::select_faces_in_box(mesh, border_faces,
-                                             base_node(1., 1.), base_node(99., 24.)),
-           fb2 = getfem::select_faces_of_normal(mesh, border_faces,
-                                                base_small_vector( 1., 0.), 0.01),
-           fb3 = getfem::select_faces_of_normal(mesh, border_faces,
-                                                base_small_vector(-1., 0.), 0.01),
-           fb4 = getfem::select_faces_of_normal(mesh, border_faces,
-                                                base_small_vector(0.,  1.), 0.01),
-           fb5 = getfem::select_faces_of_normal(mesh, border_faces,
-                                                base_small_vector(0., -1.), 0.01);
+                             size_type RIGHT_BOUND=1, LEFT_BOUND=2, TOP_BOUND=3, BOTTOM_BOUND=4;
+                             mesh.region( RIGHT_BOUND) = getfem::mesh_region::subtract(fb2, fb1);
+                             mesh.region(  LEFT_BOUND) = getfem::mesh_region::subtract(fb3, fb1);
+                             mesh.region(   TOP_BOUND) = getfem::mesh_region::subtract(fb4, fb1);
+                             mesh.region(BOTTOM_BOUND) = getfem::mesh_region::subtract(fb5, fb1);
 
-         size_type RIGHT_BOUND=1, LEFT_BOUND=2, TOP_BOUND=3, BOTTOM_BOUND=4;
-         mesh.region( RIGHT_BOUND) = getfem::mesh_region::subtract(fb2, fb1);
-         mesh.region(  LEFT_BOUND) = getfem::mesh_region::subtract(fb3, fb1);
-         mesh.region(   TOP_BOUND) = getfem::mesh_region::subtract(fb4, fb1);
-         mesh.region(BOTTOM_BOUND) = getfem::mesh_region::subtract(fb5, fb1);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             fb1 = mesh.outer_faces_in_box([1., 1.], [99., 24.])
+                             fb2 = mesh.outer_faces_with_direction([ 1., 0.], 0.01)
+                             fb3 = mesh.outer_faces_with_direction([-1., 0.], 0.01)
+                             fb4 = mesh.outer_faces_with_direction([0.,  1.], 0.01)
+                             fb5 = mesh.outer_faces_with_direction([0., -1.], 0.01)
 
-         fb1 = mesh.outer_faces_in_box([1., 1.], [99., 24.])
-         fb2 = mesh.outer_faces_with_direction([ 1., 0.], 0.01)
-         fb3 = mesh.outer_faces_with_direction([-1., 0.], 0.01)
-         fb4 = mesh.outer_faces_with_direction([0.,  1.], 0.01)
-         fb5 = mesh.outer_faces_with_direction([0., -1.], 0.01)
+                             RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
 
-         RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
+                             mesh.set_region( RIGHT_BOUND, fb2)
+                             mesh.set_region(  LEFT_BOUND, fb3)
+                             mesh.set_region(   TOP_BOUND, fb4)
+                             mesh.set_region(BOTTOM_BOUND, fb5)
+                             mesh.set_region(  HOLE_BOUND, fb1)
+                             mesh.region_subtract( RIGHT_BOUND, HOLE_BOUND)
+                             mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
+                             mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
+                             mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
 
-         mesh.set_region( RIGHT_BOUND, fb2)
-         mesh.set_region(  LEFT_BOUND, fb3)
-         mesh.set_region(   TOP_BOUND, fb4)
-         mesh.set_region(BOTTOM_BOUND, fb5)
-         mesh.set_region(  HOLE_BOUND, fb1)
-         mesh.region_subtract( RIGHT_BOUND, HOLE_BOUND)
-         mesh.region_subtract(  LEFT_BOUND, HOLE_BOUND)
-         mesh.region_subtract(   TOP_BOUND, HOLE_BOUND)
-         mesh.region_subtract(BOTTOM_BOUND, HOLE_BOUND)
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             fb1 = gf_mesh_get(mesh, 'outer_faces_in_box', [1 1], [99 24]);
+                             fb2 = gf_mesh_get(mesh, 'outer_faces_with_direction', [ 1 0], 0.01);
+                             fb3 = gf_mesh_get(mesh, 'outer_faces_with_direction', [-1 0], 0.01);
+                             fb4 = gf_mesh_get(mesh, 'outer_faces_with_direction', [0  1], 0.01);
+                             fb5 = gf_mesh_get(mesh, 'outer_faces_with_direction', [0 -1], 0.01);
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         fb1 = gf_mesh_get(mesh, 'outer_faces_in_box', [1 1], [99 24]);
-         fb2 = gf_mesh_get(mesh, 'outer_faces_with_direction', [ 1 0], 0.01);
-         fb3 = gf_mesh_get(mesh, 'outer_faces_with_direction', [-1 0], 0.01);
-         fb4 = gf_mesh_get(mesh, 'outer_faces_with_direction', [0  1], 0.01);
-         fb5 = gf_mesh_get(mesh, 'outer_faces_with_direction', [0 -1], 0.01);
-
-         RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
-         gf_mesh_set(mesh, 'region',  RIGHT_BOUND, fb2);
-         gf_mesh_set(mesh, 'region',   LEFT_BOUND, fb3);
-         gf_mesh_set(mesh, 'region',    TOP_BOUND, fb4);
-         gf_mesh_set(mesh, 'region', BOTTOM_BOUND, fb5);
-         gf_mesh_set(mesh, 'region',   HOLE_BOUND, fb1);
-         gf_mesh_set(mesh, 'region_subtract',  RIGHT_BOUND, HOLE_BOUND);
-         gf_mesh_set(mesh, 'region_subtract',   LEFT_BOUND, HOLE_BOUND);
-         gf_mesh_set(mesh, 'region_subtract',    TOP_BOUND, HOLE_BOUND);
-         gf_mesh_set(mesh, 'region_subtract', BOTTOM_BOUND, HOLE_BOUND);
+                             RIGHT_BOUND=1; LEFT_BOUND=2; TOP_BOUND=3; BOTTOM_BOUND=4; HOLE_BOUND=5;
+                             gf_mesh_set(mesh, 'region',  RIGHT_BOUND, fb2);
+                             gf_mesh_set(mesh, 'region',   LEFT_BOUND, fb3);
+                             gf_mesh_set(mesh, 'region',    TOP_BOUND, fb4);
+                             gf_mesh_set(mesh, 'region', BOTTOM_BOUND, fb5);
+                             gf_mesh_set(mesh, 'region',   HOLE_BOUND, fb1);
+                             gf_mesh_set(mesh, 'region_subtract',  RIGHT_BOUND, HOLE_BOUND);
+                             gf_mesh_set(mesh, 'region_subtract',   LEFT_BOUND, HOLE_BOUND);
+                             gf_mesh_set(mesh, 'region_subtract',    TOP_BOUND, HOLE_BOUND);
+                             gf_mesh_set(mesh, 'region_subtract', BOTTOM_BOUND, HOLE_BOUND);
+========================== ================================================
 
 
 Mesh draw
@@ -346,35 +332,31 @@ In order to preview the mesh and verify its quality, the following instructions 
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             getfem::vtu_export exp("mesh.vtu", false);
+                             exp.exporting(mesh);
+                             exp.write_mesh();
+                             // You can view the mesh for instance with
+                             // mayavi2 -d mesh.vtu -f ExtractEdges -m Surface
 
-         getfem::vtu_export exp("mesh.vtu", false);
-         exp.exporting(mesh);
-         exp.write_mesh();
-         // You can view the mesh for instance with
-         // mayavi2 -d mesh.vtu -f ExtractEdges -m Surface
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             mesh.export_to_vtu('mesh.vtu');
+                             # You can view the mesh for instance with
+                             # mayavi2 -d mesh.vtu -f ExtractEdges -m Surface
 
-         mesh.export_to_vtu('mesh.vtu');
-         # You can view the mesh for instance with
-         # mayavi2 -d mesh.vtu -f ExtractEdges -m Surface
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             scf(1);
+                             gf_plot_mesh(mesh, 'refine', 8, 'curved', 'on', 'regions', ...
+                                          [RIGHT_BOUND LEFT_BOUND TOP_BOUND BOTTOM_BOUND]);
+                             title('Mesh');
+========================== ================================================
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         scf(1);
-         gf_plot_mesh(mesh, 'refine', 8, 'curved', 'on', 'regions', ...
-                      [RIGHT_BOUND LEFT_BOUND TOP_BOUND BOTTOM_BOUND]);
-         title('Mesh');
 
 For Matlab/Octave call `pause(1);` and for Scilab call `sleep(1000);` just after.
 
@@ -413,47 +395,42 @@ In the present example, a polynomial order equal to the double of `elements_degr
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             getfem::mesh_fem mfu(mesh, 2);
+                             mfu.set_classical_finite_element(elements_degree);
+                             getfem::mesh_fem mft(mesh, 1);
+                             mft.set_classical_finite_element(elements_degree);
+                             getfem::mesh_fem mfvm(mesh, 1);
+                             mfvm.set_classical_discontinuous_finite_element(elements_degree);
 
-         getfem::mesh_fem mfu(mesh, 2);
-         mfu.set_classical_finite_element(elements_degree);
-         getfem::mesh_fem mft(mesh, 1);
-         mft.set_classical_finite_element(elements_degree);
-         getfem::mesh_fem mfvm(mesh, 1);
-         mfvm.set_classical_discontinuous_finite_element(elements_degree);
+                             getfem::mesh_im  mim(mesh);
+                             mim.set_integration_method(2*elements_degree);
 
-         getfem::mesh_im  mim(mesh);
-         mim.set_integration_method(2*elements_degree);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             mfu = gf.MeshFem(mesh, 2)
+                             mfu.set_classical_fem(elements_degree)
+                             mft = gf.MeshFem(mesh, 1)
+                             mft.set_classical_fem(elements_degree)
+                             mfvm = gf.MeshFem(mesh, 1)
+                             mfvm.set_classical_discontinuous_fem(elements_degree)
+                             mim = gf.MeshIm(mesh, elements_degree*2)
 
-         mfu = gf.MeshFem(mesh, 2)
-         mfu.set_classical_fem(elements_degree)
-         mft = gf.MeshFem(mesh, 1)
-         mft.set_classical_fem(elements_degree)
-         mfvm = gf.MeshFem(mesh, 1)
-         mfvm.set_classical_discontinuous_fem(elements_degree)
-         mim = gf.MeshIm(mesh, elements_degree*2)
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             mfu = gf_mesh_fem(mesh, 2);
+                             gf_mesh_fem_set(mfu, 'classical_fem', elements_degree);
+                             mft = gf_mesh_fem(mesh, 1);
+                             gf_mesh_fem_set(mft, 'classical_fem', elements_degree);
+                             mfvm = gf_mesh_fem(mesh, 1);
+                             gf_mesh_fem_set(mfvm, 'classical_discontinuous_fem', elements_degree-1);
+                             mim = gf_mesh_im(mesh, elements_degree*2);
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         mfu = gf_mesh_fem(mesh, 2);
-         gf_mesh_fem_set(mfu, 'classical_fem', elements_degree);
-         mft = gf_mesh_fem(mesh, 1);
-         gf_mesh_fem_set(mft, 'classical_fem', elements_degree);
-         mfvm = gf_mesh_fem(mesh, 1);
-         gf_mesh_fem_set(mfvm, 'classical_discontinuous_fem', elements_degree-1);
-         mim = gf_mesh_im(mesh, elements_degree*2);
-
+========================== ================================================
 
 Model definition
 ****************
@@ -480,36 +457,31 @@ Let us declare a real-number model with the three variables corresponding to the
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             getfem::model md;
+                             md.add_fem_variable("u", mfu);
+                             md.add_fem_variable("T", mft);
+                             md.add_fem_variable("V", mft);
 
-         getfem::model md;
-         md.add_fem_variable("u", mfu);
-         md.add_fem_variable("T", mft);
-         md.add_fem_variable("V", mft);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md=gf.Model('real');
+                             md.add_fem_variable('u', mfu)
+                             md.add_fem_variable('T', mft)
+                             md.add_fem_variable('V', mft)
 
-         md=gf.Model('real');
-         md.add_fem_variable('u', mfu)
-         md.add_fem_variable('T', mft)
-         md.add_fem_variable('V', mft)
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             md=gf_model('real');
+                             gf_model_set(md, 'add_fem_variable', 'u', mfu);
+                             gf_model_set(md, 'add_fem_variable', 'T', mft);
+                             gf_model_set(md, 'add_fem_variable', 'V', mft);
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         md=gf_model('real');
-         gf_model_set(md, 'add_fem_variable', 'u', mfu);
-         gf_model_set(md, 'add_fem_variable', 'T', mft);
-         gf_model_set(md, 'add_fem_variable', 'V', mft);
-
+========================== ================================================
 
 
 Plane stress elastic deformation problem
@@ -552,60 +524,55 @@ The following snippets show the definition of the entire elastic deformation equ
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             md.add_initialized_scalar_data("t", t);
+                             md.add_initialized_scalar_data("E", E);
+                             md.add_initialized_scalar_data("nu", nu);
+                             md.add_initialized_scalar_data("alpha_th", alpha_th);
+                             md.add_initialized_scalar_data("T0", T0);
+                             md.add_macro("sigma", "E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)"
+                                                   "+(Sym(Grad(u))-alpha_th*T*Id(2)) )");
+                             getfem::add_linear_term(md, mim, "t*sigma:Grad(Test_u)");
+                             getfem::add_Dirichlet_condition_with_multipliers
+                               (md, mim, "u", elements_degree-1, LEFT_BOUND);
+                             md.add_initialized_scalar_data("F", F);
+                             getfem::add_linear_term(md, mim, "-t*F*Test_u(1)", RIGHT_BOUND);
 
-         md.add_initialized_scalar_data("t", t);
-         md.add_initialized_scalar_data("E", E);
-         md.add_initialized_scalar_data("nu", nu);
-         md.add_initialized_scalar_data("alpha_th", alpha_th);
-         md.add_initialized_scalar_data("T0", T0);
-         md.add_macro("sigma", "E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)"
-                               "+(Sym(Grad(u))-alpha_th*T*Id(2)) )");
-         getfem::add_linear_term(md, mim, "t*sigma:Grad(Test_u)");
-         getfem::add_Dirichlet_condition_with_multipliers
-           (md, mim, "u", elements_degree-1, LEFT_BOUND);
-         md.add_initialized_scalar_data("F", F);
-         getfem::add_linear_term(md, mim, "-t*F*Test_u(1)", RIGHT_BOUND);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md.add_initialized_data('t', t)
+                             md.add_initialized_data('E', E)
+                             md.add_initialized_data('nu', nu)
+                             md.add_initialized_data('alpha_th', alpha_th)
+                             md.add_initialized_data('T0', T0)
+                             md.add_macro('sigma',
+                                          'E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'
+                                                    '+(Sym(Grad(u))-alpha_th*T*Id(2)) )')
+                             md.add_linear_term(mim, 't*sigma:Grad(Test_u)')
+                             md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
+                             md.add_initialized_data('F', F)
+                             md.add_linear_term(mim, '-t*F*Test_u(1)', RIGHT_BOUND)
 
-         md.add_initialized_data('t', t)
-         md.add_initialized_data('E', E)
-         md.add_initialized_data('nu', nu)
-         md.add_initialized_data('alpha_th', alpha_th)
-         md.add_initialized_data('T0', T0)
-         md.add_macro('sigma',
-                      'E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'
-                                '+(Sym(Grad(u))-alpha_th*T*Id(2)) )')
-         md.add_linear_term(mim, 't*sigma:Grad(Test_u)')
-         md.add_Dirichlet_condition_with_multipliers(mim, 'u', elements_degree-1, LEFT_BOUND)
-         md.add_initialized_data('F', F)
-         md.add_linear_term(mim, '-t*F*Test_u(1)', RIGHT_BOUND)
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             gf_model_set(md, 'add_initialized_data', 't', t);
+                             gf_model_set(md, 'add_initialized_data', 'E', E);
+                             gf_model_set(md, 'add_initialized_data', 'nu', nu);
+                             gf_model_set(md, 'add_initialized_data', 'alpha_th', alpha_th);
+                             gf_model_set(md, 'add_initialized_data', 'T0', T0);
+                             gf_model_set(md, 'add_macro', 'sigma',...
+                                                           ['E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'...
+                                                            '+(Sym(Grad(u))-alpha_th*T*Id(2)) )']);
+                             gf_model_set(md, 'add_linear_term', mim, 't*sigma:Grad(Test_u)');
+                             gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
+                             gf_model_set(md, 'add_initialized_data', 'F', F);
+                             gf_model_set(md, 'add_linear_term', mim, '-t*F*Test_u(1)', RIGHT_BOUND);
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         gf_model_set(md, 'add_initialized_data', 't', t);
-         gf_model_set(md, 'add_initialized_data', 'E', E);
-         gf_model_set(md, 'add_initialized_data', 'nu', nu);
-         gf_model_set(md, 'add_initialized_data', 'alpha_th', alpha_th);
-         gf_model_set(md, 'add_initialized_data', 'T0', T0);
-         gf_model_set(md, 'add_macro', 'sigma',...
-                                       ['E/(1+nu)*( nu/(1-nu)*(Div(u)-2*alpha_th*T)*Id(2)'...
-                                        '+(Sym(Grad(u))-alpha_th*T*Id(2)) )']);
-         gf_model_set(md, 'add_linear_term', mim, 't*sigma:Grad(Test_u)');
-         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'u', elements_degree-1, LEFT_BOUND);
-         gf_model_set(md, 'add_initialized_data', 'F', F);
-         gf_model_set(md, 'add_linear_term', mim, '-t*F*Test_u(1)', RIGHT_BOUND);
-
+========================== ================================================
 
 .. raw:: latex
 
@@ -619,46 +586,42 @@ Note the definition of the electric resistivity function :math:`\rho(T)` as a ma
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             md.add_initialized_scalar_data("rho_0", rho_0);
+                             md.add_initialized_scalar_data("alpha", alpha);
+                             md.add_macro("rho", "rho_0*(1+alpha*(T-T0))");
+                             getfem::add_nonlinear_term(md, mim, "t/rho * Grad(V).Grad(Test_V)");
+                             getfem::add_Dirichlet_condition_with_multipliers
+                               (md, mim, "V", elements_degree-1, RIGHT_BOUND);
+                             md.add_initialized_scalar_data("DdataV", 0.1);
+                             getfem::add_Dirichlet_condition_with_multipliers
+                               (md, mim, "V", elements_degree-1, LEFT_BOUND, "DdataV");
 
-         md.add_initialized_scalar_data("rho_0", rho_0);
-         md.add_initialized_scalar_data("alpha", alpha);
-         md.add_macro("rho", "rho_0*(1+alpha*(T-T0))");
-         getfem::add_nonlinear_term(md, mim, "t/rho * Grad(V).Grad(Test_V)");
-         getfem::add_Dirichlet_condition_with_multipliers
-           (md, mim, "V", elements_degree-1, RIGHT_BOUND);
-         md.add_initialized_scalar_data("DdataV", 0.1);
-         getfem::add_Dirichlet_condition_with_multipliers
-           (md, mim, "V", elements_degree-1, LEFT_BOUND, "DdataV");
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md.add_initialized_data('rho_0', rho_0)
+                             md.add_initialized_data('alpha', alpha)
+                             md.add_macro('rho', 'rho_0*(1+alpha*(T-T0))')
+                             md.add_nonlinear_term(mim, 't/rho * Grad(V).Grad(Test_V)')
+                             md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
+                             md.add_initialized_data('DdataV', 0.1)
+                             md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
 
-         md.add_initialized_data('rho_0', rho_0)
-         md.add_initialized_data('alpha', alpha)
-         md.add_macro('rho', 'rho_0*(1+alpha*(T-T0))')
-         md.add_nonlinear_term(mim, 't/rho * Grad(V).Grad(Test_V)')
-         md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
-         md.add_initialized_data('DdataV', 0.1)
-         md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
-
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         gf_model_set(md, 'add_initialized_data', 'rho_0', rho_0);
-         gf_model_set(md, 'add_initialized_data', 'alpha', alpha);
-         gf_model_set(md, 'add_macro', 'rho', 'rho_0*(1+alpha*(T-T0))');
-         gf_model_set(md, 'add_nonlinear_term', mim, 't/rho * Grad(V).Grad(Test_V)');
-         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
-         gf_model_set(md, 'add_initialized_data', 'DdataV', 0.1);
-         gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
+                             gf_model_set(md, 'add_initialized_data', 'rho_0', rho_0);
+                             gf_model_set(md, 'add_initialized_data', 'alpha', alpha);
+                             gf_model_set(md, 'add_macro', 'rho', 'rho_0*(1+alpha*(T-T0))');
+                             gf_model_set(md, 'add_nonlinear_term', mim, 't/rho * Grad(V).Grad(Test_V)');
+                             gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
+                             gf_model_set(md, 'add_initialized_data', 'DdataV', 0.1);
+                             gf_model_set(md, 'add_Dirichlet_condition_with_multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
+         
+========================== ================================================
 
 
 Thermal problem
@@ -668,45 +631,42 @@ Finally, the definition of the thermal problem is done in the following snippets
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             md.add_initialized_scalar_data("kappaT", kappa);
+                             md.add_initialized_scalar_data("D", D);
+                             md.add_initialized_scalar_data("T_air", air_temp);
+                             getfem::add_linear_term(md, mim,
+                                                     "t*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T");
+                             getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", TOP_BOUND);
+                             getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", BOTTOM_BOUND);
+                             getfem::add_nonlinear_term(md, mim, "-t/rho * Norm_sqr(Grad(V))*Test_T");
 
-         md.add_initialized_scalar_data("kappaT", kappa);
-         md.add_initialized_scalar_data("D", D);
-         md.add_initialized_scalar_data("T_air", air_temp);
-         getfem::add_linear_term(md, mim,
-                                 "t*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T");
-         getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", TOP_BOUND);
-         getfem::add_linear_term(md, mim, "t*D*(T-T_air).Test_T", BOTTOM_BOUND);
-         getfem::add_nonlinear_term(md, mim, "-t/rho * Norm_sqr(Grad(V))*Test_T");
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md.add_initialized_data('kappaT', kappa)
+                             md.add_initialized_data('D', D)
+                             md.add_initialized_data('T_air', air_temp)
+                             md.add_linear_term(mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T')
+                             md.add_linear_term(mim, 't*D*(T-T_air).Test_T', TOP_BOUND)
+                             md.add_linear_term(mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND)
+                             md.add_nonlinear_term(mim, '-t/rho * Norm_sqr(Grad(V))*Test_T')
 
-         md.add_initialized_data('kappaT', kappa)
-         md.add_initialized_data('D', D)
-         md.add_initialized_data('T_air', air_temp)
-         md.add_linear_term(mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T')
-         md.add_linear_term(mim, 't*D*(T-T_air).Test_T', TOP_BOUND)
-         md.add_linear_term(mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND)
-         md.add_nonlinear_term(mim, '-t/rho * Norm_sqr(Grad(V))*Test_T')
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             gf_model_set(md, 'add_initialized_data', 'kappaT', kappa);
+                             gf_model_set(md, 'add_initialized_data', 'D', D);
+                             gf_model_set(md, 'add_initialized_data', 'T_air', air_temp);
+                             gf_model_set(md, 'add_linear_term', mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T');
+                             gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', TOP_BOUND);
+                             gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND);
+                             gf_model_set(md, 'add_nonlinear_term', mim, '-t/rho * Norm_sqr(Grad(V))*Test_T');
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
+========================== ================================================
 
-         gf_model_set(md, 'add_initialized_data', 'kappaT', kappa);
-         gf_model_set(md, 'add_initialized_data', 'D', D);
-         gf_model_set(md, 'add_initialized_data', 'T_air', air_temp);
-         gf_model_set(md, 'add_linear_term', mim, 't*kappaT*Grad(T).Grad(Test_T) + 2*D*(T-T_air)*Test_T');
-         gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', TOP_BOUND);
-         gf_model_set(md, 'add_linear_term', mim, 't*D*(T-T_air).Test_T', BOTTOM_BOUND);
-         gf_model_set(md, 'add_nonlinear_term', mim, '-t/rho * Norm_sqr(Grad(V))*Test_T');
 
 Model solve
 ***********
@@ -715,28 +675,23 @@ Once the model is correctly defined, we can simply solve it by:
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             gmm::iteration iter(1E-9, 1, 100);
+                             getfem::standard_solve(md, iter);
 
-         gmm::iteration iter(1E-9, 1, 100);
-         getfem::standard_solve(md, iter);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
-         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-
+========================== ================================================
 
 Since the problem has some nonlinear terms, a Newton method is used to iteratively solve the problem.
 It takes just a few iterations (about 4 in this case) to converge at the prescribed residual threshold.
@@ -752,44 +707,39 @@ This can be done as follows:
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             gmm::iteration iter(1E-9, 1, 100);
+                             md.disable_variable("u");
+                             getfem::standard_solve(md, iter);
+                             md.enable_variable("u");
+                             md.disable_variable("T");
+                             md.disable_variable("V");
+                             iter.init();
+                             getfem::standard_solve(md, iter);
 
-         gmm::iteration iter(1E-9, 1, 100);
-         md.disable_variable("u");
-         getfem::standard_solve(md, iter);
-         md.enable_variable("u");
-         md.disable_variable("T");
-         md.disable_variable("V");
-         iter.init();
-         getfem::standard_solve(md, iter);
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             md.disable_variable('u')
+                             md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+                             md.enable_variable('u')
+                             md.disable_variable('T')
+                             md.disable_variable('V')
+                             md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
 
-         md.disable_variable('u')
-         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
-         md.enable_variable('u')
-         md.disable_variable('T')
-         md.disable_variable('V')
-         md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')
+-------------------------- ------------------------------------------------
+**Matlab, Octave, Scilab** .. code-block:: octave
 
-   * - .. raw:: html
+                             gf_model_set(md, 'disable_variable', 'u');
+                             gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
+                             gf_model_set(md, 'enable_variable', 'u');
+                             gf_model_set(md, 'disable_variable', 'T');
+                             gf_model_set(md, 'disable_variable', 'V');
+                             gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 
-         Matlab<br>Octave<br>Scilab
-     - .. code-block:: matlab
-
-         gf_model_set(md, 'disable_variable', 'u');
-         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-         gf_model_set(md, 'enable_variable', 'u');
-         gf_model_set(md, 'disable_variable', 'T');
-         gf_model_set(md, 'disable_variable', 'V');
-         gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-
+========================== ================================================
 
 Export/visualization of the solution
 ************************************
@@ -802,125 +752,119 @@ It is also possible to make complex exports and slices (see :ref:`ud-export`).
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
 
-.. list-table::
-   :header-rows: 0
-   :stub-columns: 1
+========================== ================================================
+**C++**                    .. code-block:: c++
 
-   * - C++
-     - .. code-block:: c++
+                             getfem::model_real_plain_vector VM(mfvm.nb_dof()), CO(mfvm.nb_dof() * 2);
+                             getfem::ga_local_projection // needs a discontinuous mesh_fem
+                               (md, mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))",
+                                mfvm, VM);
+                             getfem::ga_interpolation_Lagrange_fem(md, "-t/rho * Grad(V)", mfvm, CO);
 
-         getfem::model_real_plain_vector VM(mfvm.nb_dof()), CO(mfvm.nb_dof() * 2);
-         getfem::ga_local_projection // needs a discontinuous mesh_fem
-           (md, mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))",
-            mfvm, VM);
-         getfem::ga_interpolation_Lagrange_fem(md, "-t/rho * Grad(V)", mfvm, CO);
+                             getfem::vtu_export exp("displacement_with_von_mises.vtu", false);
+                             exp.exporting(mfu);
+                             exp.write_point_data(mfu, md.real_variable("u"), "elastostatic displacement");
+                             exp.write_point_data(mfvm, VM, "Von Mises stress");
+                             cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
+                               "-d displacement_with_von_mises.vtu -f WarpVector -m Surface\n" << endl;
 
-         getfem::vtu_export exp("displacement_with_von_mises.vtu", false);
-         exp.exporting(mfu);
-         exp.write_point_data(mfu, md.real_variable("u"), "elastostatic displacement");
-         exp.write_point_data(mfvm, VM, "Von Mises stress");
-         cout << "\nYou can view solutions with for instance:\n\nmayavi2 "
-           "-d displacement_with_von_mises.vtu -f WarpVector -m Surface\n" << endl;
+                             getfem::vtu_export exp2("temperature.vtu", false);
+                             exp2.exporting(mft);
+                             exp2.write_point_data(mft, md.real_variable("T"), "Temperature");
+                             cout << "mayavi2 -d temperature.vtu -f WarpScalar -m Surface\n" << endl;
 
-         getfem::vtu_export exp2("temperature.vtu", false);
-         exp2.exporting(mft);
-         exp2.write_point_data(mft, md.real_variable("T"), "Temperature");
-         cout << "mayavi2 -d temperature.vtu -f WarpScalar -m Surface\n" << endl;
+                             getfem::vtu_export exp3("electric_potential.vtu", false);
+                             exp3.exporting(mft);
+                             exp3.write_point_data(mft, md.real_variable("V"), "Electric potential");
+                             cout << "mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface\n"
+                                  << endl;
 
-         getfem::vtu_export exp3("electric_potential.vtu", false);
-         exp3.exporting(mft);
-         exp3.write_point_data(mft, md.real_variable("V"), "Electric potential");
-         cout << "mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface\n"
-              << endl;
-         }
+-------------------------- ------------------------------------------------
+**Python**                 .. code-block:: python
 
-   * - Python
-     - .. code-block:: python
+                             VM = md.local_projection(mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))", mfvm)
+                             CO = md.interpolation('-t/rho * Grad(V)', mfvm).reshape(2, mfvm.nbdof(), order='F')
+                             mfvm.export_to_vtu('displacement_with_von_mises.vtu', mfvm,  VM, 'Von Mises Stresses',
+                                                                                   mfu, md.variable('u'), 'Displacements')
+                             mft.export_to_vtu('temperature.vtu', mft, md.variable('T'), 'Temperature')
+                             mft.export_to_vtu('electric_potential.vtu', mft, md.variable('V'), 'Electric potential')
+                             print('You can view solutions with for instance:')
+                             print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
+                             print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
+                             print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
 
-         VM = md.local_projection(mim, "sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))", mfvm)
-         CO = md.interpolation('-t/rho * Grad(V)', mfvm).reshape(2, mfvm.nbdof(), order='F')
-         mfvm.export_to_vtu('displacement_with_von_mises.vtu', mfvm,  VM, 'Von Mises Stresses',
-                                                               mfu, md.variable('u'), 'Displacements')
-         mft.export_to_vtu('temperature.vtu', mft, md.variable('T'), 'Temperature')
-         mft.export_to_vtu('electric_potential.vtu', mft, md.variable('V'), 'Electric potential')
-         print('You can view solutions with for instance:')
-         print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
-         print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
-         print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
+-------------------------- ------------------------------------------------
+**Matlab, Octave**         .. code-block:: octave
 
-   * - .. raw:: html
+                             U = gf_model_get(md, 'variable', 'u');
+                             VM = gf_model_get(md, 'local_projection', mim,...
+                                               'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
+                             CO = reshape(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
+                                          [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+                             figure(2);
+                             subplot(3,1,1);
+                             gf_plot(mfvm, VM, 'mesh', 'off', 'disp_options', 'off',...
+                                               'deformed_mesh','off', 'deformation', U,... 
+                                               'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+                             colorbar;
+                             title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
+                             subplot(3,1,2);
+                             hold on;
+                             gf_plot(mft, gf_model_get(md, 'variable', 'V'), 'mesh', 'off', 'disp_options', 'off',...
+                                                                             'deformed_mesh','off',...
+                                                                             'deformation', U, 'deformation_mf', mfu,...
+                                                                             'deformation_scale', 100, 'refine', 8);
+                             colorbar;
+                             gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'disp_options', 'off',...
+                                               'deformed_mesh', 'off', 'deformation', U, 'deformation_mf', mfu,
+                                               'deformation_scale', 100, 'refine', 8);
+                             colorbar;
+                             title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
+                             hold off;
+                             subplot(3,1,3);
+                             gf_plot(mft, gf_model_get(md, 'variable', 'T'), 'mesh', 'off', 'disp_options', 'off',...
+                                                                             'deformed_mesh', 'off',...
+                                                                             'deformation', U, 'deformation_mf', mfu,...
+                                                                             'deformation_scale', 100, 'refine', 8);
+                             colorbar;
+                             title('Temperature in ^oC (on the deformed configuration, scale factor x100)');
 
-         Matlab<br>Octave
-     - .. code-block:: matlab
+-------------------------- ------------------------------------------------
+**Scilab**                 .. code-block:: octave
 
-         U = gf_model_get(md, 'variable', 'u');
-         VM = gf_model_get(md, 'local_projection', mim,...
-                           'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
-         CO = reshape(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
-                      [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
-         figure(2);
-         subplot(3,1,1);
-         gf_plot(mfvm, VM, 'mesh', 'off', 'disp_options', 'off',...
-                           'deformed_mesh','off', 'deformation', U,... 
-                           'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-         colorbar;
-         title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
-         subplot(3,1,2);
-         hold on;
-         gf_plot(mft, gf_model_get(md, 'variable', 'V'), 'mesh', 'off', 'disp_options', 'off',...
-                                                         'deformed_mesh','off',...
-                                                         'deformation', U, 'deformation_mf', mfu,...
-                                                         'deformation_scale', 100, 'refine', 8);
-         colorbar;
-         gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'disp_options', 'off',...
-                           'deformed_mesh', 'off', 'deformation', U, 'deformation_mf', mfu,
-                           'deformation_scale', 100, 'refine', 8);
-         colorbar;
-         title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
-         hold off;
-         subplot(3,1,3);
-         gf_plot(mft, gf_model_get(md, 'variable', 'T'), 'mesh', 'off', 'disp_options', 'off',...
-                                                         'deformed_mesh', 'off',...
-                                                         'deformation', U, 'deformation_mf', mfu,...
-                                                         'deformation_scale', 100, 'refine', 8);
-         colorbar;
-         title('Temperature in ^oC (on the deformed configuration, scale factor x100)');
+                             U = gf_model_get(md, 'variable', 'u');
+                             V = gf_model_get(md, 'variable', 'V');
+                             T = gf_model_get(md, 'variable', 'T');
+                             VM = gf_model_get(md, 'local_projection', mim,...
+                                               'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
+                             CO = matrix(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
+                                         [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
 
-   * - Scilab
-     - .. code-block:: matlab
+                             hh = scf(2);
+                             hh.color_map = jetcolormap(255);
+                             subplot(3,1,1);
+                             gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh', 'off',...
+                                               'deformation', U, 'deformation_mf', mfu,...
+                                               'deformation_scale', 100, 'refine', 8);
+                             colorbar(min(VM),max(VM));
+                             title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
+                             subplot(3,1,2);
+                             drawlater;
+                             gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh', 'off', 'deformation', U,...
+                                             'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+                             colorbar(min(V),max(V));
+                             gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off',...
+                                     'deformed_mesh','off', 'deformation_mf', mfu, ...
+                                     'deformation', U, 'deformation_scale', 100, 'refine', 8);
+                             title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
+                             drawnow;
+                             subplot(3,1,3);
+                             gf_plot(mft, T, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U,...
+                                             'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
+                             colorbar(min(T),max(T));
+                             title('Temperature in °C (on the deformed configuration, scale factor x100)');
 
-         U = gf_model_get(md, 'variable', 'u');
-         V = gf_model_get(md, 'variable', 'V');
-         T = gf_model_get(md, 'variable', 'T');
-         VM = gf_model_get(md, 'local_projection', mim,...
-                           'sqrt(Norm_sqr(sigma)+sqr(sigma(1,2))-sigma(1,1)*sigma(2,2))', mfvm);
-         CO = matrix(gf_model_get(md, 'interpolation', '-t/rho * Grad(V)', mfvm),...
-                     [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
-
-         hh = scf(2);
-         hh.color_map = jetcolormap(255);
-         subplot(3,1,1);
-         gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh', 'off',...
-                           'deformation', U, 'deformation_mf', mfu,...
-                           'deformation_scale', 100, 'refine', 8);
-         colorbar(min(VM),max(VM));
-         title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
-         subplot(3,1,2);
-         drawlater;
-         gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh', 'off', 'deformation', U,...
-                         'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-         colorbar(min(V),max(V));
-         gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off',...
-                 'deformed_mesh','off', 'deformation_mf', mfu, ...
-                 'deformation', U, 'deformation_scale', 100, 'refine', 8);
-         title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
-         drawnow;
-         subplot(3,1,3);
-         gf_plot(mft, T, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U,...
-                         'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8);
-         colorbar(min(T),max(T));
-         title('Temperature in °C (on the deformed configuration, scale factor x100)');
-
+========================== ================================================
 
 .. _tut-fig-solthermo:
 .. figure:: images/solution_thermo.png
