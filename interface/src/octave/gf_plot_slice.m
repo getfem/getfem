@@ -1,51 +1,18 @@
-function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
-% function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
-% this function is used to plot a slice of mesh/mesh_fem (see gf_slice)
+% Copyright (C) 1999-2026 Yves Renard
 %
-% The options are specified as pairs of "option name"/"option value"
+% This file is a part of GetFEM
 %
-%           OPTION NAME       DEFAULT VALUE         ACTION
-%                    data    []                  data to be plotted (one value per slice node)
-%             convex_data    []                  data to be plotted (one value per mesh convex)
-%                    mesh    'auto'              'on' -> show the mesh (faces of edges), 
-%                                                'off' -> ignore mesh
-%              mesh_edges    'on'                show mesh edges ?
-%        mesh_edges_color    [0.60 0.60 1]       color of mesh edges
-%        mesh_edges_width    0.70                width of mesh edges
-%        mesh_slice_edges    'on'                show edges of the slice ?
-%  mesh_slice_edges_color    [0.70 0 0]
-%  mesh_slice_edges_width    0.50
-%              mesh_faces    'off'               'on' -> fill mesh faces (otherwise they are transparent)
-%        mesh_faces_color    [0.75 0.75 0.75]
-%                  pcolor    'on'                if the field is scalar, a color plot of its values is plotted
-%                  quiver    'on'                if the field is vector, represent arrows
-%          quiver_density    50                  density of arrows in quiver plot
-%            quiver_scale    1                   density of arrows in quiver plot 
-%                    tube    'on'                use tube plot for 'filar' (1D) parts of the slice
-%              tube_color    'red'               color of tubes (ignored if 'data' is not empty and 'pcolor' is on)
-%             tube_radius    '0.5%'              tube radius; you can use a constant, or a percentage 
-%                                                (of the mesh size) or a vector of nodal values
-%             showoptions    'on'                display the list of options
-%  
-% the 'data' and 'convex_data' are mutually exclusive.
-%  
-% RETURNS: handles to the various graphical objects created.  
-%  Copyright (C) 1999-2017 Yves Renard
-%
-%  This file is a part of GetFEM++
-%
-%  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
-%  under  the  terms  of the  GNU  Lesser General Public License as published
-%  by  the  Free Software Foundation;  either version 3 of the License,  or
-%  (at your option) any later version along with the GCC Runtime Library
-%  Exception either version 3.1 or (at your option) any later version.
-%  This program  is  distributed  in  the  hope  that it will be useful,  but
-%  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-%  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-%  License and GCC Runtime Library Exception for more details.
-%  You  should  have received a copy of the GNU Lesser General Public License
-%  along  with  this program;  if not, write to the Free Software Foundation,
-%  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+% GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+% under  the  terms  of the  GNU  Lesser General Public License as published
+% by  the  Free Software Foundation;  either version 3 of the License,  or
+% (at your option) any later version along with the GCC Runtime Library
+% Exception either version 3.1 or (at your option) any later version.
+% This program  is  distributed  in  the  hope  that it will be useful,  but
+% WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+% License and GCC Runtime Library Exception for more details.
+% You  should  have received a copy of the GNU Lesser General Public License
+% along  with  this program. If not, see https://www.gnu.org/licenses/.
 
   if nargin<1,
     error('Too few input arguments')

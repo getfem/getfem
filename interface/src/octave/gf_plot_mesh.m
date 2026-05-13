@@ -1,48 +1,18 @@
-function [hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, varargin)
-% function [hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, [,properties])
-%                     [,'cvlst',CVLST] ['boundaries'[BLST]])
-%   General mesh plotting function.
-%  
-%   H=gf_plot_mesh(M) displays a mesh.
+% Copyright (C) 1999-2026 A. Huard, Y. Renard, J. Pommier
 %
-%   properties are:
-%    'vertices', {'off'|'on'}     displays also vertices numbers. 
-%    'convexes', {'off'|'on'}     displays also convexes numbers. 
-%    'dof',{'off'|'on'}           displays also finite element nodes.
-%    'regions',BLST               displays the boundaries listed in BLST.
-%    'cvlst',CVLST                display only the listed convexes. If
-%   CVLST has two rows, display only the faces listed in the second row.
-%    'edges', {'on' | 'off'}      display edges ?
-%    'faces', {'off'|'on'}        fills each 2D-face of the mesh
-%    'curved', {'off'|'on'}       displays curved edges
-%    'refine',N                   refine curved edges and filled faces N times  
-%    'deformation', Udef          optionnal deformation applied to the mesh (M must be a mesh_fem object)
-%    'edges_color',[.6 .6 1]      RGB values for the color of edges
-%    'edges_width',1              
-%    'faces_color',[.75 .75 .75]) RGB values for the color of faces
-%    'quality',{ 'off' | 'on' }   Display the quality of the mesh.
+% This file is a part of GetFEM
 %
-%   CAUTION:
-%     For 'dof', M should be a mesh_fem identifier, 
-%   not a simple mesh object.
-%  
-%   $Id$
-%  Copyright (C) 1999-2017 A. Huard, Y. Renard, J. Pommier
-%
-%  This file is a part of GetFEM++
-%
-%  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
-%  under  the  terms  of the  GNU  Lesser General Public License as published
-%  by  the  Free Software Foundation;  either version 3 of the License,  or
-%  (at your option) any later version along with the GCC Runtime Library
-%  Exception either version 3.1 or (at your option) any later version.
-%  This program  is  distributed  in  the  hope  that it will be useful,  but
-%  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-%  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-%  License and GCC Runtime Library Exception for more details.
-%  You  should  have received a copy of the GNU Lesser General Public License
-%  along  with  this program;  if not, write to the Free Software Foundation,
-%  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+% GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+% under  the  terms  of the  GNU  Lesser General Public License as published
+% by  the  Free Software Foundation;  either version 3 of the License,  or
+% (at your option) any later version along with the GCC Runtime Library
+% Exception either version 3.1 or (at your option) any later version.
+% This program  is  distributed  in  the  hope  that it will be useful,  but
+% WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+% License and GCC Runtime Library Exception for more details.
+% You  should  have received a copy of the GNU Lesser General Public License
+% along  with  this program. If not, see https://www.gnu.org/licenses/.
 
 if nargin<1,
   error('Too few input arguments')

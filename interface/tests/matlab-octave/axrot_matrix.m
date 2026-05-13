@@ -1,4 +1,4 @@
-% Copyright (C) 2004-2020 Julien Pommier.
+% Copyright (C) 2004-2026 Julien Pommier.
 %
 % This file is a part of GetFEM
 %
@@ -12,8 +12,7 @@
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 % License and GCC Runtime Library Exception for more details.
 % You  should  have received a copy of the GNU Lesser General Public License
-% along  with  this program;  if not, write to the Free Software Foundation,
-% Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+% along  with  this program. If not, see https://www.gnu.org/licenses/.
 
 function R=axrot_matrix(A, B, theta)
   n=(B-A); n = n/norm(n);

@@ -1,4 +1,4 @@
-% Copyright (C) 2009-2020 Alassane SY, Yves Renard.
+% Copyright (C) 2009-2026 Alassane SY, Yves Renard.
 %
 % This file is a part of GetFEM
 %
@@ -12,8 +12,7 @@
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 % License and GCC Runtime Library Exception for more details.
 % You  should  have received a copy of the GNU Lesser General Public License
-% along  with  this program;  if not, write to the Free Software Foundation,
-% Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+% along  with  this program. If not, see https://www.gnu.org/licenses/.
 %
 %  Shape optimization of a structure with a coupling between topological and
 %  shape gradient (with a fictitious domain approach).

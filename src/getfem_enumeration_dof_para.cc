@@ -1,6 +1,6 @@
 /*===========================================================================
 
- Copyright (C) 2012-2020 Yves Renard, Julien Pommier.
+ Copyright (C) 2012-2026 Yves Renard, Julien Pommier.
 
  This file is a part of GetFEM
 
@@ -14,8 +14,7 @@
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  License and GCC Runtime Library Exception for more details.
  You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+ along  with  this program. If not, see https://www.gnu.org/licenses/.
 
 ===========================================================================*/
 #include <queue>

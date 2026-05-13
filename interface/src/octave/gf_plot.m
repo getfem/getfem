@@ -1,51 +1,18 @@
-function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
-% function h=gf_plot(mf,U,varargin)
-% this function plots a 2D or 3D finite elements field.
+% Copyright (C) 1999-2026 Yves Renard
 %
-% The options are specified as pairs of "option name"/"option value"
-%  
-%  'zplot',{'off'|'on'}       : only for qdim=1, mdim=2
-%  'norm', {'off'|'on'}       : if qdim >= 2, color-plot the norm of the field
-%  'dir',[]	              : or the scalar product of the field with 'dir' 
-%                               (can be a vector, or 'x', 'y' etc..)
-%  'refine',8		      : nb of refinments for curved edges and surface plots
-%  'interpolated',{'off'|'on'}: if triangular patch are interpolated
-%  'pcolor',{'on'|'off'}      : if the field is scalar, a color plot of its values is plotted
-%  'quiver',{'on'|'off'}      : if the field is vector, represent arrows 	       
-%  'quiver_density',50        : density of arrows in quiver plot
-%  'quiver_scale',1           : scaling of arrows (0=>no scaling)
-%  'mesh',{'off'|'on'}	      : show the mesh ?
-%  'meshopts',{cell(0)}	         : cell array of options passed to gf_plot_slice for the mesh 
-%  'deformed_mesh', {'off'|'on'} : shows the deformed mesh (only when qdim == mdim)
-%  'deformed_meshopts', {cell(0)}: cell array of options passed to gf_plot_slice 
-%                                  for the deformed mesh 
-%  'deformation',[]	      : plots on the deformed object (only when qdim == mdim)
-%  'deformation_mf',[]        : plots on the deformed object (only when qdim == mdim)
-%  'deformation_scale','10%'  : indicate the amplitude of the deformation. Can be 
-%                               a percentage of the mesh width if given as a string, 
-%                               or an absolute value if given as a number
-%  'cvlst',[]		      : list of convexes to plot (empty=>all convexes)
-%  'title',[]                 : set the title
-%  'contour',[]               : list of contour values
-%  'disp_options', {'off'|'on'} : shows the option or not.
+% This file is a part of GetFEM
 %
-%
-%  Copyright (C) 1999-2017 Yves Renard
-%
-%  This file is a part of GetFEM++
-%
-%  GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
-%  under  the  terms  of the  GNU  Lesser General Public License as published
-%  by  the  Free Software Foundation;  either version 3 of the License,  or
-%  (at your option) any later version along with the GCC Runtime Library
-%  Exception either version 3.1 or (at your option) any later version.
-%  This program  is  distributed  in  the  hope  that it will be useful,  but
-%  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-%  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-%  License and GCC Runtime Library Exception for more details.
-%  You  should  have received a copy of the GNU Lesser General Public License
-%  along  with  this program;  if not, write to the Free Software Foundation,
-%  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+% GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+% under  the  terms  of the  GNU  Lesser General Public License as published
+% by  the  Free Software Foundation;  either version 3 of the License,  or
+% (at your option) any later version along with the GCC Runtime Library
+% Exception either version 3.1 or (at your option) any later version.
+% This program  is  distributed  in  the  hope  that it will be useful,  but
+% WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+% License and GCC Runtime Library Exception for more details.
+% You  should  have received a copy of the GNU Lesser General Public License
+% along  with  this program. If not, see https://www.gnu.org/licenses/.
 
   try 
     gf_workspace('push');
