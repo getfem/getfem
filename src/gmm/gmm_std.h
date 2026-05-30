@@ -80,12 +80,6 @@ inline void GMM_NOPERATION_(int) { }
 /*	Compilers detection.						  */
 /* ********************************************************************** */
 
-/* for VISUAL C++ ...
-#if defined(_MSC_VER) //  && !defined(__MWERKS__)
-#define _GETFEM_MSVCPP_ _MSC_VER
-#endif
-*/
-
 #if defined(__GNUC__)
 #  if (__GNUC__ < 4)
 #    error : PLEASE UPDATE g++ TO AT LEAST 4.8 VERSION

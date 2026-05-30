@@ -558,7 +558,7 @@ namespace gmm {
     writeHB_mat_double(filename, int(mat_nrows(A)), int(mat_ncols(A)),
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
 		       (const double *)A.pr,
-		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
+		       0, 0, 0, 0, "GMM CSC MATRIX", "CSCMAT",
 		       t, 0, 0, 0, 0, "F", shift);
   }
 
@@ -576,7 +576,7 @@ namespace gmm {
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
 		       (const double *)A.pr,
 		       Nrhs, (const double *)(&rhs[0]), 0, 0,
-		       "GETFEM++ CSC MATRIX", "CSCMAT",
+		       "GMM CSC MATRIX", "CSCMAT",
 		       t, 0, 0, 0, 0, "F  ", shift);
   }
 
