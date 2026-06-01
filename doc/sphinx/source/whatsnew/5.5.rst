@@ -1,0 +1,30 @@
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 5.5
+************************
+
+The main contribution of this version is a fully functional scripting language interface to Octave and support for definition and condensation of internal variables.
+
+Released version, 2026/06/15.
+
+The main changes are:
+
+   * Fixes in derivation of Interpolate expressions in GWFL
+     
+   * Support importing 13- and 14-node pyramid elements from gmsh
+     
+   * Support importing 15- and 18-node prism elements from gmsh
+     
+   * Allow for multiple right hand side vectors in MUMPS solves
+     
+   * New MUMPS context object for reusable factorization, and access to
+     all MUMPS options
+     
+   * Fix performance bottleneck in parsing long GWFL expressions
+     
+   * A lot of codebase maintenance and improvements
+
+
+   
+

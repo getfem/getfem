@@ -797,7 +797,7 @@ getfem_env(PyObject *self, PyObject *args) {
     word_out = PyUnicode_FromString("GetFEM");
   } else if (strcmp(word_in,"copyright") == 0) {
     word_out = PyUnicode_FromString
-    ("2004-2025 GetFEM project");
+    ("2004-2026 GetFEM project");
   } else if (strcmp(word_in,"authors") == 0) {
     word_out = PyUnicode_FromString
     ("Yves Renard, Julien Pommier, Konstantinos Poulios");
