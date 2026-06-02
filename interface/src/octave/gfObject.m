@@ -1,3 +1,6 @@
+function b=gfObject(a)
+% converts a getfem struct to an object such as gfMesh, gfFem etc..    
+
 % Copyright (C) 1999-2026 Yves Renard
 %
 % This file is a part of GetFEM
