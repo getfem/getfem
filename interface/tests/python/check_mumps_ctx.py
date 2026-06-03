@@ -74,9 +74,9 @@ x1_times_two = ctx1.solve()
 assert np.allclose(x1, x1_times_two/2)
 
 ctx1.set_vector(np.column_stack((rhs,2*rhs)))
-x1,x1_times_two = np.unstack(ctx1.solve(), axis=1)
+# x1,x1_times_two = np.unstack(ctx1.solve(), axis=1)
+aa = ctx1.solve(); x1 = aa[:,0]; x1_times_two = aa[:,1] # for old python version
 #print(f"rank{rank}: x1 =", x1, "2*x1 =", x1_times_two)
-
 
 ctx2.set_matrix(K2)
 ctx2.set_vector(rhs)

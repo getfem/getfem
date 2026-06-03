@@ -318,6 +318,7 @@ Makefile
 /interface/tests/*/*.dx
 /internal_tools/morley_base
 /tests/*.vtk
+/tests/*.vtu
 /tests/*.pos
 /tests/*.dx
 /tests/*.mesh
