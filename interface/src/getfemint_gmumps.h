@@ -35,6 +35,8 @@
 #include <getfemint.h>
 #include <gmm/gmm_MUMPS_interface.h>
 
+#if defined(GMM_USES_MUMPS)
+
 namespace getfemint {
 
   /*
@@ -157,5 +159,6 @@ namespace getfemint {
   };
 
 }
+#endif // GMM_USES_MUMPS
 
 #endif /* GETFEMINT_GMUMPS_H__ */

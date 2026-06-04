@@ -28,6 +28,8 @@ using namespace getfemint;
   General function for modifying mumps_context objects
 @*/
 
+
+#if defined(GMM_USES_MUMPS)
 inline void return_mumps_solution(getfemint::mexargs_out& out,
                                   const gmumps *pctx) {
   if (out.remaining()) {
@@ -54,19 +56,22 @@ inline void return_mumps_solution(getfemint::mexargs_out& out,
     }
   }
 }
-
+#endif
 
 void gf_mumps_context_set(getfemint::mexargs_in& in,
                           getfemint::mexargs_out& out) {
 
   if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
 
+  #if defined(GMM_USES_MUMPS)
   gmumps *pctx         = to_mumps_context_object(in.pop());
+  #endif
   std::string init_cmd = in.pop().to_string();
   std::string cmd      = cmd_normalize(init_cmd);
 
   const bool distr_mat =
     check_cmd(cmd, "distributed matrix", in, out, 1, 3, 0, 0);
+  #if defined(GMM_USES_MUMPS)
   if (distr_mat || check_cmd(cmd, "matrix", in, out, 1, 3, 0, 0)) {
     /*@SET ('matrix', @mat A[, @vec rows[, @vec cols]])
       Set @mat A(rows,cols) as the matrix for the @tmct object.
@@ -214,4 +219,7 @@ void gf_mumps_context_set(getfemint::mexargs_in& in,
     return_mumps_solution(out, pctx);
    } else
      bad_cmd(init_cmd);
+   #else
+   GMM_ASSERT1(false, "Sorry Mumps not linked with GetFEM");
+   #endif
 }

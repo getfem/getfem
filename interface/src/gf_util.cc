@@ -141,6 +141,20 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
        out.pop().from_integer(int(GETFEM_PARA_LEVEL));
      );
 
+  /*@FUNC tl = ('mumps linked')
+    Return if mumps is linked to GetFEM or not.
+
+    0 means no 
+    1 means yes.@*/
+  sub_command
+    ("mumps linked", 0, 0, 0, 1,
+       #if defined(GMM_USES_MUMPS)
+         out.pop().from_integer(int(1));
+       #else
+         out.pop().from_integer(int(0));
+       #endif
+     );
+
 } // build_sub_command_table
 
 

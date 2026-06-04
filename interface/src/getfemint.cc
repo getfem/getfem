@@ -1322,6 +1322,7 @@ namespace getfemint {
                                   getfem::model,
                                   MODEL_CLASS_ID)
 
+  #if defined(GMM_USES_MUMPS)
   // Functions for MUMPS_CONTEXT_CLASS_ID (writable)
   DEFINE_IS_X_OBJECT_FUNCTION(is_mumps_context_object, MUMPS_CONTEXT_CLASS_ID)
   DEFINE_STORE_X_OBJECT_FUNCTION(store_mumps_context_object,
@@ -1330,6 +1331,7 @@ namespace getfemint {
   DEFINE_TO_X_OBJECT_FUNCTION_RAW(to_mumps_context_object,
                                   gmumps,
                                   MUMPS_CONTEXT_CLASS_ID)
+  #endif
 
   // Functions for PRECOND_CLASS_ID (writable)
   DEFINE_IS_X_OBJECT_FUNCTION(is_precond_object, PRECOND_CLASS_ID)

@@ -50,6 +50,7 @@ void gf_mumps_context(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
           THROW_BADARG("invalid symmetry option: " << opt);
       } else
         THROW_BADARG("invalid argument to MumpsContext, expected string");
+
     }
     bool complex(false);
     if (in.remaining()) {
@@ -64,10 +65,13 @@ void gf_mumps_context(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       } else
         THROW_BADARG("invalid argument to MumpsContext, expected string");
     }
-
+    #if defined(GMM_USES_MUMPS)
     auto pstored = std::make_shared<gmumps>(sym, complex);
     id_type id = store_mumps_context_object(pstored);
     out.pop().from_object_id(id, MUMPS_CONTEXT_CLASS_ID);
+    #else
+    GMM_ASSERT1(false, "Sorry Mumps not linked with GetFEM");
+    #endif
   }
 }
 

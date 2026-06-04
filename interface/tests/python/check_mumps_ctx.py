@@ -31,6 +31,9 @@
 import numpy as np
 import getfem as gf
 
+if (not gf.util_mumps_linked()):
+  print('Mumps not linked with Getfem, aborting the test'); exit(0);
+
 nprocs = 1
 rank = 0
 if gf.util_mpi_parallelism_level() >= 2:
