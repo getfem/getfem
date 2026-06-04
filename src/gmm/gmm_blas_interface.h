@@ -156,7 +156,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
 // Hack due to BLAS ABI mess
 #if defined(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT)
 # define BLAS_CPLX_FUNC_CALL(blasname, ftype, res, ...) \
-  blasname(&res, __VA_ARGS__)
+  blasname(&res, __VA_ARGS__);
 #else
 # define BLAS_CPLX_FUNC_CALL(blasname, ftype, res, ...) \
   ftype _res=blasname(__VA_ARGS__); res=decltype(res){_res.r,_res.i};
