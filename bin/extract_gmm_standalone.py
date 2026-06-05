@@ -24,7 +24,7 @@ import subprocess
 from pathlib import Path
 
 def main():
-  root = Path.cwd() / "gmm_standalone_temp"
+  root = Path.cwd() / "../gmm_standalone_temp"
   getfem_root = Path(__file__).parent.parent
 
   # Create directory structure
@@ -74,6 +74,11 @@ def main():
   subprocess.run(f"cd {root} && ./configure", shell=True, check=True)
   subprocess.run(f"cd {root} && make dist", shell=True, check=True)
   # Move tar.gz file
+  
+  tar_files = list(getfem_root.glob("gmm-*.tar.gz"))
+  for tar_file in tar_files:
+    os.remove(str(tar_file))
+
   tar_files = list(root.glob("gmm-*.tar.gz"))
   for tar_file in tar_files:
     shutil.move(str(tar_file), getfem_root)
