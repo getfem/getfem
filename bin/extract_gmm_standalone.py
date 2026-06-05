@@ -26,9 +26,6 @@ from pathlib import Path
 def main():
   root = Path.cwd() / "gmm_standalone_temp"
   getfem_root = Path(__file__).parent.parent
-  MAJOR_VERSION = "5"
-  MINOR_VERSION = "4"
-  PATCH_VERSION = "5"
 
   # Create directory structure
   shutil.rmtree(root, ignore_errors=True)

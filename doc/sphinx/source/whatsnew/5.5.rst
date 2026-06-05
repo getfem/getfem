@@ -4,7 +4,7 @@
   What's New in |gf| 5.5
 ************************
 
-The main contribution of this version is a fully functional scripting language interface to Octave and support for definition and condensation of internal variables.
+The main contribution of this version is a new scripting language interface to the MUMPS sparse system solver.
 
 Released version, 2026/06/15.
 
@@ -25,6 +25,7 @@ The main changes are:
      
    * A lot of codebase maintenance and improvements
 
+   * Support for fully automated MS Windows builds through github Actions
 
    
 

@@ -26,10 +26,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT([gmm],[5.4.5])
+AC_INIT([gmm],[5.5])
 MAJOR_VERSION="5"
-MINOR_VERSION="4"
-PATCH_VERSION="5"
+MINOR_VERSION="5"
+PATCH_VERSION="0"
 AC_DEFINE_UNQUOTED(GMM_PACKAGE_NAME,"${PACKAGE_NAME}",[GMM package name])
 AC_DEFINE_UNQUOTED(GMM_PACKAGE_STRING,"${PACKAGE_STRING}",[GMM package string])
 AC_DEFINE_UNQUOTED(GMM_PACKAGE_TARNAME,"${PACKAGE_TARNAME}",[GMM package tarname])

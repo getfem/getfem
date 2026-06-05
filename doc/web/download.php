@@ -4,7 +4,7 @@
     <p>
       GetFEM++ is freely distributed under the terms of the
       <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
-       Gnu Lesser General Public License, either version 2.1 of the license or any later version</a>.
+       GNU Lesser General Public License, either version 2.1 of the license or any later version</a>.
     </p>
 
     <p>
