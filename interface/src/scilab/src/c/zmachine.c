@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -51,9 +50,7 @@ void	__zconj__(complex * zp, int len)
 /* __zip__ -- inner product
 	-- computes sum_i zp1[i].zp2[i] if flag == 0
 		    sum_i zp1[i]*.zp2[i] if flag != 0 */
-complex	__zip__(zp1,zp2,len,flag)
-complex	*zp1, *zp2;
-int	flag, len;
+complex	__zip__(complex *zp1, complex *zp2, int len, int flag)
 {
     complex	sum;
     int		i;
@@ -82,9 +79,7 @@ int	flag, len;
 /* __zmltadd__ -- scalar multiply and add i.e. complex saxpy
 	-- computes zp1[i] += s.zp2[i]  if flag == 0
 	-- computes zp1[i] += s.zp2[i]* if flag != 0 */
-void	__zmltadd__(zp1,zp2,s,len,flag)
-complex	*zp1, *zp2, s;
-int	flag, len;
+void	__zmltadd__(complex *zp1, complex *zp2, complex s, int len, int flag)
 {
     int		i;
     LongReal	t_re, t_im;
@@ -112,9 +107,7 @@ int	flag, len;
 }
 
 /* __zmlt__ scalar complex multiply array c.f. sv_mlt() */
-void	__zmlt__(zp,s,out,len)
-complex	*zp, s, *out;
-register int	len;
+void	__zmlt__(complex *zp, complex s, complex *out, register int len)
 {
     int		i;
     LongReal	t_re, t_im;
@@ -129,9 +122,7 @@ register int	len;
 }
 
 /* __zadd__ -- add complex arrays c.f. v_add() */
-void	__zadd__(zp1,zp2,out,len)
-complex	*zp1, *zp2, *out;
-int	len;
+void	__zadd__(complex *zp1, complex *zp2, complex *out, int len)
 {
     int		i;
     for ( i = 0; i < len; i++ )
@@ -142,9 +133,7 @@ int	len;
 }
 
 /* __zsub__ -- subtract complex arrays c.f. v_sub() */
-void	__zsub__(zp1,zp2,out,len)
-complex	*zp1, *zp2, *out;
-int	len;
+void	__zsub__(complex *zp1, complex *zp2, complex *out, int len)
 {
     int		i;
     for ( i = 0; i < len; i++ )
@@ -155,9 +144,7 @@ int	len;
 }
 
 /* __zzero__ -- zeros an array of complex numbers */
-void	__zzero__(zp,len)
-complex	*zp;
-int	len;
+void	__zzero__(complex *zp, int len)
 {
     /* if a Real precision zero is equivalent to a string of nulls */
     MEM_ZERO((char *)zp,len*sizeof(complex));
@@ -170,4 +157,3 @@ int	len;
     }
     ******************************/
 }
-

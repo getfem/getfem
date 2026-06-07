@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -48,12 +47,10 @@ extern	char	*calloc(), *realloc();
 /* sprow_ip -- finds the (partial) inner product of a pair of sparse rows
 	-- uses a "merging" approach & assumes column ordered rows
 	-- row indices for inner product are all < lim */
-double	sprow_ip(row1, row2, lim)
-SPROW	*row1, *row2;
-int	lim;
+double	sprow_ip(SPROW *row1, SPROW *row2, int lim)
 {
 	int			idx1, idx2, len1, len2, tmp;
-	int			sprow_idx();
+	int			sprow_idx(SPROW *,int);
 	register row_elt	*elts1, *elts2;
 	register Real		sum;
 
@@ -121,9 +118,7 @@ int	lim;
 }
 
 /* sprow_sqr -- returns same as sprow_ip(row, row, lim) */
-double	sprow_sqr(row, lim)
-SPROW	*row;
-int	lim;
+double	sprow_sqr(SPROW *row, int lim)
 {
 	register	row_elt	*elts;
 	int		idx, len;
@@ -148,8 +143,7 @@ static	int	scan_len = 0;
 
 /* set_scan -- expand scan_row and scan_idx arrays
 	-- return new length */
-int	set_scan(new_len)
-int	new_len;
+int	set_scan(int new_len)
 {
 	if ( new_len <= scan_len )
 		return scan_len;
@@ -176,8 +170,7 @@ int	new_len;
 
 /* spCHfactor -- sparse Cholesky factorisation
 	-- only the lower triangular part of A (incl. diagonal) is used */
-SPMAT	*spCHfactor(A)
-SPMAT	*A;
+SPMAT	*spCHfactor(SPMAT *A)
 {
 	register 	int	i;
 	int	idx, k, m, minim, n, num_scan, diag_idx, tmp1;
@@ -307,9 +300,7 @@ SPMAT	*A;
 /* spCHsolve -- solve L.L^T.out=b where L is a sparse matrix,
 	-- out, b dense vectors
 	-- returns out; operation may be in-situ */
-VEC	*spCHsolve(L,b,out)
-SPMAT	*L;
-VEC	*b, *out;
+VEC	*spCHsolve(SPMAT *L, VEC *b, VEC *out)
 {
 	int	i, j_idx, n, scan_idx, scan_row;
 	SPROW	*row;
@@ -379,8 +370,7 @@ VEC	*b, *out;
 /* spICHfactor -- sparse Incomplete Cholesky factorisation
 	-- does a Cholesky factorisation assuming NO FILL-IN
 	-- as for spCHfactor(), only the lower triangular part of A is used */
-SPMAT	*spICHfactor(A)
-SPMAT	*A;
+SPMAT	*spICHfactor(SPMAT *A)
 {
 	int	k, m, n, nxt_row, nxt_idx, diag_idx;
 	Real	pivot, tmp2;
@@ -441,8 +431,7 @@ SPMAT	*A;
 /* spCHsymb -- symbolic sparse Cholesky factorisation
 	-- does NOT do any floating point arithmetic; just sets up the structure
 	-- only the lower triangular part of A (incl. diagonal) is used */
-SPMAT	*spCHsymb(A)
-SPMAT	*A;
+SPMAT	*spCHsymb(SPMAT *A)
 {
 	register 	int	i;
 	int	idx, k, m, minim, n, num_scan, diag_idx, tmp1;
@@ -551,8 +540,7 @@ SPMAT	*A;
 }
 
 /* comp_AAT -- compute A.A^T where A is a given sparse matrix */
-SPMAT	*comp_AAT(A)
-SPMAT	*A;
+SPMAT	*comp_AAT(SPMAT *A)
 {
 	SPMAT	*AAT;
 	SPROW	*r, *r2;

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -46,9 +45,7 @@ static char rcsid[] = "$Id$";
 	-- sort singular values in decreasing order
 	-- variables as for bisvd()
 	-- no argument checking */
-static void	fixsvd(d,U,V)
-VEC	*d;
-MAT	*U, *V;
+static void	fixsvd(VEC *d, MAT *U, MAT *V)
 {
     int		i, j, k, l, r, stack[MAX_STACK], sp;
     Real	tmp, v;
@@ -137,9 +134,7 @@ MAT	*U, *V;
 		in U, V; if U, V == I on entry, then SVD == U^T.A.V
 		where A is initial matrix
 	-- returns d on exit */
-VEC	*bisvd(d,f,U,V)
-VEC	*d, *f;
-MAT	*U, *V;
+VEC	*bisvd(VEC *d, VEC *f, MAT *U, MAT *V)
 {
 	int	i, j, n;
 	int	i_min, i_max, split;
@@ -289,8 +284,7 @@ MAT	*U, *V;
 
 /* bifactor -- perform preliminary factorisation for bisvd
 	-- updates U and/or V, which ever is not NULL */
-MAT	*bifactor(A,U,V)
-MAT	*A, *U, *V;
+MAT	*bifactor(MAT *A, MAT *U, MAT *V)
 {
 	int	k;
 	static VEC	*tmp1=VNULL, *tmp2=VNULL;
@@ -346,9 +340,7 @@ MAT	*A, *U, *V;
 /* svd -- returns vector of singular values in d
 	-- also updates U and/or V, if one or the other is non-NULL
 	-- destroys A */
-VEC	*svd(A,U,V,d)
-MAT	*A, *U, *V;
-VEC	*d;
+VEC	*svd(MAT *A, MAT *U, MAT *V, VEC *d)
 {
 	static VEC	*f=VNULL;
 	int	i, limit;
@@ -397,4 +389,3 @@ VEC	*d;
 
 	return d;
 }
-

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -46,11 +45,7 @@ static	char	rcsid[] = "$Id$";
 
 /* zhhvec -- calulates Householder vector to eliminate all entries after the
 	i0 entry of the vector vec. It is returned as out. May be in-situ */
-ZVEC	*zhhvec(vec,i0,beta,out,newval)
-ZVEC	*vec,*out;
-int	i0;
-Real	*beta;
-complex	*newval;
+ZVEC	*zhhvec(ZVEC *vec, int i0, Real *beta, ZVEC *out, complex *newval)
 {
 	complex	tmp;
 	Real	norm, abs_val;
@@ -86,10 +81,7 @@ complex	*newval;
 }
 
 /* zhhtrvec -- apply Householder transformation to vector -- may be in-situ */
-ZVEC	*zhhtrvec(hh,beta,i0,in,out)
-ZVEC	*hh,*in,*out;	/* hh = Householder vector */
-int	i0;
-double	beta;
+ZVEC	*zhhtrvec(ZVEC *hh, double beta, int i0, ZVEC *in, ZVEC *out)
 {
 	complex	scale, tmp;
 	/* u_int	i; */
@@ -117,11 +109,7 @@ double	beta;
 
 /* zhhtrrows -- transform a matrix by a Householder vector by rows
 	starting at row i0 from column j0 -- in-situ */
-ZMAT	*zhhtrrows(M,i0,j0,hh,beta)
-ZMAT	*M;
-int	i0, j0;
-ZVEC	*hh;
-double	beta;
+ZMAT	*zhhtrrows(ZMAT *M, int i0, int j0, ZVEC *hh, double beta)
 {
 	complex	ip, scale;
 	int	i /*, j */;
@@ -166,11 +154,7 @@ double	beta;
 
 /* zhhtrcols -- transform a matrix by a Householder vector by columns
 	starting at row i0 from column j0 -- in-situ */
-ZMAT	*zhhtrcols(M,i0,j0,hh,beta)
-ZMAT	*M;
-int	i0, j0;
-ZVEC	*hh;
-double	beta;
+ZMAT	*zhhtrcols(ZMAT *M, int i0, int j0, ZVEC *hh, double beta)
 {
 	/* Real	ip, scale; */
 	complex	scale;
@@ -206,4 +190,3 @@ double	beta;
 	    }
 	return (M);
 }
-

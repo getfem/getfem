@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -50,7 +49,7 @@ static	char	rcsid[] = "$Id$";
 
 #define		sign(x)	((x) > 0.0 ? 1 : ((x) < 0.0 ? -1 : 0 ))
 
-extern	VEC	*Usolve();	/* See matrix2.h */
+//extern	VEC	*Usolve();	/* See matrix2.h */
 
 /* Note: The usual representation of a Householder transformation is taken
    to be:
@@ -60,10 +59,7 @@ extern	VEC	*Usolve();	/* See matrix2.h */
 
 /* QRfactor -- forms the QR factorisation of A -- factorisation stored in
    compact form as described above ( not quite standard format ) */
-/* MAT	*QRfactor(A,diag,beta) */
-MAT	*QRfactor(A,diag)
-MAT	*A;
-VEC	*diag /* ,*beta */;
+MAT	*QRfactor(MAT *A, VEC *diag)
 {
     u_int	k,limit;
     Real	beta;
@@ -97,11 +93,7 @@ VEC	*diag /* ,*beta */;
 /* QRCPfactor -- forms the QR factorisation of A with column pivoting
    -- factorisation stored in compact form as described above
    ( not quite standard format )				*/
-/* MAT	*QRCPfactor(A,diag,beta,px) */
-MAT	*QRCPfactor(A,diag,px)
-MAT	*A;
-VEC	*diag /* , *beta */;
-PERM	*px;
+MAT	*QRCPfactor(MAT *A, VEC *diag, PERM *px)
 {
     u_int	i, i_max, j, k, limit;
     static	VEC	*gamma=VNULL, *tmp1=VNULL, *tmp2=VNULL;
@@ -180,10 +172,7 @@ PERM	*px;
 
 /* Qsolve -- solves Qx = b, Q is an orthogonal matrix stored in compact
    form a la QRfactor() -- may be in-situ */
-/* VEC	*_Qsolve(QR,diag,beta,b,x,tmp) */
-VEC	*_Qsolve(QR,diag,b,x,tmp)
-MAT	*QR;
-VEC	*diag /* ,*beta */ , *b, *x, *tmp;
+VEC	*_Qsolve(MAT *QR, VEC *diag, VEC *b, VEC *x, VEC *tmp)
 {
     u_int	dynamic;
     int		k, limit;
@@ -221,10 +210,7 @@ VEC	*diag /* ,*beta */ , *b, *x, *tmp;
 
 /* makeQ -- constructs orthogonal matrix from Householder vectors stored in
    compact QR form */
-/* MAT	*makeQ(QR,diag,beta,Qout) */
-MAT	*makeQ(QR,diag,Qout)
-MAT	*QR,*Qout;
-VEC	*diag /* , *beta */;
+MAT	*makeQ(MAT *QR, VEC *diag, MAT *Qout)
 {
     static	VEC	*tmp1=VNULL,*tmp2=VNULL;
     u_int	i, limit;
@@ -272,8 +258,7 @@ VEC	*diag /* , *beta */;
 
 /* makeR -- constructs upper triangular matrix from QR (compact form)
    -- may be in-situ (all it does is zero the lower 1/2) */
-MAT	*makeR(QR,Rout)
-MAT	*QR,*Rout;
+MAT	*makeR(MAT *QR, MAT *Rout)
 {
     u_int	i,j;
     
@@ -290,10 +275,7 @@ MAT	*QR,*Rout;
 
 /* QRsolve -- solves the system Q.R.x=b where Q & R are stored in compact form
    -- returns x, which is created if necessary */
-/* VEC	*QRsolve(QR,diag,beta,b,x) */
-VEC	*QRsolve(QR,diag,b,x)
-MAT	*QR;
-VEC	*diag /* , *beta */ , *b, *x;
+VEC	*QRsolve(MAT *QR, VEC *diag, VEC *b, VEC *x)
 {
     int	limit;
     static	VEC	*tmp = VNULL;
@@ -316,12 +298,7 @@ VEC	*diag /* , *beta */ , *b, *x;
 
 /* QRCPsolve -- solves A.x = b where A is factored by QRCPfactor()
    -- assumes that A is in the compact factored form */
-/* VEC	*QRCPsolve(QR,diag,beta,pivot,b,x) */
-VEC	*QRCPsolve(QR,diag,pivot,b,x)
-MAT	*QR;
-VEC	*diag /* , *beta */;
-PERM	*pivot;
-VEC	*b, *x;
+VEC	*QRCPsolve(MAT *QR, VEC *diag, PERM *pivot, VEC *b, VEC *x)
 {
     static	VEC	*tmp=VNULL;
     
@@ -330,7 +307,7 @@ VEC	*b, *x;
     if ( (QR->m > diag->dim &&QR->n > diag->dim) || QR->n != pivot->size )
 	error(E_SIZES,"QRCPsolve");
     
-    tmp = QRsolve(QR,diag /* , beta */ ,b,tmp);
+    tmp = QRsolve(QR,diag,b,tmp);
     MEM_STAT_REG(tmp,TYPE_VEC);
     x = pxinv_vec(pivot,tmp,x);
 
@@ -339,9 +316,7 @@ VEC	*b, *x;
 
 /* Umlt -- compute out = upper_triang(U).x
 	-- may be in situ */
-static	VEC	*Umlt(U,x,out)
-MAT	*U;
-VEC	*x, *out;
+static	VEC	*Umlt(MAT *U, VEC *x, VEC *out)
 {
     int		i, limit;
 
@@ -359,9 +334,7 @@ VEC	*x, *out;
 }
 
 /* UTmlt -- returns out = upper_triang(U)^T.x */
-static	VEC	*UTmlt(U,x,out)
-MAT	*U;
-VEC	*x, *out;
+static	VEC	*UTmlt(MAT *U, VEC *x, VEC *out)
 {
     Real	sum;
     int		i, j, limit;
@@ -386,9 +359,7 @@ VEC	*x, *out;
 	compact form
 	-- returns sc
 	-- original due to Mike Osborne modified Wed 09th Dec 1992 */
-VEC *QRTsolve(A,diag,c,sc)
-MAT *A;
-VEC *diag, *c, *sc;
+VEC *QRTsolve(MAT *A, VEC *diag, VEC *c, VEC *sc)
 {
     int		i, j, k, n, p;
     Real	beta, r_ii, s, tmp_val;
@@ -445,8 +416,7 @@ VEC *diag, *c, *sc;
 	-- if the matrix is exactly singular, HUGE is returned
 	-- note that QRcondest() is likely to be more reliable for
 		matrices factored using QRCPfactor() */
-double	QRcondest(QR)
-MAT	*QR;
+double	QRcondest(MAT *QR)
 {
     static	VEC	*y=VNULL;
     Real	norm1, norm2, sum, tmp1, tmp2;

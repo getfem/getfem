@@ -1,6 +1,6 @@
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -50,7 +50,7 @@
 /* #undef U_INT_DEF */
 #define VARARGS 1
 #define HAVE_PROTOTYPES 1
-/* #undef HAVE_PROTOTYPES_IN_STRUCT */
+#define HAVE_PROTOTYPES_IN_STRUCT 1
 
 /* for inclusion into C++ files */
 #ifdef __cplusplus

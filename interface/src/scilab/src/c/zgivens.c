@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -49,9 +48,7 @@ static	char	rcsid[] = "$Id: ";
 
 /* zgivens -- returns c,s parameters for Givens rotation to
 		eliminate y in the **column** vector [ x y ] */
-void	zgivens(x,y,c,s)
-complex	x,y,*s;
-Real	*c;
+void	zgivens(complex x, complex y, Real *c, complex *s)
 {
 	Real	inv_norm, norm;
 	complex	tmp;
@@ -76,11 +73,7 @@ Real	*c;
 }
 
 /* rot_zvec -- apply Givens rotation to x's i & k components */
-ZVEC	*rot_zvec(x,i,k,c,s,out)
-ZVEC	*x,*out;
-int	i,k;
-double	c;
-complex	s;
+ZVEC	*rot_zvec(ZVEC *x, int i, int k, double c, complex s, ZVEC *out)
 {
 
 	complex	temp1, temp2;
@@ -111,11 +104,7 @@ complex	s;
 }
 
 /* zrot_rows -- premultiply mat by givens rotation described by c,s */
-ZMAT	*zrot_rows(mat,i,k,c,s,out)
-ZMAT	*mat,*out;
-int	i,k;
-double	c;
-complex	s;
+ZMAT	*zrot_rows(ZMAT *mat, int i, int k, double c, complex s, ZMAT *out)
 {
 	u_int	j;
 	complex	temp1, temp2;
@@ -149,11 +138,7 @@ complex	s;
 }
 
 /* zrot_cols -- postmultiply mat by adjoint Givens rotation described by c,s */
-ZMAT	*zrot_cols(mat,i,k,c,s,out)
-ZMAT	*mat,*out;
-int	i,k;
-double	c;
-complex	s;
+ZMAT	*zrot_cols(ZMAT *mat, int i, int k, double c, complex s, ZMAT *out)
 {
 	u_int	j;
 	complex	x, y;
@@ -178,4 +163,3 @@ complex	s;
 
 	return (out);
 }
-

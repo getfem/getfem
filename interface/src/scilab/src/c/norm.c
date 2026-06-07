@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -35,8 +34,7 @@ static	char	rcsid[] = "$Id$";
 
 
 /* _v_norm1 -- computes (scaled) 1-norms of vectors */
-double	_v_norm1(x,scale)
-VEC	*x, *scale;
+double	_v_norm1(VEC *x, VEC *scale)
 {
 	int	i, dim;
 	Real	s, sum;
@@ -61,18 +59,15 @@ VEC	*x, *scale;
 }
 
 /* square -- returns x^2 */
-double	square(x)
-double	x;
+double	square(double x)
 {	return x*x;	}
 
 /* cube -- returns x^3 */
-double cube(x)
-double x;
+double cube(double x)
 {  return x*x*x;   }
 
 /* _v_norm2 -- computes (scaled) 2-norm (Euclidean norm) of vectors */
-double	_v_norm2(x,scale)
-VEC	*x, *scale;
+double	_v_norm2(VEC *x, VEC *scale)
 {
 	int	i, dim;
 	Real	s, sum;
@@ -100,8 +95,7 @@ VEC	*x, *scale;
 #define	max(a,b)	((a) > (b) ? (a) : (b))
 
 /* _v_norm_inf -- computes (scaled) infinity-norm (supremum norm) of vectors */
-double	_v_norm_inf(x,scale)
-VEC	*x, *scale;
+double	_v_norm_inf(VEC *x, VEC *scale)
 {
 	int	i, dim;
 	Real	s, maxval, tmp;
@@ -129,8 +123,7 @@ VEC	*x, *scale;
 }
 
 /* m_norm1 -- compute matrix 1-norm -- unscaled */
-double	m_norm1(A)
-MAT	*A;
+double	m_norm1(MAT *A)
 {
 	int	i, j, m, n;
 	Real	maxval, sum;
@@ -153,8 +146,7 @@ MAT	*A;
 }
 
 /* m_norm_inf -- compute matrix infinity-norm -- unscaled */
-double	m_norm_inf(A)
-MAT	*A;
+double	m_norm_inf(MAT *A)
 {
 	int	i, j, m, n;
 	Real	maxval, sum;
@@ -177,8 +169,7 @@ MAT	*A;
 }
 
 /* m_norm_frob -- compute matrix frobenius-norm -- unscaled */
-double	m_norm_frob(A)
-MAT	*A;
+double	m_norm_frob(MAT *A)
 {
 	int	i, j, m, n;
 	Real	sum;
@@ -195,4 +186,3 @@ MAT	*A;
 
 	return sqrt(sum);
 }
-

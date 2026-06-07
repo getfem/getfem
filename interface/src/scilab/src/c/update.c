@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -44,10 +43,7 @@ static	char	rcsid[] = "$Id$";
 /* LDLupdate -- updates a CHolesky factorisation, replacing LDL' by
 	MD~M' = LDL' + alpha.w.w' Note: w is overwritten
 	Ref: Gill et al Math Comp 28, p516 Algorithm C1 */
-MAT	*LDLupdate(CHmat,w,alpha)
-MAT	*CHmat;
-VEC	*w;
-double	alpha;
+MAT	*LDLupdate(MAT *CHmat, VEC *w, double alpha)
 {
 	u_int	i,j;
 	Real	diag,new_diag,beta,p;
@@ -83,9 +79,7 @@ double	alpha;
 	Finds Q+, R+ s.t. Q+.R+ = Q.(R+u.v') and Q+ orthogonal, R+ upper triang
 	Ref: Golub & van Loan Matrix Computations pp437-443
 	-- does not update Q if it is NULL */
-MAT	*QRupdate(Q,R,u,v)
-MAT	*Q,*R;
-VEC	*u,*v;
+MAT	*QRupdate(MAT *Q, MAT *R, VEC *u, VEC *v)
 {
 	int	i,j,k;
 	Real	c,s,temp;
@@ -128,4 +122,3 @@ VEC	*u,*v;
 
 	return R;
 }
-

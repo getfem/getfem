@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -34,7 +33,7 @@
 
 #include	<stdio.h>
 
-void	m_version()
+void	m_version(void)
 {
 	static char rcsid[] = "$Id$";
 

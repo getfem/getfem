@@ -1,7 +1,7 @@
 
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -77,7 +77,7 @@ typedef struct Iter_data {
 
 #ifdef ANSI_C
 
-#ifdef PROTOTYPES_IN_STRUCT
+#ifdef HAVE_PROTOTYPES_IN_STRUCT
    void (*info)(struct Iter_data *, double, VEC *,VEC *);
             /* function giving some information for a user;
 	       nres - a norm of a residual res */
@@ -91,7 +91,7 @@ typedef struct Iter_data {
 #else
    void (*info)();
    int  (*stop_crit)();
-#endif /* PROTOTYPES_IN_STRUCT */
+#endif /* HAVE_PROTOTYPES_IN_STRUCT */
 
 #else
 
@@ -161,7 +161,7 @@ ITER *iter_get(int lenb, int lenx);
 ITER *iter_resize(ITER *ip,int lenb,int lenx);
 int iter_free(ITER *ip);
 
-void iter_dump(FILE *fp,ITER *ip);
+void iter_dump(ITER *ip,FILE *fp);
 
 /* copy ip1 to ip2 copying also elements of x and b */
 ITER *iter_copy(ITER *ip1, ITER *ip2);

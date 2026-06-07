@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -33,9 +32,7 @@ static	char	rcsid[] = "$Id$";
 
 
 /* _in_prod -- inner product of two vectors from i0 downwards */
-double	_in_prod(a,b,i0)
-VEC	*a,*b;
-u_int	i0;
+double	_in_prod(VEC *a, VEC *b, u_int i0)
 {
 	u_int	limit;
 	/* Real	*a_v, *b_v; */
@@ -59,9 +56,7 @@ u_int	i0;
 }
 
 /* sv_mlt -- scalar-vector multiply -- may be in-situ */
-VEC	*sv_mlt(scalar,vector,out)
-double	scalar;
-VEC	*vector,*out;
+VEC	*sv_mlt(double scalar, VEC *vector, VEC *out)
 {
 	/* u_int	dim, i; */
 	/* Real	*out_ve, *vec_ve; */
@@ -87,8 +82,7 @@ VEC	*vector,*out;
 }
 
 /* v_add -- vector addition -- may be in-situ */
-VEC	*v_add(vec1,vec2,out)
-VEC	*vec1,*vec2,*out;
+VEC	*v_add(VEC *vec1, VEC *vec2, VEC *out)
 {
 	u_int	dim;
 	/* Real	*out_ve, *vec1_ve, *vec2_ve; */
@@ -113,9 +107,7 @@ VEC	*vec1,*vec2,*out;
 
 /* v_mltadd -- scalar/vector multiplication and addition
 		-- out = v1 + scale.v2		*/
-VEC	*v_mltadd(v1,v2,scale,out)
-VEC	*v1,*v2,*out;
-double	scale;
+VEC	*v_mltadd(VEC *v1, VEC *v2, double scale, VEC *out)
 {
 	/* register u_int	dim, i; */
 	/* Real	*out_ve, *v1_ve, *v2_ve; */
@@ -152,8 +144,7 @@ double	scale;
 }
 
 /* v_sub -- vector subtraction -- may be in-situ */
-VEC	*v_sub(vec1,vec2,out)
-VEC	*vec1,*vec2,*out;
+VEC	*v_sub(VEC *vec1, VEC *vec2, VEC *out)
 {
 	/* u_int	i, dim; */
 	/* Real	*out_ve, *vec1_ve, *vec2_ve; */
@@ -179,13 +170,11 @@ VEC	*vec1,*vec2,*out;
 
 /* v_map -- maps function f over components of x: out[i] = f(x[i])
 	-- _v_map sets out[i] = f(params,x[i]) */
-VEC	*v_map(f,x,out)
-#ifdef PROTOTYPES_IN_STRUCT
-double	(*f)(double);
+#ifdef HAVE_PROTOTYPES_IN_STRUCT
+VEC	*v_map(double (*f)(double), VEC *x, VEC *out)
 #else
-double	(*f)();
+VEC	*v_map(double (*f)(), VEC *x, VEC *out)
 #endif
-VEC	*x, *out;
 {
 	Real	*x_ve, *out_ve;
 	int	i, dim;
@@ -202,14 +191,11 @@ VEC	*x, *out;
 	return out;
 }
 
-VEC	*_v_map(f,params,x,out)
-#ifdef PROTOTYPES_IN_STRUCT
-double	(*f)(void *,double);
+#ifdef HAVE_PROTOTYPES_IN_STRUCT
+VEC	*_v_map(double (*f)(void *, double), VEC *x, VEC *out, void *params)
 #else
-double	(*f)();
+VEC	*_v_map(double (*f)(), VEC *x, VEC *out, void *params)
 #endif
-VEC	*x, *out;
-void	*params;
 {
 	Real	*x_ve, *out_ve;
 	int	i, dim;
@@ -227,10 +213,7 @@ void	*params;
 }
 
 /* v_lincomb -- returns sum_i a[i].v[i], a[i] real, v[i] vectors */
-VEC	*v_lincomb(n,v,a,out)
-int	n;	/* number of a's and v's */
-Real	a[];
-VEC	*v[], *out;
+VEC	*v_lincomb(int n, VEC *v[], Real a[], VEC *out)
 {
 	int	i;
 
@@ -265,7 +248,7 @@ VEC	*v[], *out;
       v_linlist(out,v1,a1,v2,a2,...,vn,an,NULL);
    where vi are vectors (VEC *) and ai are numbers (double)
 */
-VEC  *v_linlist(VEC *out,VEC *v1,double a1,...)
+VEC  *v_linlist(VEC *out, VEC *v1, double a1, ...)
 {
    va_list ap;
    VEC *par;
@@ -350,8 +333,7 @@ VEC  *v_linlist(va_alist) va_dcl
 
 /* v_star -- computes componentwise (Hadamard) product of x1 and x2
 	-- result out is returned */
-VEC	*v_star(x1, x2, out)
-VEC	*x1, *x2, *out;
+VEC	*v_star(VEC *x1, VEC *x2, VEC *out)
 {
     int		i;
 
@@ -371,8 +353,7 @@ VEC	*x1, *x2, *out;
 	-- out[i] = x2[i] / x1[i]
 	-- if x1[i] == 0 for some i, then raise E_SING error
 	-- result out is returned */
-VEC	*v_slash(x1, x2, out)
-VEC	*x1, *x2, *out;
+VEC	*v_slash(VEC *x1, VEC *x2, VEC *out)
 {
     int		i;
     Real	tmp;
@@ -396,9 +377,7 @@ VEC	*x1, *x2, *out;
 
 /* v_min -- computes minimum component of x, which is returned
 	-- also sets min_idx to the index of this minimum */
-double	v_min(x, min_idx)
-VEC	*x;
-int	*min_idx;
+double	v_min(VEC *x, int *min_idx)
 {
     int		i, i_min;
     Real	min_val, tmp;
@@ -426,9 +405,7 @@ int	*min_idx;
 
 /* v_max -- computes maximum component of x, which is returned
 	-- also sets max_idx to the index of this maximum */
-double	v_max(x, max_idx)
-VEC	*x;
-int	*max_idx;
+double	v_max(VEC *x, int *max_idx)
 {
     int		i, i_max;
     Real	max_val, tmp;
@@ -462,9 +439,7 @@ int	*max_idx;
 	the permutation is order = [2, 0, 1].
 	-- if order is NULL on entry then it is ignored
 	-- the sorted vector x is returned */
-VEC	*v_sort(x, order)
-VEC	*x;
-PERM	*order;
+VEC	*v_sort(VEC *x, PERM *order)
 {
     Real	*x_ve, tmp, v;
     /* int		*order_pe; */
@@ -541,8 +516,7 @@ PERM	*order;
 }
 
 /* v_sum -- returns sum of entries of a vector */
-double	v_sum(x)
-VEC	*x;
+double	v_sum(VEC *x)
 {
     int		i;
     Real	sum;
@@ -558,8 +532,7 @@ VEC	*x;
 }
 
 /* v_conv -- computes convolution product of two vectors */
-VEC	*v_conv(x1, x2, out)
-VEC	*x1, *x2, *out;
+VEC	*v_conv(VEC *x1, VEC *x2, VEC *out)
 {
     int		i;
 
@@ -580,8 +553,7 @@ VEC	*x1, *x2, *out;
 
 /* v_pconv -- computes a periodic convolution product
 	-- the period is the dimension of x2 */
-VEC	*v_pconv(x1, x2, out)
-VEC	*x1, *x2, *out;
+VEC	*v_pconv(VEC *x1, VEC *x2, VEC *out)
 {
     int		i;
 

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -41,8 +40,7 @@ static char rcsid[] = "$Id$";
 /* fft -- d.i.t. fast Fourier transform 
         -- radix-2 FFT only
         -- vector extended to a power of 2 */
-void    fft(x_re,x_im)
-VEC     *x_re, *x_im;
+void    fft(VEC *x_re, VEC *x_im)
 {
     int         i, ip, j, k, li, n, length;
     Real      *xr, *xi;
@@ -133,8 +131,7 @@ VEC     *x_re, *x_im;
 }
 
 /* ifft -- inverse FFT using the same interface as fft() */
-void	ifft(x_re,x_im)
-VEC	*x_re, *x_im;
+void	ifft(VEC *x_re, VEC *x_im)
 {
     /* we just use complex conjugates */
 

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -77,8 +76,7 @@ static unsigned int mem_hash_idx_end = 0;
 
 /* hashing function */
 
-static unsigned int mem_hash(ptr)
-void **ptr;
+static unsigned int mem_hash(void **ptr)
 {
    unsigned long lp = (unsigned long)ptr;
 
@@ -87,8 +85,7 @@ void **ptr;
 
 
 /* look for a place in mem_stat_var */
-static int mem_lookup(var)
-void **var;
+static int mem_lookup(void **var)
 {
    int k, j;
 
@@ -148,9 +145,7 @@ void **var;
    returned value >= 0 --> registered with this mark;
 */
 
-int mem_stat_reg_list(var,type,list)
-void **var;
-int type,list;
+int mem_stat_reg_list(void **var, int type, int list)
 {
    int n;
 
@@ -188,8 +183,7 @@ int type,list;
 	     -1 if mark is negative.
 */
 
-int mem_stat_mark(mark)
-int mark;
+int mem_stat_mark(int mark)
 {
    if (mark < 0) {
       mem_stat_mark_curr = 0;
@@ -217,11 +211,10 @@ int mark;
      0  if mark == 0;
 */
 
-int mem_stat_free_list(mark,list)
-int mark,list;
+int mem_stat_free_list(int mark, int list)
 {
    u_int i,j;
-   int	 (*free_fn)();
+   int	 (*free_fn)(void *);
 
    if ( list < 0 || list >= MEM_CONNECT_MAX_LISTS 
        || mem_connect[list].free_funcs == NULL )
@@ -273,9 +266,7 @@ int mark,list;
 
 /* only for diagnostic purposes */
 
-void mem_stat_dump(fp,list)
-FILE *fp;
-int list;
+void mem_stat_dump(FILE *fp, int list)
 {
    u_int i,j,k=1;
 
@@ -331,7 +322,7 @@ int mem_stat_show_mark()
      (of course they must be of the same type)
 */
 
-int mem_stat_reg_vars(int list,int type,...)
+int mem_stat_reg_vars(int list, int type, ...)
 {
    va_list ap;
    int i=0;

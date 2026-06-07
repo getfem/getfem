@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -41,9 +40,7 @@ static	char	rcsid[] = "$Id$";
 /* zHfactor -- compute Hessenberg factorisation in compact form.
 	-- factorisation performed in situ
 	-- for details of the compact form see zQRfactor.c and zmatrix2.doc */
-ZMAT	*zHfactor(A, diag)
-ZMAT	*A;
-ZVEC	*diag;
+ZMAT	*zHfactor(ZMAT *A, ZVEC *diag)
 {
 	static	ZVEC	*tmp1 = ZVNULL;
 	Real	beta;
@@ -82,9 +79,7 @@ ZVEC	*diag;
 	-- it can be in situ with HQ == H
 	-- returns HQ
 */
-ZMAT	*zHQunpack(HQ,diag,Q,H)
-ZMAT	*HQ, *Q, *H;
-ZVEC	*diag;
+ZMAT	*zHQunpack(ZMAT *HQ, ZVEC *diag, ZMAT *Q, ZMAT *H)
 {
 	int	i, j, limit;
 	Real	beta, r_ii, tmp_val;
@@ -147,6 +142,3 @@ ZVEC	*diag;
 
 	return HQ;
 }
-
-
-

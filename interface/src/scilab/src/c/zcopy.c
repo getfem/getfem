@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -31,9 +30,7 @@ static	char	rcsid[] = "$Id$";
 
 
 /* _zm_copy -- copies matrix into new area */
-ZMAT	*_zm_copy(in,out,i0,j0)
-ZMAT	*in,*out;
-u_int	i0,j0;
+ZMAT	*_zm_copy(ZMAT *in, ZMAT *out, u_int i0, u_int j0)
 {
 	u_int	i /* ,j */;
 
@@ -54,9 +51,7 @@ u_int	i0,j0;
 }
 
 /* _zv_copy -- copies vector into new area */
-ZVEC	*_zv_copy(in,out,i0)
-ZVEC	*in,*out;
-u_int	i0;
+ZVEC	*_zv_copy(ZVEC *in, ZVEC *out, u_int i0)
 {
 	/* u_int	i,j; */
 
@@ -86,9 +81,7 @@ u_int	i0;
 	   to the corresponding submatrix of out with top-left co-ordinates
 	   (i1,j1)
 	-- out is resized (& created) if necessary */
-ZMAT	*zm_move(in,i0,j0,m0,n0,out,i1,j1)
-ZMAT	*in, *out;
-int	i0, j0, m0, n0, i1, j1;
+ZMAT	*zm_move(ZMAT *in, int i0, int j0, int m0, int n0, ZMAT *out, int i1, int j1)
 {
     int		i;
 
@@ -114,9 +107,7 @@ int	i0, j0, m0, n0, i1, j1;
 	-- moves the length dim0 subvector with initial index i0
 	   to the corresponding subvector of out with initial index i1
 	-- out is resized if necessary */
-ZVEC	*zv_move(in,i0,dim0,out,i1)
-ZVEC	*in, *out;
-int	i0, dim0, i1;
+ZVEC	*zv_move(ZVEC *in, int i0, int dim0, ZVEC *out, int i1)
 {
     if ( ! in )
 	error(E_NULL,"zv_move");
@@ -138,10 +129,7 @@ int	i0, dim0, i1;
 	   the subvector with initial index i1 (and length m0*n0)
 	-- rows are copied contiguously
 	-- out is resized if necessary */
-ZVEC	*zmv_move(in,i0,j0,m0,n0,out,i1)
-ZMAT	*in;
-ZVEC	*out;
-int	i0, j0, m0, n0, i1;
+ZVEC	*zmv_move(ZMAT *in, int i0, int j0, int m0, int n0, ZVEC *out, int i1)
 {
     int		dim1, i;
 
@@ -166,10 +154,7 @@ int	i0, j0, m0, n0, i1;
 	   the m1 x n1 submatrix with top-left co-ordinate (i1,j1)
         -- copying is done by rows
 	-- out is resized if necessary */
-ZMAT	*zvm_move(in,i0,out,i1,j1,m1,n1)
-ZVEC	*in;
-ZMAT	*out;
-int	i0, i1, j1, m1, n1;
+ZMAT	*zvm_move(ZVEC *in, int i0, ZMAT *out, int i1, int j1, int m1, int n1)
 {
     int		dim0, i;
 

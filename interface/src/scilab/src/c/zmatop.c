@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -34,8 +33,7 @@ static	char	rcsid[] = "$Id$";
 #define	is_zero(z)	((z).re == 0.0 && (z).im == 0.0)
 
 /* zm_add -- matrix addition -- may be in-situ */
-ZMAT	*zm_add(mat1,mat2,out)
-ZMAT	*mat1,*mat2,*out;
+ZMAT	*zm_add(ZMAT *mat1, ZMAT *mat2, ZMAT *out)
 {
     u_int	m,n,i;
     
@@ -59,8 +57,7 @@ ZMAT	*mat1,*mat2,*out;
 }
 
 /* zm_sub -- matrix subtraction -- may be in-situ */
-ZMAT	*zm_sub(mat1,mat2,out)
-ZMAT	*mat1,*mat2,*out;
+ZMAT	*zm_sub(ZMAT *mat1, ZMAT *mat2, ZMAT *out)
 {
     u_int	m,n,i;
     
@@ -90,8 +87,7 @@ ZMAT	*mat1,*mat2,*out;
   */
 
 /* zm_mlt -- matrix-matrix multiplication */
-ZMAT	*zm_mlt(A,B,out)
-ZMAT	*A,*B,*out;
+ZMAT	*zm_mlt(ZMAT *A, ZMAT *B, ZMAT *out)
 {
     u_int	i, /* j, */ k, m, n, p;
     complex	**A_v, **B_v /*, *B_row, *OUT_row, sum, tmp */;
@@ -136,8 +132,7 @@ ZMAT	*A,*B,*out;
 
 /* zmma_mlt -- matrix-matrix adjoint multiplication
    -- A.B* is returned, and stored in out */
-ZMAT	*zmma_mlt(A,B,out)
-ZMAT	*A, *B, *out;
+ZMAT	*zmma_mlt(ZMAT *A, ZMAT *B, ZMAT *out)
 {
     int	i, j, limit;
     /* complex	*A_row, *B_row, sum; */
@@ -171,8 +166,7 @@ ZMAT	*A, *B, *out;
 
 /* zmam_mlt -- matrix adjoint-matrix multiplication
    -- A*.B is returned, result stored in out */
-ZMAT	*zmam_mlt(A,B,out)
-ZMAT	*A, *B, *out;
+ZMAT	*zmam_mlt(ZMAT *A, ZMAT *B, ZMAT *out)
 {
     int	i, k, limit;
     /* complex	*B_row, *out_row, multiplier; */
@@ -203,9 +197,7 @@ ZMAT	*A, *B, *out;
 
 /* zmv_mlt -- matrix-vector multiplication 
    -- Note: b is treated as a column vector */
-ZVEC	*zmv_mlt(A,b,out)
-ZMAT	*A;
-ZVEC	*b,*out;
+ZVEC	*zmv_mlt(ZMAT *A, ZVEC *b, ZVEC *out)
 {
     u_int	i, m, n;
     complex	**A_v, *b_v /*, *A_row */;
@@ -239,9 +231,7 @@ ZVEC	*b,*out;
 }
 
 /* zsm_mlt -- scalar-matrix multiply -- may be in-situ */
-ZMAT	*zsm_mlt(scalar,matrix,out)
-complex	scalar;
-ZMAT	*matrix,*out;
+ZMAT	*zsm_mlt(complex scalar, ZMAT *matrix, ZMAT *out)
 {
     u_int	m,n,i;
     
@@ -260,9 +250,7 @@ ZMAT	*matrix,*out;
 }
 
 /* zvm_mlt -- vector adjoint-matrix multiplication */
-ZVEC	*zvm_mlt(A,b,out)
-ZMAT	*A;
-ZVEC	*b,*out;
+ZVEC	*zvm_mlt(ZMAT *A, ZVEC *b, ZVEC *out)
 {
     u_int	j,m,n;
     /* complex	sum,**A_v,*b_v; */
@@ -297,8 +285,7 @@ ZVEC	*b,*out;
 }
 
 /* zm_adjoint -- adjoint matrix */
-ZMAT	*zm_adjoint(in,out)
-ZMAT	*in, *out;
+ZMAT	*zm_adjoint(ZMAT *in, ZMAT *out)
 {
     int	i, j;
     int	in_situ;
@@ -342,9 +329,7 @@ ZMAT	*in, *out;
 }
 
 /* zswap_rows -- swaps rows i and j of matrix A upto column lim */
-ZMAT	*zswap_rows(A,i,j,lo,hi)
-ZMAT	*A;
-int	i, j, lo, hi;
+ZMAT	*zswap_rows(ZMAT *A, int i, int j, int lo, int hi)
 {
     int	k;
     complex	**A_me, tmp;
@@ -367,9 +352,7 @@ int	i, j, lo, hi;
 }
 
 /* zswap_cols -- swap columns i and j of matrix A upto row lim */
-ZMAT	*zswap_cols(A,i,j,lo,hi)
-ZMAT	*A;
-int	i, j, lo, hi;
+ZMAT	*zswap_cols(ZMAT *A, int i, int j, int lo, int hi)
 {
     int	k;
     complex	**A_me, tmp;
@@ -394,9 +377,7 @@ int	i, j, lo, hi;
 /* mz_mltadd -- matrix-scalar multiply and add
    -- may be in situ
    -- returns out == A1 + s*A2 */
-ZMAT	*mz_mltadd(A1,A2,s,out)
-ZMAT	*A1, *A2, *out;
-complex	s;
+ZMAT	*mz_mltadd(ZMAT *A1, ZMAT *A2, complex s, ZMAT *out)
 {
     /* register complex	*A1_e, *A2_e, *out_e; */
     /* register int	j; */
@@ -433,10 +414,7 @@ complex	s;
 /* zmv_mltadd -- matrix-vector multiply and add
    -- may not be in situ
    -- returns out == v1 + alpha*A*v2 */
-ZVEC	*zmv_mltadd(v1,v2,A,alpha,out)
-ZVEC	*v1, *v2, *out;
-ZMAT	*A;
-complex	alpha;
+ZVEC	*zmv_mltadd(ZVEC *v1, ZVEC *v2, ZMAT *A, complex alpha, ZVEC *out)
 {
     /* register	int	j; */
     int	i, m, n;
@@ -477,10 +455,7 @@ complex	alpha;
 /* zvm_mltadd -- vector-matrix multiply and add a la zvm_mlt()
    -- may not be in situ
    -- returns out == v1 + v2*.A */
-ZVEC	*zvm_mltadd(v1,v2,A,alpha,out)
-ZVEC	*v1, *v2, *out;
-ZMAT	*A;
-complex	alpha;
+ZVEC	*zvm_mltadd(ZVEC *v1, ZVEC *v2, ZMAT *A, complex alpha, ZVEC *out)
 {
     int	/* i, */ j, m, n;
     complex	tmp, /* *A_e, */ *out_ve;
@@ -513,10 +488,7 @@ complex	alpha;
 }
 
 /* zget_col -- gets a specified column of a matrix; returned as a vector */
-ZVEC	*zget_col(mat,col,vec)
-int	col;
-ZMAT	*mat;
-ZVEC	*vec;
+ZVEC	*zget_col(ZMAT *mat, int col, ZVEC *vec)
 {
 	u_int	i;
 
@@ -534,10 +506,7 @@ ZVEC	*vec;
 }
 
 /* zget_row -- gets a specified row of a matrix and retruns it as a vector */
-ZVEC	*zget_row(mat,row,vec)
-int	row;
-ZMAT	*mat;
-ZVEC	*vec;
+ZVEC	*zget_row(ZMAT *mat, int row, ZVEC *vec)
 {
 	int	/* i, */ lim;
 
@@ -558,10 +527,7 @@ ZVEC	*vec;
 }
 
 /* zset_col -- sets column of matrix to values given in vec (in situ) */
-ZMAT	*zset_col(mat,col,vec)
-ZMAT	*mat;
-ZVEC	*vec;
-int	col;
+ZMAT	*zset_col(ZMAT *mat, int col, ZVEC *vec)
 {
 	u_int	i,lim;
 
@@ -577,10 +543,7 @@ int	col;
 }
 
 /* zset_row -- sets row of matrix to values given in vec (in situ) */
-ZMAT	*zset_row(mat,row,vec)
-ZMAT	*mat;
-ZVEC	*vec;
-int	row;
+ZMAT	*zset_row(ZMAT *mat, int row, ZVEC *vec)
 {
 	u_int	/* j, */ lim;
 
@@ -597,8 +560,7 @@ int	row;
 }
 
 /* zm_rand -- randomise a complex matrix; uniform in [0,1)+[0,1)*i */
-ZMAT	*zm_rand(A)
-ZMAT	*A;
+ZMAT	*zm_rand(ZMAT *A)
 {
     int		i;
 

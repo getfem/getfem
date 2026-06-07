@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -32,8 +31,7 @@
 static	char	rcsid[] = "$Id$";
 
 /* m_get -- gets an mxn matrix (in MAT form) by dynamic memory allocation */
-MAT	*m_get(m,n)
-int	m,n;
+MAT	*m_get(int m, int n)
 {
    MAT	*matrix;
    int	i;
@@ -90,8 +88,7 @@ int	m,n;
 
 /* px_get -- gets a PERM of given 'size' by dynamic memory allocation
    -- Note: initialized to the identity permutation */
-PERM	*px_get(size)
-int	size;
+PERM	*px_get(int size)
 {
    PERM	*permute;
    int	i;
@@ -121,8 +118,7 @@ int	size;
 
 /* v_get -- gets a VEC of dimension 'dim'
    -- Note: initialized to zero */
-VEC	*v_get(size)
-int	size;
+VEC	*v_get(int size)
 {
    VEC	*vector;
    
@@ -150,8 +146,7 @@ int	size;
 }
 
 /* m_free -- returns MAT & asoociated memory back to memory heap */
-int	m_free(mat)
-MAT	*mat;
+int	m_free(MAT *mat)
 {
 #ifdef SEGMENTED
    int	i;
@@ -197,8 +192,7 @@ MAT	*mat;
 
 
 /* px_free -- returns PERM & asoociated memory back to memory heap */
-int	px_free(px)
-PERM	*px;
+int	px_free(PERM *px)
 {
    if ( px==(PERM *)NULL || (int)(px->size) < 0 )
      /* don't trust it */
@@ -227,8 +221,7 @@ PERM	*px;
 
 
 /* v_free -- returns VEC & asoociated memory back to memory heap */
-int	v_free(vec)
-VEC	*vec;
+int	v_free(VEC *vec)
 {
    if ( vec==(VEC *)NULL || (int)(vec->dim) < 0 )
      /* don't trust it */
@@ -258,9 +251,7 @@ VEC	*vec;
 
 /* m_resize -- returns the matrix A of size new_m x new_n; A is zeroed
    -- if A == NULL on entry then the effect is equivalent to m_get() */
-MAT	*m_resize(A,new_m,new_n)
-MAT	*A;
-int	new_m, new_n;
+MAT	*m_resize(MAT *A, int new_m, int new_n)
 {
    int	i;
    int	new_max_m, new_max_n, new_size, old_m, old_n;
@@ -395,9 +386,7 @@ int	new_m, new_n;
 
 /* px_resize -- returns the permutation px with size new_size
    -- px is set to the identity permutation */
-PERM	*px_resize(px,new_size)
-PERM	*px;
-int	new_size;
+PERM	*px_resize(PERM *px, int new_size)
 {
    int	i;
    
@@ -437,9 +426,7 @@ int	new_size;
 
 /* v_resize -- returns the vector x with dim new_dim
    -- x is set to the zero vector */
-VEC	*v_resize(x,new_dim)
-VEC	*x;
-int	new_dim;
+VEC	*v_resize(VEC *x, int new_dim)
 {
    
    if (new_dim < 0)
@@ -498,7 +485,7 @@ int	new_dim;
      Other gec_... functions are similar.
 */
 
-int v_get_vars(int dim,...) 
+int v_get_vars(int dim, ...)
 {
    va_list ap;
    int i=0;
@@ -515,7 +502,7 @@ int v_get_vars(int dim,...)
 }
 
 
-int iv_get_vars(int dim,...) 
+int iv_get_vars(int dim, ...)
 {
    va_list ap;
    int i=0;
@@ -531,7 +518,7 @@ int iv_get_vars(int dim,...)
    return i;
 }
 
-int m_get_vars(int m,int n,...) 
+int m_get_vars(int m, int n, ...)
 {
    va_list ap;
    int i=0;
@@ -547,7 +534,7 @@ int m_get_vars(int m,int n,...)
    return i;
 }
 
-int px_get_vars(int dim,...) 
+int px_get_vars(int dim, ...)
 {
    va_list ap;
    int i=0;
@@ -579,7 +566,7 @@ int px_get_vars(int dim,...)
      Other *_resize_list() functions are similar.
 */
 
-int v_resize_vars(int new_dim,...)
+int v_resize_vars(int new_dim, ...)
 {
    va_list ap;
    int i=0;
@@ -597,7 +584,7 @@ int v_resize_vars(int new_dim,...)
 
 
 
-int iv_resize_vars(int new_dim,...) 
+int iv_resize_vars(int new_dim, ...)
 {
    va_list ap;
    int i=0;
@@ -613,7 +600,7 @@ int iv_resize_vars(int new_dim,...)
    return i;
 }
 
-int m_resize_vars(int m,int n,...) 
+int m_resize_vars(int m, int n, ...)
 {
    va_list ap;
    int i=0;
@@ -630,7 +617,7 @@ int m_resize_vars(int m,int n,...)
 }
 
 
-int px_resize_vars(int new_dim,...) 
+int px_resize_vars(int new_dim, ...)
 {
    va_list ap;
    int i=0;
@@ -659,7 +646,7 @@ int px_resize_vars(int new_dim,...)
 */
 
 
-int v_free_vars(VEC **pv,...)
+int v_free_vars(VEC **pv, ...)
 {
    va_list ap;
    int i=1;
@@ -679,7 +666,7 @@ int v_free_vars(VEC **pv,...)
 }
 
 
-int iv_free_vars(IVEC **ipv,...)
+int iv_free_vars(IVEC **ipv, ...)
 {
    va_list ap;
    int i=1;
@@ -699,7 +686,7 @@ int iv_free_vars(IVEC **ipv,...)
 }
 
 
-int px_free_vars(PERM **vpx,...)
+int px_free_vars(PERM **vpx, ...)
 {
    va_list ap;
    int i=1;
@@ -718,7 +705,7 @@ int px_free_vars(PERM **vpx,...)
    return i;
 }
 
-int m_free_vars(MAT **va,...)
+int m_free_vars(MAT **va, ...)
 {
    va_list ap;
    int i=1;
@@ -999,5 +986,3 @@ int m_free_vars(va_alist) va_dcl
 
 
 #endif /* VARARGS */
-  
-
