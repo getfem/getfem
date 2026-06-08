@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -37,8 +36,7 @@ static char rcsid[] = "$Id$";
 
 #ifndef zmake
 /* zmake -- create complex number real + i*imag */
-complex	zmake(real,imag)
-double	real, imag;
+complex	zmake(double real, double imag)
 {
     complex	w;	/* == real + i*imag */
 
@@ -125,7 +123,7 @@ complex	zmlt(complex z1, complex z2)
 #endif
 
 #ifndef zinv
-/* zmlt -- returns 1/z */
+/* zinv -- returns 1/z */
 complex	zinv(complex z)
 {
     Real	x, y, tmp;

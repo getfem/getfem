@@ -8,10 +8,10 @@ lines(0);
 try
  v = getversion('scilab');
 catch
- error(gettext('Scilab 5.3.x or more is required.'));  
+ error(gettext('Scilab 6.1.0 or more is required.'));
 end;
 if v(1) < 6 then
- error(gettext('Scilab 5.3.x or more is required.'));  
+ error(gettext('Scilab 6.1.0 or more is required.'));
 end
 // ====================================================================
 if ~with_module('development_tools') then
@@ -32,7 +32,7 @@ tbx_builder_macros(toolbox_dir);
 tbx_builder_src(toolbox_dir);
 tbx_builder_gateway(toolbox_dir);
 tbx_builder_help(toolbox_dir);
-tbx_build_loader(TOOLBOX_NAME, toolbox_dir);
+tbx_build_loader(toolbox_dir);
 tbx_build_cleaner(toolbox_dir);
 
 clear toolbox_dir TOOLBOX_NAME TOOLBOX_TITLE;

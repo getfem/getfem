@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -36,8 +35,7 @@ static	char	rcsid[] = "$Id$";
 #include	"matrix.h"
 
 /* v_zero -- zero the vector x */
-VEC	*v_zero(x)
-VEC	*x;
+VEC	*v_zero(VEC *x)
 {
 	if ( x == VNULL )
 		error(E_NULL,"v_zero");
@@ -51,8 +49,7 @@ VEC	*x;
 
 
 /* iv_zero -- zero the vector ix */
-IVEC	*iv_zero(ix)
-IVEC	*ix;
+IVEC	*iv_zero(IVEC *ix)
 {
    int i;
    
@@ -67,8 +64,7 @@ IVEC	*ix;
 
 
 /* m_zero -- zero the matrix A */
-MAT	*m_zero(A)
-MAT	*A;
+MAT	*m_zero(MAT *A)
 {
 	int	i, A_m, A_n;
 	Real	**A_me;
@@ -87,8 +83,7 @@ MAT	*A;
 
 /* mat_id -- set A to being closest to identity matrix as possible
 	-- i.e. A[i][j] == 1 if i == j and 0 otherwise */
-MAT	*m_ident(A)
-MAT	*A;
+MAT	*m_ident(MAT *A)
 {
 	int	i, size;
 
@@ -104,8 +99,7 @@ MAT	*A;
 }
 	
 /* px_ident -- set px to identity permutation */
-PERM	*px_ident(px)
-PERM	*px;
+PERM	*px_ident(PERM *px)
 {
 	int	i, px_size;
 	u_int	*px_pe;
@@ -146,7 +140,7 @@ static int  inext = 0, inextp = 31;
 #ifdef ANSI_C
 double mrand(void)
 #else
-double mrand()
+double mrand(void)
 #endif
 {
     long	lval;
@@ -167,9 +161,7 @@ double mrand()
 }
 
 /* mrandlist -- fills the array a[] with len random numbers */
-void	mrandlist(a, len)
-Real	a[];
-int	len;
+void	mrandlist(Real a[], int len)
 {
     int		i;
     long	lval;
@@ -194,8 +186,7 @@ int	len;
 
 
 /* smrand -- set seed for mrand() */
-void smrand(seed)
-int	seed;
+void smrand(int seed)
 {
     int		i;
 
@@ -216,8 +207,7 @@ int	seed;
 
 /* v_rand -- initialises x to be a random vector, components
 	independently & uniformly ditributed between 0 and 1 */
-VEC	*v_rand(x)
-VEC	*x;
+VEC	*v_rand(VEC *x)
 {
 	/* int	i; */
 
@@ -234,8 +224,7 @@ VEC	*x;
 
 /* m_rand -- initialises A to be a random vector, components
 	independently & uniformly distributed between 0 and 1 */
-MAT	*m_rand(A)
-MAT	*A;
+MAT	*m_rand(MAT *A)
 {
 	int	i /* , j */;
 
@@ -252,8 +241,7 @@ MAT	*A;
 }
 
 /* v_ones -- fills x with one's */
-VEC	*v_ones(x)
-VEC	*x;
+VEC	*v_ones(VEC *x)
 {
 	int	i;
 
@@ -267,8 +255,7 @@ VEC	*x;
 }
 
 /* m_ones -- fills matrix with one's */
-MAT	*m_ones(A)
-MAT	*A;
+MAT	*m_ones(MAT *A)
 {
 	int	i, j;
 
@@ -283,8 +270,7 @@ MAT	*A;
 }
 
 /* v_count -- initialises x so that x->ve[i] == i */
-VEC	*v_count(x)
-VEC	*x;
+VEC	*v_count(VEC *x)
 {
 	int	i;
 

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -40,10 +39,7 @@ static char rcsid[] = "$Id$";
 
 /* m_save -- save matrix in ".mat" file for MATLAB
 	-- returns matrix to be saved */
-MAT     *m_save(fp,A,name)
-FILE    *fp;
-MAT     *A;
-char    *name;
+MAT     *m_save(FILE *fp, MAT *A, char *name)
 {
 	int     i;
 	matlab  mat;
@@ -75,10 +71,7 @@ char    *name;
 /* v_save -- save vector in ".mat" file for MATLAB
 	-- saves it as a row vector
 	-- returns vector to be saved */
-VEC     *v_save(fp,x,name)
-FILE    *fp;
-VEC     *x;
-char    *name;
+VEC     *v_save(FILE *fp, VEC *x, char *name)
 {
 	matlab  mat;
 
@@ -107,10 +100,7 @@ char    *name;
 /* d_save -- save double in ".mat" file for MATLAB
 	-- saves it as a row vector
 	-- returns vector to be saved */
-double	d_save(fp,x,name)
-FILE    *fp;
-double	x;
-char    *name;
+double	d_save(FILE *fp, double x, char *name)
 {
 	matlab  mat;
 	Real x1 = x;
@@ -136,9 +126,7 @@ char    *name;
 
 /* m_load -- loads in a ".mat" file variable as produced by MATLAB
 	-- matrix returned; imaginary parts ignored */
-MAT     *m_load(fp,name)
-FILE    *fp;
-char    **name;
+MAT     *m_load(FILE *fp, char **name)
 {
 	MAT     *A;
 	int     i;
@@ -193,4 +181,3 @@ char    **name;
 
 	return A;
 }
-

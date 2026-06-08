@@ -1,4 +1,3 @@
-
 /**************************************************************************
 **
 ** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
@@ -45,10 +44,7 @@
 			|a[p][k]| >= alpha * max_i |a[i][k]|
 	-- creates fill-in as needed
 	-- in situ factorisation */
-SPMAT	*spLUfactor(A,px,alpha)
-SPMAT	*A;
-PERM	*px;
-double	alpha;
+SPMAT	*spLUfactor(SPMAT *A, PERM *px, double alpha)
 {
 	int	i, best_i, k, idx, len, best_len, m, n;
 	SPROW	*r, *r_piv, tmp_row;
@@ -161,10 +157,7 @@ double	alpha;
 /* spLUsolve -- solve A.x = b using factored matrix A from spLUfactor()
 	-- returns x
 	-- may not be in-situ */
-VEC	*spLUsolve(A,pivot,b,x)
-SPMAT	*A;
-PERM	*pivot;
-VEC	*b, *x;
+VEC	*spLUsolve(SPMAT *A, PERM *pivot, VEC *b, VEC *x)
 {
 	int	i, idx, len, lim;
 	Real	sum, *x_ve;
@@ -215,10 +208,7 @@ VEC	*b, *x;
 /* spLUTsolve -- solve A.x = b using factored matrix A from spLUfactor()
 	-- returns x
 	-- may not be in-situ */
-VEC	*spLUTsolve(A,pivot,b,x)
-SPMAT	*A;
-PERM	*pivot;
-VEC	*b, *x;
+VEC	*spLUTsolve(SPMAT *A, PERM *pivot, VEC *b, VEC *x)
 {
 	int	i, idx, lim, rownum;
 	Real	sum, *tmp_ve;
@@ -298,9 +288,7 @@ VEC	*b, *x;
 	-- setting alpha = 0 gives incomplete LU factorisation
 	-- no fill-in is generated
 	-- in situ factorisation */
-SPMAT	*spILUfactor(A,alpha)
-SPMAT	*A;
-double	alpha;
+SPMAT	*spILUfactor(SPMAT *A, double alpha)
 {
     int		i, k, idx, idx_piv, m, n, old_idx, old_idx_piv;
     SPROW	*r, *r_piv;

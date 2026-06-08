@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -40,8 +39,7 @@ static	char	rcsid[] = "$Id$";
 /* Most matrix factorisation routines are in-situ unless otherwise specified */
 
 /* CHfactor -- Cholesky L.L' factorisation of A in-situ */
-MAT	*CHfactor(A)
-MAT	*A;
+MAT	*CHfactor(MAT *A)
 {
 	u_int	i, j, k, n;
 	Real	**A_ent, *A_piv, *A_row, sum, tmp;
@@ -88,9 +86,7 @@ MAT	*A;
 
 
 /* CHsolve -- given a CHolesky factorisation in A, solve A.x=b */
-VEC	*CHsolve(A,b,x)
-MAT	*A;
-VEC	*b,*x;
+VEC	*CHsolve(MAT *A, VEC *b, VEC *x)
 {
 	if ( A==(MAT *)NULL || b==(VEC *)NULL )
 		error(E_NULL,"CHsolve");
@@ -104,8 +100,7 @@ VEC	*b,*x;
 }
 
 /* LDLfactor -- L.D.L' factorisation of A in-situ */
-MAT	*LDLfactor(A)
-MAT	*A;
+MAT	*LDLfactor(MAT *A)
 {
 	u_int	i, k, n, p;
 	Real	**A_ent;
@@ -147,9 +142,7 @@ MAT	*A;
 	return A;
 }
 
-VEC	*LDLsolve(LDL,b,x)
-MAT	*LDL;
-VEC	*b, *x;
+VEC	*LDLsolve(MAT *LDL, VEC *b, VEC *x)
 {
 	if ( ! LDL || ! b )
 		error(E_NULL,"LDLsolve");
@@ -167,9 +160,7 @@ VEC	*b, *x;
 }
 
 /* MCHfactor -- Modified Cholesky L.L' factorisation of A in-situ */
-MAT	*MCHfactor(A,tol)
-MAT	*A;
-double  tol;
+MAT	*MCHfactor(MAT *A, double tol)
 {
 	u_int	i, j, k, n;
 	Real	**A_ent, *A_piv, *A_row, sum, tmp;

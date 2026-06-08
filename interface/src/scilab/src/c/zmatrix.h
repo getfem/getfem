@@ -1,7 +1,7 @@
 
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -118,12 +118,12 @@ extern ZVEC	*zv_mlt(complex scalar,ZVEC *vector,ZVEC *out);
 extern ZVEC	*zv_add(ZVEC *vec1,ZVEC *vec2,ZVEC *out);
 extern ZVEC	*zv_mltadd(ZVEC *v1,ZVEC *v2,complex scale,ZVEC *out);
 extern ZVEC	*zv_sub(ZVEC *vec1,ZVEC *vec2,ZVEC *out);
-#ifdef PROTOTYPES_IN_STRUCT
-extern ZVEC	*zv_map(complex (*f)(),ZVEC *x,ZVEC *out);
-extern ZVEC	*_zv_map(complex (*f)(),void *params,ZVEC *x,ZVEC *out);
-#else
+#ifdef HAVE_PROTOTYPES_IN_STRUCT
 extern ZVEC	*zv_map(complex (*f)(complex),ZVEC *x,ZVEC *out);
-extern ZVEC	*_zv_map(complex (*f)(void *,complex),void *params,ZVEC *x,ZVEC *out);
+extern ZVEC	*_zv_map(complex (*f)(void *,complex),ZVEC *x,ZVEC *out,void *params);
+#else
+extern ZVEC	*zv_map(complex (*f)(),ZVEC *x,ZVEC *out);
+extern ZVEC	*_zv_map(complex (*f)(),ZVEC *x,ZVEC *out,void *params);
 #endif
 extern ZVEC	*zv_lincomb(int n,ZVEC *v[],complex a[],ZVEC *out);
 extern ZVEC	*zv_linlist(ZVEC *out,ZVEC *v1,complex a1,...);

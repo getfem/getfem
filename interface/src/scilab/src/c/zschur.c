@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -44,8 +43,7 @@
 /* zschur -- computes the Schur decomposition of the matrix A in situ
 	-- optionally, gives Q matrix such that Q^*.A.Q is upper triangular
 	-- returns upper triangular Schur matrix */
-ZMAT	*zschur(A,Q)
-ZMAT	*A, *Q;
+ZMAT	*zschur(ZMAT *A, ZMAT *Q)
 {
     int		i, j, iter, k, k_min, k_max, k_tmp, n, split;
     Real	c;
@@ -190,8 +188,7 @@ ZMAT	*A, *Q;
 	-- X_re is the real part of the matrix of eigenvectors,
 		and X_im is the imaginary part of the matrix.
 	-- X_re is returned */
-MAT	*schur_vecs(T,Q,X_re,X_im)
-MAT	*T, *Q, *X_re, *X_im;
+MAT	*schur_vecs(MAT *T, MAT *Q, MAT *X_re, MAT *X_im)
 {
 	int	i, j, limit;
 	Real	t11_re, t11_im, t12, t21, t22_re, t22_im;

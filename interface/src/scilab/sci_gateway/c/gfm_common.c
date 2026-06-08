@@ -51,7 +51,7 @@ const char * sci_ClassID2string(sci_types id)
     case sci_poly:               return "POLY";
     case sci_boolean:            return "BOOLEAN";
     case sci_boolean_sparse:     return "BOOLEAN_SPARSE";
-    case sci_matlab_sparse:      return "MATLAB_SPARSE";
+//    case sci_matlab_sparse:      return "MATLAB_SPARSE";
     case sci_ints:               return "INTS";
     case sci_handles:            return "HANDLES";
     case sci_strings:            return "STRINGS";
@@ -1057,7 +1057,8 @@ int *gfi_array_to_sci_array(gfi_array *t, int ivar)
 		  sciprint("pirow = %d picol = %d, pilen[0] = %d\n", pirow, picol, pilen[0]);
 #endif
 		  // And now add it to the list
-		  _SciErr = createMatrixOfStringInList(pvApiCtx,ivar, m_var, i+1, pirow, picol, pstStrings); CHECK_ERROR_API_SCILAB;
+		  _SciErr = createMatrixOfStringInList(pvApiCtx,ivar, m_var, i+1, pirow, picol,
+                                               (const char * const *)pstStrings); CHECK_ERROR_API_SCILAB;
 		  
 		  // Desallocate
 		  if (pilen) FREE(pilen);
@@ -1149,7 +1150,8 @@ int *gfi_array_to_sci_array(gfi_array *t, int ivar)
 	char *fields[] = {"objid","id","cid"};
 
 	_SciErr = createMList(pvApiCtx,ivar,3,&m_var); CHECK_ERROR_API_SCILAB;
-	_SciErr = createMatrixOfStringInList(pvApiCtx,ivar, m_var, 1, 1, 3, fields); CHECK_ERROR_API_SCILAB;
+	_SciErr = createMatrixOfStringInList(pvApiCtx,ivar, m_var, 1, 1, 3,
+                                         (const char * const *)fields); CHECK_ERROR_API_SCILAB;
 
 	size_objid  = t->storage.gfi_storage_u.objid.objid_len;
 	pdblDataID  = (double *)MALLOC(size_objid*sizeof(double));

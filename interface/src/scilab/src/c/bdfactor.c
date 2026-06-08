@@ -1,8 +1,7 @@
 
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -49,8 +48,7 @@ static	char	rcsid[] = "$Id: ";
    in one column are now also in one column
 */
 
-BAND *bd_get(lb,ub,n)
-int lb, ub, n;
+BAND *bd_get(int lb, int ub, int n)
 {
    BAND *A;
 
@@ -70,8 +68,7 @@ int lb, ub, n;
    return A;
 }
 
-int bd_free(A)
-BAND *A;
+int bd_free(BAND *A)
 {
    if ( A == (BAND *)NULL || A->lb < 0 || A->ub < 0 )
      /* don't trust it */
@@ -91,9 +88,7 @@ BAND *A;
 
 /* resize band matrix */
 
-BAND *bd_resize(A,new_lb,new_ub,new_n)
-BAND *A;
-int new_lb,new_ub,new_n;
+BAND *bd_resize(BAND *A, int new_lb, int new_ub, int new_n)
 {
    int lb,ub,i,j,l,shift,umin;
    Real **Av;
@@ -152,8 +147,7 @@ int new_lb,new_ub,new_n;
 
 
 
-BAND *bd_copy(A,B)
-BAND *A,*B;
+BAND *bd_copy(BAND *A, BAND *B)
 {
    int lb,ub,i,j,n;
    
@@ -183,9 +177,7 @@ BAND *A,*B;
 
 
 /* copy band matrix to a square matrix */
-MAT *band2mat(bA,A)
-BAND *bA;
-MAT *A;
+MAT *band2mat(BAND *bA, MAT *A)
 {
    int i,j,l,n,n1;
    int lb, ub;
@@ -214,10 +206,7 @@ MAT *A;
 
 /* copy a square matrix to a band matrix with 
    lb subdiagonals and ub superdiagonals */
-BAND *mat2band(A,lb,ub,bA)
-BAND *bA;
-MAT *A;
-int lb, ub;
+BAND *mat2band(MAT *A, int lb, int ub, BAND *bA)
 {
    int i, j, l, n1;
    Real **bmat;
@@ -249,8 +238,7 @@ int lb, ub;
    can be done in situ
 */
 
-BAND *bd_transp(in,out)
-BAND *in, *out;
+BAND *bd_transp(BAND *in, BAND *out)
 {
    int i, j, jj, l, k, lb, ub, lub, n, n1;
    int in_situ;
@@ -362,9 +350,7 @@ BAND *in, *out;
       Matrix U is permuted, whereas L is not permuted !!!
       Therefore we save some memory.
    */
-BAND	*bdLUfactor(bA,pivot)
-BAND	*bA;
-PERM	*pivot;
+BAND	*bdLUfactor(BAND *bA, PERM *pivot)
 {
    int	i, j, k, l, n, n1, lb, ub, lub, k_end, k_lub;
    int	i_max, shift;
@@ -445,10 +431,7 @@ PERM	*pivot;
 
 /* bdLUsolve -- given an LU factorisation in bA, solve bA*x=b */
 /* pivot is changed upon return  */
-VEC	*bdLUsolve(bA,pivot,b,x)
-BAND	*bA;
-PERM	*pivot;
-VEC	*b,*x;
+VEC	*bdLUsolve(BAND *bA, PERM *pivot, VEC *b, VEC *x)
 {
    int i,j,l,n,n1,pi,lb,ub,jmin, maxj;
    Real c;
@@ -503,8 +486,7 @@ VEC	*b,*x;
    so it is possible to set A->ub = 0
  */
 
-BAND *bdLDLfactor(A)
-BAND *A;
+BAND *bdLDLfactor(BAND *A)
 {
    int i,j,k,n,n1,lb,ki,jk,ji,lbkm,lbkp;
    Real **Av;
@@ -550,9 +532,7 @@ BAND *A;
 
 /* solve A*x = b, where A is factorized by 
    Choleski LDL^T factorization */
-VEC    *bdLDLsolve(A,b,x)
-BAND   *A;
-VEC    *b, *x;
+VEC    *bdLDLsolve(BAND *A, VEC *b, VEC *x)
 {
    int i,j,l,n,n1,lb,ilb;
    Real **Av, *Avlb;
@@ -609,9 +589,7 @@ VEC    *b, *x;
  *   may not work in situ (x != out)
  */
 
-VEC *bd_mv_mlt(A, x, out)
-BAND *A;
-VEC *x, *out;
+VEC *bd_mv_mlt(BAND *A, VEC *x, VEC *out)
 {
   int i, j, j_end, k;
   int start_idx, end_idx;

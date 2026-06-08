@@ -1,4 +1,3 @@
-
 /**************************************************************************
 **
 ** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
@@ -40,14 +39,8 @@ static char rcsid[] = "$Id$";
 
 
 
-#ifndef ANSI_C
-static	void	hhldr3(x,y,z,nu1,beta,newval)
-double	x, y, z;
-Real	*nu1, *beta, *newval;
-#else
 static	void	hhldr3(double x, double y, double z,
 		       Real *nu1, Real *beta, Real *newval)
-#endif
 {
 	Real	alpha;
 
@@ -60,15 +53,8 @@ static	void	hhldr3(double x, double y, double z,
 	*newval = alpha;
 }
 
-#ifndef ANSI_C
-static	void	hhldr3cols(A,k,j0,beta,nu1,nu2,nu3)
-MAT	*A;
-int	k, j0;
-double	beta, nu1, nu2, nu3;
-#else
 static	void	hhldr3cols(MAT *A, int k, int j0, double beta,
 			   double nu1, double nu2, double nu3)
-#endif
 {
 	Real	**A_me, ip, prod;
 	int	j, n;
@@ -109,15 +95,8 @@ static	void	hhldr3cols(MAT *A, int k, int j0, double beta,
 	/* putc('\n',stdout); */
 }
 
-#ifndef ANSI_C
-static	void	hhldr3rows(A,k,i0,beta,nu1,nu2,nu3)
-MAT	*A;
-int	k, i0;
-double	beta, nu1, nu2, nu3;
-#else
 static	void	hhldr3rows(MAT *A, int k, int i0, double beta,
 			   double nu1, double nu2, double nu3)
-#endif
 {
 	Real	**A_me, ip, prod;
 	int	i, m;
@@ -151,8 +130,7 @@ static	void	hhldr3rows(MAT *A, int k, int i0, double beta,
 /* schur -- computes the Schur decomposition of the matrix A in situ
 	-- optionally, gives Q matrix such that Q^T.A.Q is upper triangular
 	-- returns upper triangular Schur matrix */
-MAT	*schur(A,Q)
-MAT	*A, *Q;
+MAT	*schur(MAT *A, MAT *Q)
 {
     int		i, j, iter, k, k_min, k_max, k_tmp, n, split;
     Real	beta2, c, discrim, dummy, nu1, s, t, tmp, x, y, z;
@@ -428,9 +406,7 @@ MAT	*A, *Q;
 	-- assumes T contains a block upper triangular matrix
 		as produced by schur()
 	-- real parts stored in real_pt, imaginary parts in imag_pt */
-void	schur_evals(T,real_pt,imag_pt)
-MAT	*T;
-VEC	*real_pt, *imag_pt;
+void	schur_evals(MAT *T, VEC *real_pt, VEC *imag_pt)
 {
 	int	i, n;
 	Real	discrim, **T_me;
@@ -484,8 +460,7 @@ VEC	*real_pt, *imag_pt;
 	-- X_re is the real part of the matrix of eigenvectors,
 		and X_im is the imaginary part of the matrix.
 	-- X_re is returned */
-MAT	*schur_vecs(T,Q,X_re,X_im)
-MAT	*T, *Q, *X_re, *X_im;
+MAT	*schur_vecs(MAT *T, MAT *Q, MAT *X_re, MAT *X_im)
 {
 	int	i, j, limit;
 	Real	t11_re, t11_im, t12, t21, t22_re, t22_im;
@@ -665,4 +640,3 @@ MAT	*T, *Q, *X_re, *X_im;
 
 	return X_re;
 }
-

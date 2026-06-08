@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -33,10 +32,7 @@ static	char	rcsid[] = "$Id$";
 
 
 /* get_col -- gets a specified column of a matrix and retruns it as a vector */
-VEC	*get_col(mat,col,vec)
-u_int	col;
-MAT	*mat;
-VEC	*vec;
+VEC	*get_col(MAT *mat, u_int col, VEC *vec)
 {
    u_int	i;
    
@@ -54,10 +50,7 @@ VEC	*vec;
 }
 
 /* get_row -- gets a specified row of a matrix and retruns it as a vector */
-VEC	*get_row(mat,row,vec)
-u_int	row;
-MAT	*mat;
-VEC	*vec;
+VEC	*get_row(MAT *mat, u_int row, VEC *vec)
 {
    u_int	i;
    
@@ -75,10 +68,7 @@ VEC	*vec;
 }
 
 /* _set_col -- sets column of matrix to values given in vec (in situ) */
-MAT	*_set_col(mat,col,vec,i0)
-MAT	*mat;
-VEC	*vec;
-u_int	col,i0;
+MAT	*_set_col(MAT *mat, u_int col, VEC *vec, u_int i0)
 {
    u_int	i,lim;
    
@@ -94,10 +84,7 @@ u_int	col,i0;
 }
 
 /* _set_row -- sets row of matrix to values given in vec (in situ) */
-MAT	*_set_row(mat,row,vec,j0)
-MAT	*mat;
-VEC	*vec;
-u_int	row,j0;
+MAT	*_set_row(MAT *mat, u_int row, VEC *vec, u_int j0)
 {
    u_int	j,lim;
    
@@ -116,9 +103,7 @@ u_int	row,j0;
    from (row1,col1) to (row2,col2)
    -- Note: storage is shared so that altering the "new"
    matrix will alter the "old" matrix */
-MAT	*sub_mat(old,row1,col1,row2,col2,new)
-MAT	*old,*new;
-u_int	row1,col1,row2,col2;
+MAT	*sub_mat(MAT *old, u_int row1, u_int col1, u_int row2, u_int col2, MAT *new)
 {
    u_int	i;
    
@@ -153,9 +138,7 @@ u_int	row1,col1,row2,col2;
 
 /* sub_vec -- returns sub-vector which is formed by the elements i1 to i2
    -- as for sub_mat, storage is shared */
-VEC	*sub_vec(old,i1,i2,new)
-VEC	*old, *new;
-int	i1, i2;
+VEC	*sub_vec(VEC *old, int i1, int i2, VEC *new)
 {
    if ( old == (VEC *)NULL )
      error(E_NULL,"sub_vec");

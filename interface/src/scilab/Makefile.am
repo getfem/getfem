@@ -1,9 +1,9 @@
 ## Scilab Getfem Interface
 ## Copyright (C) 2009 Yann COLLETTE
 ##
-## This scilab getfem interface is a part of GetFEM++
+## This scilab getfem interface is a part of GetFEM
 ##
-## GefFEM++ is free software; you can redistribute it and/or modify
+## GefFEM is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 3 of the License, or
 ## (at your option) any later version.
@@ -14,8 +14,7 @@
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+## along with this program. If not, see https://www.gnu.org/licenses/.
 ##
 
 toolboxdir=@SCILAB_TOOLBOX_DIR@
@@ -71,9 +70,9 @@ EXTRA_DIST=builddoc.sce \
         tests/unit_tests/check_spmat.sce \
         tests/unit_tests/check_workspace.sce \
         demos/demo_bilaplacian.sce \
-	demos/demo_continuation_block.sce \
+        demos/demo_continuation_block.sce \
         demos/demo_continuation.sce \
-	demos/demo_continuation_vee.sce \
+        demos/demo_continuation_vee.sce \
         demos/demo_convection_rotating_cavity.sce \
         demos/demo_crack.sce \
         demos/demo_fictitious_domains.sce \
@@ -116,7 +115,7 @@ EXTRA_DIST=builddoc.sce \
         demos/data/tripod.GiD.msh \
         demos/data/tripod.mesh \
         demos/data/tube_2D_spline.GiD.msh \
-	demos/data/vee_h_0.03.mesh \
+        demos/data/vee_h_0.03.mesh \
         etc/sci_getfem.quit \
         etc/sci_getfem.start \
         help/builder_help.sce \

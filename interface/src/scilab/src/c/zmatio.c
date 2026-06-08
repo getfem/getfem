@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -40,8 +39,7 @@ static char line[MAXLINE];
   Input routines
   **************************************************************************/
 
-complex	z_finput(fp)
-FILE	*fp;
+complex	z_finput(FILE *fp)
 {
     int		io_code;
     complex	z;
@@ -73,11 +71,9 @@ FILE	*fp;
 }
 
 
-ZMAT	*zm_finput(fp,a)
-FILE    *fp;
-ZMAT	*a;
+ZMAT	*zm_finput(FILE *fp, ZMAT *a)
 {
-     ZMAT        *izm_finput(),*bzm_finput();
+     ZMAT        *izm_finput(FILE*,ZMAT*),*bzm_finput(FILE*,ZMAT*);
      
      if ( isatty(fileno(fp)) )
 	  return izm_finput(fp,a);
@@ -86,9 +82,7 @@ ZMAT	*a;
 }
 
 /* izm_finput -- interactive input of matrix */
-ZMAT     *izm_finput(fp,mat)
-FILE    *fp;
-ZMAT     *mat;
+ZMAT     *izm_finput(FILE *fp, ZMAT *mat)
 {
      char       c;
      u_int      i, j, m, n, dynamic;
@@ -150,9 +144,7 @@ ZMAT     *mat;
 }
 
 /* bzm_finput -- batch-file input of matrix */
-ZMAT     *bzm_finput(fp,mat)
-FILE    *fp;
-ZMAT     *mat;
+ZMAT     *bzm_finput(FILE *fp, ZMAT *mat)
 {
      u_int      i,j,m,n,dummy;
      int        io_code;
@@ -189,11 +181,9 @@ ZMAT     *mat;
      return (mat);
 }
 
-ZVEC     *zv_finput(fp,x)
-FILE    *fp;
-ZVEC     *x;
+ZVEC     *zv_finput(FILE *fp, ZVEC *x)
 {
-     ZVEC        *izv_finput(),*bzv_finput();
+     ZVEC        *izv_finput(FILE*,ZVEC*),*bzv_finput(FILE*,ZVEC*);
      
      if ( isatty(fileno(fp)) )
 	  return izv_finput(fp,x);
@@ -202,9 +192,7 @@ ZVEC     *x;
 }
 
 /* izv_finput -- interactive input of vector */
-ZVEC     *izv_finput(fp,vec)
-FILE    *fp;
-ZVEC     *vec;
+ZVEC     *izv_finput(FILE *fp, ZVEC *vec)
 {
      u_int      i,dim,dynamic;  /* dynamic set if memory allocated here */
      
@@ -250,9 +238,7 @@ ZVEC     *vec;
 }
 
 /* bzv_finput -- batch-file input of vector */
-ZVEC     *bzv_finput(fp,vec)
-FILE    *fp;
-ZVEC    *vec;
+ZVEC     *bzv_finput(FILE *fp, ZVEC *vec)
 {
      u_int      i,dim;
      int        io_code;
@@ -287,8 +273,7 @@ ZVEC    *vec;
   **************************************************************************/
 static char    *zformat = " (%14.9g, %14.9g) ";
 
-char	*setzformat(f_string)
-char    *f_string;
+char	*setzformat(char *f_string)
 {
     char	*old_f_string;
     old_f_string = zformat;
@@ -298,17 +283,13 @@ char    *f_string;
     return old_f_string;
 }
 
-void	z_foutput(fp,z)
-FILE	*fp;
-complex	z;
+void	z_foutput(FILE *fp, complex z)
 {
     fprintf(fp,zformat,z.re,z.im);
     putc('\n',fp);
 }
 
-void    zm_foutput(fp,a)
-FILE    *fp;
-ZMAT     *a;
+void    zm_foutput(FILE *fp, ZMAT *a)
 {
      u_int      i, j, tmp;
      
@@ -329,9 +310,7 @@ ZMAT     *a;
      }
 }
 
-void    zv_foutput(fp,x)
-FILE    *fp;
-ZVEC     *x;
+void    zv_foutput(FILE *fp, ZVEC *x)
 {
      u_int      i, tmp;
      
@@ -349,9 +328,7 @@ ZVEC     *x;
 }
 
 
-void    zm_dump(fp,a)
-FILE    *fp;
-ZMAT     *a;
+void    zm_dump(FILE *fp, ZMAT *a)
 {
 	u_int   i, j, tmp;
      
@@ -378,9 +355,7 @@ ZMAT     *a;
 
 
 
-void    zv_dump(fp,x)
-FILE    *fp;
-ZVEC     *x;
+void    zv_dump(FILE *fp, ZVEC *x)
 {
      u_int      i, tmp;
      
@@ -397,4 +372,3 @@ ZVEC     *x;
      }
      if ( tmp % 2 != 0 )        putc('\n',fp);
 }
-

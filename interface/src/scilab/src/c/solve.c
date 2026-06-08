@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -43,10 +42,7 @@ static	char	rcsid[] = "$Id$";
 
 /* Usolve -- back substitution with optional over-riding diagonal
 		-- can be in-situ but doesn't need to be */
-VEC	*Usolve(matrix,b,out,diag)
-MAT	*matrix;
-VEC	*b, *out;
-double	diag;
+VEC	*Usolve(MAT *matrix, VEC *b, VEC *out, double diag)
 {
 	u_int	dim /* , j */;
 	int	i, i_lim;
@@ -96,10 +92,7 @@ double	diag;
 }
 
 /* Lsolve -- forward elimination with (optional) default diagonal value */
-VEC	*Lsolve(matrix,b,out,diag)
-MAT	*matrix;
-VEC	*b,*out;
-double	diag;
+VEC	*Lsolve(MAT *matrix, VEC *b, VEC *out, double diag)
 {
 	u_int	dim, i, i_lim /* , j */;
 	Real	**mat_ent, *mat_row, *b_ent, *out_ent, *out_col, sum, tiny;
@@ -150,10 +143,7 @@ double	diag;
 
 /* UTsolve -- forward elimination with (optional) default diagonal value
 		using UPPER triangular part of matrix */
-VEC	*UTsolve(U,b,out,diag)
-MAT	*U;
-VEC	*b,*out;
-double	diag;
+VEC	*UTsolve(MAT *U, VEC *b, VEC *out, double diag)
 {
     u_int	dim, i, i_lim;
     Real	**U_me, *b_ve, *out_ve, tmp, invdiag, tiny;
@@ -204,9 +194,7 @@ double	diag;
 }
 
 /* Dsolve -- solves Dx=b where D is the diagonal of A -- may be in-situ */
-VEC	*Dsolve(A,b,x)
-MAT	*A;
-VEC	*b,*x;
+VEC	*Dsolve(MAT *A, VEC *b, VEC *x)
 {
     u_int	dim, i;
     Real	tiny;
@@ -233,10 +221,7 @@ VEC	*b,*x;
 /* LTsolve -- back substitution with optional over-riding diagonal
 		using the LOWER triangular part of matrix
 		-- can be in-situ but doesn't need to be */
-VEC	*LTsolve(L,b,out,diag)
-MAT	*L;
-VEC	*b, *out;
-double	diag;
+VEC	*LTsolve(MAT *L, VEC *b, VEC *out, double diag)
 {
     u_int	dim;
     int		i, i_lim;

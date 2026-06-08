@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -82,7 +81,8 @@ MAT * m_sub(MAT * mat1, MAT * mat2, MAT * out)
 }
 
 /* m_mlt -- matrix-matrix multiplication */
-MAT * m_mlt(MAT * A, MAT * B, MAT * out) {
+MAT * m_mlt(MAT * A, MAT * B, MAT * out)
+{
 	u_int	i, /* j, */ k, m, n, p;
 	Real	**A_v, **B_v /*, *B_row, *out_row, sum, tmp */;
 
@@ -438,7 +438,7 @@ VEC * mv_mltadd(VEC * v1, VEC * v2, MAT * A, double alpha, VEC * out)
 /* vm_mltadd -- vector-matrix multiply and add
 	-- may not be in situ
 	-- returns out' == v1' + v2'*A */
-VEC * vm_mltadd(VEC * v1, VEC * v2, MAT * A,double alpha, VEC * out)
+VEC * vm_mltadd(VEC * v1, VEC * v2, MAT * A, double alpha, VEC * out)
 {
 	int	/* i, */ j, m, n;
 	Real	tmp, /* *A_e, */ *out_ve;
@@ -467,4 +467,3 @@ VEC * vm_mltadd(VEC * v1, VEC * v2, MAT * A,double alpha, VEC * out)
 
 	return out;
 }
-

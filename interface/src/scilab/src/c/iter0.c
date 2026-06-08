@@ -1,4 +1,3 @@
-
 /**************************************************************************
 **
 ** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
@@ -46,10 +45,7 @@ static char rcsid[] = "$Id$";
 /* standard functions */
 
 /* standard information */
-void iter_std_info(ip,nres,res,Bres)
-ITER *ip;
-double nres;
-VEC *res, *Bres;
+void iter_std_info(ITER *ip, double nres, VEC *res, VEC *Bres)
 {
    if (nres >= 0.0)
      printf(" %d. residual = %g\n",ip->steps,nres);
@@ -59,10 +55,7 @@ VEC *res, *Bres;
 }
 
 /* standard stopping criterion */
-int iter_std_stop_crit(ip, nres, res, Bres)
-ITER *ip;
-double nres;
-VEC *res, *Bres;
+int iter_std_stop_crit(ITER *ip, double nres, VEC *res, VEC *Bres)
 {
    /* standard stopping criterium */
    if (nres <= ip->init_res*ip->eps) return TRUE; 
@@ -72,8 +65,7 @@ VEC *res, *Bres;
 
 /* iter_get - create a new structure pointing to ITER */
 
-ITER *iter_get(lenb, lenx)
-int lenb, lenx;
+ITER *iter_get(int lenb, int lenx)
 {
    ITER *ip;
 
@@ -114,8 +106,7 @@ int lenb, lenx;
 
 
 /* iter_free - release memory */
-int iter_free(ip)
-ITER *ip;
+int iter_free(ITER *ip)
 {
    if (ip == (ITER *)NULL) return -1;
    
@@ -132,9 +123,7 @@ ITER *ip;
    return 0;
 }
 
-ITER *iter_resize(ip,new_lenb,new_lenx)
-ITER *ip;
-int new_lenb, new_lenx;
+ITER *iter_resize(ITER *ip, int new_lenb, int new_lenx)
 {
    VEC *old;
 
@@ -155,9 +144,7 @@ int new_lenb, new_lenx;
 
 
 /* print out ip structure - for diagnostic purposes mainly */
-void iter_dump(fp,ip)
-ITER *ip;
-FILE *fp;
+void iter_dump(ITER *ip, FILE *fp)
 {
    if (ip == NULL) {
       fprintf(fp," ITER structure: NULL\n");
@@ -186,8 +173,7 @@ FILE *fp;
    if ip2 == NULL then a new structure is created with x and b being NULL
    and other members are taken from ip1
 */
-ITER *iter_copy2(ip1,ip2)
-ITER *ip1, *ip2;
+ITER *iter_copy2(ITER *ip1, ITER *ip2)
 {
    VEC *x, *b;
    int shx, shb;
@@ -221,8 +207,7 @@ ITER *ip1, *ip2;
 
 
 /* copy the structure ip1 to ip2 copying also the vectors x and b */
-ITER *iter_copy(ip1,ip2)
-ITER *ip1, *ip2;
+ITER *iter_copy(ITER *ip1, ITER *ip2)
 {
    VEC *x, *b;
 
@@ -260,8 +245,7 @@ ITER *ip1, *ip2;
    n x n matrix, 
    nrow - number of nonzero entries in a row
    */
-SPMAT	*iter_gen_sym(n,nrow)
-int	n, nrow;
+SPMAT	*iter_gen_sym(int n, int nrow)
 {
    SPMAT	*A;
    VEC	        *u;
@@ -301,9 +285,7 @@ int	n, nrow;
    diag - number which is put in diagonal entries and then permuted
    (if diag is zero then 1.0 is there)
 */
-SPMAT	*iter_gen_nonsym(m,n,nrow,diag)
-int	m, n, nrow;
-double diag;
+SPMAT	*iter_gen_nonsym(int m, int n, int nrow, double diag)
 {
    SPMAT	*A;
    PERM		*px;
@@ -343,8 +325,7 @@ double diag;
    n x n sparse matrix;
    nrow - number of entries in a row
 */
-SPMAT	*iter_gen_nonsym_posdef(n,nrow)
-int	n, nrow;
+SPMAT	*iter_gen_nonsym_posdef(int n, int nrow)
 {
    SPMAT	*A;
    PERM		*px;
@@ -376,6 +357,3 @@ int	n, nrow;
    V_FREE(u);
    return A;
 }
-
-
-

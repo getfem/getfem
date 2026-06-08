@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -43,9 +42,7 @@ static	char	rcsid[] = "$Id$";
 
 /* zLUfactor -- Gaussian elimination with scaled partial pivoting
 		-- Note: returns LU matrix which is A */
-ZMAT	*zLUfactor(A,pivot)
-ZMAT	*A;
-PERM	*pivot;
+ZMAT	*zLUfactor(ZMAT *A, PERM *pivot)
 {
 	u_int	i, j, k, k_max, m, n;
 	int	i_max;
@@ -131,10 +128,7 @@ PERM	*pivot;
 
 
 /* zLUsolve -- given an LU factorisation in A, solve Ax=b */
-ZVEC	*zLUsolve(A,pivot,b,x)
-ZMAT	*A;
-PERM	*pivot;
-ZVEC	*b,*x;
+ZVEC	*zLUsolve(ZMAT *A, PERM *pivot, ZVEC *b, ZVEC *x)
 {
 	if ( A==ZMNULL || b==ZVNULL || pivot==PNULL )
 		error(E_NULL,"zLUsolve");
@@ -149,10 +143,7 @@ ZVEC	*b,*x;
 }
 
 /* zLUAsolve -- given an LU factorisation in A, solve A^*.x=b */
-ZVEC	*zLUAsolve(LU,pivot,b,x)
-ZMAT	*LU;
-PERM	*pivot;
-ZVEC	*b,*x;
+ZVEC	*zLUAsolve(ZMAT *LU, PERM *pivot, ZVEC *b, ZVEC *x)
 {
 	if ( ! LU || ! b || ! pivot )
 		error(E_NULL,"zLUAsolve");
@@ -169,8 +160,7 @@ ZVEC	*b,*x;
 
 /* zm_inverse -- returns inverse of A, provided A is not too rank deficient
 	-- uses LU factorisation */
-ZMAT	*zm_inverse(A,out)
-ZMAT	*A, *out;
+ZMAT	*zm_inverse(ZMAT *A, ZMAT *out)
 {
 	int	i;
 	ZVEC	*tmp, *tmp2;
@@ -207,9 +197,7 @@ ZMAT	*A, *out;
 
 /* zLUcondest -- returns an estimate of the condition number of LU given the
 	LU factorisation in compact form */
-double	zLUcondest(LU,pivot)
-ZMAT	*LU;
-PERM	*pivot;
+double	zLUcondest(ZMAT *LU, PERM *pivot)
 {
     static	ZVEC	*y = ZVNULL, *z = ZVNULL;
     Real	cond_est, L_norm, U_norm, norm, sn_inv;

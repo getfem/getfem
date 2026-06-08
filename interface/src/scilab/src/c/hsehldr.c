@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -43,10 +42,7 @@ static	char	rcsid[] = "$Id$";
 
 /* hhvec -- calulates Householder vector to eliminate all entries after the
 	i0 entry of the vector vec. It is returned as out. May be in-situ */
-VEC	*hhvec(vec,i0,beta,out,newval)
-VEC	*vec,*out;
-u_int	i0;
-Real	*beta,*newval;
+VEC	*hhvec(VEC *vec, u_int i0, Real *beta, VEC *out, Real *newval)
 {
 	Real	norm;
 
@@ -68,10 +64,8 @@ Real	*beta,*newval;
 }
 
 /* hhtrvec -- apply Householder transformation to vector -- may be in-situ */
-VEC	*hhtrvec(hh,beta,i0,in,out)
-VEC	*hh,*in,*out;	/* hh = Householder vector */
-u_int	i0;
-double	beta;
+VEC	*hhtrvec(VEC *hh, /* hh = Householder vector */
+                 double beta, u_int i0, VEC *in, VEC *out)
 {
 	Real	scale;
 	/* u_int	i; */
@@ -96,11 +90,7 @@ double	beta;
 
 /* hhtrrows -- transform a matrix by a Householder vector by rows
 	starting at row i0 from column j0 -- in-situ */
-MAT	*hhtrrows(M,i0,j0,hh,beta)
-MAT	*M;
-u_int	i0, j0;
-VEC	*hh;
-double	beta;
+MAT	*hhtrrows(MAT *M, u_int i0, u_int j0, VEC *hh, double beta)
 {
 	Real	ip, scale;
 	int	i /*, j */;
@@ -142,11 +132,7 @@ double	beta;
 
 /* hhtrcols -- transform a matrix by a Householder vector by columns
 	starting at row i0 from column j0 -- in-situ */
-MAT	*hhtrcols(M,i0,j0,hh,beta)
-MAT	*M;
-u_int	i0, j0;
-VEC	*hh;
-double	beta;
+MAT	*hhtrcols(MAT *M, u_int i0, u_int j0, VEC *hh, double beta)
 {
 	/* Real	ip, scale; */
 	int	i /*, k */;

@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -43,8 +42,7 @@ static char line[MAXLINE];
   **************************************************************************/
 /* skipjunk -- skips white spaces and strings of the form #....\n
    Here .... is a comment string */
-int     skipjunk(fp)
-FILE    *fp;
+int     skipjunk(FILE *fp)
 {
      int        c;
      
@@ -69,11 +67,10 @@ FILE    *fp;
      return 0;
 }
 
-MAT     *m_finput(fp,a)
-FILE    *fp;
-MAT     *a;
+MAT     *m_finput(FILE *fp, MAT *a)
 {
-     MAT        *im_finput(),*bm_finput();
+     MAT        *im_finput(FILE *, MAT *),
+                *bm_finput(FILE *, MAT *);
      
      if ( isatty(fileno(fp)) )
 	  return im_finput(fp,a);
@@ -82,9 +79,7 @@ MAT     *a;
 }
 
 /* im_finput -- interactive input of matrix */
-MAT     *im_finput(fp,mat)
-FILE    *fp;
-MAT     *mat;
+MAT     *im_finput(FILE *fp, MAT *mat)
 {
      char       c;
      u_int      i, j, m, n, dynamic;
@@ -144,9 +139,7 @@ MAT     *mat;
 }
 
 /* bm_finput -- batch-file input of matrix */
-MAT     *bm_finput(fp,mat)
-FILE    *fp;
-MAT     *mat;
+MAT     *bm_finput(FILE *fp, MAT *mat)
 {
      u_int      i,j,m,n,dummy;
      int        io_code;
@@ -179,11 +172,10 @@ MAT     *mat;
      return (mat);
 }
 
-PERM    *px_finput(fp,px)
-FILE    *fp;
-PERM    *px;
+PERM    *px_finput(FILE *fp, PERM *px)
 {
-     PERM       *ipx_finput(),*bpx_finput();
+     PERM       *ipx_finput(FILE *, PERM *),
+                *bpx_finput(FILE *, PERM *);
      
      if ( isatty(fileno(fp)) )
 	  return ipx_finput(fp,px);
@@ -193,9 +185,7 @@ PERM    *px;
 
 
 /* ipx_finput -- interactive input of permutation */
-PERM    *ipx_finput(fp,px)
-FILE    *fp;
-PERM    *px;
+PERM    *ipx_finput(FILE *fp, PERM *px)
 {
      u_int      i,j,size,dynamic; /* dynamic set if memory allocated here */
      u_int      entry,ok;
@@ -247,9 +237,7 @@ PERM    *px;
 }
 
 /* bpx_finput -- batch-file input of permutation */
-PERM    *bpx_finput(fp,px)
-FILE    *fp;
-PERM    *px;
+PERM    *bpx_finput(FILE *fp, PERM *px)
 {
      u_int      i,j,size,entry,ok;
      int        io_code;
@@ -289,11 +277,9 @@ PERM    *px;
 }
 
 
-VEC     *v_finput(fp,x)
-FILE    *fp;
-VEC     *x;
+VEC     *v_finput(FILE *fp, VEC *x)
 {
-     VEC        *ifin_vec(),*bfin_vec();
+     VEC        *ifin_vec(FILE *,VEC *),*bfin_vec(FILE *,VEC *);
      
      if ( isatty(fileno(fp)) )
 	  return ifin_vec(fp,x);
@@ -302,9 +288,7 @@ VEC     *x;
 }
 
 /* ifin_vec -- interactive input of vector */
-VEC     *ifin_vec(fp,vec)
-FILE    *fp;
-VEC     *vec;
+VEC     *ifin_vec(FILE *fp, VEC *vec)
 {
      u_int      i,dim,dynamic;  /* dynamic set if memory allocated here */
      
@@ -347,9 +331,7 @@ VEC     *vec;
 }
 
 /* bfin_vec -- batch-file input of vector */
-VEC     *bfin_vec(fp,vec)
-FILE    *fp;
-VEC     *vec;
+VEC     *bfin_vec(FILE *fp, VEC *vec)
 {
      u_int      i,dim;
      int        io_code;
@@ -382,8 +364,7 @@ VEC     *vec;
   **************************************************************************/
 static char    *format = "%14.9g ";
 
-char	*setformat(f_string)
-char    *f_string;
+char	*setformat(char *f_string)
 {
     char	*old_f_string;
     old_f_string = format;
@@ -393,9 +374,7 @@ char    *f_string;
     return old_f_string;
 }
 
-void    m_foutput(fp,a)
-FILE    *fp;
-MAT     *a;
+void    m_foutput(FILE *fp, MAT *a)
 {
      u_int      i, j, tmp;
      
@@ -416,9 +395,7 @@ MAT     *a;
      }
 }
 
-void    px_foutput(fp,px)
-FILE    *fp;
-PERM    *px;
+void    px_foutput(FILE *fp, PERM *px)
 {
      u_int      i;
      
@@ -435,9 +412,7 @@ PERM    *px;
      fprintf(fp,"\n");
 }
 
-void    v_foutput(fp,x)
-FILE    *fp;
-VEC     *x;
+void    v_foutput(FILE *fp, VEC *x)
 {
      u_int      i, tmp;
      
@@ -455,9 +430,7 @@ VEC     *x;
 }
 
 
-void    m_dump(fp,a)
-FILE    *fp;
-MAT     *a;
+void    m_dump(FILE *fp, MAT *a)
 {
 	u_int   i, j, tmp;
      
@@ -482,9 +455,7 @@ MAT     *a;
      }
 }
 
-void    px_dump(fp,px)
-FILE    *fp;
-PERM    *px;
+void    px_dump(FILE *fp, PERM *px)
 {
      u_int      i;
      
@@ -500,9 +471,7 @@ PERM    *px;
 }
 
 
-void    v_dump(fp,x)
-FILE    *fp;
-VEC     *x;
+void    v_dump(FILE *fp, VEC *x)
 {
      u_int      i, tmp;
      
@@ -519,4 +488,3 @@ VEC     *x;
      }
      if ( tmp % 5 != 0 )        putc('\n',fp);
 }
-

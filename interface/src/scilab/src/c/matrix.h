@@ -1,7 +1,7 @@
 
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -417,13 +417,13 @@ extern	VEC	*sv_mlt(double,VEC *,VEC *),	/* out <- s.x */
 		*px_vec(PERM *,VEC *,VEC *),	/* out <- P.x */
 		*pxinv_vec(PERM *,VEC *,VEC *),	  /* out <- P^{-1}.x */
 		*v_mltadd(VEC *,VEC *,double,VEC *),   /* out <- x + s.y */
-#ifdef PROTOTYPES_IN_STRUCT
+#ifdef HAVE_PROTOTYPES_IN_STRUCT
 		*v_map(double (*f)(double),VEC *,VEC *),  
                                                  /* out[i] <- f(x[i]) */
-		*_v_map(double (*f)(void *,double),void *,VEC *,VEC *),
+		*_v_map(double (*f)(void *,double),VEC *,VEC *,void *),
 #else
 		*v_map(double (*f)(),VEC *,VEC *), /* out[i] <- f(x[i]) */
-		*_v_map(double (*f)(),void *,VEC *,VEC *),
+		*_v_map(double (*f)(),VEC *,VEC *,void *),
 #endif
 		*v_lincomb(int,VEC **,Real *,VEC *),   
                                                  /* out <- sum_i s[i].x[i] */

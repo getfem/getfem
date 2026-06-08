@@ -1,7 +1,6 @@
-
 /**************************************************************************
 **
-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
 **
 **			     Meschach Library
 ** 
@@ -41,9 +40,7 @@ static	char	rcsid[] = "$Id$";
 /* Hfactor -- compute Hessenberg factorisation in compact form.
 	-- factorisation performed in situ
 	-- for details of the compact form see QRfactor.c and matrix2.doc */
-MAT	*Hfactor(A, diag, beta)
-MAT	*A;
-VEC	*diag, *beta;
+MAT	*Hfactor(MAT *A, VEC *diag, VEC *beta)
 {
 	static	VEC	*tmp1 = VNULL;
 	int	k, limit;
@@ -82,9 +79,7 @@ VEC	*diag, *beta;
 
 /* makeHQ -- construct the Hessenberg orthogonalising matrix Q;
 	-- i.e. Hess M = Q.M.Q'	*/
-MAT	*makeHQ(H, diag, beta, Qout)
-MAT	*H, *Qout;
-VEC	*diag, *beta;
+MAT	*makeHQ(MAT *H, VEC *diag, VEC *beta, MAT *Qout)
 {
 	int	i, j, limit;
 	static	VEC	*tmp1 = VNULL, *tmp2 = VNULL;
@@ -129,8 +124,7 @@ VEC	*diag, *beta;
 }
 
 /* makeH -- construct actual Hessenberg matrix */
-MAT	*makeH(H,Hout)
-MAT	*H, *Hout;
+MAT	*makeH(MAT *H, MAT *Hout)
 {
 	int	i, j, limit;
 
@@ -149,4 +143,3 @@ MAT	*H, *Hout;
 
 	return (Hout);
 }
-
