@@ -6,7 +6,7 @@
 
 The main contribution of this version is a new scripting language interface to the MUMPS sparse system solver.
 
-Released version, 2026/06/15.
+Released version, 2026/06/08.
 
 The main changes are:
 
