@@ -14,11 +14,14 @@ project(GetFEM)
 
 # Set the project version
 set(VERSION_MAJOR 5)
-set(VERSION_MINOR 4)
-set(VERSION_PATCH 2)
+set(VERSION_MINOR 5)
+set(VERSION_PATCH 0)
 # applies to both GetFEM and GMM
-set(GETFEM_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
-set(GMM_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+set(GETFEM_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
+if(NOT VERSION_PATCH EQUAL 0)
+  set(GETFEM_VERSION "${GETFEM_VERSION}.${VERSION_PATCH}")
+endif()
+set(GMM_VERSION ${GETFEM_VERSION})
 # mimic autotools package variables
 set(GETFEM_PACKAGE_NAME "getfem")
 set(GETFEM_PACKAGE_STRING "getfem ${GETFEM_VERSION}")
@@ -66,7 +69,7 @@ set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
 # General tests and configurations
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "Set C++ standard version (default: 14))
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-check_include_file_cxx("cxxabi.h" GETFEM_HAVE_CXXABI_H)
+check_include_file_cxx(cxxabi.h GETFEM_HAVE_CXXABI_H)
 check_cxx_source_compiles(
   "#include <fenv.h>\nint main() {feenableexcept(FE_DIVBYZERO); return 0;}"
   GETFEM_HAVE_FEENABLEEXCEPT)
