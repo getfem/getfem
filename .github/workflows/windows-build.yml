@@ -134,5 +134,37 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: getfem-python-interface-windows
-        path: |
-          C:\opt\lib\site-packages
+        path: C:\opt\lib\site-packages
+
+    - name: Create wheel package
+      shell: cmd
+      run: |
+        cd C:\opt
+        (
+        echo [build-system]
+        echo requires = ["setuptools>=61.0", "wheel"]
+        echo build-backend = "setuptools.build_meta"
+        echo.
+        echo [project]
+        echo name = "getfem-windows"
+        echo version = "5.5"
+        echo description = "GetFEM python interface"
+        echo authors = [{name="Konstantinos Poulios", email="poulios.konstantinos@gmail.com"}]
+        echo requires-python = ">=3.9"
+        echo dependencies = ["numpy"]
+        echo.
+        echo [tool.setuptools]
+        echo package-dir = { "getfem" = "lib/site-packages/getfem" }
+        echo packages = ["getfem"]
+        echo.
+        echo [tool.setuptools.package-data]
+        echo getfem = ["*.pyd", "*.dll", "*.py"]
+        ) > pyproject.toml
+        pip install build
+        python -m build
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: getfem-wheel-windows
+        path: dist\*.whl
