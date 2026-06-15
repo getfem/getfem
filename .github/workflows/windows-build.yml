@@ -7,6 +7,7 @@ on:
 env:
   INSTALL_PREFIX: 'C:\opt'
   BUILD_TYPE: Release
+  GF_VERSION: 5.5
 
 jobs:
   build:
@@ -14,28 +15,37 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Create installation directory
-      shell: pwsh
-      run: |
-        If(!(test-path -PathType container ${{ env.INSTALL_PREFIX }}))
-        {
-          New-Item -ItemType Directory -Path ${{ env.INSTALL_PREFIX }}
-        }
+    - name: Cache Intel Fortran & MKL installers
+      id: cache-intel
+      uses: actions/cache@v4
+      with:
+        path: |
+          C:\temp\intel-fortran-compiler.exe
+          C:\temp\intel-onemkl.exe
+        key: ${{ runner.os }}-intel-installers-2025.3
+        restore-keys: |
+          ${{ runner.os }}-intel-installers-
 
-    - name: Intall Intel Fortran Essentials
-      shell: pwsh
+    - name: Download Intel Fortran Essentials (if not cached)
+      if: steps.cache-intel.outputs.cache-hit != 'true'
+      shell: cmd
       run: |
-        $URL1 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/039121f2-d488-4bc1-a5bb-97528e3a4b86/intel-fortran-compiler-2025.3.2.26_offline.exe"
-        $URL2 = "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae472ff5-aa01-4a72-a452-ce7b559ef041/intel-onemkl-2025.3.1.10_offline.exe"
-        $TempDir = $env:TEMP
-        curl.exe --url $URL1 --retry 5 --retry-delay 5 --output "$TempDir\intel-fortran-compiler.exe"
-        curl.exe --url $URL2 --retry 5 --retry-delay 5 --output "$TempDir\intel-onemkl.exe"
-        Start-Process -Wait -FilePath "$TempDir\intel-fortran-compiler.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
-        Start-Process -Wait -FilePath "$TempDir\intel-onemkl.exe" -ArgumentList "-s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=$TempDir"
+        if not exist "C:\temp" mkdir "C:\temp"
+        set URL1=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/039121f2-d488-4bc1-a5bb-97528e3a4b86/intel-fortran-compiler-2025.3.2.26_offline.exe
+        set URL2=https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae472ff5-aa01-4a72-a452-ce7b559ef041/intel-onemkl-2025.3.1.10_offline.exe
+        curl.exe --url %URL1% --retry 5 --retry-delay 5 --output C:\temp\intel-fortran-compiler.exe
+        curl.exe --url %URL2% --retry 5 --retry-delay 5 --output C:\temp\intel-onemkl.exe
+
+    - name: Install Intel Fortran Essentials
+      shell: cmd
+      run: |
+        start /wait C:\temp\intel-fortran-compiler.exe -s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=C:\temp
+        start /wait C:\temp\intel-onemkl.exe -s --action install --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir=C:\temp
 
     - name: Build MUMPS
       shell: cmd
       run: |
+        if not exist "${{ env.INSTALL_PREFIX }}" mkdir "${{ env.INSTALL_PREFIX }}"
         call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
         echo store MKLROOT=%MKLROOT%
         echo store CMPLR_ROOT=%CMPLR_ROOT%
@@ -56,7 +66,6 @@ jobs:
           -DMKL_LINK=static
         cmake --build build
         cmake --install build
-        cd ..
 
     - name: Enter MSVC dev mode
       uses: ilammy/msvc-dev-cmd@v1
@@ -64,7 +73,7 @@ jobs:
     - name: Build Qhull
       shell: cmd
       run: |
-        echo "Building Qhull..."
+        echo Building Qhull...
         git clone https://github.com/qhull/qhull.git
         cd qhull
         git checkout 2020.2
@@ -75,10 +84,6 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}"
         cmake --build build
         cmake --install build
-        cd ..
-
-    - name: Checkout code
-      uses: actions/checkout@v5
 
     - name: Set up Python
       uses: actions/setup-python@v5  # Official action for Python setup
@@ -91,14 +96,19 @@ jobs:
         pip install numpy
         python -c "import sys; print(sys.version)"
         python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
+        for /f %%t in ('python -c "from sys import version_info as v;print(f\"cp{v.major}{v.minor}\")"') do set PYTAG=%%t
+        echo PYTAG=%PYTAG%>> "%GITHUB_ENV%"
+
+    - name: Checkout GetFEM code
+      uses: actions/checkout@v5
 
     - name: Build and install GetFEM
       shell: cmd
       run: |
-        echo "Building GetFEM..."
-        echo "%MKLROOT%\env\vars.bat"
+        echo Building GetFEM...
+        echo %MKLROOT%\env\vars.bat
         call "%MKLROOT%\env\vars.bat"
-        echo "%CMPLR_ROOT%\env\vars.bat"
+        echo %CMPLR_ROOT%\env\vars.bat
         call "%CMPLR_ROOT%\env\vars.bat"
         cmake -B build ^
           -G Ninja ^
@@ -120,7 +130,7 @@ jobs:
     - name: Copy dependencies
       shell: cmd
       run: |
-        echo "Copying libifcoremd.dll, libmmd.dll, svml_dispmd.dll"
+        echo Copying libifcoremd.dll, libmmd.dll, svml_dispmd.dll
         copy "%CMPLR_ROOT%\bin\libifcoremd.dll" C:\opt\lib\site-packages\getfem\
         copy "%CMPLR_ROOT%\bin\libmmd.dll"      C:\opt\lib\site-packages\getfem\
         copy "%CMPLR_ROOT%\bin\svml_dispmd.dll" C:\opt\lib\site-packages\getfem\
@@ -133,21 +143,21 @@ jobs:
     - name: Upload built libraries as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: getfem-python-interface-windows
+        name: getfem-${{ env.GF_VERSION }}-${{ env.PYTAG }}-win_amd64-raw
         path: C:\opt\lib\site-packages
 
     - name: Create wheel package
       shell: cmd
       run: |
-        cd C:\opt
+        cd /d C:\opt
         (
         echo [build-system]
         echo requires = ["setuptools>=61.0", "wheel"]
         echo build-backend = "setuptools.build_meta"
         echo.
         echo [project]
-        echo name = "getfem-windows"
-        echo version = "5.5"
+        echo name = "getfem"
+        echo version = "${{ env.GF_VERSION }}"
         echo description = "GetFEM python interface"
         echo authors = [{name="Konstantinos Poulios", email="poulios.konstantinos@gmail.com"}]
         echo requires-python = ">=3.9"
@@ -160,11 +170,16 @@ jobs:
         echo [tool.setuptools.package-data]
         echo getfem = ["*.pyd", "*.dll", "*.py"]
         ) > pyproject.toml
-        pip install build
-        python -m build
+        pip install build wheel
+        python -m build --wheel
+        wheel tags ^
+          --python-tag ${{ env.PYTAG }} ^
+          --abi-tag ${{ env.PYTAG }} ^
+          --platform-tag win_amd64 ^
+          --remove C:\opt\dist\getfem-${{ env.GF_VERSION }}-py3-none-any.whl
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: getfem-wheel-windows
-        path: dist\*.whl
+        name: getfem-${{ env.GF_VERSION }}-${{ env.PYTAG }}-win_amd64-whl
+        path: C:\opt\dist\*.whl
