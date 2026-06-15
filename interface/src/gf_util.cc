@@ -25,6 +25,12 @@
 
 using namespace getfemint;
 
+#ifdef GMM_USES_MUMPS
+  #define MUMPS_LINKED ((int)1)
+#else
+  #define MUMPS_LINKED ((int)0)
+#endif
+
 /*@GFDOC
   Performs various operations which do not fit elsewhere.
 @*/
@@ -131,7 +137,7 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
      );
 
   /*@FUNC tl = ('mpi parallelism level')
-    Return the level of MPI parallelism GetFEM is compiled with.
+    Returns the level of MPI parallelism GetFEM is compiled with.
 
     0 means no MPI parallelism,
     1 means assembly is parallelized, and
@@ -142,17 +148,11 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
      );
 
   /*@FUNC tl = ('mumps linked')
-    Return if mumps is linked to GetFEM or not.
-
-    0 means no 
-    1 means yes.@*/
+    Returns 1 if mumps is linked in GetFEM and 0 otherwise.
+  @*/
   sub_command
     ("mumps linked", 0, 0, 0, 1,
-       #if defined(GMM_USES_MUMPS)
-         out.pop().from_integer(int(1));
-       #else
-         out.pop().from_integer(int(0));
-       #endif
+         out.pop().from_integer(MUMPS_LINKED);
      );
 
 } // build_sub_command_table
