@@ -71,6 +71,7 @@ jobs:
         cmake -B build ^
           -G Ninja ^
           -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" ^
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ^
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}"
         cmake --build build
         cmake --install build
