@@ -16,6 +16,12 @@
 /* glibc floating point exceptions control */
 #cmakedefine GETFEM_HAVE_FEENABLEEXCEPT
 
+/* defined if GetFEM is built with Exodus II / NetCDF support */
+#cmakedefine GETFEM_HAVE_EXODUS
+
+/* defined if NetCDF supports NetCDF4/HDF5 deflate for Exodus compression */
+#cmakedefine GETFEM_HAVE_EXODUS_NETCDF4
+
 /* defined if the <libqhull_r/qhull_ra.h> header file is available */
 #cmakedefine GETFEM_HAVE_LIBQHULL_R_QHULL_RA_H
 

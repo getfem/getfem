@@ -1,0 +1,129 @@
+name: macOS Build (Exodus)
+
+# Builds GetFEM on macOS with the Exodus II reader/writer enabled and runs the
+# Exodus round-trip tests. A second job builds with the feature disabled to
+# check that --enable-exodus is opt-in: a default build neither requires nor
+# links NetCDF and leaves all Exodus code compiled out.
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  exodus:
+    name: build with --enable-exodus and run Exodus tests
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Install dependencies from Homebrew
+      # gcc provides gcc/g++/gfortran from one release; openblas, superlu, qhull
+      # and netcdf are keg-only so their prefixes are passed to configure.
+      run: |
+        brew update
+        brew install gcc openblas superlu qhull netcdf autoconf automake libtool
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install numpy and scipy
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy scipy
+        python -c "import numpy, scipy; print('NumPy', numpy.__version__, 'SciPy', scipy.__version__)"
+
+    - name: Generate configure script
+      run: bash autogen.sh
+
+    - name: Configure (SuperLU + Exodus + Python)
+      run: |
+        GCCVER="$(brew list --versions gcc | head -1 | awk '{print $2}' | cut -d. -f1)"
+        GF="$(brew --prefix)/bin"
+        GF_LIBDIR="$(dirname "$("$GF/gfortran-$GCCVER" -print-file-name=libgfortran.dylib)")"
+        NC="$(brew --prefix netcdf)"
+        mkdir build && cd build
+        ../configure \
+          --prefix="$PWD/../install" \
+          CC="$GF/gcc-$GCCVER" CXX="$GF/g++-$GCCVER" FC="$GF/gfortran-$GCCVER" \
+          BLAS_LIBS="-L$(brew --prefix openblas)/lib -lopenblas" \
+          CPPFLAGS="-I$(brew --prefix superlu)/include -I$(brew --prefix qhull)/include -I$(brew --prefix openblas)/include -I$NC/include" \
+          LDFLAGS="-L$(brew --prefix superlu)/lib -L$(brew --prefix qhull)/lib -L$(brew --prefix openblas)/lib -L$NC/lib -Wl,-rpath,$NC/lib -L$GF_LIBDIR" \
+          --enable-superlu --enable-qhull --enable-force-singlethread-blas \
+          --enable-exodus --with-netcdf-include-dir="$NC/include" \
+          --enable-python PYTHON="$(which python)"
+        echo "--- config: Exodus macro ---"
+        grep GETFEM_HAVE_EXODUS src/getfem/getfem_arch_config.h
+
+    - name: Build
+      # Work around GetFEM's out-of-tree cubature quirk: seed the generated
+      # getfem_im_list.h into the source tree, then (re)build.
+      run: |
+        NJ="$(sysctl -n hw.ncpu)"
+        make -C build -j"$NJ" || true
+        if [ -f build/cubature/getfem_im_list.h ]; then
+          cp build/cubature/getfem_im_list.h cubature/getfem_im_list.h
+          cp build/cubature/getfem_im_list.h src/getfem/getfem_im_list.h
+        fi
+        make -C build -j"$NJ"
+
+    - name: Run Exodus tests (C++ and Python)
+      run: |
+        make -C build/tests check TESTS=test_exodus.pl
+        make -C build/interface/tests/python check TESTS=check_exodus.py
+
+    - name: Show test logs on failure
+      if: failure()
+      run: |
+        cat build/tests/test_exodus.log 2>/dev/null || true
+        cat build/interface/tests/python/check_exodus.log 2>/dev/null || true
+
+  no-exodus:
+    name: default build is inert (no NetCDF, feature off)
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Install dependencies (deliberately NO netcdf)
+      run: |
+        brew update
+        brew install gcc openblas superlu qhull autoconf automake libtool
+
+    - name: Generate configure script
+      run: bash autogen.sh
+
+    - name: Configure WITHOUT --enable-exodus
+      # With NetCDF absent and the flag not given, configure must still succeed:
+      # the Exodus block must not probe NetCDF at all.
+      run: |
+        GCCVER="$(brew list --versions gcc | head -1 | awk '{print $2}' | cut -d. -f1)"
+        GF="$(brew --prefix)/bin"
+        GF_LIBDIR="$(dirname "$("$GF/gfortran-$GCCVER" -print-file-name=libgfortran.dylib)")"
+        mkdir build && cd build
+        ../configure \
+          CC="$GF/gcc-$GCCVER" CXX="$GF/g++-$GCCVER" FC="$GF/gfortran-$GCCVER" \
+          BLAS_LIBS="-L$(brew --prefix openblas)/lib -lopenblas" \
+          CPPFLAGS="-I$(brew --prefix superlu)/include -I$(brew --prefix qhull)/include -I$(brew --prefix openblas)/include" \
+          LDFLAGS="-L$(brew --prefix superlu)/lib -L$(brew --prefix qhull)/lib -L$(brew --prefix openblas)/lib -L$GF_LIBDIR" \
+          --enable-superlu --enable-qhull --enable-force-singlethread-blas
+
+    - name: Assert the feature is fully disabled
+      run: |
+        cd build
+        echo "--- GETFEM_HAVE_EXODUS must be undefined ---"
+        if grep -q "define GETFEM_HAVE_EXODUS" src/getfem/getfem_arch_config.h; then
+          echo "ERROR: GETFEM_HAVE_EXODUS is defined in a default build"; exit 1
+        fi
+        echo "OK: GETFEM_HAVE_EXODUS undefined"
+        echo "--- configure must not have probed NetCDF ---"
+        # match the strings this configure.ac actually emits (AC_CHECK_HEADERS
+        # prints "checking for netcdf.h"; the link test "... provides nc_create")
+        if grep -qiE "checking for netcdf\.h|provides nc_create" config.log; then
+          echo "ERROR: NetCDF was probed in a default build"; exit 1
+        fi
+        echo "OK: NetCDF never probed"

@@ -53,6 +53,11 @@ The corresponding four classes: |gf_vtk_export|, |gf_vtu_export|,
 
 Examples of use can be found in the examples of the tests directory.
 
+In addition, if |gf| is configured with ``--enable-exodus``, the `Exodus II
+<https://sandialabs.github.io/seacas-docs/>`_ format can be used to export and
+re-import a |gf_m| or |gf_mf| (including transient results); see
+:ref:`ud-export-exodus` below.
+
 .. _ud-export_slices:
 
 Producing mesh slices
@@ -284,3 +289,143 @@ exported (into another OpenDX mesh). In this example, you have access in OpenDX 
 The ``tests/dynamic_friction.net`` is an example of OpenDX program for these data
 (run it with ``cd tests; dx -edit dynamic_friction.net`` , menu
 "Execute/sequencer").
+
+.. _ud-export-exodus:
+
+Exodus II export and import
+---------------------------
+
+The `Exodus II <https://sandialabs.github.io/seacas-docs/>`_ format (defined by
+Sandia's SEACAS project) is a finite-element database built on top of `NetCDF
+<https://www.unidata.ucar.edu/software/netcdf/>`_. It stores a mesh together
+with optional nodal results and, unlike the formats above, a single file
+natively holds a transient (time-dependent) series.
+
+|gf| support for Exodus is **optional**: it is only compiled when the library is
+configured with ``--enable-exodus``, which requires the NetCDF library and
+headers (the SEACAS library itself is *not* needed — the documented Exodus
+layout is written directly through NetCDF). The classes ``getfem::exodus_export``
+and ``getfem::exodus_import`` are declared in :file:`getfem/getfem_exodus.h`.
+
+Writing a mesh and some fields is similar to the other exporters::
+
+  #include "getfem/getfem_exodus.h"
+  ...
+  getfem::exodus_export exp("output.exo");
+  exp.exporting(mf);                  // a mesh_fem (or a mesh)
+  exp.write_mesh();
+  exp.write_point_data(mf, U, "displacement");
+
+As with the VTK export, the finite element and geometric transformations are
+mapped to order 1 or 2 isoparametric Pk/Qk elements. The supported element types
+are segments, triangles, quadrilaterals, tetrahedra, hexahedra and prisms (linear
+and quadratic), written as the matching Exodus element types (``BAR2``/``BAR3``,
+``TRI3``/``TRI6``, ``QUAD4``/``QUAD8``/``QUAD9``, ``TETRA4``/``TETRA10``,
+``HEX8``/``HEX20``/``HEX27``, ``WEDGE6``/``WEDGE15``).
+
+A transient series is written to a single file by opening a new time step before
+writing each field::
+
+  getfem::exodus_export exp("output.exo");
+  exp.exporting(mf);
+  exp.write_mesh();
+  while (t <= T) {
+    ...
+    exp.set_time(t);                  // open a new time step at value t
+    exp.write_point_data(mf, U, "u");
+    exp.sync();                       // optional: flush this complete step
+  }
+  // the file is finalised when exp goes out of scope (or on exp.close())
+
+Calling ``sync()`` after all fields for a time step have been written flushes the
+completed step to disk. This is useful for long-running simulations: ParaView can
+reload/refresh the same file and see the synced time steps while the simulation
+continues. Incomplete steps are rejected instead of being deliberately synced
+with fill values.
+
+For best write performance when the list of result fields is known up front,
+predeclare them before ``write_mesh()``::
+
+  getfem::exodus_export exp("output.exo");
+  exp.exporting(mf);
+  exp.declare_point_data("u", mf.get_qdim());
+  exp.write_mesh();
+
+This lets the exporter create the transient variables during the initial NetCDF
+definition phase and avoids a later file redefine. The Python/Matlab interface
+uses this path automatically for ``export_to_exodus`` calls that create a new
+file.
+
+Appending time steps is supported only for files written by GetFEM with the same
+exported mesh. New files store a compact GetFEM mesh fingerprint (dimension,
+node coordinates, block layout and connectivity); append mode checks it before
+writing so that a result cannot be appended to a file with a different block or
+element layout.
+
+|gf| regions are exported as Exodus sets, keyed by the region number: the face
+entries of a region become a *side set*, its whole-convex entries become an
+*element set*, and the nodes it touches become a *node set*. In addition, each
+volume (whole-convex) region is written as its own Exodus *element block* whose
+block id equals the region number, so a viewer such as ParaView can colour the
+regions by the block id (``ObjectId``) or with ``vtkBlockColors``.
+
+``enable_region_field()`` in C++ (or the ``'region field'`` keyword of the Python
+``export_to_exodus``) additionally writes a ``region`` element (cell) variable
+holding that block id per element, which gives a discrete cell field to colour
+by. It is **off by default**: being constant in time, it would otherwise be
+stored at every transient step. If it is explicitly enabled for a mesh-only
+export, GetFEM writes one static Exodus time step containing only this cell
+variable.
+
+When GetFEM is built with usable NetCDF4/HDF5 deflate support, the Exodus writer
+creates **compressed** NetCDF4 classic-model files by default (deflated numeric
+arrays), which substantially reduces the size of large meshes and transient
+series. Such files are still valid Exodus II and are read transparently by any
+reader built with NetCDF4/HDF5 support, including modern ParaView. If that
+support is not available at configure time, GetFEM defaults to classic
+64-bit-offset files. To force classic output — for the widest reader
+compatibility, or for very small meshes where the HDF5 container overhead can
+make a compressed file *larger* — pass ``enable_compression(0)`` in C++ or the
+``'uncompressed'`` keyword in the interface. The deflate level (1..9) can be set
+with ``enable_compression(level)`` on builds with NetCDF4/HDF5 support.
+Compression is fixed when the file is created and cannot be changed on
+``append``.
+
+By default, region blocks are named ``region_<id>`` and set names are left
+empty. Names can be set explicitly with ``exp.set_region_name(id, "name")`` in
+C++, or with the ``'region names'`` option of the Python ``export_to_exodus`` (an
+id vector and a list of names of the same length).
+
+When *importing* externally produced files, both the split (``coordx``/``coordy``/
+``coordz``) and the older packed (``coord``) coordinate layouts are read, and
+connectivity node ids are range-checked. Shell elements (``SHELL*``) are read as
+2D surface elements. Side sets defined on shell elements are rejected with a clear
+error because their top/bottom-face numbering differs from a 2D quad's edge
+numbering.
+
+The mesh is read back with ``getfem::import_mesh`` (side sets are restored as
+face regions and element sets as convex regions)::
+
+  getfem::mesh m;
+  getfem::import_mesh("output.exo", "exodus", m);
+
+The transient nodal variables can also be read back, which makes an
+export/import round-trip verifiable::
+
+  getfem::exodus_import imp("output.exo");
+  getfem::mesh m;  imp.read_mesh(m);
+  std::vector<double> U;
+  imp.read_nodal_var("u", step, U);   // values at time step ``step``
+
+The Python interface exposes the same operations:
+
+.. code-block:: python
+
+   mf.export_to_exodus('output.exo', U, 'u')        # compressed when supported
+   mf.export_to_exodus('plain.exo', 'uncompressed', U, 'u')   # force classic
+   # optionally name the blocks/sets matching regions 1 and 2:
+   mf.export_to_exodus('named.exo', 'region names', [1, 2], ['left', 'right'], U, 'u')
+   # request NetCDF4 compression when creating a new file:
+   mf.export_to_exodus('small.exo', 'compress', U, 'u')
+   m2 = gf.Mesh('import', 'exodus', 'output.exo')
+   vals = m2.exodus_nodal_data('output.exo', 'u', 0)
