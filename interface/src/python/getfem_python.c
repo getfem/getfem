@@ -802,7 +802,7 @@ getfem_env(PyObject *self, PyObject *args) {
     word_out = PyUnicode_FromString
     ("Yves Renard, Julien Pommier, Konstantinos Poulios");
   } else if (strcmp(word_in,"url") == 0) {
-    word_out = PyUnicode_FromString("http://home.gna.org/getfem/");
+    word_out = PyUnicode_FromString("https://getfem.org/");
   } else if (strcmp(word_in,"license") == 0) {
     word_out = PyUnicode_FromString("GNU LGPL v3");
   } else if (strcmp(word_in,"package") == 0 ||
