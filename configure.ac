@@ -73,7 +73,7 @@ AC_ARG_ENABLE(paralevel,
      esac
 ])
 
-if test $paralevel -ge 1; then
+if test "$paralevel" -ge 1; then
   AC_DEFINE_UNQUOTED(GETFEM_PARA_LEVEL,$paralevel,[Parallelization level (0|1|2)])
 fi;
 dnl ---------------------------END OF PARA LEVEL-------------------
@@ -86,7 +86,7 @@ dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
 USER_CFLAGS="$CFLAGS"
-AX_PROG_CXX_MPI(  [test $paralevel -ge 1],[usempi=yes],[usempi=no])
+AX_PROG_CXX_MPI(  [test "$paralevel" -ge 1],[usempi=yes],[usempi=no])
 AX_PROG_CC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 AX_PROG_FC_MPI([test "x$usempi" = "xyes"],[usempi=yes],[usempi=no])
 
@@ -489,7 +489,7 @@ dnl  AM_PATH_PYTHON(2.2)
     echo $MSG
     WARNING_MSG="$WARNING_MSG\n$MSG"
   fi
-  if  test $paralevel -ge 1; then
+  if  test "$paralevel" -ge 1; then
     ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print("YES")' 2>/dev/null`
     if test "x$ac_python_mpi4py" != "xYES"; then
       usepython=NO
@@ -899,7 +899,7 @@ AC_ARG_ENABLE(mumps,
 
 MUMPS_LIBS=""
 # the user can override these defaults using --with-mumps=
-if test $paralevel -le 1; then # default to the typical naming of the sequential libraries
+if test "$paralevel" -le 1; then # default to the typical naming of the sequential libraries
   MUMPS_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"
 else # default to the common name for the parallel libraries (the user can override this using --with-mumps=)
   MUMPS_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps"
@@ -998,7 +998,7 @@ dnl ---------------------------END OF MUMPS TEST--------------------------
 
 
 
-if test "x$found_superlu" = "xno" -a "x$found_mumps" = "xno"; then
+if test "x$found_superlu" != "xyes" -a "x$found_mumps" != "xyes"; then
   AC_MSG_ERROR([Neither MUMPS nor SuperLU was enabled. At least one linear solver is required.])
   exit 1
 fi
@@ -1107,7 +1107,7 @@ AC_ARG_ENABLE(metis,
  [usemetis="test"]
 )
 
-if test $paralevel -ge 1 -a "x$usemetis" = "xno"; then
+if test "$paralevel" -ge 1 -a "x$usemetis" = "xno"; then
   echo "Parallel getfem requires the METIS library, --enable-metis=no will be ignored";
   usemetis="yes"
 fi;
@@ -1115,7 +1115,7 @@ fi;
 if test "x$usemetis" = "xno"; then
   echo "Building without METIS";
 else
-  if test $paralevel -ge 1; then
+  if test "$paralevel" -ge 1; then
     AC_CHECK_LIB(metis, METIS_PartGraphRecursive,
                  [usemetis="yes"],
                  [usemetis="no";
