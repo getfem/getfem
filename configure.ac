@@ -997,6 +997,94 @@ fi
 dnl ---------------------------END OF MUMPS TEST--------------------------
 
 
+dnl ------------------------------EXODUS TEST----------------------------
+dnl Exodus II file I/O. Optional and DISABLED BY DEFAULT: unless
+dnl --enable-exodus is given, NetCDF is never probed, GETFEM_HAVE_EXODUS is
+dnl left undefined (so all Exodus code is compiled out), the EXODUS automake
+dnl conditional stays false (no Exodus sources or tests are built) and no
+dnl Exodus-only dependency is linked.
+require_exodus="no"
+AC_ARG_ENABLE(exodus,
+  [AS_HELP_STRING([--enable-exodus], [Enable Exodus II file I/O (requires NetCDF). Disabled by default.])],
+  [require_exodus=$enableval],
+  [require_exodus="no"])
+
+NETCDF_LIBS=""
+found_exodus="no"
+if test "x$require_exodus" = "xno"; then
+  echo "Building without Exodus II support (use --enable-exodus to enable it)"
+else
+  NETCDF_LIBS="-lnetcdf"
+  AC_ARG_WITH(netcdf,
+   [AS_HELP_STRING([--with-netcdf=<lib>],[use the NetCDF library <lib> for Exodus support])],
+   [case $with_netcdf in
+     yes | "" ) ;;
+     -* | */* | *.a | *.so | *.so.* | *.o | *.dylib ) NETCDF_LIBS="$with_netcdf";;
+     * ) NETCDF_LIBS=`echo $with_netcdf | sed -e 's/^/-l/g;s/ \+/ -l/g'`;;
+    esac]
+  )
+  NETCDFINC=""
+  AC_ARG_WITH(netcdf-include-dir,
+   [AS_HELP_STRING([--with-netcdf-include-dir],[directory in which netcdf.h can be found])],
+   [case $withval in
+     -I* ) NETCDFINC="$withval";;
+     * ) NETCDFINC="-I$withval";;
+    esac],
+  )
+  CPPFLAGS="$CPPFLAGS $NETCDFINC"
+
+  save_LIBS="$LIBS"
+  AC_CHECK_HEADERS([netcdf.h], [],
+    [AC_MSG_ERROR([--enable-exodus was given but netcdf.h was not found (try --with-netcdf-include-dir=<dir>)])])
+  dnl NETCDF_LIBS may be bare names ("-lnetcdf"), a full library path, or
+  dnl "-L<dir> -lnetcdf" flags; link with it directly rather than feeding it to
+  dnl AC_SEARCH_LIBS (which expects bare library names and would mangle paths/flags).
+  LIBS="$NETCDF_LIBS $save_LIBS"
+  AC_MSG_CHECKING([whether NetCDF ($NETCDF_LIBS) provides nc_create])
+  dnl extern "C": this runs in the C++ language, but nc_create is a C symbol
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[extern "C" char nc_create ();]], [[return nc_create ();]])],
+    [found_exodus="yes"; AC_MSG_RESULT([yes])],
+    [found_exodus="no";  AC_MSG_RESULT([no])])
+  LIBS="$save_LIBS"
+  if test x"$found_exodus" = x"yes"; then
+    AC_DEFINE(GETFEM_HAVE_EXODUS,1,[defined if GetFEM is built with Exodus II file support])
+    LIBS="$NETCDF_LIBS $save_LIBS"
+    AC_MSG_CHECKING([whether NetCDF supports NetCDF4 deflate])
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <cstdio>
+#include <netcdf.h>
+    ]], [[
+      const char *fname = "getfem_netcdf4_probe.nc";
+      int ncid = -1, dimid = -1, varid = -1;
+      int st = nc_create(fname, NC_CLOBBER | NC_NETCDF4 | NC_CLASSIC_MODEL,
+                         &ncid);
+      if (st == NC_NOERR) st = nc_def_dim(ncid, "n", 1, &dimid);
+      if (st == NC_NOERR) st = nc_def_var(ncid, "x", NC_DOUBLE, 1,
+                                          &dimid, &varid);
+      if (st == NC_NOERR) st = nc_def_var_deflate(ncid, varid, 1, 1, 1);
+      if (ncid >= 0) nc_close(ncid);
+      std::remove(fname);
+      return st == NC_NOERR ? 0 : 1;
+    ]])],
+      [AC_MSG_RESULT([yes])
+       AC_DEFINE(GETFEM_HAVE_EXODUS_NETCDF4,1,[defined if NetCDF supports NetCDF4/HDF5 deflate for Exodus compression])],
+      [AC_MSG_RESULT([no])
+       AC_MSG_WARN([NetCDF was found, but NetCDF4/HDF5 deflate was not usable; Exodus output will default to classic 64-bit-offset files])],
+      [AC_MSG_RESULT([unknown])
+       AC_MSG_WARN([cross compiling: cannot test NetCDF4 deflate; Exodus output will default to classic 64-bit-offset files])])
+    LIBS="$NETCDF_LIBS $save_LIBS"
+    echo "Building with Exodus II support"
+  else
+    AC_MSG_ERROR([--enable-exodus was given but linking nc_create from NetCDF ($NETCDF_LIBS) failed (try --with-netcdf=<lib>, --with-netcdf-include-dir=<dir>, or set LDFLAGS)])
+  fi
+fi
+AM_CONDITIONAL(EXODUS, test x$found_exodus = xyes)
+AC_SUBST([NETCDF_LIBS])
+if test "x$found_exodus" = "xyes"; then
+  echo "Configuration of Exodus done"
+fi
+dnl ---------------------------END OF EXODUS TEST------------------------
+
 
 if test "x$found_superlu" != "xyes" -a "x$found_mumps" != "xyes"; then
   AC_MSG_ERROR([Neither MUMPS nor SuperLU was enabled. At least one linear solver is required.])

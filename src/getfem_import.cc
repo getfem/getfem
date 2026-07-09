@@ -25,6 +25,7 @@
 #include "getfem/getfem_mesh.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_exodus.h"
 
 namespace getfem {
 
@@ -1544,6 +1545,15 @@ namespace getfem {
         { regular_ball_mesh(m, filename); return; }
       else if (bgeot::casecmp(format,"structured_ball_shell")==0)
         { regular_ball_shell_mesh(m, filename); return; }
+      else if (bgeot::casecmp(format,"exodus")==0) {
+        /* Exodus is a binary (NetCDF) format, opened by name, not by stream */
+#ifdef GETFEM_HAVE_EXODUS
+        import_mesh_exodus(filename, m); return;
+#else
+        GMM_ASSERT1(false, "GetFEM was built without Exodus support; "
+                    "reconfigure with --enable-exodus");
+#endif
+      }
 
       std::ifstream f(filename.c_str());
       GMM_ASSERT1(f.good(), "can't open file " << filename);

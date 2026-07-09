@@ -12,6 +12,12 @@
 /* defined if the cxxabi.h header file is available */
 #undef GETFEM_HAVE_CXXABI_H
 
+/* defined if GetFEM is built with Exodus II file support (--enable-exodus) */
+#undef GETFEM_HAVE_EXODUS
+
+/* defined if NetCDF supports NetCDF4/HDF5 deflate for Exodus compression */
+#undef GETFEM_HAVE_EXODUS_NETCDF4
+
 /* glibc floating point exceptions control */
 #undef GETFEM_HAVE_FEENABLEEXCEPT
 

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.23)
 include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 include(CheckCXXSourceCompiles)
+include(CheckCXXSourceRuns)
 include(CheckLibraryExists)
 
 string(ASCII 27 ESC)
@@ -35,6 +36,7 @@ option(ENABLE_MATLAB "Enable MATLAB support" OFF)
 option(ENABLE_OPENMP "Enable OpenMP support" OFF)
 # Configure option to enable Qhull support
 option(ENABLE_QHULL "Enable Qhull support" ON)
+option(ENABLE_EXODUS "Enable Exodus II import/export support through NetCDF" OFF)
 # Configure options for enabling/disabling linear solvers (at least one is required)
 option(ENABLE_SUPERLU "Enable SuperLU support" ON) # might be turned off by cmake if SuperLU is not found
 option(ENABLE_MUMPS "Enable MUMPS support" ON)     # might be turned off by cmake if MUMPS is not found
@@ -212,6 +214,62 @@ if(NOT ENABLE_MUMPS AND NOT ENABLE_SUPERLU)
           "Use MUMPS_LIB_DIR, MUMPS_INC_DIR, SUPERLU_LIB_DIR and SUPERLU_INC_DIR")
 endif()
 
+if(ENABLE_EXODUS)
+  if(NETCDF_INC_DIR)
+    find_path(NETCDF_INCLUDE_DIR NAMES netcdf.h
+              PATHS ${NETCDF_INC_DIR} NO_DEFAULT_PATH)
+  else()
+    find_path(NETCDF_INCLUDE_DIR NAMES netcdf.h)
+  endif()
+  if(NETCDF_LIB_DIR)
+    find_library(NETCDF_LIBRARY NAMES netcdf
+                 PATHS ${NETCDF_LIB_DIR} NO_DEFAULT_PATH)
+  else()
+    find_library(NETCDF_LIBRARY NAMES netcdf)
+  endif()
+  if(NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
+    set(GETFEM_HAVE_EXODUS 1)
+    message(STATUS "Building with Exodus II support")
+    message(STATUS "NETCDF_INCLUDE_DIR = ${NETCDF_INCLUDE_DIR}")
+    message(STATUS "NETCDF_LIBRARY = ${NETCDF_LIBRARY}")
+    set(_GETFEM_SAVE_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
+    set(_GETFEM_SAVE_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+    set(CMAKE_REQUIRED_INCLUDES ${NETCDF_INCLUDE_DIR})
+    set(CMAKE_REQUIRED_LIBRARIES ${NETCDF_LIBRARY})
+    check_cxx_source_runs("
+      #include <cstdio>
+      #include <netcdf.h>
+      int main() {
+        const char *fname = \"getfem_netcdf4_probe.nc\";
+        int ncid = -1, dimid = -1, varid = -1;
+        int st = nc_create(fname, NC_CLOBBER | NC_NETCDF4 | NC_CLASSIC_MODEL,
+                           &ncid);
+        if (st == NC_NOERR) st = nc_def_dim(ncid, \"n\", 1, &dimid);
+        if (st == NC_NOERR) st = nc_def_var(ncid, \"x\", NC_DOUBLE, 1,
+                                            &dimid, &varid);
+        if (st == NC_NOERR) st = nc_def_var_deflate(ncid, varid, 1, 1, 1);
+        if (ncid >= 0) nc_close(ncid);
+        std::remove(fname);
+        return st == NC_NOERR ? 0 : 1;
+      }" GETFEM_HAVE_EXODUS_NETCDF4)
+    set(CMAKE_REQUIRED_INCLUDES ${_GETFEM_SAVE_CMAKE_REQUIRED_INCLUDES})
+    set(CMAKE_REQUIRED_LIBRARIES ${_GETFEM_SAVE_CMAKE_REQUIRED_LIBRARIES})
+    if(GETFEM_HAVE_EXODUS_NETCDF4)
+      message(STATUS "NetCDF4/HDF5 deflate support found for Exodus compression")
+    else()
+      message(WARNING "NetCDF was found, but NetCDF4/HDF5 deflate support was "
+                      "not usable; Exodus output will default to classic "
+                      "64-bit-offset files")
+    endif()
+  else()
+    message(FATAL_ERROR
+            "ENABLE_EXODUS requires NetCDF C headers and library. "
+            "Use NETCDF_INC_DIR and NETCDF_LIB_DIR to help cmake find them.")
+  endif()
+else()
+  message("Building with Exodus II support explicitly disabled")
+endif()
+
 # define source files and main build target
 set(SOURCES
     src/bgeot_convex_ref.cc
@@ -291,6 +349,10 @@ set(SOURCES
     src/getfem_projected_fem.cc
     src/getfem_regular_meshes.cc
     src/getfem_torus.cc)
+
+if(ENABLE_EXODUS)
+  list(APPEND SOURCES src/getfem_exodus.cc)
+endif()
 
 set(HEADERS
     src/gmm/gmm_algobase.h
@@ -394,6 +456,7 @@ set(HEADERS
     src/getfem/getfem_deformable_mesh.h
     src/getfem/getfem_derivatives.h
     src/getfem/getfem_error_estimate.h
+    src/getfem/getfem_exodus.h
     src/getfem/getfem_export.h
     src/getfem/getfem_fem_global_function.h
     src/getfem/getfem_fem.h
@@ -469,6 +532,10 @@ endif()
 if(ENABLE_MUMPS)
   target_include_directories(libgetfem PRIVATE ${MUMPS_INCLUDE_PATH})
   target_link_libraries(libgetfem PUBLIC "${MUMPS_LIBS}")
+endif()
+if(ENABLE_EXODUS)
+  target_include_directories(libgetfem PRIVATE ${NETCDF_INCLUDE_DIR})
+  target_link_libraries(libgetfem PRIVATE ${NETCDF_LIBRARY})
 endif()
 
 if(NOT GETFEM_PARA_LEVEL MATCHES "^(0|1|2)$")

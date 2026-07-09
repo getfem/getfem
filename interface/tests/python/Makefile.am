@@ -22,9 +22,16 @@ else
 optpy =
 endif
 
+if EXODUS
+optpy_exodus = check_exodus.py
+else
+optpy_exodus =
+endif
+
 
 EXTRA_DIST=                                       \
     check_export.py                               \
+    check_exodus.py                               \
     check_export_vtu.py                           \
     check_global_functions.py                     \
     check_levelset.py                             \
@@ -84,12 +91,13 @@ TESTS =                         \
     demo_laplacian.py           \
     demo_laplacian_HHO.py       \
     demo_elasticity_HHO.py      \
-    $(optpy)
+    $(optpy)                    \
+    $(optpy_exodus)
 
 AM_TESTS_ENVIRONMENT = \
-    export PYTHONPATH=$(PYTHONPATH):$(top_builddir)/interface/src/python; \
+    export PYTHONPATH=$(top_builddir)/interface/src/python:$(PYTHONPATH); \
     export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs;
 LOG_COMPILER = $(PYTHON)
 endif
 
-CLEANFILES = *.vtk *.vtu *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx results/* __pycache__/*
+CLEANFILES = *.vtk *.vtu *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx *.exo results/* __pycache__/*

@@ -22,7 +22,15 @@ optpl = test_mesh_im_level_set.pl                \
         test_mesh_generation.pl
 else
 optprogs =
-optpl = 
+optpl =
+endif
+
+if EXODUS
+exodus_progs = test_exodus
+exodus_pl = test_exodus.pl
+else
+exodus_progs =
+exodus_pl =
 endif
 
 check_PROGRAMS =             \
@@ -56,6 +64,7 @@ check_PROGRAMS =             \
   nonlinear_membrane         \
   schwarz_additive           \
   $(optprogs)                \
+  $(exodus_progs)            \
   plasticity                 \
   bilaplacian                \
   heat_equation              \
@@ -75,7 +84,7 @@ CLEANFILES = \
   ii_files/* auto_gmm* dyn*.txt *.sl time FN0 *.vtk *.vtu             \
   nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
   nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
-  Q2_incomplete.pos Q2_incomplete.msh 
+  Q2_incomplete.pos Q2_incomplete.msh *.exo
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 
@@ -119,6 +128,7 @@ wave_equation_SOURCES = wave_equation.cc
 cyl_slicer_SOURCES = cyl_slicer.cc
 test_continuation_SOURCES = test_continuation.cc
 test_gmm_matrix_functions_SOURCES = test_gmm_matrix_functions.cc
+test_exodus_SOURCES = test_exodus.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ -lstdc++
@@ -150,6 +160,7 @@ TESTS =                         \
   stokes.pl                     \
   plate.pl                      \
   $(optpl)                      \
+  $(exodus_pl)                  \
   nonlinear_elastostatic.pl     \
   nonlinear_membrane.pl         \
   test_continuation.pl          \
@@ -250,6 +261,8 @@ EXTRA_DIST =                                         \
   meshes/punch2D_1.mesh                              \
   meshes/punch2D_2.mesh                              \
   meshes/multi_body.mesh                             \
-  meshes/donut_regulier_512_elements.mesh
+  meshes/donut_regulier_512_elements.mesh            \
+  test_exodus.pl                                     \
+  test_exodus.cc
 
 LOG_COMPILER = perl
