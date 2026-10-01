@@ -485,7 +485,7 @@ The file :file:`getfem/getfem_import.h` provides the function::
 
 Here the string ``fmtfilename`` must contain a descriptor of the
 file format ("gid", "gmsh", "cdb", "noboite", "am_fmt", "emc2_mesh",
-or "structured"), followed by a colon and the file name (if there is
+"exodus", or "structured"), followed by a colon and the file name (if there is
 not format descriptor, it is assumed that the file is a native getfem
 mesh and the ``mesh::read_from_file()`` method is used). Example::
 
@@ -509,6 +509,9 @@ and 191 can be imported, this however does not include any finite element
 techology linked to these elements but only their geometry.
 The "noboite" format is for TetMesh-GHS3D, and the
 "am_fmt" and "emc2_mesh" are for files built with `EMC2`_ (but 2D only).
+The "exodus" format reads an Exodus II finite-element database (requires
+GetFEM built with ``--enable-exodus``); see :ref:`ud-export-exodus` for the
+export side and the field read-back.
 
 The "structured" format is just a short specification for regular meshes:
 the rest of ``fmtfilename`` in that case is not a filename, but a string

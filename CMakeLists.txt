@@ -35,6 +35,7 @@ option(ENABLE_MATLAB "Enable MATLAB support" OFF)
 option(ENABLE_OPENMP "Enable OpenMP support" OFF)
 # Configure option to enable Qhull support
 option(ENABLE_QHULL "Enable Qhull support" ON)
+option(ENABLE_EXODUS "Enable Exodus II import/export support through NetCDF" OFF)
 # Configure options for enabling/disabling linear solvers (at least one is required)
 option(ENABLE_SUPERLU "Enable SuperLU support" ON) # might be turned off by cmake if SuperLU is not found
 option(ENABLE_MUMPS "Enable MUMPS support" ON)     # might be turned off by cmake if MUMPS is not found
@@ -289,6 +290,7 @@ set(SOURCES
     src/getfem_partial_mesh_fem.cc
     src/getfem_plasticity.cc
     src/getfem_projected_fem.cc
+    src/getfem_exodus.cc
     src/getfem_regular_meshes.cc
     src/getfem_torus.cc)
 
@@ -394,6 +396,7 @@ set(HEADERS
     src/getfem/getfem_deformable_mesh.h
     src/getfem/getfem_derivatives.h
     src/getfem/getfem_error_estimate.h
+    src/getfem/getfem_exodus.h
     src/getfem/getfem_export.h
     src/getfem/getfem_fem_global_function.h
     src/getfem/getfem_fem.h
@@ -469,6 +472,10 @@ endif()
 if(ENABLE_MUMPS)
   target_include_directories(libgetfem PRIVATE ${MUMPS_INCLUDE_PATH})
   target_link_libraries(libgetfem PUBLIC "${MUMPS_LIBS}")
+endif()
+if(ENABLE_EXODUS)
+  target_include_directories(libgetfem PRIVATE ${NETCDF_INCLUDE_PATH})
+  target_link_libraries(libgetfem PRIVATE ${NETCDF_LIBS})
 endif()
 
 if(NOT GETFEM_PARA_LEVEL MATCHES "^(0|1|2)$")
@@ -658,6 +665,23 @@ else()
   message("Building with Qhull explicitly disabled")
 endif()
 
+if(ENABLE_EXODUS)
+  find_library(NETCDF_LIBS NAMES netcdf PATHS ${NETCDF_LIB_DIR})
+  find_path(NETCDF_INCLUDE_PATH NAMES netcdf.h HINTS ${NETCDF_INC_DIR})
+  if(NETCDF_LIBS AND NETCDF_INCLUDE_PATH)
+    set(GETFEM_HAVE_EXODUS 1)
+    message(STATUS "NETCDF_INCLUDE_PATH = ${NETCDF_INCLUDE_PATH}")
+    message(STATUS "NETCDF_LIBS = ${NETCDF_LIBS}")
+    message(STATUS "Building with Exodus II support")
+  else()
+    message(FATAL_ERROR
+            "ENABLE_EXODUS requires the NetCDF C library and headers. "
+            "Use NETCDF_LIB_DIR and NETCDF_INC_DIR to help cmake find them.")
+  endif()
+else()
+  message("Building with Exodus II support explicitly disabled")
+endif()
+
 if(ENABLE_FORCE_SINGLETHREAD_BLAS)
   find_library(DL_LIB NAMES dl)
   set(CMAKE_REQUIRED_LIBRARIES ${DL_LIB})
@@ -685,6 +709,7 @@ message(STATUS "  ENABLE_OPENMP: ${ENABLE_OPENMP}")
 message(STATUS "  ENABLE_SUPERLU: ${ENABLE_SUPERLU}")
 message(STATUS "  ENABLE_MUMPS: ${ENABLE_MUMPS}")
 message(STATUS "  ENABLE_QHULL: ${ENABLE_QHULL}")
+message(STATUS "  ENABLE_EXODUS: ${ENABLE_EXODUS}")
 message(STATUS "  ENABLE_FORCE_SINGLETHREAD_BLAS: ${ENABLE_FORCE_SINGLETHREAD_BLAS}")
 message(STATUS "GetFEM version ${GETFEM_VERSION}")
 

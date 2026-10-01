@@ -53,6 +53,11 @@ The corresponding four classes: |gf_vtk_export|, |gf_vtu_export|,
 
 Examples of use can be found in the examples of the tests directory.
 
+In addition, if |gf| is configured with ``--enable-exodus``, the `Exodus II
+<https://sandialabs.github.io/seacas-docs/>`_ format can be used to export and
+re-import a |gf_m| or |gf_mf| (including transient results); see
+:ref:`ud-export-exodus` below.
+
 .. _ud-export_slices:
 
 Producing mesh slices
@@ -284,3 +289,67 @@ exported (into another OpenDX mesh). In this example, you have access in OpenDX 
 The ``tests/dynamic_friction.net`` is an example of OpenDX program for these data
 (run it with ``cd tests; dx -edit dynamic_friction.net`` , menu
 "Execute/sequencer").
+
+.. _ud-export-exodus:
+
+Exodus II export and import
+---------------------------
+
+The `Exodus II <https://sandialabs.github.io/seacas-docs/>`_ format (defined by
+Sandia's SEACAS project) is a finite-element database built on top of `NetCDF
+<https://www.unidata.ucar.edu/software/netcdf/>`_. Unlike the formats above, a
+single file natively holds a transient (time-dependent) series.
+
+|gf| support for Exodus is **optional**: it is only compiled when the library is
+configured with ``--enable-exodus``, which requires the NetCDF library and
+headers (the SEACAS library itself is *not* needed). The classes
+``getfem::exodus_export`` and ``getfem::exodus_import`` are declared in
+:file:`getfem/getfem_exodus.h`.
+
+Writing a mesh and some fields is similar to the other exporters, except that
+every field must be declared before ``write_mesh()``::
+
+  getfem::exodus_export exp("output.exo");
+  exp.declare_point_data("displacement", mf.get_qdim());
+  exp.exporting(mf);                  // a mesh_fem (or a mesh)
+  exp.write_mesh();
+  exp.write_point_data(mf, U, "displacement");
+
+As with the VTK export, the finite element and geometric transformations are
+mapped to order 1 or 2 isoparametric Pk/Qk elements (segments, triangles,
+quadrilaterals, tetrahedra, hexahedra and prisms, linear and quadratic).
+
+A transient series is written to a single file by opening a new time step
+before writing each field::
+
+  while (t <= T) {
+    ...
+    exp.set_time(t);                  // open a new time step at value t
+    exp.write_point_data(mf, U, "displacement");
+  }
+  // the file is finalised when exp goes out of scope (or on exp.close())
+
+The scripting interface creates and closes a new ``exodus_export`` on every
+call instead of keeping one open for the whole simulation; its ``'append'``
+option reopens the file to add one more time step, checking a stored mesh
+fingerprint so a step cannot be appended onto a different mesh.
+
+|gf| regions become Exodus side sets (face entries), element sets (whole-convex
+entries) and node sets, keyed by the region number; each volume region also
+becomes its own Exodus element block, so a viewer such as ParaView can colour
+regions by block id.
+
+The mesh and its fields are read back with ``getfem::import_mesh`` and
+``getfem::exodus_import``, which makes an export/import round-trip verifiable::
+
+  getfem::mesh m;
+  getfem::import_mesh("output.exo", "exodus", m);
+
+  getfem::exodus_import imp("output.exo");
+  std::vector<double> U;
+  imp.read_nodal_var("displacement", step, U);   // values at time step ``step``
+
+The Python/Matlab/Scilab interface exposes the same operations as
+``MeshFem:export_to_exodus``, ``Mesh:export_to_exodus`` and
+``Mesh:exodus_nodal_data``; see their reference documentation for the full set
+of options (appending time steps, naming regions, compression).
