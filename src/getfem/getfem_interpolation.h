@@ -292,7 +292,7 @@ namespace getfem {
     std::vector<T> U(mf_source.nb_basic_dof()*qqdim);
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
     gmm::row_matrix<gmm::rsvector<scalar_type> >
-      M(mf_target.nb_basic_dof(), mf_source.nb_basic_dof());
+      M(mf_target.nb_basic_dof()*qmult, mf_source.nb_basic_dof());
 
     if (version == 0) mf_source.extend_vector(UU, U);
 
@@ -374,8 +374,7 @@ namespace getfem {
             V[(dof_t + k)*qqdim+qq] /= passes;
       else if (passes > scalar_type(0))
         for (size_type k=0; k < qdim; ++k)
-          for (size_type j=0; j < dof_source.size(); ++j)
-            gmm::scale(gmm::mat_row(M, dof_t + k), scalar_type(1)/passes);
+          gmm::scale(gmm::mat_row(M, dof_t + k), scalar_type(1)/passes);
     }
 
     if (version == 0)
