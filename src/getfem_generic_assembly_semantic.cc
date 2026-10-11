@@ -1275,8 +1275,8 @@ namespace getfem {
             for (size_type i = 0; i < m0; ++i)
               for (size_type j = 0; j < m1; ++j)
                 for (size_type k = 0; k < s0; ++k)
-                  pnode->tensor()[i*m1+j]
-                    += child0->tensor()[i*s0+k] * child1->tensor()[k*m1+j];
+                  pnode->tensor()[i+j*m0]
+                    += child0->tensor()[i+k*m0] * child1->tensor()[k+j*s1];
             pnode->node_type = GA_NODE_CONSTANT;
             tree.clear_children(pnode);
           }
