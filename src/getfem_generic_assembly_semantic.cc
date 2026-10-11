@@ -935,7 +935,7 @@ namespace getfem {
                     (workspace.selected_test2.transname))
                   child0_compatible = false;
                 if (child1->name_test2.compare(workspace.selected_test2.varname)
-                    || child1->interpolate_name_test1.compare
+                    || child1->interpolate_name_test2.compare
                     (workspace.selected_test2.transname))
                   child1_compatible = false;
               }
