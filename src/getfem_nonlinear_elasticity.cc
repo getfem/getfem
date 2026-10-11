@@ -1737,12 +1737,13 @@ namespace getfem {
       case 2:
         {
           // Derivative with respect to Grad_u :
-          // (delta_ik sigma_lm F_jm + F_im sigma_mk delta_lj
+          // (delta_ik sigma_lm F_jm + F_im sigma_ml delta_jk
           //   - F_im sigma_mn F_jn F^{-1}_lk) / det(F)
-          base_matrix sigma(N,N), aux(N,N), aux2(N,N);
+          base_matrix sigma(N,N), aux(N,N), aux2(N,N), aux3(N,N);
           gmm::copy(args[0]->as_vector(), sigma.as_vector());
           gmm::mult(sigma, gmm::transposed(F), aux);
           gmm::mult(F, aux, aux2);
+          gmm::mult(F, sigma, aux3);
           bgeot::lu_inverse(&(*(F.begin())), N);
           for (size_type l = 0; l < N; ++l)
             for (size_type k = 0; k < N; ++k)
@@ -1750,7 +1751,7 @@ namespace getfem {
                 for (size_type i = 0; i < N; ++i, ++it) {
                   *it = scalar_type(0);
                   if (i == k) *it += aux(l, j) / det;
-                  if (l == j) *it += aux(k, i) / det;
+                  if (j == k) *it += aux3(i, l) / det;
                   *it -= aux2(i,j) * F(l,k) / det;
                 }
         }
