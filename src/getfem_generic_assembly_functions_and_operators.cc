@@ -524,7 +524,7 @@ namespace getfem {
       = ga_predef_function(ga_reg_pos_part, 1, "DER_REG_POS_PART", "");
     PREDEF_FUNCTIONS["DER_REG_POS_PART"]
       = ga_predef_function(ga_der_reg_pos_part, 1, "DER2_REG_POS_PART", "");
-    PREDEF_FUNCTIONS["DER_REG_POS_PART"]
+    PREDEF_FUNCTIONS["DER2_REG_POS_PART"]
       = ga_predef_function(ga_der2_reg_pos_part);
 
     PREDEF_FUNCTIONS["max"]
