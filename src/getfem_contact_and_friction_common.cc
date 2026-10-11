@@ -2096,23 +2096,21 @@ namespace getfem {
         const obstacle &obs = obstacles[irigid_obstacle];
         gmm::copy(pt_x, obs.point());
         gmm::copy(pt_x, pt_y);
-        size_type nit = 0, nb_fail = 0;
-        scalar_type alpha(0), beta(0);
+        size_type nit = 0;
         d1 = d0;
 
-        while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
+        while (gmm::abs(d1) > 1E-13 && ++nit < 50) {
           if (nit != 1) gmm::copy(obs.eval_derivative().as_vector(), n_y);
 
           for (scalar_type lambda(1); lambda >= 1E-3; lambda/=scalar_type(2)) {
-          gmm::add(gmm::scaled(n_y, -d1/gmm::vect_norm2_sqr(n_y)), pt_y, pt_x);
-
+            gmm::add(pt_y, gmm::scaled(n_y, -lambda*d1/gmm::vect_norm2_sqr(n_y)),
+                     obs.point());
+            d2 = obs.eval()[0];
             if (gmm::abs(d2) < gmm::abs(d1)) break;
           }
-          if (gmm::abs(beta - d1 / gmm::vect_sp(n_y, n_x)) > scalar_type(500))
-            nb_fail++;
-          beta = alpha; d1 = d2;
+          gmm::copy(obs.point(), pt_y);
+          d1 = d2;
         }
-        gmm::copy(obs.point(), pt_y);
 
         if (gmm::abs(d1) > 1E-8) {
            GMM_WARNING1("Raytrace on rigid obstacle failed");
@@ -2278,7 +2276,7 @@ namespace getfem {
         // compute the unit normal vector at y and the signed distance.
         base_small_vector ny0(N);
         compute_normal(ctx_y, face_y, ref_conf, coeff_y, ny0, n_y, grad);
-        // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
+        n_y /= gmm::vect_norm2(n_y);
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles
