@@ -880,19 +880,13 @@ namespace getfem {
                             "Wrong size for base vector");
             std::fill(t.begin(), t.end(), scalar_type(0));
             auto itZ = Z.begin();
-            size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+            size_type s = t.sizes()[0];
 
-            // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-            for (size_type k = 0; k < target_dim; ++k) {
-              auto it = t.begin() + (ss * k);
-              for (size_type i = 0; i < ndof; ++i, ++itZ) {
-                if (i) it += Qmult;
-                auto it2 = it;
-                *it2 = *itZ;
-                for (size_type j = 1; j < Qmult; ++j)
-                  { it2 += sss; *it2 = *itZ; }
-              }
-            }
+            // Performs t(i*Qmult+j, j*target_dim + k) = Z(i,k);
+            for (size_type k = 0; k < target_dim; ++k)
+              for (size_type i = 0; i < ndof; ++i, ++itZ)
+                for (size_type j = 0; j < Qmult; ++j)
+                  t[i*Qmult + j + s*(j*target_dim + k)] = *itZ;
           }
         }
       }
@@ -941,20 +935,14 @@ namespace getfem {
                             "Wrong size for gradient vector");
             std::fill(t.begin(), t.end(), scalar_type(0));
             base_tensor::const_iterator itZ = Z.begin();
-            size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-            size_type ssss = ss*target_dim;
+            size_type s = t.sizes()[0], ss = s * qdim;
 
-            // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
+            // Performs t(i*Qmult+j, j*target_dim + k, l) = Z(i,k,l);
             for (size_type l = 0; l < N; ++l)
-              for (size_type k = 0; k < target_dim; ++k) {
-                base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-                for (size_type i = 0; i < ndof; ++i, ++itZ) {
-                  if (i) it += Qmult;
-                  base_tensor::iterator it2 = it;
-                  *it2 = *itZ;
-                  for (size_type j = 1; j < Qmult; ++j) { it2+=sss; *it2=*itZ; }
-                }
-              }
+              for (size_type k = 0; k < target_dim; ++k)
+                for (size_type i = 0; i < ndof; ++i, ++itZ)
+                  for (size_type j = 0; j < Qmult; ++j)
+                    t[i*Qmult + j + s*(j*target_dim + k) + ss*l] = *itZ;
           }
         }
       }
@@ -1041,19 +1029,15 @@ namespace getfem {
                       "Wrong size for Hessian vector");
         gmm::clear(t.as_vector());
         base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+        size_type s = t.sizes()[0], ss = s * qdim;
 
-        // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m)
-        size_type NNdim = Z.sizes()[2]*target_dim;
-        for (size_type klm = 0; klm < NNdim; ++klm) {
-          base_tensor::iterator it = t.begin() + (ss * klm);
-          for (size_type i = 0; i < ndof; ++i, ++itZ) {
-            if (i) it += Qmult;
-            base_tensor::iterator it2 = it;
-            *it2 = *itZ;
-            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-          }
-        }
+        // Performs t(i*Qmult+j, j*target_dim + k, l, m) = Z(i,k,l*N+m)
+        size_type NN = Z.sizes()[2];
+        for (size_type lm = 0; lm < NN; ++lm)
+          for (size_type k = 0; k < target_dim; ++k)
+            for (size_type i = 0; i < ndof; ++i, ++itZ)
+              for (size_type j = 0; j < Qmult; ++j)
+                t[i*Qmult + j + s*(j*target_dim + k) + ss*lm] = *itZ;
       }
       return 0;
     }
