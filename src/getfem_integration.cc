@@ -1018,7 +1018,7 @@ namespace getfem {
             add_point(P2, base_im->coeff(i)*J1/J2, short_type(-1));
           else if (J1 > 1E-10) {
             short_type f = short_type(-1);
-            for (short_type ff = 0; ff <= N; ++ff)
+            for (short_type ff = 0; ff < pgt2->structure()->nb_faces(); ++ff)
               if (gmm::abs(pgt2->convex_ref()->is_in_face(ff, P2)) < 1E-8) {
                 GMM_ASSERT1(f == short_type(-1),
                             "An integration point is common to two faces");
