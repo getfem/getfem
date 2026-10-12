@@ -33,7 +33,7 @@ namespace getfem {
   //   avoiding the computation of the whole matrix M2.
   // - The vectorization can be avoided in most cases
   // - Avoid some multiple ctx
-  
+
 
   class _HHO_reconstructed_gradient
     : public virtual_elementary_transformation {
@@ -70,7 +70,7 @@ namespace getfem {
       pfem_precomp pfp1 = HHO_pfp_pool(pf1, pim->pintegration_points());
       pfem_precomp pfp2 = HHO_pfp_pool(pf2, pim->pintegration_points());
       pfem_precomp pfpi = HHO_pfp_pool(pfi, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctxi(pgp, pfpi, 0, G, cv);
@@ -83,7 +83,7 @@ namespace getfem {
       size_type ndof2 = pf2->nb_dof(cv) * qmult2;
       size_type qmulti =  Q / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
-      
+
       base_tensor t1, t2, ti, tv1;
       base_matrix tv2, tv1p, tvi;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -93,13 +93,13 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
 
         ctx2.base_value(t2);
         vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q*N);
-       
+
         gmm::mult(tv2, gmm::transposed(tv2), aux2);
         gmm::add(gmm::scaled(aux2, coeff), M2);
 
@@ -119,16 +119,16 @@ namespace getfem {
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-          
+
           ctx2.base_value(t2);
           vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q*N);
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), Q);
-          
+
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), Q);
-          
+
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k1 = 0; k1 < Q; ++k1) {
@@ -149,7 +149,7 @@ namespace getfem {
           gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
         }
       } else { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
-      
+
       gmm::mult(M2inv, M1, M);
       gmm::clean(M, gmm::vect_norminf(M.as_vector()) * 1E-13);
     }
@@ -178,7 +178,7 @@ namespace getfem {
       // inside the element whose gradient is to be reconstructed,
       // "v_{dT}" is the field on the boundary of T and "n" is the outward
       // unit normal.
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       pfem pf2 = mf2.fem_of_element(cv);
@@ -198,7 +198,7 @@ namespace getfem {
       pfem_precomp pfp1 = HHO_pfp_pool(pf1, pim->pintegration_points());
       pfem_precomp pfp2 = HHO_pfp_pool(pf2, pim->pintegration_points());
       pfem_precomp pfpi = HHO_pfp_pool(pfi, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctxi(pgp, pfpi, 0, G, cv);
@@ -214,7 +214,7 @@ namespace getfem {
       size_type qmulti =  N / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
 
-      
+
       base_tensor t1, t2, ti, tv1;
       base_matrix tv2, tv1p, tvi;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -225,24 +225,24 @@ namespace getfem {
       for (size_type ipt = 0; ipt < pim->nb_points_on_convex(); ++ipt) {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
 
         ctx2.base_value(t2);
         vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N*N);
-       
+
         gmm::mult(tv2, gmm::transposed(tv2), aux2);
         gmm::add(gmm::scaled(aux2, coeff), M2);
 
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
-            for (size_type k1 = 0; k1 < N; ++k1) 
+            for (size_type k1 = 0; k1 < N; ++k1)
               for (size_type k2 = 0; k2 < N; ++k2)
                 M1(j, i) += coeff * tv1.as_vector()[i+(k1+k2*N)*ndof1]
                   * 0.5 * (tv2(j, k1+k2*N) + tv2(j, k2+k1*N));
       }
-      
+
       // Integrals on the faces : (1/2)*\int_{dT}(v_{dT} - v_T).((w+w^T).n) (M1)
       for (short_type ifc = 0; ifc < pgt->structure()->nb_faces(); ++ifc) {
         ctx1.set_face_num(ifc); ctx2.set_face_num(ifc); ctxi.set_face_num(ifc);
@@ -253,13 +253,13 @@ namespace getfem {
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-         
+
           ctx2.base_value(t2);
           vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N*N);
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), N);
-          
+
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), N);
 
@@ -275,7 +275,7 @@ namespace getfem {
         }
 
       }
-            
+
       if (pf2->target_dim() == 1) {
         gmm::sub_slice I(0, ndof2/(N*Q), N*Q);
         gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
@@ -283,9 +283,9 @@ namespace getfem {
           gmm::sub_slice I2(i, ndof2/(N*Q), N*Q);
           gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
         }
-      } else 
+      } else
         { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
-      
+
       gmm::mult(M2inv, M1, M);
       gmm::clean(M, gmm::vect_norminf(M.as_vector()) * 1E-13);
     }
@@ -297,7 +297,7 @@ namespace getfem {
     md.add_elementary_transformation(name, p);
   }
 
-  
+
 
   class _HHO_reconstructed_value
     : public virtual_elementary_transformation {
@@ -336,7 +336,7 @@ namespace getfem {
       pfem_precomp pfp1 = HHO_pfp_pool(pf1, pim->pintegration_points());
       pfem_precomp pfp2 = HHO_pfp_pool(pf2, pim->pintegration_points());
       pfem_precomp pfpi = HHO_pfp_pool(pfi, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctxi(pgp, pfpi, 0, G, cv);
@@ -350,7 +350,7 @@ namespace getfem {
       size_type qmulti =  Q / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
 
-      
+
       base_tensor t1, t2, ti, tv1, tv2, t1p, t2p;
       base_matrix tv1p, tv2p, tvi;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -365,7 +365,7 @@ namespace getfem {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
         area += coeff;
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
 
@@ -387,7 +387,7 @@ namespace getfem {
         for (size_type i = 0; i < ndof2; ++i)
           for (size_type k = 0; k < Q; ++k)
             M4(k,  i) += coeff * tv2p(i, k);
-              
+
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k = 0; k < Q*N; ++k)
@@ -410,13 +410,13 @@ namespace getfem {
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-          
+
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), Q);
-          
+
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), Q);
 
@@ -439,7 +439,7 @@ namespace getfem {
       gmm::add (gmm::scaled(aux2, coeff_p), M2);
       gmm::mult(gmm::transposed(M4), M3, aux1);
       gmm::add (gmm::scaled(aux1, coeff_p), M1);
-      
+
       if (pf2->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof2/Q, Q);
         gmm::lu_inverse(gmm::sub_matrix(M2, I, I));
@@ -447,9 +447,9 @@ namespace getfem {
           gmm::sub_slice I2(i, ndof2/Q, Q);
           gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
         }
-      } else 
+      } else
         { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
-      
+
       gmm::mult(M2inv, M1, M);
       gmm::clean(M, gmm::vect_norminf(M.as_vector()) * 1E-13);
     }
@@ -480,7 +480,7 @@ namespace getfem {
       // inside the element whose gradient is to be reconstructed,
       // "v_{dT}" is the field on the boundary of T and "n" is the outward
       // unit normal.
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       pfem pf2 = mf2.fem_of_element(cv);
@@ -500,7 +500,7 @@ namespace getfem {
       pfem_precomp pfp1 = HHO_pfp_pool(pf1, pim->pintegration_points());
       pfem_precomp pfp2 = HHO_pfp_pool(pf2, pim->pintegration_points());
       pfem_precomp pfpi = HHO_pfp_pool(pfi, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctxi(pgp, pfpi, 0, G, cv);
@@ -516,7 +516,7 @@ namespace getfem {
       size_type qmulti =  N / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
 
-      
+
       base_tensor t1, t2, ti, tv1, tv2, t1p, t2p;
       base_matrix tv1p, tv2p, tvi;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);;
@@ -524,7 +524,7 @@ namespace getfem {
       base_matrix M5(N*N, ndof1), M6(N*N, ndof2);
       base_matrix aux1(ndof2, ndof1), aux2(ndof2, ndof2);
       scalar_type area(0);
-      
+
       // Integrals on the element : \int_T Sym(Grad(D)).Grad(w) (M2)
       //                            \int_T Sym(Grad(v_T)).Grad(w) (M1)
       //                            \int_T D (M4)  and \int_T v_T (M3)
@@ -533,7 +533,7 @@ namespace getfem {
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
         area += coeff;
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
 
@@ -563,7 +563,7 @@ namespace getfem {
             for (size_type k2 = 0; k2 < N; ++k2)
               M6(k1+k2*N, i) += 0.5*coeff*(tv2.as_vector()[i+(k1+k2*N)*ndof2] -
                                            tv2.as_vector()[i+(k2+k1*N)*ndof2]);
-              
+
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k1 = 0; k1 < N; ++k1)
@@ -589,13 +589,13 @@ namespace getfem {
           ctxi.set_ii(first_ind+ipt);
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
-          
+
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), N);
-          
+
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), N);
 
@@ -629,7 +629,7 @@ namespace getfem {
       gmm::add (gmm::scaled(aux1, coeff_p1), M1);
       gmm::mult(gmm::transposed(M6), M5, aux1);
       gmm::add (gmm::scaled(aux1, coeff_p2), M1);
-      
+
       gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
 
       gmm::mult(M2inv, M1, M);
@@ -671,7 +671,7 @@ class _HHO_stabilization
       // by the mean of the projection matrix from P^{k+1} to the original space
       // and the projection matrix from interior space to the boundary space.
       // As it is built, S(v) is zero on interior dofs.
-      
+
       GMM_ASSERT1(&mf1 == &mf2, "The HHO stabilization transformation is "
                   "only defined on the HHO space to itself");
 
@@ -694,7 +694,7 @@ class _HHO_stabilization
       pfem_precomp pfp1 = HHO_pfp_pool(pf1, pim->pintegration_points());
       pfem_precomp pfp2 = HHO_pfp_pool(pf2, pim->pintegration_points());
       pfem_precomp pfpi = HHO_pfp_pool(pfi, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctxi(pgp, pfpi, 0, G, cv);
@@ -708,7 +708,7 @@ class _HHO_stabilization
       size_type qmulti =  Q / pfi->target_dim();
       size_type ndofi = pfi->nb_dof(cv) * qmulti;
 
-      
+
       base_tensor t1, t2, ti, tv1, tv2, t1p, t2p;
       base_matrix tv1p, tv2p, tvi;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -725,7 +725,7 @@ class _HHO_stabilization
         ctx1.set_ii(ipt); ctx2.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
         area += coeff;
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
 
@@ -747,7 +747,7 @@ class _HHO_stabilization
         for (size_type i = 0; i < ndof2; ++i)
           for (size_type k = 0; k < Q; ++k)
             M4(k,  i) += coeff * tv2p(i, k);
-              
+
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k = 0; k < Q*N; ++k)
@@ -762,7 +762,7 @@ class _HHO_stabilization
           for (size_type j = 0; j < ndof1; ++j)
             for (size_type k = 0; k < Q; ++k)
               M7(i, j) += coeff * tv1p(i, k) * tv1p(j, k);
-        
+
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k = 0; k < Q; ++k)
@@ -781,7 +781,7 @@ class _HHO_stabilization
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           scalar_type normun = gmm::vect_norm2(un);
-          
+
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
 
@@ -790,7 +790,7 @@ class _HHO_stabilization
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), Q);
-          
+
           ctxi.base_value(ti);
           vectorize_base_tensor(ti, tvi, ndofi, pfi->target_dim(), Q);
 
@@ -818,7 +818,7 @@ class _HHO_stabilization
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndofi; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M9(i, j) += coeff * normun * tv1p(i,k) * tvi(j, k); 
+                M9(i, j) += coeff * normun * tv1p(i,k) * tvi(j, k);
         }
       }
 
@@ -836,9 +836,9 @@ class _HHO_stabilization
           gmm::sub_slice I2(i, ndof2/Q, Q);
           gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
         }
-      } else 
+      } else
         { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
-      
+
       if (pf1->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof1/Q, Q);
         gmm::lu_inverse(gmm::sub_matrix(M7, I, I));
@@ -848,7 +848,7 @@ class _HHO_stabilization
         }
       } else
         { gmm::copy(M7, M7inv); gmm::lu_inverse(M7inv); }
-      
+
       gmm::mult(M2inv, M1, MD);
       gmm::clean(MD, gmm::vect_norminf(MD.as_vector()) * 1E-13);
 
@@ -877,7 +877,7 @@ class _HHO_stabilization
 
 
 #else
-  
+
 
   class _HHO_stabilization
     : public virtual_elementary_transformation {
@@ -905,7 +905,7 @@ class _HHO_stabilization
       // by the mean of the projection matrix from P^{k+1} to the target space
       // and the projection matrix from interior space to the boundary space.
       // As it is built, S(v) is zero on interior dofs.
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       short_type degree = pf1->estimated_degree();
@@ -929,7 +929,7 @@ class _HHO_stabilization
       pfem_precomp pfp3 = HHO_pfp_pool(pf3, pim->pintegration_points());
       pfem_precomp pfp1i = HHO_pfp_pool(pf1i, pim->pintegration_points());
       pfem_precomp pfp3i = HHO_pfp_pool(pf3i, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctx3(pgp, pfp3, 0, G, cv);
@@ -949,7 +949,7 @@ class _HHO_stabilization
       size_type qmult3i =  Q / pf3i->target_dim();
       size_type ndof3i = pf3i->nb_dof(cv) * qmult3i;
 
-      
+
       base_tensor t1, t2, t3, t1i, t3i, tv1, tv2, t1p, t2p;
       base_matrix tv1p, tv2p, tv3p, tv1i, tv3i;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -966,7 +966,7 @@ class _HHO_stabilization
         ctx1.set_ii(ipt); ctx2.set_ii(ipt); ctx3.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
         area += coeff;
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
 
@@ -991,7 +991,7 @@ class _HHO_stabilization
         for (size_type i = 0; i < ndof2; ++i)
           for (size_type k = 0; k < Q; ++k)
             M4(k,  i) += coeff * tv2p(i, k);
-              
+
         for (size_type i = 0; i < ndof1; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k = 0; k < Q*N; ++k)
@@ -1006,7 +1006,7 @@ class _HHO_stabilization
           for (size_type j = 0; j < ndof3; ++j)
             for (size_type k = 0; k < Q; ++k)
               M7(i, j) += coeff * tv3p(i, k) * tv3p(j, k);
-        
+
         for (size_type i = 0; i < ndof3; ++i) // To be optimized
           for (size_type j = 0; j < ndof2; ++j)
             for (size_type k = 0; k < Q; ++k)
@@ -1030,7 +1030,7 @@ class _HHO_stabilization
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           scalar_type normun = gmm::vect_norm2(un);
-          
+
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
 
@@ -1039,7 +1039,7 @@ class _HHO_stabilization
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), Q);
-          
+
           ctx1i.base_value(t1i);
           vectorize_base_tensor(t1i, tv1i, ndof1i, pf1i->target_dim(), Q);
 
@@ -1049,7 +1049,7 @@ class _HHO_stabilization
           ctx3.base_value(t3);
           vectorize_base_tensor(t3, tv3p, ndof3, pf3->target_dim(), Q);
 
-          
+
           for (size_type i = 0; i < ndof1; ++i) // To be optimized
             for (size_type j = 0; j < ndof2; ++j)
               for (size_type k1 = 0; k1 < Q; ++k1) {
@@ -1078,10 +1078,10 @@ class _HHO_stabilization
           for (size_type i = 0; i < ndof3; ++i) // To be optimized
             for (size_type j = 0; j < ndof3i; ++j)
               for (size_type k = 0; k < Q; ++k)
-                M10(i, j) += coeff * normun * tv3p(i,k) * tv3i(j, k); 
+                M10(i, j) += coeff * normun * tv3p(i,k) * tv3i(j, k);
         }
       }
-      
+
       // Add the constraint with penalization
       scalar_type coeff_p = pow(area, -1. - 2./scalar_type(N));
       gmm::mult(gmm::transposed(M4), M4, aux2);
@@ -1096,9 +1096,9 @@ class _HHO_stabilization
           gmm::sub_slice I2(i, ndof2/Q, Q);
           gmm::copy(gmm::sub_matrix(M2, I, I), gmm::sub_matrix(M2inv, I2, I2));
         }
-      } else 
+      } else
         { gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv); }
-      
+
       if (pf3->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof3/Q, Q);
         gmm::lu_inverse(gmm::sub_matrix(M7, I, I));
@@ -1108,7 +1108,7 @@ class _HHO_stabilization
         }
       } else
         { gmm::copy(M7, M7inv); gmm::lu_inverse(M7inv); }
-      
+
       gmm::mult(M2inv, M1, MD);
       gmm::clean(MD, gmm::vect_norminf(MD.as_vector()) * 1E-13);
 
@@ -1162,7 +1162,7 @@ class _HHO_stabilization
       // by the mean of the projection matrix from P^{k+1} to the target space
       // and the projection matrix from interior space to the boundary space.
       // As it is built, S(v) is zero on interior dofs.
-       
+
       // Obtaining the fem descriptors
       pfem pf1 = mf1.fem_of_element(cv);
       short_type degree = pf1->estimated_degree();
@@ -1186,7 +1186,7 @@ class _HHO_stabilization
       pfem_precomp pfp3 = HHO_pfp_pool(pf3, pim->pintegration_points());
       pfem_precomp pfp1i = HHO_pfp_pool(pf1i, pim->pintegration_points());
       pfem_precomp pfp3i = HHO_pfp_pool(pf3i, pim->pintegration_points());
-      
+
       fem_interpolation_context ctx1(pgp, pfp1, 0, G, cv);
       fem_interpolation_context ctx2(pgp, pfp2, 0, G, cv);
       fem_interpolation_context ctx3(pgp, pfp3, 0, G, cv);
@@ -1208,7 +1208,7 @@ class _HHO_stabilization
       size_type qmult3i =  Q / pf3i->target_dim();
       size_type ndof3i = pf3i->nb_dof(cv) * qmult3i;
 
-      
+
       base_tensor t1, t2, t3, t1i, t3i, tv1, tv2, t1p, t2p;
       base_matrix tv1p, tv2p, tv3p, tv1i, tv3i;
       base_matrix M1(ndof2, ndof1), M2(ndof2, ndof2), M2inv(ndof2, ndof2);
@@ -1218,7 +1218,7 @@ class _HHO_stabilization
       base_matrix M7(ndof3, ndof3), M7inv(ndof3, ndof3), M8(ndof3, ndof2);
       base_matrix M9(ndof3, ndof1), M10(ndof3, ndof3), MD(ndof2, ndof1);
       scalar_type area(0);
-      
+
       // Integrals on the element : \int_T Sym(Grad(D)).Grad(w) (M2)
       //                            \int_T Sym(Grad(v_T)).Grad(w) (M1)
       //                            \int_T D (M4)  and \int_T v_T (M3)
@@ -1227,7 +1227,7 @@ class _HHO_stabilization
         ctx1.set_ii(ipt); ctx2.set_ii(ipt); ctx3.set_ii(ipt);
         scalar_type coeff = pim->coeff(ipt) * ctx1.J();
         area += coeff;
-        
+
         ctx1.grad_base_value(t1);
         vectorize_grad_base_tensor(t1, tv1, ndof1, pf1->target_dim(), Q);
 
@@ -1250,11 +1250,11 @@ class _HHO_stabilization
                M2(j, i) += coeff * tv2.as_vector()[i+(k1+k2*N)*ndof2]
                  * 0.5 * (tv2.as_vector()[j+(k1+k2*N)*ndof2] +
                           tv2.as_vector()[j+(k2+k1*N)*ndof2]);
-        
+
         for (size_type i = 0; i < ndof2; ++i)
           for (size_type k = 0; k < N; ++k)
             M4(k,  i) += coeff * tv2p(i, k);
-              
+
         for (size_type i = 0; i < ndof2; ++i)
           for (size_type k1 = 0; k1 < N; ++k1)
             for (size_type k2 = 0; k2 < N; ++k2)
@@ -1268,7 +1268,7 @@ class _HHO_stabilization
                 M1(j, i) += coeff * tv1.as_vector()[i+(k1+k2*N)*ndof1]
                   * 0.5 * (tv2.as_vector()[j+(k1+k2*N)*ndof2] +
                            tv2.as_vector()[j+(k2+k1*N)*ndof2]);
-        
+
         for (size_type i = 0; i < ndof1; ++i)
           for (size_type k = 0; k < N; ++k)
             M3(k,  i) += coeff * tv1p(i, k);
@@ -1302,7 +1302,7 @@ class _HHO_stabilization
           scalar_type coeff = pim->coeff(first_ind+ipt) * ctx1.J();
           gmm::mult(ctx1.B(), pgt->normals()[ifc], un);
           scalar_type normun = gmm::vect_norm2(un);
-          
+
           ctx2.grad_base_value(t2);
           vectorize_grad_base_tensor(t2, tv2, ndof2, pf2->target_dim(), Q);
 
@@ -1311,13 +1311,13 @@ class _HHO_stabilization
 
           ctx1.base_value(t1);
           vectorize_base_tensor(t1, tv1p, ndof1, pf1->target_dim(), Q);
-          
+
           ctx1i.base_value(t1i);
           vectorize_base_tensor(t1i, tv1i, ndof1i, pf1i->target_dim(), Q);
 
           ctx3i.base_value(t3i);
           vectorize_base_tensor(t3i, tv3i, ndof3i, pf3i->target_dim(), Q);
-          
+
           ctx3.base_value(t3);
           vectorize_base_tensor(t3, tv3p, ndof3, pf3->target_dim(), Q);
 
@@ -1373,7 +1373,7 @@ class _HHO_stabilization
       gmm::add (gmm::scaled(aux1, coeff_p2), M1);
 
       gmm::copy(M2, M2inv); gmm::lu_inverse(M2inv);
-      
+
       if (pf3->target_dim() == 1 && Q > 1) {
         gmm::sub_slice I(0, ndof3/Q, Q);
         gmm::lu_inverse(gmm::sub_matrix(M7, I, I));
@@ -1383,10 +1383,10 @@ class _HHO_stabilization
         }
       } else
         { gmm::copy(M7, M7inv); gmm::lu_inverse(M7inv); }
-      
+
       gmm::mult(M2inv, M1, MD);
       gmm::clean(MD, gmm::vect_norminf(MD.as_vector()) * 1E-13);
-      
+
       // S  = (I - inv(M7)*M10)*inv(M7)*(M9 - M8*MD)
       base_matrix MPB(ndof3, ndof3);
       gmm::mult(M7inv, M10, MPB);

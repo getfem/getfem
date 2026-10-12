@@ -30,10 +30,10 @@ SIMPLIFY_LEVEL_SET = 0;
 STABILIZED_DIRICHLET = 1;    % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
 MINIMAL_ELT_RATIO = 0.005;   % threshold ratio for the fully stab Dirichlet.
 DIRICHLET_GAMMA0 = 0.01;     % Barbosa Hughes stabilization parameter
-		   
+
 OK = 0;
 
-if (N == 1) 
+if (N == 1)
   MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0;NSUBDIV=[10]';
   IM = 'IM_GAUSS1D(6)';     % Integration method.
   IM_SIMPLEX = IM;          % Integration method on sub-triangles.
@@ -70,7 +70,7 @@ end;
 if (N == 3 && ~QUAD)
   MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0;NSUBDIV=[3,3,3]';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';    % Integration method.
-  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)'; 
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';
   FEM = 'FEM_PK(3,2)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers

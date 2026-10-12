@@ -35,8 +35,8 @@ namespace getfem {
                                              const std::string &param_kappa,
                                              size_type variant,
                                              size_type region) {
-    
-    
+
+
     std::string test_U = "Test_" + sup_previous_and_dot_to_varname(U);
     std::string test_Theta = "Test_" + sup_previous_and_dot_to_varname(Theta);
     std::string proj_Theta = (variant == 2) ?
@@ -45,22 +45,22 @@ namespace getfem {
     std::string proj_test_Theta = (variant == 2) ?
       ("Elementary_transformation("+test_Theta
        +",_2D_rotated_RT0_projection__434)") : test_Theta;
-    
+
     std::string D = "(("+param_E+")*pow("+param_epsilon+
       ",3))/(12*(1-sqr("+param_nu+")))";
     std::string G = "(("+param_E+")*("+param_epsilon+"))*("+param_kappa+
       ")/(2*(1+("+param_nu+")))";
     std::string E_theta = "(Grad_" + Theta + "+(Grad_" + Theta + ")')/2";
     std::string E_test_Theta="(Grad_"+test_Theta+"+(Grad_"+test_Theta+")')/2";
-    
+
     std::string expr_left =
       D+"*(( 1-("+param_nu+"))*("+E_theta+"):("+E_test_Theta+")+("+param_nu+
       ")*Trace("+E_theta+")*Trace("+E_test_Theta+"))";
-    
-    std::string expr_right = 
+
+    std::string expr_right =
       "("+G+")*(Grad_"+U+"-"+proj_Theta+").Grad_"+test_U+
       "-("+G+")*(Grad_"+U+"-"+proj_Theta+")."+proj_test_Theta;
-    
+
     switch(variant) {
     case 0: // Without reduction
       return add_linear_term
@@ -83,8 +83,8 @@ namespace getfem {
     }
     return size_type(-1);
   }
-  
-  
+
+
   size_type add_enriched_Mindlin_Reissner_plate_brick(model &md,
                                              const mesh_im & mim,
                                              const mesh_im & mim_red1,
@@ -92,47 +92,47 @@ namespace getfem {
                                              const std::string &Ua,
                                              const std::string &Theta,
                                              const std::string &U3,
-                                             const std::string &Theta3,                                             
+                                             const std::string &Theta3,
                                              const std::string &param_E,
                                              const std::string &param_nu,
                                              const std::string &param_epsilon,
                                              size_type variant,
                                              size_type region) {
-    
+
     std::string test_Ua = "Test_" + sup_previous_and_dot_to_varname(Ua);
-    std::string test_U3 = "Test_" + sup_previous_and_dot_to_varname(U3);    
+    std::string test_U3 = "Test_" + sup_previous_and_dot_to_varname(U3);
     std::string test_Theta = "Test_" + sup_previous_and_dot_to_varname(Theta);
     std::string proj_Theta = (variant >= 2) ?
       ("Elementary_transformation("+Theta+",_2D_rotated_RT0_projection__434)")
       : Theta;
     std::string proj_test_Theta = (variant >= 2) ?
-      ("Elementary_transformation("+test_Theta+",_2D_rotated_RT0_projection__434)") 
+      ("Elementary_transformation("+test_Theta+",_2D_rotated_RT0_projection__434)")
       : test_Theta;
     std::string test_Theta3 = "Test_" + sup_previous_and_dot_to_varname(Theta3);
     std::string proj_Theta3 = (variant == 3) ?
       ("Elementary_transformation("+Theta3+",_P0_projection__434)")
       : Theta3;
     std::string proj_test_Theta3 = (variant == 3) ?
-      ("Elementary_transformation("+test_Theta3+",_P0_projection__434)") 
+      ("Elementary_transformation("+test_Theta3+",_P0_projection__434)")
       : test_Theta3;
     std::string D1 = "(("+param_E+")*pow("+param_epsilon+",3))/(12*(1+("+param_nu+")))";
-    std::string D2 = D1+"*("+param_nu+")/(1-2*("+param_nu+"))";    
+    std::string D2 = D1+"*("+param_nu+")/(1-2*("+param_nu+"))";
     std::string D3 = D1+"/2";
     std::string G1 = "(("+param_E+")*("+param_epsilon+"))/(1+("+param_nu+"))";
-    std::string G2 = G1+"*("+param_nu+")/(1-2*("+param_nu+"))";    
+    std::string G2 = G1+"*("+param_nu+")/(1-2*("+param_nu+"))";
     std::string G3 = G1+"/2";
-    
+
     std::string E_Ua = "(Grad_" + Ua + "+(Grad_" + Ua + ")')/2";
     std::string E_test_Ua = "(Grad_" + test_Ua + "+(Grad_" + test_Ua + ")')/2";
     std::string E_Theta = "(Grad_" + Theta + "+(Grad_" + Theta + ")')/2";
     std::string E_test_Theta="(Grad_"+test_Theta+"+(Grad_"+test_Theta+")')/2";
-    
+
     std::string expr_no_coupled_1 = G1+"*("+E_Ua+"):("+E_test_Ua+") + "+G1+"*("+Theta3+")*("+test_Theta3+")";
     std::string expr_no_coupled_2 = D1+"*("+E_Theta+"):("+E_test_Theta+") + "+D2+"*Trace(Grad_"+Theta+")*Trace(Grad_"+test_Theta+") + "+D3+"*(Grad_"+Theta3+").(Grad_"+test_Theta3+")";
 
     std::string expr_coupled_1 = G3+"*(Grad_"+U3+" + "+proj_Theta+").(Grad_"+test_U3+" + "+proj_test_Theta+")";
     std::string expr_coupled_2 = G2+"*(Trace("+E_Ua+") + "+proj_Theta3+")*(Trace("+E_test_Ua+") + "+proj_test_Theta3+")";
-        
+
     switch(variant) {
     case 0: // Without reduction
       add_nonlinear_term
@@ -161,7 +161,7 @@ namespace getfem {
          "enriched Reissner-Mindlin plate model brick, coupled MR");
       return add_nonlinear_term
         (md, mim_red2, expr_coupled_2, region, false, false,
-         "enriched Reissner-Mindlin plate model brick, coupled eMR");  
+         "enriched Reissner-Mindlin plate model brick, coupled eMR");
     case 3: // Variant with projection on rotated RT0 and projection P0
       add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
       add_P0_projection(md, "_P0_projection__434");
@@ -173,7 +173,7 @@ namespace getfem {
          "enriched Reissner-Mindlin plate model brick, coupled MR");
       return add_nonlinear_term
         (md, mim, expr_coupled_2, region, false, false,
-         "enriched Reissner-Mindlin plate model brick, coupled eMR");  
+         "enriched Reissner-Mindlin plate model brick, coupled eMR");
       break;
     default: GMM_ASSERT1(false, " testInvalid variant for enriched Reissner-Mindlin brick.");
     }
@@ -202,14 +202,14 @@ namespace getfem {
 
       GMM_ASSERT1(&mf == &mf2,
                   "This transformation works on identical fems only");
-      
+
       // Obtaining the fem descriptors
       pfem pf1 = mf.fem_of_element(cv);
       size_type N = 2;
       GMM_ASSERT1(pf1->dim() == 2, "This projection is only defined "
                   "for two-dimensional elements");
       size_type qmult =  N / pf1->target_dim();
-      
+
       bool simplex = false;
       if (pf1->ref_convex(cv) == bgeot::simplex_of_reference(dim_type(N))) {
         simplex = true;
@@ -242,7 +242,7 @@ namespace getfem {
       base_matrix aux0(ndof1, ndof1), aux1(ndof1, ndof2), aux2(ndof1, ndof2);
       base_matrix aux3(ndof2, ndof2);
 
-      
+
       base_matrix G;
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
       fem_interpolation_context ctx1(pgt, pf1, base_node(N), G, cv);
@@ -250,18 +250,18 @@ namespace getfem {
 
       base_tensor t1, t2;
       base_matrix tv1, tv2;
-        
+
       for (size_type i = 0; i < pim->nb_points_on_convex(); ++i) {
 
         scalar_type coeff = pim->coeff(i); // Mult by ctx.J() not useful here
         ctx1.set_xref(pim->point(i));
-        ctx2.set_xref(pim->point(i));    
+        ctx2.set_xref(pim->point(i));
         pf1->real_base_value(ctx1, t1);
         vectorize_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
         pf2->real_base_value(ctx2, t2);
         vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
         for (size_type j = 0; j < ndof2; ++j) std::swap(tv2(j,0), tv2(j,1));
-       
+
         gmm::mult(tv1, gmm::transposed(tv1), aux0);
         gmm::add(gmm::scaled(aux0, coeff), M1);
         gmm::mult(tv2, gmm::transposed(tv2), aux3);
@@ -269,8 +269,8 @@ namespace getfem {
         gmm::mult(tv1, gmm::transposed(tv2), aux1);
         gmm::add(gmm::scaled(aux1, coeff), B);
       }
-      
-      
+
+
       // Computation of M
       gmm::lu_inverse(M1);
       gmm::lu_inverse(M2);
@@ -306,14 +306,14 @@ namespace getfem {
 
       GMM_ASSERT1(&mf == &mf2,
                   "This transformation works on identical fems only");
-        
+
       // Obtaining the fem descriptors
       pfem pf1 = mf.fem_of_element(cv);
       size_type N = mf.get_qdim(), d = pf1->dim();
       // GMM_ASSERT1(pf1->dim() == 2, "This projection is only defined "
       //             "for two-dimensional elements");
       size_type qmult =  N / pf1->target_dim();
-      
+
       bool simplex = false;
       if (pf1->ref_convex(cv) == bgeot::simplex_of_reference(dim_type(d))) {
         simplex = true;
@@ -346,7 +346,7 @@ namespace getfem {
       base_matrix aux0(ndof1, ndof1), aux1(ndof1, ndof2), aux2(ndof1, ndof2);
       base_matrix aux3(ndof2, ndof2);
 
-      
+
       base_matrix G;
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
       fem_interpolation_context ctx1(pgt, pf1, base_node(d), G, cv);
@@ -354,18 +354,18 @@ namespace getfem {
 
       base_tensor t1, t2;
       base_matrix tv1, tv2;
-        
+
       for (size_type i = 0; i < pim->nb_points_on_convex(); ++i) {
 
         scalar_type coeff = pim->coeff(i); // Mult by ctx.J() not useful here
         ctx1.set_xref(pim->point(i));
-        ctx2.set_xref(pim->point(i));    
+        ctx2.set_xref(pim->point(i));
         pf1->real_base_value(ctx1, t1);
         vectorize_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
         pf2->real_base_value(ctx2, t2);
         vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
         // for (size_type j = 0; j < ndof2; ++j) std::swap(tv2(j,0), tv2(j,1));
-       
+
         gmm::mult(tv1, gmm::transposed(tv1), aux0);
         gmm::add(gmm::scaled(aux0, coeff), M1);
         gmm::mult(tv2, gmm::transposed(tv2), aux3);
@@ -373,8 +373,8 @@ namespace getfem {
         gmm::mult(tv1, gmm::transposed(tv2), aux1);
         gmm::add(gmm::scaled(aux1, coeff), B);
       }
-      
-      
+
+
       // Computation of M
       gmm::lu_inverse(M1);
       gmm::lu_inverse(M2);
@@ -412,7 +412,7 @@ namespace getfem {
 //                                      base_matrix &M) const{
 
 
-      
+
 //       // Obtaining the fem descriptors
 //       pfem pf1 = mf.fem_of_element(cv);
 //       size_type N = pf1->dim();
@@ -447,7 +447,7 @@ namespace getfem {
 //       base_matrix aux0(ndof1, ndof1), aux1(ndof1, ndof2), aux2(ndof1, ndof2);
 //       base_matrix aux3(ndof2, ndof2);
 
-      
+
 //       base_matrix G;
 //       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 //       fem_interpolation_context ctx1(pgt, pf1, base_node(N), G, cv);
@@ -455,12 +455,12 @@ namespace getfem {
 
 //       base_tensor t1, t2;
 //       base_matrix tv1, tv2;
-        
+
 //       for (size_type i = 0; i < pim->nb_points_on_convex(); ++i) {
 
 //         scalar_type coeff = pim->coeff(i); // Mult by ctx.J() not useful here
 //         ctx1.set_xref(pim->point(i));
-//         ctx2.set_xref(pim->point(i));    
+//         ctx2.set_xref(pim->point(i));
 //         pf1->real_base_value(ctx1, t1);
 //         vectorize_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
 //         pf2->real_base_value(ctx2, t2);
@@ -470,7 +470,7 @@ namespace getfem {
 //         // for (size_type j = 0; j < 4; ++j)
 //         //  std::swap(tv2(j,0), tv2(j,1));
 
-       
+
 //         gmm::mult(tv1, gmm::transposed(tv1), aux0);
 //         gmm::add(gmm::scaled(aux0, coeff), M1);
 //         gmm::mult(tv2, gmm::transposed(tv2), aux3);
@@ -478,8 +478,8 @@ namespace getfem {
 //         gmm::mult(tv1, gmm::transposed(tv2), aux1);
 //         gmm::add(gmm::scaled(aux1, coeff), B);
 //       }
-      
-      
+
+
 //       // Computation of M
 //       gmm::lu_inverse(M1);
 //       gmm::lu_inverse(M2);

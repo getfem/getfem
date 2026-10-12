@@ -24,10 +24,10 @@ Curl based problem in 3d cube test, including DG.
 We solve equation for vector potential approach for the magnetostatic problem as it described in(and many other papers)
 "Mixed formulations for finite element analysis of magnetostatic and electrostatic problems"
 Fumio Kikuchi, Japan J. Appl. Math. (1989) 6: 209.
-For a Interior penalty terms understanding we refer to 
+For a Interior penalty terms understanding we refer to
 "Discontinuous galerkin approximation of the maxwell eigenproblem",
-A. Buffa AND I. Perugia, SIAM Journal on Numerical Analysis, Vol. 44, No. 5 : pp. 2198-222, 2006. 
-"Unified analysis of discontinuous Galerkin methods for elliptic problems", 
+A. Buffa AND I. Perugia, SIAM Journal on Numerical Analysis, Vol. 44, No. 5 : pp. 2198-222, 2006.
+"Unified analysis of discontinuous Galerkin methods for elliptic problems",
 D.N. Arnold, F. Brezzi, B. Cockburn, L.D. Marini, SIAM J. Numer. Anal. vol. 39:5, pp 1749-1779, 2002.
 @author: Egor Vtorushin
 @mail: vtorushin@gmail.com
@@ -47,7 +47,7 @@ if gf is None:
 Exact = Enum('Exact', 'BdmExample DotNormalZero CrossNormalZero')
 
 ######################################################################
-# Parameters 
+# Parameters
 CUBE_H=1.001
 MESHSIZE=0.25
 ALPHAF=1.e3/MESHSIZE #Interior penalty(alpha) factor
@@ -61,12 +61,12 @@ EXACT_TYPE=Exact.BdmExample
 ######################################################################
 
 ######################################################################
-# Exact functions 
+# Exact functions
 V1 = np.pi/4.0 #for a case
 if (EXACT_TYPE==Exact.BdmExample):
     Bexact_exp=f'[{V1}*(sin(pi*X(2)) - sin(pi*X(3))); {V1}*(-sin(pi*X(1)) + sin(pi*X(3))); {V1}*(sin(pi*X(1)) - sin(pi*X(2)))]'
     CurlBexact_exp=f'[{V1}*(-pi*cos(pi*X(2)) - pi*cos(pi*X(3)));{V1}*(-pi*cos(pi*X(1)) - pi*cos(pi*X(3))); {V1}*(-pi*cos(pi*X(1)) - pi*cos(pi*X(2)))]'
-elif(EXACT_TYPE==Exact.CrossNormalZero):    
+elif(EXACT_TYPE==Exact.CrossNormalZero):
     Bexact_exp=f'{V1}*[sin(pi*X(2)) * sin(pi*X(3)); -sin(pi*X(1)) * sin(pi*X(3)); sin(pi*X(1)) * sin(pi*X(2))]'
     CurlBexact_exp=f'{V1}*[pi*sin(pi*X(1))*cos(pi*X(2)) + pi*sin(pi*X(1))*cos(pi*X(3)); -pi*sin(pi*X(2))*cos(pi*X(1)) + pi*sin(pi*X(2))*cos(pi*X(3)); -pi*sin(pi*X(3))*cos(pi*X(1)) - pi*sin(pi*X(3))*cos(pi*X(2))]'
 elif(EXACT_TYPE==Exact.DotNormalZero):
@@ -76,7 +76,7 @@ elif(EXACT_TYPE==Exact.DotNormalZero):
 ######################################################################
 
 ######################################################################
-# Creation of a simple 3d simplex mesh 
+# Creation of a simple 3d simplex mesh
 xa = np.arange(0, CUBE_H, MESHSIZE)
 ya = np.arange(0, CUBE_H, MESHSIZE)
 za = np.arange(0, CUBE_H, MESHSIZE)
@@ -104,13 +104,13 @@ mfdiv_mult.set_fem(gf.Fem(f'FEM_PK{DS}(3,1{ALPHA})')) # MeshFem FEM_PK FEM_PK_DI
 mim = gf.MeshIm(m, gf.Integ('IM_TETRAHEDRON(2)'))
 
 #########################################################################
-# Make it boundary 
+# Make it boundary
 m.set_region(ALL_SIDES, m.outer_faces())
 if(DS_GA):
     m.set_region(INNER_FACES,m.inner_faces())
-# Make it boundary END	
+# Make it boundary END
 ###########################################################################
-    
+
 VPRODUCT_VAR_N_='Cross_product(Normal,{var})'
 JUMP_VPRODUCT_VAR_='Cross_product(Normal,{var})-Cross_product(Normal,Interpolate({var},neighbor_element))'
 MEAN_VAR_='(0.5*{M}+0.5*{N})'
@@ -138,11 +138,11 @@ cross_jump_test_a = JUMP_VPRODUCT_VAR_.format(var='Test_a')
 jump_a = JUMP_VVAR_N_.format(v='a')
 jump_test_a = JUMP_VVAR_N_.format(v='Test_a')
 
-#magentec potential model     
+#magentec potential model
 mdmag=gf.Model('real');
 
 ######################################################################################################################
-#Interpolate and export exact fields 
+#Interpolate and export exact fields
 intonme = mfb
 CurlBexact = mdmag.interpolation(CurlBexact_exp, intonme)
 intonme.export_to_vtk('curl_exact3d.vtk', 'ascii', CurlBexact)
@@ -161,14 +161,14 @@ mdmag.add_fem_variable('b', mfb);
 mdmag.add_fem_variable('p', mfdiv_mult)
 
 tm = time.time()
-# building (curl b, curl \tau) term 
+# building (curl b, curl \tau) term
 CURL_B=gf.asm('generic', mim, 2, curl_testb_curl_b_exp, -1, 'b', 1, mfb, 0)
 tm = time.time()-tm
 print("CURL.CURL elapsed time", tm)
 
 # (curl b, curl \tau) adding to the model
 magi=mdmag.add_explicit_matrix('b', 'b', CURL_B)
- 
+
 #####################################################################################################
 # Interior penalty terms
 if(DS_GA):
@@ -205,7 +205,7 @@ if(DS_GA): # Interior penalty terms for div B=0 part
 #####################################################################################################
 
 #####################################################################################################
-# building rhs with given curlB field and B x N BC  
+# building rhs with given curlB field and B x N BC
 B_RHS=gf.asm('generic', mim, 1, 'vec.Test_b', -1, 'vec', 0, intonme, CurlBexact, 'b', 1, mfb, 0)
 print("B_RHS L2_norm", gf.compute_L2_norm(mfb, B_RHS, mim))
 mdmag.add_explicit_rhs('b', B_RHS)
@@ -220,7 +220,7 @@ if(WITH_B_CROSS_N):
     if(B_CROSS_N_RHS_NORM>MESHSIZE**4):
         print('B_CROSS_N_RHS added')
         mdmag.add_explicit_rhs('b', B_CROSS_N_RHS)
-# building rhs with given curlB field and B x N BC END		
+# building rhs with given curlB field and B x N BC END
 #####################################################################################################
 
 #####################################################################################################
@@ -248,22 +248,22 @@ mfb.export_to_vtk('vector_potential3d.vtk', 'ascii', mdmag.variable('b')) # espo
 # done vector potential part
 ####################################################################
 
-if(VERIFY_NEIGHBOR_COMPUTATION):    
+if(VERIFY_NEIGHBOR_COMPUTATION):
     m.set_region(42,m.inner_faces())
     print ("jump A x N conv", np.linalg.norm(gf.asm('generic', mim, 1, '({A}).({B})'.format(A=cross_jump_b, B=cross_jump_test_b), 42, mdmag)))
     print ("jump A . N conv", np.linalg.norm(gf.asm('generic', mim, 1, '({A}).({B})'.format(A=jump_b,B=jump_test_b), 42, mdmag)))
     print ("jump p * N conv", np.linalg.norm(gf.asm('generic', mim, 1, '({A}).({B})'.format(A=jump_p,B=jump_test_p), 42, mdmag)))
 
 ################################################################################################################
-# start restoring target field from the vector potential 
+# start restoring target field from the vector potential
 # Technically we solve equation
 # find b \in H_{curl}(\Omega) such as
 # (b,\tau) = (curl A, \tau), for any \tau\in H_{curl}(\Omega)
-# for given field A\in V, where space V can be H_{div} or H^1 
+# for given field A\in V, where space V can be H_{div} or H^1
 # To do it one should apply green formula for (curl A, \tau) term and carefully account BC term (\tau x N).A
 ################################################################################################################
 
-# Model for restoration 
+# Model for restoration
 mdpot=gf.Model('real');
 # Main unknown
 mdpot.add_fem_variable('a', mfb);
@@ -304,7 +304,7 @@ if(WITH_A_CROSS_N):
 #####################################################################################################
 
 #####################################################################################################
-# Assembly of the restoration linear system and solve.		
+# Assembly of the restoration linear system and solve.
 try:
     mdpot.assembly(option='build_matrix')
     mdpot.assembly(option='build_rhs')
@@ -334,6 +334,6 @@ if(VERIFY_NEIGHBOR_COMPUTATION):
     print('(B+ . N+)-(B- . N-)',np.linalg.norm(dot_n_conv))
 
 ####################################################################
-# done with restoring target field from the vector potential 
+# done with restoring target field from the vector potential
 ####################################################################
 input("Press Enter to continue...")

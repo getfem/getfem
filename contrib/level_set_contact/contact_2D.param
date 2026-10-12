@@ -50,7 +50,7 @@ MU_MASTER = 70.0;
 %
 % Slave contact body
 DIVxS = 20;
-DIVyS = 
+DIVyS =
 20;
 DIVzS = 4;
 

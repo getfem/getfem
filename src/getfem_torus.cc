@@ -45,7 +45,7 @@ namespace getfem
     for (size_type k = 0; k < nb_dof_origin; ++k)
     {
       for(size_type j = 0; j < 2; ++j){
-        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j), 
+        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j),
           poriginal_fem_->node_of_dof(0, k));
       }
     }
@@ -61,7 +61,7 @@ namespace getfem
   void torus_fem::grad_base_value(const base_node &, base_tensor &) const
   { GMM_ASSERT1(false, "No grad values, real only element."); }
 
-  void torus_fem::hess_base_value(const base_node &, base_tensor &) const{ 
+  void torus_fem::hess_base_value(const base_node &, base_tensor &) const{
     GMM_ASSERT1(false, "No hess values, real only element.");
   }
 
@@ -72,9 +72,9 @@ namespace getfem
 
     base_tensor u_orig;
     poriginal_fem_->base_value(c.xref(), u_orig);
-    if (!(poriginal_fem_->is_equivalent())){ 
-      base_tensor u_temp = u_orig; 
-      u_orig.mat_transp_reduction(u_temp, c.M(), 0); 
+    if (!(poriginal_fem_->is_equivalent())){
+      base_tensor u_temp = u_orig;
+      u_orig.mat_transp_reduction(u_temp, c.M(), 0);
     }
 
     if(is_scalar_){
@@ -82,7 +82,7 @@ namespace getfem
       return;
     }
 
-    //expand original base of [nb_base, 1] 
+    //expand original base of [nb_base, 1]
     //to vectorial form [nb_base * dim_, dim_ + 1]
     bgeot::multi_index tensor_size(u_orig.sizes());
     tensor_size[0] *= dim_;
@@ -96,7 +96,7 @@ namespace getfem
   }
 
   void torus_fem::real_grad_base_value
-    (const getfem::fem_interpolation_context& c, base_tensor &t, bool) const 
+    (const getfem::fem_interpolation_context& c, base_tensor &t, bool) const
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
 
@@ -112,7 +112,7 @@ namespace getfem
     //poriginal_fem_->base_value(c.xref(), n_origin);
     GMM_ASSERT1(!n_origin.empty(), "Original FEM is unable to provide base value!");
 
-    //expand original grad of [nb_base, 1, dim_] 
+    //expand original grad of [nb_base, 1, dim_]
     //to vectorial form [nb_base * dim_, dim_ + 1, dim_ + 1]
     const bgeot::multi_index &origin_size = u_origin.sizes();
     bgeot::multi_index tensor_size(origin_size);
@@ -139,14 +139,14 @@ namespace getfem
   }
 
   void torus_fem::real_hess_base_value
-    (const getfem::fem_interpolation_context & /*c*/, base_tensor & /*t*/, bool) const 
+    (const getfem::fem_interpolation_context & /*c*/, base_tensor & /*t*/, bool) const
   {
     GMM_ASSERT1(false, "Hessian not yet implemented in torus fem.");
   }
 
   void torus_fem::set_to_scalar(bool is_scalar){
     if(is_scalar_ == is_scalar) return;
-    
+
     is_scalar_ = is_scalar;
 
     if(is_scalar_){
@@ -165,7 +165,7 @@ namespace getfem
       for (size_type k = 0; k < nb_dof_origin; ++k)
       {
         for(size_type j = 0; j < 2; ++j){
-          add_node(xfem_dof(poriginal_fem_->dof_types()[k], j), 
+          add_node(xfem_dof(poriginal_fem_->dof_types()[k], j),
             poriginal_fem_->node_of_dof(0, k));
         }
       }
@@ -251,7 +251,7 @@ namespace getfem
     }
 
     for(size_type i = 0; i < this->convex_tab.size(); ++i){
-      bgeot::pconvex_structure pstructure 
+      bgeot::pconvex_structure pstructure
         = bgeot::torus_structure_descriptor(convex_tab[i].cstruct);
       convex_tab[i].cstruct = pstructure;
     }

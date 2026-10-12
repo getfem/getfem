@@ -34,7 +34,7 @@ import getfem as gf
 #   /|       |    |   |    |   |    |       |-> F
 #   /|        \__/     \__/     \__/        |->
 #   /|______________________________________|->
-#     
+#
 #
 # Elastic problem: The plate is clamped at rhe left boundary and a
 #   traction density of force F is prescribed at the right boundary.
@@ -211,7 +211,7 @@ if (solve_in_two_steps >= 1):
   md.enable_variable('T')
   md.enable_variable('V')
   U1 = md.variable('u')
-  
+
 if (solve_in_two_steps == 0):
   print('Global problem with ', md.nbdof(), ' dofs')
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy')

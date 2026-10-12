@@ -77,13 +77,13 @@ namespace getfem
     pfem poriginal_fem_;
     bool is_scalar_;
   };
-  
+
   /**Copy an original 2D mesh to become a torus mesh with radial dimension.*/
   class torus_mesh : public mesh
   {
   private:
     bool is_adapted_;
-    
+
   public:
     torus_mesh(std::string name = std::string());
     virtual scalar_type convex_radius_estimate(size_type ic) const;
@@ -96,7 +96,7 @@ namespace getfem
   class torus_mesh_fem : public mesh_fem{
   public:
 
-    torus_mesh_fem(const torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}    
+    torus_mesh_fem(const torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}
     void enumerate_dof(void) const;
 
   private:

@@ -28,9 +28,9 @@
 
 ===========================================================================*/
 
-/** @file gmm_feedback_management.h 
+/** @file gmm_feedback_management.h
     @date July 03, 2017.
-    @brief Support for run time management of trace, warning and assert 
+    @brief Support for run time management of trace, warning and assert
            feedback.
 */
 

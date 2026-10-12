@@ -50,7 +50,7 @@ applied_force = 1E7              # Force at the hole boundary (N)
 #
 h = 1                    # Approximate mesh size
 elements_degree = 2      # Degree of the finite element methods
-gamma0 = 1./E;           # Augmentation parameter for the augmented Lagrangian 
+gamma0 = 1./E;           # Augmentation parameter for the augmented Lagrangian
 
 #
 # Mesh generation. Meshes can also been imported from several formats.
@@ -157,7 +157,7 @@ if not(Dirichlet_version):
 
 #
 # Solution export
-#  
+#
 U1 = md.variable('u1')
 U2 = md.variable('u2')
 VM1 = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u1', 'clambdastar', 'cmu', mfvm1)

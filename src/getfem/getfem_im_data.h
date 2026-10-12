@@ -52,14 +52,14 @@ namespace getfem{
 
   /** im_data provides indexing to the integration points of a mesh
   im object. The im_data data contains a reference of mesh_im object
-  . The index can be filtered by region, and each im_data has its 
+  . The index can be filtered by region, and each im_data has its
   own tensorial size.
 
   Filtered methods will provide filtered index on the region.
   This class also provides reading and writing tensor( including
   matrix, vector and scalar) from a vector data (generally a
   fixed-size variable from the model.)
-  
+
   im_data can be used to provide integration point index on convex or
   on faces of convex, but not both. To create an im_data that represents
   integration points on a face, the filter region provided has to contain
@@ -199,14 +199,14 @@ namespace getfem{
       }
     }
 
-    /**Filter a vector from full size to filtered size and copy the data to correct index*/    
+    /**Filter a vector from full size to filtered size and copy the data to correct index*/
     template <typename VECT>
     void reduce_vector(const VECT &V1, VECT &V2) const {
       if (V1.size() == 0 && V2.size() == 0)
         return;
       size_type nb_data = V1.size()/nb_index();
       GMM_ASSERT2(V1.size() == nb_data*nb_index(), "Invalid size of vector V1");
-      GMM_ASSERT2(V2.size() == nb_data*nb_filtered_index(), 
+      GMM_ASSERT2(V2.size() == nb_data*nb_filtered_index(),
                                "Invalid size of vector V2");
       if (nb_filtered_index() == nb_index()) {
         gmm::copy(V1, V2);
@@ -229,7 +229,7 @@ namespace getfem{
       }
     }
 
-    /**get a scalar value of an integration point 
+    /**get a scalar value of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT>
     typename VECT::value_type get_value(const VECT &V1, size_type cv,
@@ -242,7 +242,7 @@ namespace getfem{
       return V1[ptid];
     }
 
-    /**get a vector of an integration point 
+    /**get a vector of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT1, typename VECT2>
     void get_vector(const VECT1 &V1, size_type cv, size_type i,
@@ -260,10 +260,10 @@ namespace getfem{
                 V2);
     }
 
-    /**get a matrix of an integration point 
+    /**get a matrix of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT, typename MAT>
-    void get_matrix(const VECT &V1, size_type cv, size_type i, 
+    void get_matrix(const VECT &V1, size_type cv, size_type i,
                     MAT& M, bool use_filter = true) const {
       if (V1.size() == 0 && M.size() == 0)
         return;
@@ -278,10 +278,10 @@ namespace getfem{
                 M.as_vector());
     }
 
-    /**get a tensor of an integration point 
+    /**get a tensor of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT, typename TENSOR>
-    void get_tensor(const VECT &V1, size_type cv, size_type i, 
+    void get_tensor(const VECT &V1, size_type cv, size_type i,
                     TENSOR& T, bool use_filter = true) const {
       if (V1.size() == 0 && T.size() == 0)
         return;
@@ -296,7 +296,7 @@ namespace getfem{
                 T.as_vector());
     }
 
-    /**set a value of an integration point 
+    /**set a value of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT>
     typename VECT::value_type &set_value(VECT &V1, size_type cv, size_type i,
@@ -309,10 +309,10 @@ namespace getfem{
       return V1[ptid];
     }
 
-    /**set a vector of an integration point 
+    /**set a vector of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT1, typename VECT2>
-    void set_vector(VECT1 &V1, size_type cv, size_type i, 
+    void set_vector(VECT1 &V1, size_type cv, size_type i,
                     const VECT2& V2, bool use_filter = true) const {
       if (V1.size() == 0 && V2.size() == 0)
         return;
@@ -327,10 +327,10 @@ namespace getfem{
                                                       nb_tensor_elem_)));
     }
 
-    /**set a matrix of an integration point 
+    /**set a matrix of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT, typename MAT>
-    void set_matrix(VECT &V1, size_type cv, size_type i, 
+    void set_matrix(VECT &V1, size_type cv, size_type i,
                     const MAT& M, bool use_filter = true) const {
       if (V1.size() == 0 && M.size() == 0)
         return;
@@ -345,7 +345,7 @@ namespace getfem{
                                                       nb_tensor_elem_)));
     }
 
-    /**set a tensor of an integration point 
+    /**set a tensor of an integration point
     from a raw vector data, described by the tensor size.*/
     template <typename VECT, typename TENSOR>
     void set_tensor(VECT &V1, size_type cv, size_type i,

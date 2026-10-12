@@ -26,7 +26,7 @@ contact_problem::contact_problem(int argc, char *argv[])
 {
 	std::cout<<"-- reading parameter file"<<std::endl;
 	PARAM.read_command_line(argc,argv);
-	tol_newton = PARAM.real_value("RESIDUAL"); 
+	tol_newton = PARAM.real_value("RESIDUAL");
 	model_dim = PARAM.int_value("N","Dimension of the model");
 	nstep = PARAM.int_value("NSTEP","Number of steps in the analysis");
 	applied_disp = PARAM.real_value("APPLIED_DISP","Final value of the applied displacement");
@@ -54,7 +54,7 @@ contact_problem::contact_problem(int argc, char *argv[])
 	buf1<<"GT_"<<MESH_TYPE_PREFIX_MASTER<<"("<<model_dim<<","<<app_order_master<<")";
 	std::string MESH_TYPE_MASTER=buf1.str();
 	std::vector<size_type> nsubdiv_master(model_dim);
-	nsubdiv_master[0] = div_x_M; if(model_dim>1) nsubdiv_master[1] = div_y_M; if(model_dim==3) nsubdiv_master[2] = div_z_M; 
+	nsubdiv_master[0] = div_x_M; if(model_dim>1) nsubdiv_master[1] = div_y_M; if(model_dim==3) nsubdiv_master[2] = div_z_M;
 	getfem::regular_unit_mesh(mesh_master, nsubdiv_master, bgeot::geometric_trans_descriptor(MESH_TYPE_MASTER));
 	base_matrix M_m(model_dim,model_dim);
 	bgeot::base_small_vector Origin_master(model_dim);
@@ -85,7 +85,7 @@ contact_problem::contact_problem(int argc, char *argv[])
 	buf2<<"GT_"<<MESH_TYPE_PREFIX_SLAVE<<"("<<model_dim<<","<<app_order_slave<<")";
 	std::string MESH_TYPE_SLAVE=buf2.str();
 	std::vector<size_type> nsubdiv_slave(model_dim);
-	nsubdiv_slave[0] = div_x_S; if(model_dim>1) nsubdiv_slave[1] = div_y_S; if(model_dim==3) nsubdiv_slave[2] = div_z_S; 
+	nsubdiv_slave[0] = div_x_S; if(model_dim>1) nsubdiv_slave[1] = div_y_S; if(model_dim==3) nsubdiv_slave[2] = div_z_S;
 	getfem::regular_unit_mesh(mesh_slave, nsubdiv_slave, bgeot::geometric_trans_descriptor(MESH_TYPE_SLAVE));
 	base_matrix M_s(model_dim,model_dim);
 	bgeot::base_small_vector Origin_slave(model_dim);
@@ -103,22 +103,22 @@ contact_problem::contact_problem(int argc, char *argv[])
 
 void mark_boundary(getfem::mesh& mesh)
 {
-	//	Create mesh regions for boundary 
+	//	Create mesh regions for boundary
 	getfem::mesh_region border_faces;
-	getfem::outer_faces_of_mesh(mesh, border_faces); 
+	getfem::outer_faces_of_mesh(mesh, border_faces);
 	for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
 		bgeot::base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
 		un/= gmm::vect_norm2(un);
 		if (gmm::abs(un[1] - 1.0) < 1.0E-7) { // Top face
 			mesh.region(NORTH).add(i.cv(), i.f());
-		} 
+		}
 		if (gmm::abs(un[1] + 1.0) < 1.0E-7) {  // Bottom face
 			mesh.region(SOUTH).add(i.cv(), i.f());}
 		if (gmm::abs(un[0] - 1.0) < 1.0E-7) { // Right face
-			mesh.region(EAST).add(i.cv(), i.f());} 
+			mesh.region(EAST).add(i.cv(), i.f());}
 		if (gmm::abs(un[0] + 1.0) < 1.0E-7) { // Left face
 			mesh.region(WEST).add(i.cv(), i.f());}
-		if (mesh.dim()==3) 
+		if (mesh.dim()==3)
 		{
 			if (gmm::abs(un[2] + 1.0) < 1.0E-7) { // front face
 				mesh.region(FRONT).add(i.cv(), i.f());}

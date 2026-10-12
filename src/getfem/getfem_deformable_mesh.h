@@ -44,23 +44,23 @@
 
 namespace getfem {
 
-  /** An object function that first deforms and then remembers 
-  to restore a mesh if it has to be restored 
-  for other bricks. By default the mesh is deformed on 
+  /** An object function that first deforms and then remembers
+  to restore a mesh if it has to be restored
+  for other bricks. By default the mesh is deformed on
   construct and undeformed in the destructor (by RAII principle)
-  but it's also possible to specify deform_on_construct = false 
+  but it's also possible to specify deform_on_construct = false
   and then call explicitely deform() and undeform() methods.
   Optional to_be_restored flag will control whether the mesh will be restored
   when the deformator destructs.
   */
-  template<class VECTOR = model_real_plain_vector> 
+  template<class VECTOR = model_real_plain_vector>
   class temporary_mesh_deformator
   {
   public:
     temporary_mesh_deformator(const mesh_fem &mf, const VECTOR &dU,
       bool deform_on_construct = true, bool to_be_restored = true)
        : dU_(mf.nb_basic_dof()),
-         mf_(mf), 
+         mf_(mf),
          deform_on_construct_(deform_on_construct),
          is_deformed_(false),
          to_be_restored_(to_be_restored){
@@ -123,7 +123,7 @@ namespace getfem {
         }
         ppts.resort();
       }
-      GMM_ASSERT1(ppts.card() == init_nb_points, 
+      GMM_ASSERT1(ppts.card() == init_nb_points,
                   "Error, after deforming the mesh, number of nodes are different.");
     }
 

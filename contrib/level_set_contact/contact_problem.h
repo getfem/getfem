@@ -49,7 +49,7 @@ struct contact_problem{
 	size_type int_order_master, int_order_slave;
 	scalar_type ls_offset;
 	scalar_type mu_master, lambda_master, mu_slave, lambda_slave;
-	std::string LM_INT_TYPE; 
+	std::string LM_INT_TYPE;
 	contact_problem(int argc, char *argv[]);
 };
 

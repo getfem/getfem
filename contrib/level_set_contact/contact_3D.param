@@ -53,7 +53,7 @@ LM_INT_TYPE = 'IM_STRUCTURED_COMPOSITE(IM_QUAD(2),3)';
 %
 % Slave contact body
 DIVxS = 20;
-DIVyS = 
+DIVyS =
 20;
 DIVzS = 8;
 
