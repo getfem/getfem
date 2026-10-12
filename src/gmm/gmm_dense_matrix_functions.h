@@ -281,7 +281,7 @@ namespace gmm {
           cS(i,j) = T(0);
       logm_utri_inplace(cS);
       gmm::mult(cQ, cS, auxmat);
-      gmm::mult(auxmat, gmm::transposed(cQ), cS);
+      gmm::mult(auxmat, gmm::conjugated(cQ), cS);
       // Remove small complex values which may have entered calculation
       gmm::copy(gmm::real_part(cS), LOGMA);
 //      GMM_ASSERT1(gmm::mat_norm1(gmm::imag_part(cS)) < n*default_tol(T()),

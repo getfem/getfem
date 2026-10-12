@@ -372,7 +372,7 @@ namespace gmm {
   }
 
   /* ********************************************************************* */
-  /*    2x2 blocks reduction for Schur vectors                             */
+  /*    Reduction of the 2x2 diagonal blocks of a Schur form               */
   /* ********************************************************************* */
 
   template <typename MATH, typename MATQ, typename Ttol>
@@ -382,7 +382,7 @@ namespace gmm {
 
     size_type n = mat_nrows(H), nq = mat_nrows(Q);
     if (n < 2) return;
-    sub_interval SUBQ(0, nq), SUBL(0, 2);
+    sub_interval SUBQ(0, nq);
     std::vector<T> v(2), w(std::max(n, nq)); v[0] = T(1);
     tol *= Ttol(2);
     Ttol tol_i = tol * gmm::abs(H(0,0)), tol_cplx = tol_i;
@@ -394,14 +394,18 @@ namespace gmm {
         T tr = (H(i+1, i+1) - H(i,i)) / T(2);
         T delta = tr*tr + H(i,i+1)*H(i+1, i);
 
+        // For real T, blocks with complex eigenvalues are left unreduced.
         if (is_complex(T()) || gmm::real(delta) >= R(0)) {
           sub_interval SUBI(i, 2);
           T theta = (tr - gmm::sqrt(delta)) / H(i+1,i);
           R a = gmm::abs(theta);
           v[1] = (a == R(0)) ? T(-1)
             : gmm::conj(theta) * (R(1) - gmm::sqrt(a*a + R(1)) / a);
-          row_house_update(sub_matrix(H, SUBI), v, sub_vector(w, SUBL));
-          col_house_update(sub_matrix(H, SUBI), v, sub_vector(w, SUBL));
+          sub_interval SUBR(i, n-i), SUBC(0, i+2);
+          row_house_update(sub_matrix(H, SUBI, SUBR), v,
+                           sub_vector(w, sub_interval(0, n-i)));
+          col_house_update(sub_matrix(H, SUBC, SUBI), v,
+                           sub_vector(w, SUBC));
           col_house_update(sub_matrix(Q, SUBQ, SUBI), v, sub_vector(w, SUBQ));
         }
         ++i;
