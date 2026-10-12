@@ -1392,7 +1392,7 @@ namespace getfem {
         std::fill(result.begin(), result.end(), 1.E200);
     }
 
-    // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{ik}M^{-T}_{lj}
+    // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{il}M^{-T}_{kj}
     //                      -I@M^{-T} + Trace(M)*M^{-T}@M^{-T}/3)/(3det(M)^1/3)
     void second_derivative(const arg_list &args, size_type, size_type,
                            base_tensor &result) const {
@@ -1409,9 +1409,9 @@ namespace getfem {
             for (size_type j = 0; j < N; ++j)
               for (size_type i = 0; i < N; ++i, ++it)
                 *it = (- ((k == l) ? M(j, i) : scalar_type(0))
-                       + tr*M(i,k)*M(l,j)
+                       + tr*M(j,k)*M(l,i)
                        - ((i == j) ? M(l, k) : scalar_type(0))
-                       + tr*M(j,i)*M(k,l)/ scalar_type(3))
+                       + tr*M(j,i)*M(l,k)/ scalar_type(3))
                   / (scalar_type(3)*pow(det, scalar_type(1)/scalar_type(3)));
         GMM_ASSERT1(it == result.end(), "Internal error");
       } else
