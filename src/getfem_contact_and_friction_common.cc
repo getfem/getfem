@@ -2609,14 +2609,14 @@ namespace getfem {
                  scalar_type(1)/gmm::vect_norm2(result.as_vector()));
     }
 
-    // Derivative / Grad_u: -(I - n@n)(I+Grad_u)^{-T}Test_Grad_u n
+    // Derivative / Grad_u: -(I - ndef@ndef)(I+Grad_u)^{-T}Test_Grad_u^T ndef
     // Implementation: A{ijk} = -G{ik}ndef{j}
-    //                 with G = (I - n@n)(I+Grad_u)^{-T}
+    //                 with G = (I - ndef@ndef)(I+Grad_u)^{-T}
     //                 and ndef the transformed normal
-    // Derivative / n: ((I+Grad_u)^{-T}Test_n
-    //                 - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
-    // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
-    //                 with F = (I+Grad_u)^{-1}
+    // Derivative / n: (I - ndef@ndef)(I+Grad_u)^{-T}Test_n
+    //                 / ||(I+Grad_u)^{-T}n||
+    // Implementation: A{ij} = G{ij}/norm_ndef
+    //                 with norm_ndef = ||(I+Grad_u)^{-T}n||
     void derivative(const arg_list &args, size_type nder,
                     base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
@@ -2642,7 +2642,7 @@ namespace getfem {
       case 2:
         for (size_type j = 0; j < N; ++j)
           for (size_type i = 0; i < N; ++i, ++it)
-            *it = (F(j,i) - ndef[i]*ndef[j])/norm_ndef;
+            *it = G(i, j)/norm_ndef;
         break;
       default: GMM_ASSERT1(false, "Internal error");
       }
