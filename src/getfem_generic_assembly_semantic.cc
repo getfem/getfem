@@ -4081,14 +4081,16 @@ namespace getfem {
     case GA_NODE_HESS: case GA_NODE_HESS_TEST:
       GMM_ASSERT1(false, "Sorry, cannot derive an Hessian once more");
       break;
-    case GA_NODE_DIVERG: case GA_NODE_DIVERG_TEST: // Hess_u : Id(meshdim)
+    case GA_NODE_DIVERG: case GA_NODE_DIVERG_TEST: // Id(meshdim) : Hess_u
       if (pnode->node_type == GA_NODE_DIVERG)
         pnode->node_type = GA_NODE_HESS;
       else
         pnode->node_type = GA_NODE_HESS_TEST;
       mi = pnode->tensor().sizes();
-      mi.pop_back(), mi.push_back(m.dim());
-      if (m.dim() > 1) mi.push_back(m.dim());
+      if (mi.back() != 1) mi.push_back(m.dim());
+      else                mi.back() = m.dim();
+      mi.push_back(m.dim());
+      mi.push_back(m.dim());
       pnode->t.adjust_sizes(mi);
       tree.duplicate_with_operation(pnode, GA_COLON);
       child0 = pnode;
@@ -4099,6 +4101,7 @@ namespace getfem {
       for (size_type i = 0; i < meshdim; ++i)
         child1->tensor()(i,i) = scalar_type(1);
       child1->node_type = GA_NODE_CONSTANT;
+      std::swap(pnode->children[0], pnode->children[1]);
       break;
 
     case GA_NODE_INTERPOLATE_HESS_TEST:
@@ -4171,8 +4174,10 @@ namespace getfem {
             else
               pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
             mi = pnode->tensor().sizes();
-            mi.pop_back(), mi.push_back(trans_dim);
-            if (trans_dim > 1) mi.push_back(trans_dim);
+            if (mi.back() != 1) mi.push_back(trans_dim);
+            else                mi.back() = trans_dim;
+            mi.push_back(trans_dim);
+            mi.push_back(trans_dim);
             pnode->t.adjust_sizes(mi);
             tree.duplicate_with_operation(pnode, GA_COLON);
             child0 = pnode;
@@ -4183,6 +4188,7 @@ namespace getfem {
             for (size_type i = 0; i < trans_dim; ++i)
               child1->tensor()(i,i) = scalar_type(1);
             child1->node_type = GA_NODE_CONSTANT;
+            std::swap(pnode->children[0], pnode->children[1]);
           } else if (pnode->node_type == GA_NODE_INTERPOLATE_X) {
             pnode->node_type = GA_NODE_CONSTANT;
             if (pnode->nbc1) {
@@ -4296,10 +4302,10 @@ namespace getfem {
         pnode->node_type = replacement_table.at(pnode->node_type);
       }
       mi = pnode->tensor().sizes();
-      mi.pop_back();
+      if (mi.back() != 1) mi.push_back(m.dim());
+      else                mi.back() = m.dim();
       mi.push_back(m.dim());
-      if (m.dim() > 1)
-        mi.push_back(m.dim());
+      mi.push_back(m.dim());
       pnode->t.adjust_sizes(mi);
       tree.duplicate_with_operation(pnode, GA_COLON);
       child0 = pnode;
@@ -4310,6 +4316,7 @@ namespace getfem {
       for (size_type i = 0; i < meshdim; ++i)
         child1->tensor()(i,i) = scalar_type(1);
       child1->node_type = GA_NODE_CONSTANT;
+      std::swap(pnode->children[0], pnode->children[1]);
       break;
 
     case GA_NODE_OP:
