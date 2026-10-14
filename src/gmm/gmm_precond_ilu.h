@@ -213,8 +213,8 @@ namespace gmm {
       }
     }
 
-    L = tm_type(&(L_val[0]), &(L_ind[0]), &(L_ptr[0]), n, mat_ncols(A));
-    U = tm_type(&(U_val[0]), &(U_ind[0]), &(U_ptr[0]), n, mat_ncols(A));
+    L = tm_type(L_val.data(), L_ind.data(), L_ptr.data(), n, mat_ncols(A));
+    U = tm_type(U_val.data(), U_ind.data(), U_ptr.data(), n, mat_ncols(A));
   }
 
   template <typename Matrix>
