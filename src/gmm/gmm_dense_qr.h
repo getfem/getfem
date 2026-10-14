@@ -67,7 +67,8 @@ namespace gmm {
       house_vector(V);
 
       R Vnorm2 = vect_norm2_sqr(V);
-      if (Vnorm2 > R(1) || gmm::imag(A(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+      if (vect_norminf(sub_vector(V, sub_interval(1, m-j-1))) > R(0)
+          || gmm::imag(A(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
         auto subA = sub_matrix(A, SUBI, SUBJ);
         gmm::mult(conjugated(subA),
                   scaled(V, T(R(-2)/Vnorm2)), W);
@@ -100,7 +101,8 @@ namespace gmm {
       for (size_type i = j+1; i < m; ++i)
         V[i-j] = QR(i, j);
       R Vnorm2 = vect_norm2_sqr(V);
-      if (Vnorm2 > R(1) || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+      if (vect_norminf(sub_vector(V, sub_interval(1, m-j-1))) > R(0)
+          || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
         auto subA = sub_matrix(A, sub_interval(0, mat_nrows(A)),
                                   sub_interval(j, m-j));
         gmm::mult(subA, scaled(V, T(R(-2)/Vnorm2)), W);
@@ -131,7 +133,8 @@ namespace gmm {
       for (size_type i = j+1; i < m; ++i)
         V[i-j] = QR(i, j);
       R Vnorm2 = vect_norm2_sqr(V);
-      if (Vnorm2 > R(1) || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
+      if (vect_norminf(sub_vector(V, sub_interval(1, m-j-1))) > R(0)
+          || gmm::imag(QR(j, j)) != R(0)) { // compatible with {sdcz}larfg.f
         auto subA = sub_matrix(A, sub_interval(j, m-j),
                                   sub_interval(0, mat_ncols(A)));
         gmm::mult(conjugated(subA),
