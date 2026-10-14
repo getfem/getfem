@@ -666,6 +666,10 @@ static void test_new_assembly(int N, int NX, int pK) {
                   "Derivative_cos(pi*X).exp(X*0)", mim, min_value);
       SCAL_TEST_0("Test on function integration 3",
                   "cos(pi*X).Id(meshdim)(:,1)", mim,0);
+      SCAL_TEST_0("Test on function derivative",
+                  "Derivative_reg_pos_part(0.2, 0.5)", mim, 0.4);
+      SCAL_TEST_0("Test on constant dot product",
+                  "([1,2;3,4].[1;0])(2)", mim, 3);
     }
 
     if (all) {
@@ -722,6 +726,33 @@ static void test_new_assembly(int N, int NX, int pK) {
 
 
     if (all) {
+      getfem::add_interpolate_transformation_from_expression
+        (workspace, "identity", m, m, "X");
+      SCAL_TEST_0("Test on gradient of divergence",
+                  "Norm_sqr(Grad(Div_u)-Grad(Trace(Grad_u)))", mim, 0);
+      SCAL_TEST_0("Test on gradient of interpolated divergence",
+                  "Norm_sqr(Grad(Interpolate(Div_u,identity))"
+                  "-Grad(Trace(Grad_u)))", mim, 0);
+
+      cout << "\nTest on gradient of divergence of test functions" << endl;
+      std::string D = (N == 2) ? "[1;2]" : "[1;2;3]";
+      getfem::base_vector V(ndofu), V2(ndofu);
+      workspace.clear_expressions();
+      workspace.add_expression("Grad(Div_Test_u)." + D, mim);
+      workspace.assembly(1);
+      gmm::copy(gmm::sub_vector(workspace.assembled_vector(), Iu), V);
+      workspace.clear_expressions();
+      workspace.add_expression("Grad(Trace(Grad_Test_u))." + D, mim);
+      workspace.assembly(1);
+      gmm::copy(gmm::sub_vector(workspace.assembled_vector(), Iu), V2);
+      gmm::add(gmm::scaled(V2, scalar_type(-1)), V);
+      scalar_type norm_error = gmm::vect_norminf(V) / gmm::vect_norminf(V2);
+      cout << "Error : " << norm_error << endl;
+      GMM_ASSERT1(norm_error < 1E-10,
+                  "Error in high or low level generic assembly");
+    }
+
+    if (all) {
       VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
                  Iu, getfem::old_asm_source_term(V, mim, mf_u, mf_u, U));
 
@@ -767,6 +798,30 @@ static void test_new_assembly(int N, int NX, int pK) {
     if (all) {
       MAT_TEST_1("Test for Mass matrix", ndofu, ndofu, "Test_u.Test2_u", mim,
                  Iu, Iu,  getfem::old_asm_mass_matrix(K, mim, mf_u));
+    }
+
+    if (all) {
+      cout << "\nTest for a sum of terms with and without transformation"
+           << endl;
+      getfem::add_interpolate_transformation_from_expression
+        (workspace, "mirror", m, m,
+         (N == 2) ? "[1-X(1);X(2)]" : "[1-X(1);X(2);X(3)]");
+      getfem::model_real_sparse_matrix K(ndofu, ndofu), K2(ndofu, ndofu);
+      workspace.clear_expressions();
+      workspace.add_expression("Test_u.Test2_u"
+                               "+Test_u.Interpolate(Test2_u,mirror)", mim);
+      workspace.assembly(2);
+      gmm::copy(gmm::sub_matrix(workspace.assembled_matrix(), Iu, Iu), K);
+      workspace.clear_expressions();
+      workspace.add_expression("Test_u.Test2_u", mim);
+      workspace.add_expression("Test_u.Interpolate(Test2_u,mirror)", mim);
+      workspace.assembly(2);
+      gmm::copy(gmm::sub_matrix(workspace.assembled_matrix(), Iu, Iu), K2);
+      gmm::add(gmm::scaled(K2, scalar_type(-1)), K);
+      scalar_type norm_error = gmm::mat_norminf(K) / gmm::mat_norminf(K2);
+      cout << "Error : " << norm_error << endl;
+      GMM_ASSERT1(norm_error < 1E-10,
+                  "Error in high or low level generic assembly");
     }
 
     if (all) {

@@ -338,6 +338,15 @@ static void check_methods() {
 
 
 
+  for (size_type k = 0; k < 2; ++k) {
+    snprintf(s,511,"IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3,6))");
+    check_method(s, getfem::int_method_descriptor(s), k,
+                 bgeot::pyramid_QK_geotrans(1));
+    snprintf(s,511,"IM_PYRAMID_COMPOSITE(IM_TETRAHEDRON(8))");
+    check_method(s, getfem::int_method_descriptor(s), k,
+                 bgeot::pyramid_QK_geotrans(1));
+  }
+
   {
     snprintf(s,511,"IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(3),4)");
     check_method(s, getfem::int_method_descriptor(s), 3, bgeot::simplex_geotrans(1,1));

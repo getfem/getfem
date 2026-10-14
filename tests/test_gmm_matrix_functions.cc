@@ -46,6 +46,34 @@ template <class T> void test_sqrtm(T) {
   gmm::add(gmm::scaled(Z, -T(1)), SQRTMX);
   std::cout << "err(sqrtm(X)) = " << SQRTMX << std::endl;
   assert(gmm::mat_norm1(SQRTMX) < gmm::default_tol(T()));
+
+  // Real matrix with a complex eigenvalue pair, not normal:
+  // X = [A b; 0 c] with A = [1 -1; 1 1], b = [1/2; 1/4] and c = 2.
+  // sqrtm(X) = [S F; 0 sqrt(c)] with S = [s -t; t s], s = 2^(1/4)cos(pi/8),
+  // t = 2^(1/4)sin(pi/8) and (A - c I) F = (S - sqrt(c) I) b.
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  n = 3;
+  gmm::resize(X, n, n); gmm::resize(SQRTMX, n, n); gmm::resize(Z, n, n);
+  gmm::clear(X); gmm::clear(SQRTMX); gmm::clear(Z);
+  X(0,0) = X(1,0) = X(1,1) = T(1);
+  X(0,1) = -T(1);
+  X(0,2) = T(0.5);
+  X(1,2) = T(0.25);
+  X(2,2) = T(2);
+  double s = pow(2., 0.25)*cos(M_PI/8.), t = pow(2., 0.25)*sin(M_PI/8.);
+  double m0 = (s - sqrt(2.))*0.5 - t*0.25, m1 = t*0.5 + (s - sqrt(2.))*0.25;
+  Z(0,0) = Z(1,1) = T(s);
+  Z(0,1) = T(-t);
+  Z(1,0) = T(t);
+  Z(0,2) = T(0.5*(m1 - m0));
+  Z(1,2) = T(-0.5*(m0 + m1));
+  Z(2,2) = T(sqrt(2.));
+  gmm::sqrtm(X, SQRTMX);
+  std::cout << "X = " << X << std::endl;
+  std::cout << "sqrtm(X) = " << SQRTMX << std::endl;
+  gmm::add(gmm::scaled(Z, -T(1)), SQRTMX);
+  std::cout << "err(sqrtm(X)) = " << SQRTMX << std::endl;
+  assert(gmm::mat_norm1(SQRTMX) < R(3*n)*gmm::default_tol(T()));
 }
 
 
@@ -81,6 +109,31 @@ template <class T> void test_logm(T) {
   std::cout << "err(logm(X)) = " << LOGMX << std::endl;
   assert(gmm::mat_norm1(LOGMX) < R(3*n)*gmm::default_tol(T()));
   //assert (logm ([1 -1 -1;0 1 -1; 0 0 1]), [0 -1 -1.5; 0 0 -1; 0 0 0], 1e-5)
+
+  // Real matrix with a complex eigenvalue pair, not normal:
+  // X = [A b; 0 c] with A = [1 -1; 1 1], b = [1/2; 1/4] and c = 2.
+  // logm(X) = [L F; 0 log(c)] with L = [log(r) -t; t log(r)],
+  // r = sqrt(2), t = pi/4 and (A - c I) F = (L - log(c) I) b.
+  gmm::clear(X); gmm::clear(LOGMX); gmm::clear(Z);
+  X(0,0) = X(1,0) = X(1,1) = T(1);
+  X(0,1) = -T(1);
+  X(0,2) = T(0.5);
+  X(1,2) = T(0.25);
+  X(2,2) = T(2);
+  double l = log(2.)/2., t = M_PI/4.;
+  double m0 = (l - log(2.))*0.5 - t*0.25, m1 = t*0.5 + (l - log(2.))*0.25;
+  Z(0,0) = Z(1,1) = T(l);
+  Z(0,1) = T(-t);
+  Z(1,0) = T(t);
+  Z(0,2) = T(0.5*(m1 - m0));
+  Z(1,2) = T(-0.5*(m0 + m1));
+  Z(2,2) = T(log(2.));
+  gmm::logm(X, LOGMX);
+  std::cout << "X = " << X << std::endl;
+  std::cout << "logm(X) = " << LOGMX << std::endl;
+  gmm::add(gmm::scaled(Z, -T(1)), LOGMX);
+  std::cout << "err(logm(X)) = " << LOGMX << std::endl;
+  assert(gmm::mat_norm1(LOGMX) < R(3*n)*gmm::default_tol(T()));
 
   //assert (logm (10), log (10))
   //assert (full (logm (eye (3))), logm (full (eye (3))))
