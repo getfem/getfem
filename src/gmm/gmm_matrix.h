@@ -613,18 +613,20 @@ namespace gmm
     typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(&m.pr[0],&m.ir[0],&m.jc[0], m.nr, &m.pr[0]); }
+    static const_col_iterator col_begin(const this_type &m) {
+      return const_col_iterator(m.pr.data(), m.ir.data(), m.jc.data(), m.nr,
+                                m.pr.data());
+    }
     static const_col_iterator col_end(const this_type &m) {
-      return const_col_iterator(&m.pr[0],&m.ir[0],&m.jc[0]+m.nc,
-                                m.nr,&m.pr[0]);
+      return const_col_iterator(m.pr.data(), m.ir.data(), m.jc.data()+m.nc, m.nr,
+                                m.pr.data());
     }
     static const_sub_col_type col(const const_col_iterator &it) {
       return const_sub_col_type(it.pr + *(it.jc) - shift,
                                 it.ir + *(it.jc) - shift,
                                 *(it.jc + 1) - *(it.jc), it.n);
     }
-    static const origin_type* origin(const this_type &m) { return &m.pr[0]; }
+    static const origin_type* origin(const this_type &m) { return m.pr.data(); }
     static void do_clear(this_type &m) { m.do_clear(); }
     static value_type access(const const_col_iterator &itcol, size_type j)
     { return col(itcol)[j]; }
@@ -763,15 +765,17 @@ namespace gmm
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(&m.pr[0], &m.ir[0], &m.jc[0], m.nc, &m.pr[0]); }
+    { return const_row_iterator(m.pr.data(), m.ir.data(), m.jc.data(), m.nc,
+                                m.pr.data()); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(&m.pr[0], &m.ir[0], &m.jc[0] + m.nr, m.nc, &m.pr[0]); }
+    { return const_row_iterator(m.pr.data(), m.ir.data(), m.jc.data() + m.nr,
+                                m.nc, m.pr.data()); }
     static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
                                 it.ir + *(it.jc) - shift,
                                 *(it.jc + 1) - *(it.jc), it.n);
     }
-    static const origin_type* origin(const this_type &m) { return &m.pr[0]; }
+    static const origin_type* origin(const this_type &m) { return m.pr.data(); }
     static void do_clear(this_type &m) { m.do_clear(); }
     static value_type access(const const_row_iterator &itrow, size_type j)
     { return row(itrow)[j]; }
