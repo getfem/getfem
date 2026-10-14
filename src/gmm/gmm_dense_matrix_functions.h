@@ -100,7 +100,7 @@ namespace gmm {
     #endif
     sqrtm_utri_inplace(S);
     gmm::mult(Q, S, TMP);
-    gmm::mult(TMP, gmm::transposed(Q), SQRTMA);
+    gmm::mult(TMP, gmm::conjugated(Q), SQRTMA);
   }
 
   template <typename T>
@@ -256,7 +256,7 @@ namespace gmm {
                 "Matrix logarithm is not defined for non-square matrices");
     dense_matrix<T> S(A), Q(A);
     #if defined(GMM_USES_LAPACK)
-    schur(A, S, Q); // A = Q * S * Q^T
+    schur(A, S, Q); // A = Q * S * Q^H
     #else
     GMM_ASSERT1(false, "Please recompile with lapack and blas libraries "
                 "to use logm matrix function.");
@@ -290,7 +290,7 @@ namespace gmm {
       dense_matrix<T> auxmat(n,n);
       logm_utri_inplace(S);
       gmm::mult(Q, S, auxmat);
-      gmm::mult(auxmat, gmm::transposed(Q), LOGMA);
+      gmm::mult(auxmat, gmm::conjugated(Q), LOGMA);
     }
 
   }
