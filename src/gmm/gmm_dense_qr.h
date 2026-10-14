@@ -52,6 +52,7 @@ namespace gmm {
 
     const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
+    if (n == 0) return;
 
     std::vector<T> W(m), V(m);
     // skip the last reflection for *real* square matrices (m-1 limit)
@@ -148,6 +149,7 @@ namespace gmm {
 
     const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
+    if (n == 0) return;
     gmm::copy(A, Q);
 
     std::vector<T> W(m);
