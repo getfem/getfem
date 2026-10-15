@@ -285,8 +285,42 @@ namespace getfem {
         *region_map = read_region_names_from_gmsh_mesh_file(f);
       }
     }
+    /* read the physical tags of the entities (format version 4) */
+    std::map<std::pair<unsigned, unsigned>, std::vector<unsigned>> entity_phys;
+    bool has_physical = false, at_nodes = false;
+    if (version >= 4.) {
+      std::string section;
+      while (f >> section && section != "$Entities")
+        if (section == "$Nodes") { at_nodes = true; break; }
+      if (!at_nodes) {
+        size_type nb_ent[4];
+        f >> nb_ent[0] >> nb_ent[1] >> nb_ent[2] >> nb_ent[3];
+        for (unsigned d = 0; d < 4; ++d)
+          for (size_type e = 0; e < nb_ent[d]; ++e) {
+            int tag, t;
+            double x;
+            size_type nb_phys, nb_bound;
+            f >> tag;
+            // bounding box, or the coordinates of a point in version 4.1
+            for (int k = 0; k < ((d == 0 && version >= 4.05) ? 3 : 6); ++k)
+              f >> x;
+            f >> nb_phys;
+            std::vector<unsigned> &phys = entity_phys[{d, unsigned(tag)}];
+            for (size_type k = 0; k < nb_phys; ++k) {
+              f >> t;
+              phys.push_back(unsigned(gmm::abs(t)));
+            }
+            if (nb_phys) has_physical = true;
+            if (d > 0) {
+              f >> nb_bound;
+              for (size_type k = 0; k < nb_bound; ++k) f >> t;
+            }
+          }
+      }
+    }
+
     /* read the node list */
-    if (version >= 2.)
+    if (version >= 2. && !at_nodes)
       bgeot::read_until(f, "$Nodes"); /* Format versions 2 and 4 */
 
     size_type nb_block, nb_node, dummy;
@@ -352,14 +386,27 @@ namespace getfem {
     dal::bit_vector reg;
     for (size_type block=0; block < nb_block; ++block) {
       unsigned dimr, type, region;
+      std::vector<unsigned> regions;
       if (version >= 4.) { /* Format version 4 */
-        f >> dimr >> region >> type >> nb_cv;
-        if (reg.is_in(region)) {
-          GMM_WARNING2("Two regions share the same number, "
-                       "the region numbering is modified");
-          while (reg.is_in(region)) region += 5;
+        unsigned tag;
+        if (version >= 4.05) f >> dimr >> tag >> type >> nb_cv;
+        else f >> tag >> dimr >> type >> nb_cv;
+        if (has_physical) {
+          // one region per physical group, as in format version 2
+          regions = entity_phys[{dimr, tag}];
+          if (regions.empty()) regions.push_back(0);
+        } else {
+          // no physical groups: number the regions by entity tag
+          region = tag;
+          if (reg.is_in(region)) {
+            GMM_WARNING2("Two regions share the same number, "
+                         "the region numbering is modified");
+            while (reg.is_in(region)) region += 5;
+          }
+          reg.add(region);
+          regions.push_back(region);
         }
-        reg.add(region);
+        region = regions[0];
       }
       for (size_type cv=0; cv < nb_cv; ++cv) {
 
@@ -637,6 +684,11 @@ namespace getfem {
           ci.nodes[3]  = tmp_nodes[4];
           ci.nodes[4]  = tmp_nodes[1];
         } break;
+        }
+        for (size_type k = 1; k < regions.size(); ++k) {
+          gmsh_cv_info ci2 = cvlst.back();
+          ci2.region = regions[k];
+          cvlst.push_back(ci2);
         }
       }
     }
