@@ -2180,7 +2180,7 @@ namespace getfem {
                 for (size_type k = 0; k < ii2; ++k)
                   for (size_type l = 0; l < nn2; ++l)
                     for (size_type m = 0; m < ii1; ++m, ++it)
-                      *it = child0->tensor()[m+j*ii1+k*ii1*nn1+l*ii1*nn1*ii2+
+                      *it = child1->tensor()[m+j*ii1+k*ii1*nn1+l*ii1*nn1*ii2+
                                              i*ii1*nn1*ii2*nn2];
             tree.clear_children(pnode);
           } else if (child1->node_type == GA_NODE_ZERO) {
@@ -2237,7 +2237,7 @@ namespace getfem {
             for (size_type i = 0; i < nn; ++i)
               for (size_type j = 0; j < ii2; ++j)
                 for (size_type k = 0; k < ii1; ++k, ++it)
-                  *it = child0->tensor()[k+i*ii1+j*ii1*nn];
+                  *it = child1->tensor()[k+i*ii1+j*ii1*nn];
             tree.clear_children(pnode);
           } else if (child1->node_type == GA_NODE_ZERO) {
             pnode->node_type = GA_NODE_ZERO;
