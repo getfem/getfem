@@ -4398,8 +4398,9 @@ namespace getfem {
         pnode->children[3]->init_scalar_tensor(scalar_type(2));
         break;
 
-      case GA_DEVIATOR: // Replace Deviator(T) by (T-Trace(T)*Id(mdim)/mdim)
-        {
+      case GA_DEVIATOR: // Replace Deviator(T) by (T-Trace(T)*Id(N)/N)
+        {                 // with N the size of T
+          size_type N = child0->tensor().sizes().back();
           tree.duplicate_with_substraction(child0);
           child1 = child0->parent->children[1];
           tree.insert_node(child1, GA_NODE_OP);
@@ -4412,13 +4413,13 @@ namespace getfem {
           pga_tree_node pid = child1->parent->parent->children[0];
           tree.duplicate_with_operation(pid, GA_DIV);
           pid->parent->children[1]->node_type = GA_NODE_CONSTANT;
-          pid->parent->children[1]->init_scalar_tensor(m.dim());
+          pid->parent->children[1]->init_scalar_tensor(scalar_type(N));
           pid->node_type = GA_NODE_PARAMS;
           tree.add_child(pid); tree.add_child(pid);
           pid->children[0]->node_type = GA_NODE_NAME;
           pid->children[0]->name = "Id";
           pid->children[1]->node_type = GA_NODE_CONSTANT;
-          pid->children[1]->init_scalar_tensor(m.dim());
+          pid->children[1]->init_scalar_tensor(scalar_type(N));
           ga_node_grad(tree, workspace, m, child0);
           child1->parent->marked = true;
           ga_node_grad(tree, workspace, m, child1->parent);
