@@ -995,7 +995,7 @@ namespace getfem {
                 "Bad parameters");
     std::stringstream name;
     if (n == 2)
-      name << "FEM_QK_HIERARCHICAL(1," << k << ")";
+      name << "FEM_QK_HIERARCHICAL(2," << k << ")";
     else
       name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
            << "),FEM_PK_HIERARCHICAL(1," << k << "))";
@@ -1064,7 +1064,7 @@ namespace getfem {
                 "Bad parameters");
     std::stringstream name;
     if (n == 2)
-      name << "FEM_QK(1," << k << ")";
+      name << "FEM_QK(2," << k << ")";
     else
       name << "FEM_PRODUCT(FEM_PK(" << n-1 << "," << k << "),FEM_PK(1,"
            << k << "))";
@@ -1093,7 +1093,7 @@ namespace getfem {
                 "Bad parameters");
     std::stringstream name;
     if (n == 2)
-      name << "FEM_QK_DISCONTINUOUS(1," << k << alpha << ")";
+      name << "FEM_QK_DISCONTINUOUS(2," << k << alpha << ")";
     else
       name << "FEM_PRODUCT(FEM_PK_DISCONTINUOUS(" << n-1 << "," << k << alpha
            << "),FEM_PK_DISCONTINUOUS(1,"
