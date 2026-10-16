@@ -714,16 +714,57 @@ namespace bgeot
     /// Makes P = 1.
     void one() { numerator_.one(); denominator_.one(); }
     void clear() { numerator_.clear(); denominator_.one(); }
+  private:
+    // Taylor coefficients in t of P(x(1-t)) at t = 0.
+    template <typename ITER>
+    static std::vector<T> ray_taylor(const polynomial<T> &P, const ITER &it) {
+      std::vector<T> S(P.degree()+1, T(0)), c(P.degree()+1, T(0));
+      power_index mi(P.dim());
+      for (size_type l = 0; l < P.size(); ++l, ++mi) {
+        T m = P[l];
+        for (short_type i = 0; i < P.dim(); ++i)
+          for (short_type e = 0; e < mi[i]; ++e) m *= it[i];
+        S[mi.degree()] += m;
+      }
+      for (size_type j = 0; j < S.size(); ++j) {
+        T binom(1); // binomial coefficient C(d, j)
+        for (size_type d = j; d < S.size(); ++d) {
+          c[j] += binom * S[d];
+          binom = binom * T(d+1) / T(d+1-j);
+        }
+        if (j % 2) c[j] = -c[j];
+      }
+      return c;
+    }
+
+  public:
     template <typename ITER> T eval(const ITER &it) const {
       typedef typename gmm::number_traits<T>::magnitude_type R;
       T a = numerator_.eval(it), b = denominator_.eval(it);
-      if (b == T(0)) { // The better should be to evaluate the derivatives ...
+      if (b == T(0)) {
         std::vector<T> p(it, it+dim());
-	R no = gmm::vect_norm2(p);
-	if (no == R(0)) { gmm::fill_random(p); gmm::scale(p, R(1E-35)); }
-	else gmm::scale(p, R(0.9999999));
-	a = numerator_.eval(p.begin());
-        b = denominator_.eval(p.begin());
+        if (gmm::vect_norm2(p) == R(0)) {
+          gmm::fill_random(p); gmm::scale(p, R(1E-35));
+          a = numerator_.eval(p.begin());
+          b = denominator_.eval(p.begin());
+        } else {
+          // Limit when the point is approached from the origin: ratio of
+          // the lowest non-vanishing Taylor coefficients along the ray.
+          std::vector<T> cn = ray_taylor(numerator_, p.begin());
+          std::vector<T> cd = ray_taylor(denominator_, p.begin());
+          R maxn(0), maxd(0);
+          for (const T &v : cn) maxn = std::max(maxn, R(gmm::abs(v)));
+          for (const T &v : cd) maxd = std::max(maxd, R(gmm::abs(v)));
+          for (size_type j = 0; j < cd.size(); ++j) {
+            if (j < cn.size() && R(gmm::abs(cn[j])) > maxn * R(1E-10)) {
+              a = cn[j]; b = cd[j]; // infinite limit if cd[j] vanishes
+              if (R(gmm::abs(b)) <= maxd * R(1E-10)) b = T(0);
+              break;
+            }
+            if (R(gmm::abs(cd[j])) > maxd * R(1E-10))
+              { a = T(0); b = cd[j]; break; }
+          }
+        }
       }
       if (a != T(0)) a /= b;
       return a;
