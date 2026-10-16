@@ -199,27 +199,34 @@ namespace getfem {
     }
   };
 
-  std::map<std::string, size_type> read_region_names_from_gmsh_mesh_file(std::istream& f)
-  {
+  std::map<std::string, size_type>
+  read_region_names_from_gmsh_mesh_file(std::istream& f) {
     std::map<std::string, size_type> region_map;
-    bgeot::read_until(f, "$PhysicalNames");
-    size_type nb_regions;
-    f >> nb_regions;
-    size_type rt,ri;
-    std::string region_name;
-    for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
-      f >> rt >> ri;
-      std::getline(f, region_name);
-      /* trim the string to the quote character front and back*/
-      size_t pos = region_name.find_first_of("\"");
-      if (pos != region_name.npos) {
-        region_name.erase(0, pos+1);
-        pos = region_name.find_last_of("\"");
-        region_name.erase(pos);
+    // $PhysicalNames is optional and may be anywhere in the file
+    std::streampos start = f.tellg();
+    std::string line;
+    while (line.substr(0, 14) != "$PhysicalNames" &&
+           f.good() && f.peek() != EOF)
+      std::getline(f, line);
+    if (line.substr(0, 14) == "$PhysicalNames") {
+      size_type nb_regions;
+      f >> nb_regions;
+      size_type rt,ri;
+      std::string region_name;
+      for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
+        f >> rt >> ri;
+        std::getline(f, region_name);
+        /* trim the string to the quote character front and back*/
+        size_t pos = region_name.find_first_of("\"");
+        if (pos != region_name.npos) {
+          region_name.erase(0, pos+1);
+          pos = region_name.find_last_of("\"");
+          region_name.erase(pos);
+        }
+        region_map[region_name] = ri;
       }
-      region_map[region_name] = ri;
     }
-
+    f.seekg(start);
     return region_map;
   }
 
