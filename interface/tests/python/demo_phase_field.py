@@ -57,8 +57,8 @@ integration_degree = 5   # 9 gauss points per quad
 
 #------------------------------------
 
-NX = int(2*((NX+1)/2))
-NY = int(2*((NY+1)/2))
+NX = 2*((NX+1)//2)
+NY = 2*((NY+1)//2)
 
 resultspath = "./demo_phase_field_results"
 if not os.path.exists(resultspath):
