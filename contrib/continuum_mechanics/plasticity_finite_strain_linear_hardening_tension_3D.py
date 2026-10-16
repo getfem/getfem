@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2020-2023 Konstantinos Poulios.
+# Copyright (C) 2020-2026 Konstantinos Poulios.
 #
 # This file is a part of GetFEM
 #
@@ -209,20 +209,22 @@ with open(f"{resultspath}/tension_3D.dat", "w") as f1:
       print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")[0]))
 
       starttime = time.process_time()
-      md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
-               "lsearch", "simplest", "alpha max ratio", 100, "alpha min", 0.2, "alpha mult", 0.6,
-               "alpha threshold res", 1e9)
+      nit, converged = md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
+                                "lsearch", "simplest",
+                                "alpha max ratio", 100, "alpha min", 0.2,
+                                "alpha mult", 0.6, "alpha threshold res", 1e9)
+      if not converged:
+         raise RuntimeError("Newton did not converge in step %d" % step)
       print("STEP %i COMPLETED IN %f SEC" % (step, time.process_time()-starttime))
 
       F = gf.asm_generic(mim, 0, "dirmult", XP_RG, md)
-      print("Displacement %g, total force %g" % (md.variable("disp"), F))
-
+      print("Displacement %g, total force %g" % (md.variable("disp")[0], F))
       A = gf.asm_generic(mim, 0, "Norm(J*Inv(F')*[1;0;0])", XP_RG, md)
       V = gf.asm_generic(mim, 0, "1", -1, md)
       sigma11 = gf.asm_generic(mim, 0, "sigma(1,1)", -1, md)/V
       gamma = gf.asm_generic(mim, 0, "gamma", -1, md)/V
       f1.write("%.10g %.10g %.10g %.10g %10g %10g\n"
-               % (md.variable("disp"), F, A, F/A, sigma11, gamma))
+               % (md.variable("disp")[0], F, A, F/A, sigma11, gamma))
       f1.flush()
 
       output = (mfout1, md.local_projection(mim, "sqrt(1.5)*Norm(sigmaD)", mfout1), "Von Mises Stress",
@@ -236,11 +238,13 @@ with open(f"{resultspath}/tension_3D.dat", "w") as f1:
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
       mfout2.export_to_vtu(f"{resultspath}/tension_3D_{step}.vtu", *output)
 
-      md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
-      md.set_variable("invCp0vec",
-                      md.interpolation("[[[1,0,0,0,0,0]  ,[0,0,0,0.5,0,0],[0,0,0,0,0,0.5]],"+\
-                                       " [[0,0,0,0.5,0,0],[0,1,0,0,0,0]  ,[0,0,0,0,0.5,0]],"+\
-                                       " [[0,0,0,0,0,0.5],[0,0,0,0,0.5,0],[0,0,1,0,0,0]]]:invCp", mimd6, -1))
+      # Update gamma with a tiny inconsistency to avoid hitting the kink point of the
+      # semismooth formulation
+      updated_gamma = md.interpolation("max(gamma0,gamma-1e-9)", mimd1, -1)
+      updated_invCpvec = md.interpolation("[[[1,0,0,0,0,0]  ,[0,0,0,0.5,0,0],[0,0,0,0,0,0.5]],"+\
+                                          " [[0,0,0,0.5,0,0],[0,1,0,0,0,0]  ,[0,0,0,0,0.5,0]],"+\
+                                          " [[0,0,0,0,0,0.5],[0,0,0,0,0.5,0],[0,0,1,0,0,0]]]:invCp", mimd6, -1)
+      md.set_variable("gamma0", updated_gamma)
+      md.set_variable("invCp0vec", updated_invCpvec)
 
 print("OVERALL SOLUTION TIME IS %f SEC" % (time.process_time()-starttime_overall))
-

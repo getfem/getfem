@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: UTF8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2020-2023 Konstantinos Poulios.
+# Copyright (C) 2020-2026 Konstantinos Poulios.
 #
 # This file is a part of GetFEM
 #
@@ -200,9 +200,12 @@ with open(f"{resultspath}/tension_plane_strain.dat", "w") as f1:
       print('STEP %i: Solving with disp = %g' % (step, md.variable("disp")[0]))
 
       starttime = time.process_time()
-      md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
-               "lsearch", "simplest", "alpha max ratio", 10, "alpha min", 0.1, "alpha mult", 0.6,
-               "alpha threshold res", 1e3)
+      nit, converged = md.solve("noisy", "max_iter", 25, "max_res", 1e-10,
+                                "lsearch", "simplest",
+                                "alpha max ratio", 10, "alpha min", 0.1,
+                                "alpha mult", 0.6, "alpha threshold res", 1e3)
+      if not converged:
+         raise RuntimeError("Newton did not converge in step %d" % step)
       print("STEP %i COMPLETED IN %f SEC" % (step, time.process_time()-starttime))
 
       F = gf.asm_generic(mim, 0, "dirmult", XP_RG, md)
@@ -226,11 +229,13 @@ with open(f"{resultspath}/tension_plane_strain.dat", "w") as f1:
                 mfout2, md.local_projection(mim, "gamma", mfout2), "plastic strain")
       mfout2.export_to_vtu(f"{resultspath}/tension_plane_strain_{step}.vtu", *output)
 
-      md.set_variable("gamma0", md.interpolation("gamma", mimd1, -1))
-      md.set_variable("invCp0vec",
-                      md.interpolation("[[[1,0,0,0]  ,[0,0,0,0.5],[0,0,0,0]],"+\
-                                       " [[0,0,0,0.5],[0,1,0,0]  ,[0,0,0,0]],"+\
-                                       " [[0,0,0,0]  ,[0,0,0,0]  ,[0,0,1,0]]]:invCp", mimd4, -1))
+      # Update gamma with a tiny inconsistency to avoid hitting the kink point of the
+      # semismooth formulation
+      updated_gamma = md.interpolation("max(gamma0,gamma-1e-9)", mimd1, -1)
+      updated_invCpvec = md.interpolation("[[[1,0,0,0]  ,[0,0,0,0.5],[0,0,0,0]],"+\
+                                          " [[0,0,0,0.5],[0,1,0,0]  ,[0,0,0,0]],"+\
+                                          " [[0,0,0,0]  ,[0,0,0,0]  ,[0,0,1,0]]]:invCp", mimd4, -1)
+      md.set_variable("gamma0", updated_gamma)
+      md.set_variable("invCp0vec", updated_invCpvec)
 
 print("OVERALL SOLUTION TIME IS %f SEC" % (time.process_time()-starttime_overall))
-

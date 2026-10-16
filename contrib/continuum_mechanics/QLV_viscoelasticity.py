@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM interface
 #
-# Copyright (C) 2021-2021 Konstantinos Poulios.
+# Copyright (C) 2021-2026 Konstantinos Poulios.
 #
 # This file is a part of GetFEM
 #
@@ -188,8 +188,13 @@ with open("QLV_viscoelasticity_results.dat", "w") as f:
                                                      mfout, SIGMA22,  'Sigma 22',
                                                      mfout, SIGMA33,  'Sigma 33')
 
-    md.set_variable("SeHprev", md.interpolation("SeH", mimd3x3, -1))
-    md.set_variable("SeDprev", md.interpolation("SeD", mimd3x3, -1))
-    md.set_variable("SvHprev", md.interpolation("SvH", mimd3x3, -1))
-    md.set_variable("SvDprev", md.interpolation("SvD", mimd3x3, -1))
+    # All from the converged state, before any is updated.
+    updated_SeH = md.interpolation("SeH", mimd3x3, -1)
+    updated_SeD = md.interpolation("SeD", mimd3x3, -1)
+    updated_SvH = md.interpolation("SvH", mimd3x3, -1)
+    updated_SvD = md.interpolation("SvD", mimd3x3, -1)
+    md.set_variable("SeHprev", updated_SeH)
+    md.set_variable("SeDprev", updated_SeD)
+    md.set_variable("SvHprev", updated_SvH)
+    md.set_variable("SvDprev", updated_SvD)
 
