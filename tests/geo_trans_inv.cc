@@ -143,6 +143,44 @@ void test_inversion(bool verbose) {
   test_inversion(bgeot::prism_linear_geotrans(3),verbose);
 }
 
+/* Inversion with projection into the element, for non-affine elements:
+   interior points must be recovered, and exterior points must be
+   projected into the reference element. */
+void test_projection_into_element() {
+  const char *names[5] = { "GT_QK(3,1)", "GT_QK(3,2)", "GT_PYRAMID(1)",
+                           "GT_PYRAMID(2)", "GT_PRISM(3,1)" };
+  const scalar_type interior[5][3] = { { 0.8, 0.8, 0.5}, { 0.9, 0.3, 0.7},
+                                       {-0.5, 0.2, 0.3}, {-0.4,-0.3, 0.2},
+                                       { 0.3, 0.4, 0.9} };
+  for (size_type c = 0; c < 5; ++c) {
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(names[c]);
+    cout << "Testing projection into the element with " << names[c] << "\n";
+    std::vector<base_node> cvpts; // distorted reference element
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      base_node p = pgt->convex_ref()->points()[i];
+      p[0] += 0.05 * p[1] * p[2];
+      cvpts.push_back(p);
+    }
+    bgeot::geotrans_inv_convex gic;
+    gic.init(cvpts, pgt);
+    bool converged;
+    base_node xref(3), xr(3);
+    for (size_type k = 0; k < 3; ++k) xref[k] = interior[c][k];
+    gic.invert(pgt->transform(xref, cvpts), xr, converged, 1e-12, true);
+    GMM_ASSERT1(gmm::vect_dist2(xr, xref) < 1e-9, "wrong inversion of the "
+                "interior point " << xref << " for " << names[c] << ": " << xr);
+    for (size_type i = 0; i < 6; ++i)
+      for (size_type j = 0; j < 6; ++j)
+        for (size_type k = 0; k < 6; ++k) {
+          base_node xo(-1. + 0.6*double(i), -1. + 0.6*double(j),
+                       -1. + 0.6*double(k));
+          gic.invert(pgt->transform(xo, cvpts), xr, converged, 1e-12, true);
+          GMM_ASSERT1(pgt->convex_ref()->is_in(xr) < 1e-12, "point " << xo
+                      << " projected outside of " << names[c] << ": " << xr);
+        }
+  }
+}
+
 int main(int argc, char *argv[]) {
   dim_type N, MESH_TYPE;
   scalar_type LX, LY, LZ;
@@ -155,6 +193,7 @@ int main(int argc, char *argv[]) {
   try {
     test0();
     test_inversion(true);
+    test_projection_into_element();
     PARAM.read_command_line(argc, argv);
     N = bgeot::dim_type(PARAM.int_value("N", "Domaine dimension"));
     NB_POINTS = PARAM.int_value("NB_POINTS", "Nb points");

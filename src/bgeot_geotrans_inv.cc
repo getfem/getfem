@@ -28,32 +28,39 @@ namespace bgeot
 {
   void project_into_convex(base_node &x, const pgeometric_trans pgt) {
 
+    auto pgt_torus = std::dynamic_pointer_cast<const torus_geom_trans>(pgt);
+    const pgeometric_trans
+      orig_pgt = pgt_torus ? pgt_torus->get_original_transformation()
+                           : pgt;
+    pconvex_structure cvs = orig_pgt->basic_structure();
+    dim_type n = cvs->dim();
+
+    if (cvs == pyramid_QK_structure(1)) {
+      // reference pyramid: 0 <= x2 <= 1 and |x0|, |x1| <= 1 - x2
+      x[2] = std::min(std::max(x[2], 0.0), 1.0);
+      scalar_type h = 1.0 - x[2];
+      for (dim_type k = 0; k < 2; ++k)
+        x[k] = std::min(std::max(x[k], -h), h);
+      return;
+    }
+
     for (auto &coord : x) {
       if (coord < 0.0) coord = 0.0;
       if (coord > 1.0) coord = 1.0;
     }
 
-
-    auto pgt_torus = std::dynamic_pointer_cast<const torus_geom_trans>(pgt);
-    const pgeometric_trans
-      orig_pgt = pgt_torus ? pgt_torus->get_original_transformation()
-                           : pgt;
-
-    auto pbasic_convex_ref = basic_convex_ref(orig_pgt->convex_ref());
-    auto nb_simplices = pbasic_convex_ref->simplexified_convex()->nb_convex();
-
-    if (nb_simplices == 1) { // simplex
-      auto sum_coordinates = 0.0;
+    if (cvs == simplex_structure(n)) {
+      scalar_type sum_coordinates = 0.0;
       for (const auto &coord : x) sum_coordinates += coord;
 
       if (sum_coordinates > 1.0) gmm::scale(x, 1.0 / sum_coordinates);
     }
-    else if (pgt->dim() == 3 && nb_simplices != 4) { // prism
-      auto sum_coordinates = x[0] + x[1];
-      if (sum_coordinates > 1.0) {
-        x[0] /= sum_coordinates;
-        x[1] /= sum_coordinates;
-      }
+    else if (n >= 3 && cvs == prism_P1_structure(n)) {
+      // simplex in the first n-1 coordinates
+      scalar_type sum_coordinates = 0.0;
+      for (dim_type k = 0; k < n-1; ++k) sum_coordinates += x[k];
+      if (sum_coordinates > 1.0)
+        for (dim_type k = 0; k < n-1; ++k) x[k] /= sum_coordinates;
     }
   }
 
@@ -188,7 +195,7 @@ namespace bgeot
                                           bool /* throw_except */,
                                           bool project_into_element) {
     converged = false;
-    base_node x0_ref(P), x0_real(N), diff(N);
+    base_node x0_ref(P), x0_real(N), diff(N), xref_prev(P);
     scalar_type maxnormG = gmm::mat_maxnorm(G); // element size
     { // find initial guess
       x0_ref = pgt->geometric_nodes()[0];
@@ -241,8 +248,8 @@ namespace bgeot
         converged = (res < maxnormG * IN_EPS/100.);
         return converged && (pgt->convex_ref()->is_in(xref) < IN_EPS);
       }
-      if (res > res0) {
-        add(gmm::scaled(x0_ref, factor), xref);
+      if (res > res0) { // back to the previous iterate, with a shorter step
+        gmm::copy(xref_prev, xref);
         x0_real = pgt->transform(xref, G);
         add(x0_real, gmm::scaled(xreal, -1.0), diff);
         factor *= 0.5;
@@ -256,6 +263,7 @@ namespace bgeot
         return false;
       }
       mult(transposed(B), diff, x0_ref);
+      gmm::copy(xref, xref_prev);
       add(gmm::scaled(x0_ref, -factor), xref);
       if (project_into_element) project_into_convex(xref, pgt);
       x0_real = pgt->transform(xref, G);
