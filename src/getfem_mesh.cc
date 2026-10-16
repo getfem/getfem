@@ -802,16 +802,16 @@ namespace getfem {
       pgt_old=pgt;
       pgp=bgeot::geotrans_precomp(pgt, pgt->pgeometric_nodes(), 0);
     }
-    size_type N = G.nrows();
+    size_type P = pgp->grad(0).ncols(); // dimension of the element
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 0;
-    base_matrix K(pgp->grad(0).ncols(),G.nrows());
+    base_matrix K(P, G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
       scalar_type emax, emin; gmm::condition_number(K,emin,emax);
       q = std::max(q, emax);
     }
-    return q * sqrt(scalar_type(N)) / scalar_type(2);
+    return q * sqrt(scalar_type(P)) / scalar_type(2);
   }
 
   /* extract faces of convexes which are not shared
