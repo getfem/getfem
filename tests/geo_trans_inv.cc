@@ -181,6 +181,56 @@ void test_projection_into_element() {
   }
 }
 
+/* Inversion near the apex of pyramids, where Newton stalls at the level
+   of rounding errors above the residual tolerance. */
+void test_inversion_near_pyramid_apex() {
+  for (const char *name : { "GT_PYRAMID(1)", "GT_PYRAMID(2)" }) {
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(name);
+    cout << "Testing inversion near the apex of " << name << "\n";
+    std::vector<base_node> cvpts(pgt->convex_ref()->points().begin(),
+                                 pgt->convex_ref()->points().end());
+    bgeot::geotrans_inv_convex gic;
+    gic.init(cvpts, pgt);
+    for (scalar_type d : { 0.1, 0.03, 0.01 }) {
+      base_node xref(0.2*d, -0.1*d, 1.-d), xr(3);
+      bool converged;
+      bool in = gic.invert(pgt->transform(xref, cvpts), xr, converged, 1e-12);
+      GMM_ASSERT1(in && converged && gmm::vect_dist2(xr, xref) < 1e-10,
+                  "inversion failed near the apex of " << name << " for "
+                  << xref << ": " << xr);
+    }
+  }
+}
+
+/* Points off a curved element of lower dimension than the space must
+   not be accepted, although the Newton correction vanishes for them. */
+void test_inversion_off_lower_dimensional_element() {
+  for (const char *name : { "GT_PK(1,2)", "GT_PK(2,2)", "GT_QK(2,2)" }) {
+    bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(name);
+    size_type P = pgt->dim(), N = P + 1;
+    cout << "Testing inversion off a curved " << name << " in dimension "
+         << N << "\n";
+    std::vector<base_node> cvpts;
+    for (const base_node &pt : pgt->convex_ref()->points()) {
+      base_node x(N);
+      for (size_type k = 0; k < P; ++k) x[k] = pt[k];
+      x[N-1] = 0.3 * pt[0] * pt[0];
+      cvpts.push_back(x);
+    }
+    bgeot::geotrans_inv_convex gic;
+    gic.init(cvpts, pgt);
+    base_node xref(P), xr(P);
+    for (size_type k = 0; k < P; ++k) xref[k] = 0.2 + 0.1 * double(k);
+    base_node x = pgt->transform(xref, cvpts);
+    bool converged;
+    GMM_ASSERT1(gic.invert(x, xr, converged, 1e-12) && converged,
+                "point on " << name << " not found");
+    x[N-1] += 1e-6;
+    GMM_ASSERT1(!gic.invert(x, xr, converged, 1e-12) && !converged,
+                "point off " << name << " accepted");
+  }
+}
+
 int main(int argc, char *argv[]) {
   dim_type N, MESH_TYPE;
   scalar_type LX, LY, LZ;
@@ -194,6 +244,8 @@ int main(int argc, char *argv[]) {
     test0();
     test_inversion(true);
     test_projection_into_element();
+    test_inversion_near_pyramid_apex();
+    test_inversion_off_lower_dimensional_element();
     PARAM.read_command_line(argc, argv);
     N = bgeot::dim_type(PARAM.int_value("N", "Domaine dimension"));
     NB_POINTS = PARAM.int_value("NB_POINTS", "Nb points");

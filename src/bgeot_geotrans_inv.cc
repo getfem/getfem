@@ -246,6 +246,19 @@ namespace bgeot
         // relaxed convergence criterion depending on the size and position
         // of the real element
         converged = (res < maxnormG * IN_EPS/100.);
+        if (!converged) { // stalled at rounding level, e.g. near a pyramid
+          // apex: accept if the Newton correction is below the tolerance
+          pgt->poly_vector_grad(xref, pc);
+          if (update_B()) {
+            mult(transposed(B), diff, x0_ref);
+            converged = (gmm::vect_norm2(x0_ref) < IN_EPS);
+            if (converged && P != N) { // the residual normal to the element
+              base_node rn(N);         // is not reduced by the correction
+              gmm::mult(K, gmm::scaled(x0_ref, -1.0), diff, rn);
+              converged = (gmm::vect_norm2(rn) < maxnormG * IN_EPS/100.);
+            }
+          }
+        }
         return converged && (pgt->convex_ref()->is_in(xref) < IN_EPS);
       }
       if (res > res0) { // back to the previous iterate, with a shorter step
