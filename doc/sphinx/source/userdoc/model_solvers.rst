@@ -29,7 +29,7 @@ solve the problem only with respect to a subset of variables (the
 disabled variables are the considered as data) for instance to
 replace the global Newton strategy with a fixed point one.
 
-Let us recall that a standard initialization for the iter object is the folowwing (see Gmm++ documentation on :ref:`gmm-iter`)::
+Let us recall that a standard initialization for the iter object is the following (see Gmm++ documentation on :ref:`gmm-iter`)::
 
   gmm::iteration iter(1E-7, 1, 200);
 

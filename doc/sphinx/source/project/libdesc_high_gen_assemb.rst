@@ -28,7 +28,7 @@ Files
    :file:`getfem_generic_assembly_tree.h` and :file:`getfem_generic_assembly_tree.cc`, "Definition of the tree structure and basic operations on it, including reading an assembly string and transforming it into a syntax tree and making the inverse transformation of a tree into a string."
    :file:`getfem_generic_assembly_function_and_operators.h` and :file:`getfem_generic_assembly_function_and_operators.cc`, "Definition of redefined function and nonlinear operator of GWFL."
    :file:`getfem_generic_assembly_semantic.h` and :file:`getfem_generic_assembly_semantic.cc`, "Semantic analysis and enrichment of the syntax tree. Include some operations such as making the derivation of a tree with respect to a variable or computing the tree corresponding to the gradient of an expression."
-   :file:`getfem_generic_assembly_workspace.cc`, "Methodes of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
+   :file:`getfem_generic_assembly_workspace.cc`, "Methods of the workspace object (defined in :file:`getfem_generic_assembly.h`)."
    :file:`getfem_generic_assembly_compile_and_exec.h` and :file:`getfem_generic_assembly_compile_and_exec.cc`, "Definition of the optimized instructions, compilation into a sequel of optimize instructions and execution of the instructions on Gauss point/interpolation points."
    :file:`getfem_generic_assembly_interpolation.cc`, "Interpolation operations and interpolate transformations."
 
@@ -52,7 +52,7 @@ The assembly string is transformed into an assembly tree by a set of functions i
 
  - Execution of the sequence of instructions and assembly by ``ga_exec(...)``.
 
-These steps are performed only once at the beginning of the assembly. The final tree is compiled in a sequence of optimized instructions which are executed on each Gauss point of each element. The compilation performed some optimizations : repeated terms are automatically detected and evaluated only once, simplifications if the mesh has uniform type of elements, simplifications for vectorized fnite element methods.
+These steps are performed only once at the beginning of the assembly. The final tree is compiled in a sequence of optimized instructions which are executed on each Gauss point of each element. The compilation performed some optimizations : repeated terms are automatically detected and evaluated only once, simplifications if the mesh has uniform type of elements, simplifications for vectorized finite element methods.
 
 Moreover, there is specifics function for interpolation operations (ga_interpolation(...), ga_interpolation_exec(...), ga_interpolation_Lagrange_fem, ga_interpolation_mti, ga_interpolation_im_data, ...)
 
@@ -90,7 +90,7 @@ Assembly tensors are represented on each node by a ``bgeot::tensor<double>`` obj
 
 - Copied tensor. When a node is detected to have exactly the same expression compared to an already compiled one, the assembly tensor will contain a pointer to the assembly tensor of the already compiled node. The consequence is that no unnecessary copy is made.
 
-- Sparse tensor with a listed sparsity. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are duplicated. The tensor are fully represented because it would be difficul to gain in efficiency with that kind of small sparse tensor format. However, some operation can be optimized with the knoledge of a certain sparsity (and duplication). This can change the order of complexity of a reduction. In order to allows this gain in efficiency, the tensor are labellised with some known sparsity format (vectorisation and format coming from operation applied on vectorized tensors). This results in a certain number of sparsity formats that are listed below:
+- Sparse tensor with a listed sparsity. When working with a vector field, the finite element method is applied on each component. This results on vector base functions having only one nonzero component and some components are duplicated. The tensor are fully represented because it would be difficult to gain in efficiency with that kind of small sparse tensor format. However, some operation can be optimized with the knowledge of a certain sparsity (and duplication). This can change the order of complexity of a reduction. In order to allows this gain in efficiency, the tensor are labellised with some known sparsity format (vectorisation and format coming from operation applied on vectorized tensors). This results in a certain number of sparsity formats that are listed below:
 
   - 1: Vectorized base sparsity format: The tensor represent a vectorized
     value. Each value of the condensed tensor is repeated on :math:`Q`

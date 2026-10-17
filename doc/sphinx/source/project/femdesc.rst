@@ -161,7 +161,7 @@ geometric nodes are denoted:
    g^i, i = 0, \ldots, n_g - 1.
 
 The geometric transformation is described thanks to a :math:`n_g` components
-polynomial vector (In fact, as an extention, non polynomial geometric
+polynomial vector (In fact, as an extension, non polynomial geometric
 transformation can also be supported by |gf|, but this is very rarely used)
 
 .. math::
@@ -267,7 +267,7 @@ this case, we will say that the element is :math:`\tau`-equivalent.
 This approach allows to define hermite elements (Argyris for instance) in a
 generic way, even with non linear transformations (i.e. mainly for curved
 boundaries). We denote :math:`[\widehat{\varphi}(\widehat{x})]` the :math:`n_d \times Q` matrix
-whose ith line is :math:`(\widehat{\varphi})^i(\widehat{x})`. Whis this notation, for a function is
+whose ith line is :math:`(\widehat{\varphi})^i(\widehat{x})`. With this notation, for a function is
 defined by
 
 .. math::

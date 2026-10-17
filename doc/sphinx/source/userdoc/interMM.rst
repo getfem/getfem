@@ -66,11 +66,11 @@ Interpolation on a Lagrange fem::
 
   void getfem::ga_interpolation_Lagrange_fem(workspace, mf, result);
 
-where ``workspace`` is a ``getfem::ga_workspace`` object which aims to store the different variables and data (see  :ref:`ud-gasm-high`), ``mf`` is the ``getfem::mesh_fem`` object reresenting the Lagrange fem on which the interpolation is to be done and ``result`` is a ``beot::base_vector`` which store the interpolatin. Note that the workspace should contain the epression to be interpolated. ::
+where ``workspace`` is a ``getfem::ga_workspace`` object which aims to store the different variables and data (see  :ref:`ud-gasm-high`), ``mf`` is the ``getfem::mesh_fem`` object representing the Lagrange fem on which the interpolation is to be done and ``result`` is a ``bgeot::base_vector`` which store the interpolation. Note that the workspace should contain the expression to be interpolated. ::
 
   void getfem::ga_interpolation_Lagrange_fem(md, expr, mf, result, rg=mesh_region::all_convexes());
 
-where ``md`` is a ``getfem::model`` object (containing the variables and data), ``expr`` (std::string object) is the expression to be interpolated, ``mf`` is the ``getfem::mesh_fem`` object reresenting the Lagrange fem on which the interpolation is to be done, ``result`` is the vector in which the interpolation is stored and ``rg`` is the optional mesh region.
+where ``md`` is a ``getfem::model`` object (containing the variables and data), ``expr`` (std::string object) is the expression to be interpolated, ``mf`` is the ``getfem::mesh_fem`` object representing the Lagrange fem on which the interpolation is to be done, ``result`` is the vector in which the interpolation is stored and ``rg`` is the optional mesh region.
 
 Interpolation on a cloud of points::
 

@@ -83,7 +83,7 @@ thanks to the function::
 
   getfem::pfem pf = getfem::fem_descriptor("name of method");
 
-where ``"name of method"`` is a string to be choosen among the existing methods.
+where ``"name of method"`` is a string to be chosen among the existing methods.
 
 
 Classical :math:`P_K` Lagrange elements on simplices
@@ -1360,7 +1360,7 @@ Specific elements in dimension 3
 Lagrange elements on 3D pyramid
 +++++++++++++++++++++++++++++++
 
-|gf| proposes some Lagrange pyramidal elements of degree 0, 1 and two based on [GR-GH1999]_ and [BE-CO-DU2010]_. See these references for more details. The proposed element can be raccorded to standard :math:`P_1` or :math:`P_2` Lagrange fem on the triangular faces and to a standard :math:`Q_1` or :math:`Q_2` Lagrange fem on the quatrilateral face.
+|gf| proposes some Lagrange pyramidal elements of degree 0, 1 and two based on [GR-GH1999]_ and [BE-CO-DU2010]_. See these references for more details. The proposed element can be raccorded to standard :math:`P_1` or :math:`P_2` Lagrange fem on the triangular faces and to a standard :math:`Q_1` or :math:`Q_2` Lagrange fem on the quadrilateral face.
 
 .. _ud-fig-pyramid-lagrange:
 .. list-table:: Lagrange element on a pyramidal element of order 0, 1 and 2

@@ -9,7 +9,7 @@
 |gfm| organization
 =====================
 
-This part of the |sci| |gf| documentation is to be adapted (comes frome the |
+This part of the |sci| |gf| documentation is to be adapted (comes from the |
 |Mlab| |gf| one).
 
 
@@ -25,27 +25,27 @@ Functions
 ---------
 
 * ``gf_workspace`` : workspace management.
-* ``gf_util`` : miscellanous utility functions.
+* ``gf_util`` : miscellaneous utility functions.
 * ``gf_delete`` : destroy a |gf| object (|mlab_m| , |mlab_mf| , |mlab_mim| etc.).
-* ``gf_cvstruct_get`` : retrieve informations from a |mlab_cs| object.
+* ``gf_cvstruct_get`` : retrieve information from a |mlab_cs| object.
 * ``gf_geotrans`` : define a geometric transformation.
-* ``gf_geotrans_get`` : retrieve informations from a |mlab_gt| object.
+* ``gf_geotrans_get`` : retrieve information from a |mlab_gt| object.
 * ``gf_mesh`` : creates a new |mlab_m| object.
-* ``gf_mesh_get`` : retrieve informations from a |mlab_m| object.
+* ``gf_mesh_get`` : retrieve information from a |mlab_m| object.
 * ``gf_mesh_set`` : modify a |mlab_m| object.
 * ``gf_eltm`` : define an elementary matrix.
 * ``gf_fem`` : define a |mlab_fem|.
-* ``gf_fem_get`` : retrieve informations from a |mlab_fem| object.
+* ``gf_fem_get`` : retrieve information from a |mlab_fem| object.
 * ``gf_integ`` : define a integration method.
-* ``gf_integ_get`` : retrieve informations from an |mlab_int| object.
+* ``gf_integ_get`` : retrieve information from an |mlab_int| object.
 * ``gf_mesh_fem`` : creates a new |mlab_mf| object.
-* ``gf_mesh_fem_get`` : retrieve informations from a |mlab_mf| object.
+* ``gf_mesh_fem_get`` : retrieve information from a |mlab_mf| object.
 * ``gf_mesh_fem_set`` : modify a |mlab_mf| object.
 * ``gf_mesh_im`` : creates a new |mlab_mim| object.
-* ``gf_mesh_im_get`` : retrieve informations from a |mlab_mim| object.
+* ``gf_mesh_im_get`` : retrieve information from a |mlab_mim| object.
 * ``gf_mesh_im_set`` : modify a |mlab_mim| object.
 * ``gf_slice`` : create a new |mlab_sl| object.
-* ``gf_slice_get`` : retrieve informations from a |mlab_sl| object.
+* ``gf_slice_get`` : retrieve information from a |mlab_sl| object.
 * ``gf_slice_set`` : modify a |mlab_sl| object.
 * ``gf_spmat`` : create a |mlab_sm| object.
 * ``gf_spmat_get`` : perform computations with the |mlab_sm|.

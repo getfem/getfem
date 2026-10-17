@@ -91,7 +91,7 @@ induce a call to a mex-file, and additional |octv| / |mlab| code::
 Hence you should always try to store data in |octv| / |mlab| arrays instead of
 repetitively calling the getfem functions.
 
-Avalaible object types are :envvar:`gfCvStruct`, :envvar:`gfGeoTrans`,
+Available object types are :envvar:`gfCvStruct`, :envvar:`gfGeoTrans`,
 :envvar:`gfEltm`, :envvar:`gfInteg`, :envvar:`gfFem`, :envvar:`gfMesh`,
 :envvar:`gfMeshFem`, :envvar:`gfMeshIm`, :envvar:`gfMdBrick`,
 :envvar:`gfMdState`, :envvar:`gfModel`, :envvar:`gfSpmat`, :envvar:`gfPrecond`,

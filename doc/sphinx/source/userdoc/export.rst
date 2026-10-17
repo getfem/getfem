@@ -220,7 +220,7 @@ An |mf| ``mfu`` can also be exported in the VTU format with::
   exp.write_point_data(mfp, P, "pressure"); // write a scalar field
   exp.write_point_data(mfu, U, "displacement"); // write a vector field
 
-Note however that when exporing a |mf| with ``vtk_export`` or ``vtu_export``
+Note however that when exporting a |mf| with ``vtk_export`` or ``vtu_export``
 each convex/fem of ``mfu`` will be mapped to a VTK/VTU element type. As
 VTK/VTU does not handle elements of degree greater than 2, there will be a
 loss of precision for higher degree FEMs.

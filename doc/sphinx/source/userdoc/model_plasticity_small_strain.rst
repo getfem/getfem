@@ -140,7 +140,7 @@ with :math:`\eta_n, \zeta_{n}` the right hand side of equations :eq:`thetascheme
 
    \eta_n = \alpha_n - (1-\theta)\Delta t \gamma_n \dfrac{\partial \Psi}{\partial A}(\sigma_{n}, A_{n})
 
-This means in particular that :math:`(\varepsilon^p_{n+1}, \alpha_{n+1}) = ({\mathscr E}^p(u_{n+1},  \zeta_n, \eta_n), {\mathscr A}(u_{n+1}, \zeta_{n}, \eta_n))` is the solution to equations :eq:`thetascheme1` and :eq:`thetascheme2`. Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usualy performed with a local Newton method.
+This means in particular that :math:`(\varepsilon^p_{n+1}, \alpha_{n+1}) = ({\mathscr E}^p(u_{n+1},  \zeta_n, \eta_n), {\mathscr A}(u_{n+1}, \zeta_{n}, \eta_n))` is the solution to equations :eq:`thetascheme1` and :eq:`thetascheme2`. Both these maps and their tangent moduli (usually called consistent tangent moduli) are then used in the global solve of the problem with a Newton method and for :math:`u_{n+1}` the unique remaining variable. The advantage of the return mapping strategy is that the unique variable of the global solve is the displacement :math:`u_{n+1}`. A nonlinear solve on each Gauss point is often necessary which is usually performed with a local Newton method.
 
 In |gf| we propose both the return mapping strategy and also an alternative strategy developed below which is mainly inspired from  [PO-NI2016]_,  [SE-PO-WO2015]_ and [HA-WO2009]_ and allow more simple tangent moduli. It consists in keeping (a multiple of) :math:`\gamma_{n+1}` as an additional unknown with respect to :math:`u_{n+1}`. As we will see, this will allow a more generic treatment of the yield functions, the price for the simplicity being this additional unknown scalar field.
 
@@ -148,7 +148,7 @@ First, we consider an additional (and optional) given function :math:`\alpha(\si
 
 .. math:: \xi_{n+1} = \dfrac{\gamma_{n+1}}{\alpha(\sigma_{n+1}, A_{n+1})} ,
 
-so that our two main unknows are now :math:`u_{n+1} \mbox{ and } \xi_{n+1}`. The discretized plastic flow rule integration now reads:
+so that our two main unknowns are now :math:`u_{n+1} \mbox{ and } \xi_{n+1}`. The discretized plastic flow rule integration now reads:
 
 .. math:: \varepsilon^p_{n+1} - \varepsilon^p_{n} = (1-\theta)\alpha(\sigma_n,A_n)\Delta t \xi_n \dfrac{\partial \Psi}{\partial \sigma}(\sigma_{n}, A_{n}) + \theta \alpha(\sigma_{n+1},A_{n+1}) \Delta t \xi_{n+1} \dfrac{\partial \Psi}{\partial \sigma}(\sigma_{n+1}, A_{n+1}),
   :label: flowrule1
@@ -184,7 +184,7 @@ or
 
 .. math::  \int_{\Omega} (f(\sigma_{n+1} + (-f(\sigma_{n+1}, A_{n+1}) - \xi_{n+1}/r)_+ , A_{n+1}) ) \lambda dx = 0,   \forall \lambda
 
-NOTE : The notation :math:`\Delta \xi_{n+1} = \Delta t \xi_{n+1}` is often used in the litterature. The choice here is to preserve the distinction between the two quantities, mainly because ot the possible use of adaptative time step : when the time step is changing, the value :math:`\xi_n` has to be multiplied by the new time step, so that it is preferable to store :math:`\xi_n` instead of :math:`\Delta \xi_{n}` when using the :math:`\theta`-scheme.
+NOTE : The notation :math:`\Delta \xi_{n+1} = \Delta t \xi_{n+1}` is often used in the literature. The choice here is to preserve the distinction between the two quantities, mainly because of the possible use of adaptative time step : when the time step is changing, the value :math:`\xi_n` has to be multiplied by the new time step, so that it is preferable to store :math:`\xi_n` instead of :math:`\Delta \xi_{n}` when using the :math:`\theta`-scheme.
 
 
 Plane strain approximation
@@ -236,7 +236,7 @@ We will still denote
 
 .. math:: \bar{\sigma} =  \left(\hspace{-0.5em}\begin{array}{cc} \sigma_{1,1} & \sigma_{1,2} \\ \sigma_{1,2} & \sigma_{2,2} \end{array}\hspace{-0.5em}\right)
 
-the in-plane components of the stress tensor. For elastoplasticity, it consists generally to apply the 2D plastic flow rule, prescribing the out-plane components of the stress tensor to be zero with the additionnal variables :math:`\varepsilon^e_{1,3}`, :math:`\varepsilon^e_{2,3}`, :math:`\varepsilon^e_{3,3}` being unknown (see for instance [SO-PE-OW2008]_).
+the in-plane components of the stress tensor. For elastoplasticity, it consists generally to apply the 2D plastic flow rule, prescribing the out-plane components of the stress tensor to be zero with the additional variables :math:`\varepsilon^e_{1,3}`, :math:`\varepsilon^e_{2,3}`, :math:`\varepsilon^e_{3,3}` being unknown (see for instance [SO-PE-OW2008]_).
 
 For an isotropic linearized elastic response, one has :math:`\sigma = \lambda \mbox{tr}(\varepsilon^e) + 2\mu\varepsilon^e` such that
 
@@ -271,8 +271,8 @@ Von Mises :  :math:`\|\mbox{Dev}(\sigma)\| \le \sqrt{\frac{2}{3}}\sigma_y` where
 :math:`\mbox{Dev}(\sigma) = \sigma - \frac{1}{3}\mbox{tr}(\sigma)I` the deviatoric part of :math:`\sigma` and :math:`\|\sigma\| = \sqrt{\sigma:\sigma}`.
 
 
-Perfect isotropic associated elastoplasticity with Von-Mises criterion (Prandl-Reuss model)
-===========================================================================================
+Perfect isotropic associated elastoplasticity with Von-Mises criterion (Prandtl-Reuss model)
+============================================================================================
 
 There is no internal variables and we consider an isotropic elastic response. The flow rule reads
 
@@ -359,7 +359,7 @@ Moreover, for the yield condition, expression :eq:`plane_stress_dev` can be used
 Isotropic elastoplasticity with linear isotropic and kinematic hardening and Von-Mises criterion
 ================================================================================================
 
-We consider an isotropic elastic reponse and the internal variable :math:`\alpha : \Omega \rightarrow \rm I\hspace{-0.15em}R` being the accumulated plastic strain which satisfies
+We consider an isotropic elastic response and the internal variable :math:`\alpha : \Omega \rightarrow \rm I\hspace{-0.15em}R` being the accumulated plastic strain which satisfies
 
 .. math:: \dot{\alpha} = \sqrt{\dfrac{2}{3}}\gamma
 
@@ -440,7 +440,7 @@ The yield condition still reads
 
 .. math:: \delta \|B\| \le \sqrt{\dfrac{2}{3}}(\sigma_{y0}+H_i \alpha_{n+1}).
 
-and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`. The expressions of :math:`\bar{\zeta}_n` and :math:`\eta_n` have to be adapted accoringly.
+and for the elimination of the multiplier, :math:`\beta` has the same expression as in the previous section adapting the value of :math:`\|B\|`. The expressions of :math:`\bar{\zeta}_n` and :math:`\eta_n` have to be adapted accordingly.
 
 
 
@@ -557,7 +557,7 @@ to be called at the end of each time step, before the next one
 (and before any post-treatment : this sets the value of the plastic
 strain and plastic multiplier).
 
-Additionaly, the following function allow to pass from a time step to another for the small strain plastic brick: ::
+Additionally, the following function allow to pass from a time step to another for the small strain plastic brick: ::
 
    getfem::small_strain_elastoplasticity_next_iter
      (md, mim, lawname, unknowns_type,
@@ -568,7 +568,7 @@ The parameters have to be exactly the same as the ones of the
 `add_small_strain_elastoplasticity_brick`,  so see the documentation of
 this function for any explanations.
 Basically, this brick computes the plastic strain and the plastic
-multiplier and stores them for the next step. Additionaly, it copies
+multiplier and stores them for the next step. Additionally, it copies
 the computed displacement to the data that stores the displacement
 of the previous time step (typically "u" to "Previous\_u").
 It has to be called before any use of
@@ -615,7 +615,7 @@ Be careful: ``datalambda``, ``datamu`` and ``datathreshold`` could be constants 
 This function assembles the tangent matrix and the right hand side vector which will be solved using a Newton algorithm.
 
 
-Additionaly, The function: ::
+Additionally, The function: ::
 
       getfem::elastoplasticity_next_iter
           (md, mim, varname, previous_varname, ACP, datalambda, datamu, datathreshold, datasigma);

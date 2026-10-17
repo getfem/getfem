@@ -233,7 +233,7 @@ When a cut-mesh ``mls`` is used (i.e. a ``getfem::mesh_level_set`` object), it i
 
   mls.global_cut_mesh(mcut);
 
-where ``mcut`` has to be an empty mesh which will be fill by the sub-elements. Note that the resulting mesh is a non-regular one in the sense that the sub-mesh of all elements are not conformal at the element edges/faces. It is however possible to interolate on a Lagrange fem on this mesh and make a post-treatment with it to correctly represent a discontinuous field.
+where ``mcut`` has to be an empty mesh which will be fill by the sub-elements. Note that the resulting mesh is a non-regular one in the sense that the sub-mesh of all elements are not conformal at the element edges/faces. It is however possible to interpolate on a Lagrange fem on this mesh and make a post-treatment with it to correctly represent a discontinuous field.
 
 Another mean to represent only the interesting part of the solution when a fictitious domain method is used is to use the mesh slices defined by an isovalue level-set (see :ref:`ud-export_slices`).
 

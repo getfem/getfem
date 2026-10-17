@@ -27,7 +27,7 @@ It is supposed that the considered body is submitted approximately to a rigid bo
 .. math::
   \tau(X) = R(t)X + Z(t)
 
-and may have additonal deformation (exptected smaller) with respect to this rigid motion, where :math:`R(t)` is a rotation matrix
+and may have additional deformation (expected smaller) with respect to this rigid motion, where :math:`R(t)` is a rotation matrix
 
 .. math::
   R(t) = \left(\begin{array}{ccc}
@@ -103,7 +103,7 @@ Note that the term :math:`\dot{\theta} A \bar{X} = \left(\hspace*{-0.5em}\begin{
 
   \dfrac{\partial \Theta}{\partial t} = \dfrac{\partial \bar{\Theta}}{\partial t} + \dot{\theta} \nabla \bar{\Theta} A \bar{X}
 
-This should not be forgotten that a correction has to be provided for each evolving variable for which the time derivative intervene in the considered model (think for instance to platic flow for plasticity). So that certain model bricks canot be used directly (plastic bricks for instance).
+This should not be forgotten that a correction has to be provided for each evolving variable for which the time derivative intervene in the considered model (think for instance to plastic flow for plasticity). So that certain model bricks cannot be used directly (plastic bricks for instance).
 
 |gf| bricks for structural mechanics are mainly considering the displacement as the amin unknown. The expression for the displacement is the following:
 
@@ -156,7 +156,7 @@ The available bricks ...
 
 To be adapted  ::
 
-  ind = getfem::brick_name(parmeters);
+  ind = getfem::brick_name(parameters);
 
 where ``parameters`` are the parameters ...
 

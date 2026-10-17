@@ -47,7 +47,7 @@ For a matrix ``M`` or a vector ``V``,
 add
 ---
 
-addition of vectors or matrices. It is alway possible to mix different type of vector or matrices in the operations. The following operations are valid::
+addition of vectors or matrices. It is always possible to mix different type of vector or matrices in the operations. The following operations are valid::
 
   std::vector<double> V1(10);
   gmm::wsvector<double> V2(10);

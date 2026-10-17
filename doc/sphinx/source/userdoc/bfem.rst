@@ -57,7 +57,7 @@ There are three levels in the |gf_mf| object:
   The product of the reduction matrix with the extension matrix should be the
   identity matrix (ensuring in particular that the two matrices are of maximal
   rank). This optional transformation can be used to reduce the finite element
-  space to a certain region (tipically a boundary) or to prescribe some matching
+  space to a certain region (typically a boundary) or to prescribe some matching
   conditions between non naturally compatible fems (for instance fems with
   different degrees).
 

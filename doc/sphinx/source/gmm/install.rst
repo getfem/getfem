@@ -18,7 +18,7 @@ Moreover, as |gmm| is a template library, no compilation is needed to install it
   gunzip -c gmm-x.xx.tar.gz | tar xvf -
   cd  gmm-x.xx
 
-Then you you have to run the configure script just typing::
+Then you have to run the configure script just typing::
 
   ./configure
 

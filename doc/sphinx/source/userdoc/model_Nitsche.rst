@@ -12,9 +12,9 @@
 Nitsche's method for dirichlet and contact boundary conditions
 --------------------------------------------------------------
 
-|gf| provides a generic implementation of Nitche's method which allows to account for Dirichlet type or contact with friction boundary conditions in a weak sense without the use of Lagrange multipliers.
+|gf| provides a generic implementation of Nitsche's method which allows to account for Dirichlet type or contact with friction boundary conditions in a weak sense without the use of Lagrange multipliers.
 The method is very attractive because it transforms a Dirichlet boundary condition into a weak term similar to a Neumann boundary condition.
-However, this advantage is at the cost that the implementation of Nitche's method is model dependent, since it requires an approximation of the corresponding Neumann term.
+However, this advantage is at the cost that the implementation of Nitsche's method is model dependent, since it requires an approximation of the corresponding Neumann term.
 In order to add a boundary condition with Nitsche's method on a variable of a model, the corresponding brick needs to have access to an approximation of the Neumann term of all partial differential terms applied to this variable.
 In the following, considering a variable :math:`u`, we will denote by
 
@@ -63,7 +63,7 @@ Nitsche's method for prescribing this Dirichlet condition consists in adding the
   \int_{\Gamma_D} \dfrac{1}{\gamma}(Hu-g-\gamma HG).(Hv) - \theta(Hu-g).(HD_uG[v])d\Gamma,
 
 where :math:`\gamma` and :math:`\theta` are two parameters of Nitsche's method and :math:`v` is the test function corresponding to :math:`u`.
-The parameter :math:`\theta` can be chosen positive or negative. :math:`\theta = 1` corresponds to the more standard method which leads to a symmetric tangent term in standard situations, :math:`\theta = 0` corresponds to a non-symmetric method which has the advantage of a reduced number of terms and not requiring the second derivatives of :math:`G` in the nonlinear case, and :math:`\theta = -1` is a kind of skew-symmetric method which ensures an inconditonal coercivity (which means independent of :math:`\gamma`) at least in standard situations.
+The parameter :math:`\theta` can be chosen positive or negative. :math:`\theta = 1` corresponds to the more standard method which leads to a symmetric tangent term in standard situations, :math:`\theta = 0` corresponds to a non-symmetric method which has the advantage of a reduced number of terms and not requiring the second derivatives of :math:`G` in the nonlinear case, and :math:`\theta = -1` is a kind of skew-symmetric method which ensures an unconditional coercivity (which means independent of :math:`\gamma`) at least in standard situations.
 The parameter :math:`\gamma` is a kind of penalization parameter (although the method is consistent) which is taken to be :math:`\gamma = \gamma_0 h_T` where :math:`\gamma_0` is taken uniform on the mesh and :math:`h_T` is the diameter of the element :math:`T`.
 Note that, in standard situations, except for :math:`\theta = -1` the parameter :math:`\gamma_0` has to be taken sufficiently small in order to ensure the convergence of Nitsche's method.
 
@@ -91,7 +91,7 @@ Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
 method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionally coercive. `theta = 0` is the simplest method
+unconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. Returns the brick index in the model.
 ::
@@ -119,7 +119,7 @@ Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
 method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionally coercive. `theta = 0` is the simplest method
+unconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. Returns the brick index in the model.
 (This brick is not fully tested)
@@ -151,7 +151,7 @@ Nitsche's method parameter. `theta` is a scalar value which can be
 positive or negative. `theta = 1` corresponds to the standard symmetric
 method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionally coercive. `theta = 0` is the simplest method
+unconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary
 even for nonlinear problems. `Hname` is the data
 corresponding to the matrix field `H`. It has to be a constant matrix
@@ -203,7 +203,7 @@ the obstacle (interpolated on a finite element method).
 positive or negative. `theta = 1` corresponds to the standard symmetric
 method which is conditionally coercive for  `gamma0` small.
 `theta = -1` corresponds to the skew-symmetric method which is
-inconditionally coercive. `theta = 0` is the simplest method
+unconditionally coercive. `theta = 0` is the simplest method
 for which the second derivative of the Neumann term is not necessary.
 The optional parameter `dataexpr_friction_coeff` is the friction
 coefficient which could be any expression of GWFL.

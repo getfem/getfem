@@ -165,11 +165,11 @@ Once getfem is compiled:
 Octave interface
 ^^^^^^^^^^^^^^^^
 
-You have first to install |octv| with the developpement package
+You have first to install |octv| with the development package
 
 .. caution::
 
-   * You have first to install |octv|, minimal release 4.1.1 with the developpement package such
+   * You have first to install |octv|, minimal release 4.1.1 with the development package such
      that the command ``mkoctfile`` is available (liboctave-dev package on Debian, for instance)
 
    * you should have built the |gf| static library (i.e. do not use ``./configure

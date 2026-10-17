@@ -67,11 +67,11 @@ A specific weak form language has been developed to describe the weak formulatio
 
   - ``Grad(expression)``: When possible, symbolically derive the gradient of the given expression.
 
-  - Possiblility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
+  - Possibility of macro definition (in the model, the ga_workspace object or directly in the assembly string). The macros should be some valid expressions that are expanded inline at the lexical analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
   - ``Interpolate(variable, transformation)``: Powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describes the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element spaces defined on different meshes or more generally for fictitious domain methods such as fluid-structure interaction.
 
-  - ``Elementary_transformation(variable, transformation, dest)``: Allow a linear transformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the trasformation for a particular element. ``dest`` is an optional argument refering to a model variable or data whose fem will be the target fem of the transformation. If omitted, the target fem of the transformation is the one of the first variable. 
+  - ``Elementary_transformation(variable, transformation, dest)``: Allow a linear transformation defined at the element level (i.e. not possible to define at the gauss point level). This feature has been added mostly for defining a reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describes the transformation for a particular element. ``dest`` is an optional argument referring to a model variable or data whose fem will be the target fem of the transformation. If omitted, the target fem of the transformation is the one of the first variable.
 
   - Possibility of integration on the direct product of two-domains for double integral computation or coupling of two variables with a Kernel / convolution / exchange integral. This allows terms like :math:`\displaystyle\int_{\Omega_1}\int_{\Omega_2}k(x,y)u(x)v(y)dydx` with :math:`\Omega_1` and :math:`\Omega_2` two domains, different or not, having their own meshes, integration methods and with :math:`u` a variable defined on :math:`\Omega_1` and :math:`v` a variable defined on :math:`\Omega_2`. The keyword ``Secondary_domain(variable)`` allows to access to the variables on the second domain of integration.
 
@@ -180,7 +180,7 @@ In that case, the variable and constant have to be added to the workspace. This 
 
   workspace.add_im_data(name, imd, V);
 
-where ``name`` is the variable/constant name (see in the next sections the restriction on possible names), ``mf`` is the ``getfem::mesh_fem`` object describing the finite element method, ``I`` is an object of class ``gmm::sub_interval`` indicating the interval of the variable on the assembled vector/matrix and ``V`` is a ``getfem::base_vector`` being the value of the variable/constant. The last method add a constant defined on an ``im_data`` object ``imd`` which allows to store scalar/vector/tensor field informations on the integration points of an ``mesh_im`` object.
+where ``name`` is the variable/constant name (see in the next sections the restriction on possible names), ``mf`` is the ``getfem::mesh_fem`` object describing the finite element method, ``I`` is an object of class ``gmm::sub_interval`` indicating the interval of the variable on the assembled vector/matrix and ``V`` is a ``getfem::base_vector`` being the value of the variable/constant. The last method add a constant defined on an ``im_data`` object ``imd`` which allows to store scalar/vector/tensor field information on the integration points of an ``mesh_im`` object.
 
 
 Once it is declared and once the variables and constant are declared, it is possible to add assembly string to the workspace with::
@@ -511,7 +511,7 @@ Parentheses can be used in a standard way to change the operation order. If no p
 Explicit vectors
 ----------------
 
-GWFL allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite opertor (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
+GWFL allows to define explicit vectors (i.e. order 1 tensors) with the notation ``[a,b,c,d,e]``, i.e. an arbitrary number of components separated by a comma (note the separation with a semicolon ``[a;b;c;d;e]`` is also permitted), the whole vector beginning with a right bracket and ended by a left bracket. The components can be some numeric constants, some valid expressions and may also contain test functions. In the latter case, the vector has to be homogeneous with respect to the test functions. This means that a construction of the type ``[Test_u; Test_v]`` is not allowed. A valid example, with ``u`` as a scalar field variable is ``[5*Grad_Test_u(2), 2*Grad_Test_u(1)]``. Note also that using the quite operator (transpose), an expression ``[a,b,c,d,e]'`` stands for 'row vector`, i.e. a 1x5 matrix.
 
 
 Explicit matrices
@@ -776,12 +776,12 @@ In some situations, the interpolation of a point may fail if the transformed poi
 
   Interpolate_filter(transname, expr, i)
 
-where ``transname`` is the name of the transformation, ``expr`` is the expression to be evaluated and ``i`` value of the returned integer identifier for which the expression have to be computed. Note that ``i`` can be ommited, in that case, the expression is evaluated for a nonzero identifier (i.e. when a corresponding point has been found). For instance, the previous assembly expression to prescribe the equality of a variable ``u`` with its interpolation could be writtne::
+where ``transname`` is the name of the transformation, ``expr`` is the expression to be evaluated and ``i`` value of the returned integer identifier for which the expression have to be computed. Note that ``i`` can be omitted, in that case, the expression is evaluated for a nonzero identifier (i.e. when a corresponding point has been found). For instance, the previous assembly expression to prescribe the equality of a variable ``u`` with its interpolation could be written::
 
   Interpolate_filter(transmane, Interpolate(u,my_transformation)-u)*lambda)
   + Interpolate_filter(transmane, lambda*lambda, 0)
 
-In that case, the equality will only be prescribed in the part of the domain where the transformation succeed and in the other part, the mulitplier is enforced to vanish.
+In that case, the equality will only be prescribed in the part of the domain where the transformation succeed and in the other part, the multiplier is enforced to vanish.
 
 
 **CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus, such a transformation is not allowed in the definition of a potential since it cannot be derived twice.
@@ -1011,7 +1011,7 @@ of the other assembly terms, such that the data can be used in the
 remaining of the assembly as an intermediary result (be careful that it is
 still considered as a data, no derivation of the expression is performed for
 the tangent system).
-If before = 0 (default), the assignement is done after the assembly terms.
+If before = 0 (default), the assignment is done after the assembly terms.
 
 Additionally, In a model, the method::
 

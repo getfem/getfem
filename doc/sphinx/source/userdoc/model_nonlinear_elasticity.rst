@@ -121,7 +121,7 @@ where :math:`{W}` is the density of strain energy of the material. The total str
 
   \mathcal{I}(u) = \int_{\Omega} W( E(u)) dX
 
-and the derivative of the energy in a direction :math:`v` can be writen
+and the derivative of the energy in a direction :math:`v` can be written
 
 .. math::
 
@@ -152,7 +152,7 @@ Integrating by parts, one obtains:
 Tangent matrix
 ##############
 
-The displacement :math:`u` is fixed. In order to obtain the tangent matrix, one subsitutes :math:`u` with :math:`u+h`
+The displacement :math:`u` is fixed. In order to obtain the tangent matrix, one substitutes :math:`u` with :math:`u+h`
 
 .. math::
 
@@ -339,7 +339,7 @@ A Lagrange multiplier representing the pressure is introduced in a mixed formula
     (md, mim, varname, multname, region = -1)
 
 
-where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model on which the incompressibility condition is added, ``multanme`` the multiplier variable corresponding to the pressure (be aware that at least a linear Ladyzhenskaja-Babuska-Brezzi inf-sup condition is satisfied between the f.e.m. of the variable and the one of the multiplier). ``region`` is an optional parameter correponding to the mesh region on which the term is considered (by default, all the mesh).
+where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model on which the incompressibility condition is added, ``multanme`` the multiplier variable corresponding to the pressure (be aware that at least a linear Ladyzhenskaja-Babuska-Brezzi inf-sup condition is satisfied between the f.e.m. of the variable and the one of the multiplier). ``region`` is an optional parameter corresponding to the mesh region on which the term is considered (by default, all the mesh).
 
 
 High-level generic assembly versions
@@ -431,4 +431,4 @@ The Von Mises stress can be interpolated with the following function::
   void compute_finite_strain_elasticity_Von_Mises(md, varname, lawname, params, mf_vm, VM,
                                                   rg=mesh_region::all_convexes());
 
-where ``md`` is the model, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name (see previou brick), ``params`` is a string representing the parameters of the law, ``mf_vm`` a (preferably discontinuous) Lagrange  finite element method on which the interpolation will be done and ``VM`` a vector of type ``model_real_plain_vector`` in which the interpolation will be stored.
+where ``md`` is the model, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name (see previous brick), ``params`` is a string representing the parameters of the law, ``mf_vm`` a (preferably discontinuous) Lagrange  finite element method on which the interpolation will be done and ``VM`` a vector of type ``model_real_plain_vector`` in which the interpolation will be stored.

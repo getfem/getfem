@@ -17,7 +17,7 @@ First, verify that you have installed the following components on your system:
   - Xquartz
   - Homebrew
 
-(Xquartz is not strictly necessary but more confortable).
+(Xquartz is not strictly necessary but more comfortable).
 
 Then, if you download the current git version
 

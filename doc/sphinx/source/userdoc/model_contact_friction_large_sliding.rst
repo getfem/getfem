@@ -11,7 +11,7 @@
 Large sliding/large deformation contact with friction bricks
 ------------------------------------------------------------
 
-The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in GWFL (the generic weak form language). Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contacct bondary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in GWFL.
+The basic tools to deal with large sliding/large deformation contact of deformable structures are accessible in GWFL (the generic weak form language). Some interpolate transformations (see :ref:`ud-gasm-high-transf`) are defined to perform the contact detection and allow to integrate from a contact boundary to the opposite contact boundary. Some other useful tools such as the unit normal vector in the real configuration and projections to take into account contact with Coulomb friction are also defined as operators in GWFL.
 
 Of course, the computational cost of large sliding/large deformation contact algorithms is greatly higher than small sliding-small deformation ones.
 
@@ -83,7 +83,7 @@ Note that the transformation could also be directly used with a `ga_workspace` o
 The contact pair detection algorithm
 ************************************
 
-A contact pair is formed by a point of a slave (or master in case of self-contact) surface and a projected point on the nearest master surface (or rigid obstacle). The Algorithm used is summerized in :ref:`figure<ud-fig-algodetect>`
+A contact pair is formed by a point of a slave (or master in case of self-contact) surface and a projected point on the nearest master surface (or rigid obstacle). The Algorithm used is summarized in :ref:`figure<ud-fig-algodetect>`
 
 .. _ud-fig-algodetect:
 
@@ -159,7 +159,7 @@ The list of criteria:
     without the constraint to remain inside the face
     (which means that the face is prolongated). If the orthogonal
     projection is outside the face, the pair is not considered. This
-    is the present state, however, to treat case (J3) an aditional
+    is the present state, however, to treat case (J3) an additional
     treatment will have to be considered (projection on the face with
     the constraint to remain inside it and test of the normal cone at
     this point)
@@ -209,7 +209,7 @@ We denote by :math:`x_i = \varphi^h(X_i)` the corresponding node on the deformed
 
 where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`.
 
-Considering only stationnary rigid obstacles and applying the principle of Alart-Curnier augmented Lagrangian [AL-CU1991]_, the problem with nodal contact with friction condition can be expressed as follows in an unsymmetric version (see [renard2013]_ for the linear elasticity case)
+Considering only stationary rigid obstacles and applying the principle of Alart-Curnier augmented Lagrangian [AL-CU1991]_, the problem with nodal contact with friction condition can be expressed as follows in an unsymmetric version (see [renard2013]_ for the linear elasticity case)
 
 .. math::
 
@@ -260,7 +260,7 @@ The following nonlinear operators are defined in GWFL (see :ref:`ud-gasm-high`):
 
       \mbox{with } \tau = \mbox{min}(f_3 + f_1(\lambda\cdot n + rg)_-, f_2)
 
-    where :math:`(\cdot)_-` is the negative part (:math:`(x)_- = (-x)_+`) and :math:`f_1, f_2, f_3` are the three components of the friction coefficient. Note that the components :math:`f_2, f_3` are optional. If a scalar fiction coefficient is given (only :math:`f_1`) then this corresponds to the classical Coulomb friction law. If a vector of two components is given  (only :math:`f_1, f_2`) then this corresponds to a Coulomb friction with a given threshold. Finally, if a vector of three components is given, the friction law correspongs to the expression of :math:`\tau` given above.
+    where :math:`(\cdot)_-` is the negative part (:math:`(x)_- = (-x)_+`) and :math:`f_1, f_2, f_3` are the three components of the friction coefficient. Note that the components :math:`f_2, f_3` are optional. If a scalar fiction coefficient is given (only :math:`f_1`) then this corresponds to the classical Coulomb friction law. If a vector of two components is given  (only :math:`f_1, f_2`) then this corresponds to a Coulomb friction with a given threshold. Finally, if a vector of three components is given, the friction law corresponds to the expression of :math:`\tau` given above.
 
     The expression :math:`P_{B(n,\tau)}(q)` refers to the orthogonal projection (this is linked to the return mapping algorithm) on the tangential ball (with respect to :math:`n` of radius :math:`\tau`.
 
@@ -351,7 +351,7 @@ Once the brick is added to the model, the master and slave contact boundaries ha
       const std::string &lambda = "", const std::string &w = "",
       bool frame_indifferent = false)
 
-where ``region`` should be a valid mesh region number representing a boundary, ``is_master`` should be set to ``true`` if the contact detection is to be done on that contact boundary, ``is_slave`` should be set to ``true`` if the integration of contact terms is to be done on that boundary. Note that a contact boundary is allowed to be both master and slave, in particular to allow self-contact detection. ``u`` is the displacement variable. If ``is_slave`` is set to true, ``lambda`` should describe a multiplier variable with degrees of freedom on the contact boundary (typically added to the model with the ``md.add_filtered_fem_variable(...) method). Pure master contact boundary do not need the definition of a multiplier. Additionally, ``w`` is for the evolutionnary case and represents the displacement at the previous time step.
+where ``region`` should be a valid mesh region number representing a boundary, ``is_master`` should be set to ``true`` if the contact detection is to be done on that contact boundary, ``is_slave`` should be set to ``true`` if the integration of contact terms is to be done on that boundary. Note that a contact boundary is allowed to be both master and slave, in particular to allow self-contact detection. ``u`` is the displacement variable. If ``is_slave`` is set to true, ``lambda`` should describe a multiplier variable with degrees of freedom on the contact boundary (typically added to the model with the ``md.add_filtered_fem_variable(...) method). Pure master contact boundary do not need the definition of a multiplier. Additionally, ``w`` is for the evolutionary case and represents the displacement at the previous time step.
 
 A rigid obstacle can be added to the brick with::
 

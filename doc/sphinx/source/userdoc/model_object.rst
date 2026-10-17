@@ -470,11 +470,11 @@ This is done by the call of the |mo| object method::
 
 The method returns the index of the brick in the model. The call of this method is
 rather complex because it can be adapted to many situations. The construction of a
-new brick should be accompagned to the definition of a function that adds the new
+new brick should be accompanied to the definition of a function that adds the new
 brick to the model calling this method and more simple to use.
 
 For instance, for the simple Laplacian brick described above, this function can be
-defined as folows::
+defined as follows::
 
   size_t add_my_Laplacian_brick(getfem::model &md, const getfem::mesh_im &mim,
                                 const std::string &varname,

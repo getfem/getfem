@@ -672,7 +672,7 @@ For instance ``"IM_GAUSS_PARALLELEPIPED(2,k)"`` is an alias for
 Specific integration methods
 ----------------------------
 
-For pyramidal elements, ``"IM_PYRAMID(im)"`` provides an integration method corresponding to the transformation of an integration ``im`` from a hexahedron (for instance ``"IM_GAUSS_PARALLELEPIPED(3,5)"``) onto a pyramid. It is a singular integration method specically adapted to rational fraction shape functions of the pyramidal elements.
+For pyramidal elements, ``"IM_PYRAMID(im)"`` provides an integration method corresponding to the transformation of an integration ``im`` from a hexahedron (for instance ``"IM_GAUSS_PARALLELEPIPED(3,5)"``) onto a pyramid. It is a singular integration method specifically adapted to rational fraction shape functions of the pyramidal elements.
 
 Composite integration methods
 -----------------------------

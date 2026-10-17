@@ -6,7 +6,7 @@
 GetFEM Mailing Lists
 ======================
 
-GetFEM is maintened on the `Savannah <http://Savannah.gnu.org>`_ collaborative development platform for free software. See https://savannah.nongnu.org/projects/getfem for additional information on GetFEM development.
+GetFEM is maintained on the `Savannah <http://Savannah.gnu.org>`_ collaborative development platform for free software. See https://savannah.nongnu.org/projects/getfem for additional information on GetFEM development.
 
 Discussions are now hosted on `the GetFEM discourse forum <https://getfem.discourse.group/>`_.
 

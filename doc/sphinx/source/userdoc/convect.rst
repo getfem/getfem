@@ -25,10 +25,10 @@ The method integrate the partial differential equation
 
    \frac{\partial U}{\partial t} + V\cdot\nabla U = 0,
 
-on the time intervall :math:`[0, dt]`.
+on the time interval :math:`[0, dt]`.
 
 The method used is of Galerkin-Characteristic kind. It is a very simple version
-which is inconditionnally stable but rather dissipative. See [ZT1989]_ and also the Freefem++ documentation on convect
+which is unconditionally stable but rather dissipative. See [ZT1989]_ and also the Freefem++ documentation on convect
 command.
 
 The defined method works only if ``mf`` is a pure Lagrange finite element method
@@ -38,7 +38,7 @@ for the moment. The principle is to convect backward the finite element nodes by
 
    \frac{d X}{d t} = -V(X),
 
-with an initial condition corresponding to each node. This convection is made with ``nt`` steps. Then the solution is interploated on
+with an initial condition corresponding to each node. This convection is made with ``nt`` steps. Then the solution is interpolated on
 the convected nodes.
 
 In order to make the extrapolation not too expensive, the product :math:`dt\times V`

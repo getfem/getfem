@@ -11,7 +11,7 @@ Iterative solvers
 
 
 
-Most of the solvers provided in |gmm| come frorm ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file ``gmm/gmm_iter_solvers.h`` to use them.
+Most of the solvers provided in |gmm| come from ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file ``gmm/gmm_iter_solvers.h`` to use them.
 
 iterations
 ----------

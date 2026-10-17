@@ -14,14 +14,14 @@ Deeper inside |gmm|
 The linalg_traits structure
 ---------------------------
 
-The major principle of |gmm| is that each vector and matrix type has a corresponding structure (which is never instantiated) named ``linalg_traits`` containing all informations on it. For instance, the component ``linalg_type`` of this structure is set to ``abstract_vector`` or ``abstract_matrix`` if the corresponding type represent a vector or a matrix. If ``V`` is an interfaced type of vector and ``M`` an interface type of matrix, it is possible to access to this component with::
+The major principle of |gmm| is that each vector and matrix type has a corresponding structure (which is never instantiated) named ``linalg_traits`` containing all information on it. For instance, the component ``linalg_type`` of this structure is set to ``abstract_vector`` or ``abstract_matrix`` if the corresponding type represent a vector or a matrix. If ``V`` is an interfaced type of vector and ``M`` an interface type of matrix, it is possible to access to this component with::
 
   typename gmm::linalg_traits<V>::linalg_type ...  // should be abstract_vector
   typename gmm::linalg_traits<M>::linalg_type ...  // should be abstract_matrix
 
 The types ``abstract_vector`` and ``abstract_matrix`` are defined in ``gmm/gmm_def.h``. They are void type allowing to specialize generic algorithms.
 
-For a vector type, the following informations are available::
+For a vector type, the following information is available::
 
   typename gmm::linalg_traits<V>::value_type     --> type of the components of the
                                                      vector

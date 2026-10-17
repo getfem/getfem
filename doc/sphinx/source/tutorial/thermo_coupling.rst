@@ -17,7 +17,7 @@ Let :math:`\Omega \subset \rm I\hspace{-0.15em}R^2` be the reference configurati
 Thermal problem
 ***************
 
-The left and right sides of the plate as well as the hole surfaces, alltogether denoted with :math:`\Gamma_i`, are supposed to be in thermal insulation. The bottom and top sides, denoted with :math:`\Gamma_c`, as well as the front and back faces of the plate are supposed to be in thermal exchange with surrounding air at temperature :math:`T_{air} = 20` |degreC|) with a heat transfer coefficient :math:`D`.
+The left and right sides of the plate as well as the hole surfaces, altogether denoted with :math:`\Gamma_i`, are supposed to be in thermal insulation. The bottom and top sides, denoted with :math:`\Gamma_c`, as well as the front and back faces of the plate are supposed to be in thermal exchange with surrounding air at temperature :math:`T_{air} = 20` |degreC|) with a heat transfer coefficient :math:`D`.
 
 The heat transfer equation for the temperature field :math:`T` including all relevant boundary conditions can be written as follows:
 
@@ -386,7 +386,7 @@ However, Lagrange finite element methods are the most common in practice.
 The second finite element method is a scalar one, `mft`, which will approximate both the temperature and the electric potential fields.
 Several finite element variables can share the same finite element method if necessary.
 
-The third finite element method, `mfvm`, is a discontinuous Lagrange one for a scalar field, which will allow us to post-process quantities which are discotinuous at element boundaries, such as the gradient of some approximated field variables, in particular the Von Mises stress field.
+The third finite element method, `mfvm`, is a discontinuous Lagrange one for a scalar field, which will allow us to post-process quantities which are discontinuous at element boundaries, such as the gradient of some approximated field variables, in particular the Von Mises stress field.
 
 The last thing to define is an integration method `mim`.
 There is no default integration method in |gf|, so it is mandatory to define an integration method.
@@ -505,7 +505,7 @@ In order to add this term, global scalar data corresponding to the elastic const
 If any of these data were not constant, it is also possible to define them as a finite element field or at integration points directly (not shown here).
 Note that this term, already incorporates the thermomechanical coupling between the displacement and temperature fields.
 For the isothermal case, one could alternatively also use a predefined brick, a black-box term, added to the model with the `add_isotropic_linearized_elasticity_brick` function.
-Terms provided by GWFL expressions are unambigouous, and they are compiled into a list of optimized assembly instructions which are executed on each Gauss point.
+Terms provided by GWFL expressions are unambiguous, and they are compiled into a list of optimized assembly instructions which are executed on each Gauss point.
 
 The second term to add to the elasticity problem is the external load on the right boundary, corresponding to the term
 

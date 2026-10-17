@@ -39,7 +39,7 @@ Although time integration scheme can be written directly using the model object 
 
 * For all implemented one-step schemes, the time step can be changed from an iteration to another for both order one and order two in time problems (or even quasi-static problems).
 
-* A scheme for second order in time problem (resp. first order in time) can be applied to a second or first order in time or even to a quasi-static problem (resp. to a first order or quasi-static problem) without any problem except that the initial data corresponding to the velocity/displacement have to be initialized with respect ot the order of the scheme. Conversely, of course, a scheme for first order problem cannot be applied to a second order in time problem.
+* A scheme for second order in time problem (resp. first order in time) can be applied to a second or first order in time or even to a quasi-static problem (resp. to a first order or quasi-static problem) without any problem except that the initial data corresponding to the velocity/displacement have to be initialized with respect to the order of the scheme. Conversely, of course, a scheme for first order problem cannot be applied to a second order in time problem.
 
 
 The implicit theta-method for first-order problems
@@ -62,7 +62,7 @@ where :math:`F(U)` might be nonlinear (and may depend on some other variables fo
 
 for :math:`\theta \in (0, 1]` the parameter of the theta-method (for :math:`\theta = 0`, the method corresponds to the forward Euler method and is not an implicit scheme) and for :math:`U^{n-1}, V^{n-1}` given.
 
-Before the first time step, :math:`U^0` should be initialized, however, :math:`V^0` is also needed (except for :math:`\theta = 1`). In this example, it should correspond to :math:`M^{-1}F(U^0)`. For a general coupled problem where :math:`M` might be singular, a generic precomputation of :math:`V^0` is difficult to obtain. Thus :math:`V^0` have to be furnisded also. Alternatively (see below) the model object (and the standard solve) furnishes a mean to evaluate them thanks to the application of a Backward Euler scheme on a (very) small time step.
+Before the first time step, :math:`U^0` should be initialized, however, :math:`V^0` is also needed (except for :math:`\theta = 1`). In this example, it should correspond to :math:`M^{-1}F(U^0)`. For a general coupled problem where :math:`M` might be singular, a generic precomputation of :math:`V^0` is difficult to obtain. Thus :math:`V^0` have to be furnished also. Alternatively (see below) the model object (and the standard solve) furnishes a mean to evaluate them thanks to the application of a Backward Euler scheme on a (very) small time step.
 
 
 The following formula can be deduced for the time derivative:
@@ -87,7 +87,7 @@ Before the solve, the data  "Previous_u" (corresponding to :math:`U^0` in the ex
 
   Dot_u = (u - Previous_u)/(theta*dt) - Previous_Dot_u*(1-theta)/theta
 
-Which means that "Dot_u" will be replaced at assembly time by its expression in term of "u" (multipied by :math:`1/(\theta*dt)`) and in term of a constant remaining part depending on the previous time step.
+Which means that "Dot_u" will be replaced at assembly time by its expression in term of "u" (multiplied by :math:`1/(\theta*dt)`) and in term of a constant remaining part depending on the previous time step.
 The addition of this scheme to a variable is to be done thanks to::
 
   add_theta_method_for_first_order(model &md, const std::string &varname, scalar_type theta);
@@ -116,7 +116,7 @@ For a model `md`, the following instructions::
    model.perform_init_time_derivative(ddt);
    standard_solve(model, iter);
 
-allows to perform automatically the approximation of the initial time derivative. The parameter `ddt` corresponds to the small time step used to perform the aproximation. Typically, `ddt = dt/20` could be used where  `dt` is the time step used to approximate the transient problem (see the example below).
+allows to perform automatically the approximation of the initial time derivative. The parameter `ddt` corresponds to the small time step used to perform the approximation. Typically, `ddt = dt/20` could be used where  `dt` is the time step used to approximate the transient problem (see the example below).
 
 The implicit theta-method for second-order problems
 ***************************************************
@@ -127,7 +127,7 @@ For a problem which reads
 
   M\ddot{U} = F(U)
 
-where :math:`F(U)` might be nonlinear (and may depend on some othere variables for coupled problems), for :math:`dt` a time step, :math:`V = \dot{U}`, :math:`A = \ddot{U}` and :math:`U^n, V^n, A^n` the approximation of :math:`U, V, A` at time :math:`ndt`, the first oder theta-method reads
+where :math:`F(U)` might be nonlinear (and may depend on some other variables for coupled problems), for :math:`dt` a time step, :math:`V = \dot{U}`, :math:`A = \ddot{U}` and :math:`U^n, V^n, A^n` the approximation of :math:`U, V, A` at time :math:`ndt`, the first order theta-method reads
 
 .. math::
 
@@ -149,7 +149,7 @@ The following formula can be deduced for the time derivative:
 
   A^n = \frac{U^n - U^{n-1}}{\theta^2 dt^2} - \frac{1}{\theta^2dt}V^{n-1} - \frac{1-\theta}{\theta}A^{n-1}
 
-When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
+When applying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
 
   "Dot_u", "Dot2_u"
 
@@ -181,7 +181,7 @@ For a problem which reads
 
   M\ddot{U} = F(U)
 
-where :math:`F(U)` might be nonlinear (and may depend on some othere variables for coupled problems), for :math:`dt` a time step, :math:`V = \dot{U}`, :math:`A = \ddot{U}` and :math:`U^n, V^n, A^n` the approximation of :math:`U, V, A` at time :math:`ndt`, the first oder theta-method reads
+where :math:`F(U)` might be nonlinear (and may depend on some other variables for coupled problems), for :math:`dt` a time step, :math:`V = \dot{U}`, :math:`A = \ddot{U}` and :math:`U^n, V^n, A^n` the approximation of :math:`U, V, A` at time :math:`ndt`, the first order theta-method reads
 
 .. math::
 
@@ -203,7 +203,7 @@ The following formula can be deduced for the time derivative:
 
   A^n = \frac{U^n - U^{n-1}}{\beta dt^2} - \frac{1}{\beta dt}V^{n-1} - (1/2-\beta)A^{n-1}
 
-When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
+When applying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
 
   "Dot_u", "Dot2_u"
 
@@ -240,7 +240,7 @@ The affine dependences are thus given by::
    Dot_u  = 1/(6*dt)*(11*u-18*Previous_u+9*Previous2_u-2*Previous3_u)
    Dot2_u = 1/(dt**2)*(2*u-5*Previous_u+4*Previous2_u-Previous3_u)
 
-When aplying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
+When applying this scheme to a variable "u" of the model, the following affine dependent variables are added to the model::
 
   "Dot_u", "Dot2_u"
 

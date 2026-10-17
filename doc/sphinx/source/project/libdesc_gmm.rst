@@ -35,7 +35,7 @@ utilities to |gf|.
 
 * Some extended math definitions in :file:`gmm_def.h`.
 
-See :ref:`gmm` documenation for more details.
+See :ref:`gmm` documentation for more details.
 
 Files
 ^^^^^

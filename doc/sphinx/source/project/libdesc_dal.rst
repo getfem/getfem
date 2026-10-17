@@ -14,10 +14,10 @@ Dal library
 Description
 ^^^^^^^^^^^
 
-In the very begining of |gf| (the first files was written in 1995) the S.T.L. was
+In the very beginning of |gf| (the first files was written in 1995) the S.T.L. was
 not available and the containers defined in the ``dal`` namespace was used
 everywhere. Now, in |gf|, the S.T.L. containers are mainly used. The remaining
-uses of ``dal`` containers are eather historical or due to the specificities of
+uses of ``dal`` containers are either historical or due to the specificities of
 these containers. It is however clear that this is not the aim of the |gf|
 project to develop new container concept. So, the use of the ``dal`` containers
 has to be as much as possible reduced.

@@ -34,7 +34,7 @@ not been parallelized for the moment). See demo_parallel_laplacian.py in
 the interface/test/python directory.
 
 With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitly
-partitionned (using METIS) into a
+partitioned (using METIS) into a
 number of regions corresponding to the number of processors and the assembly
 procedures are parallelized. This means that the tangent matrix and the
 constraint matrix assembled in the model_state variable are distributed.
@@ -89,7 +89,7 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
   The model system is globally parallelized, which mainly means that the
   assembly procedures of standard bricks use a METIS partition of the
   meshes to distribute the assembly. The tangent/stiffness matrices
-  remain distibuted and the standard solve call the parallel version
+  remain distributed and the standard solve call the parallel version
   of MUMPS (which accept distributed matrices).
 
   For the moment, the procedure ``actualize_sizes()`` of the model

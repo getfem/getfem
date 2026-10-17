@@ -52,7 +52,7 @@ All the files in the directory :file:`interface\src`. A short description of mai
 
   Both :file:`gfm_mex.c` and :file:`getfem_python.c` need a simple convention on
   how to send and receive arrays, and object handles, from
-  ``getfem_interface_main()``. This file provide such functionnality.
+  ``getfem_interface_main()``. This file provide such functionality.
 
 * :file:`getfemint_gsparse.h`, :file:`getfemint_gprecond.h`,
   :file:`getfemint_gmumps.h`, etc.
@@ -149,7 +149,7 @@ To make all the things work automatically, a certain number of rules have to be 
   a new method/function with the following syntax::
 
    /*@GET val = ('method-name', params, ...)
-      Documention of the method/function.
+      Documentation of the method/function.
    @*/
    sub_command
    ("method-name", 0, 0, 0, 1,
@@ -177,7 +177,7 @@ To make all the things work automatically, a certain number of rules have to be 
   is given (which is arbitrary) followed by ``=``.
 
   The parameters of the method/function are described. For a method, the
-  object itself is not mentionned. The first parameter should be the method
+  object itself is not mentioned. The first parameter should be the method
   or sub-command name between single quotes (a special case is when
   this name begins with a dot; this means that it corresponds to a
   method/function where the command name is not required).
@@ -294,7 +294,7 @@ Adding a new object to the getfem interface
 
 In order to add a new object to the interface, you have to build the new corresponding sources :file:`gf_obj.cc`, :file:`gf_obj_get.cc` and :file:`gf_obj_set.cc`. Of course you can take the existing ones as a model.
 
-For the management of the object, you have to declare the class at the begining of :file:`getfemint.h` (with respect to the alphabetic order), and declare three functions::
+For the management of the object, you have to declare the class at the beginning of :file:`getfemint.h` (with respect to the alphabetic order), and declare three functions::
 
   bool is_"name"_object(const mexarg_in &p);
   id_type store_"name"_object(const std::shared_ptr<object_class> &shp);
@@ -309,9 +309,9 @@ The previous three functions have to be implemented at the end of :file:`getfemi
 You have also to complete functions ``name_of_getfemint_class_id`` and ``class_id_of_object`` at the end of :file:`getfemint.cc`.
 
 
-You have to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
+You have to add the call of the interface function in :file:`getfem_interface.cc` and modify the file :file:`bin/extract_doc` and run the configure file.
 
-The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionaly, a constructor from a string is necessary to load the object from a file.
+The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionally, a constructor from a string is necessary to load the object from a file.
 
 For the Scilab interface the file :file:`sci_gateway/c/builder_gateway_c.sce.in` has to be modified and the files in the directory :file:`macros/overload`.
 

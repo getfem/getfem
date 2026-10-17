@@ -22,9 +22,9 @@ HHO elements are composite ones having a polynomial approximation space for the 
 
   getfem::pfem pf = getfem::fem_descriptor("HHO(FEM_SIMPLEX_IPK(2,2), FEM_SIMPLEX_CIPK(1,2))");
 
-The first argument to ``FEM_HHO(...)`` is the fem for the interior of the element. It has to be a discontinuous FEM. The method ``FEM_SIMPLEX_IPK(2,2)`` is a discontinous method having its degrees of freedom in the strict interior of the element, which ensure that no dof identification will be done. The second argument is the fem for the faces (if only one method is given, it will be applied to all faces, but it is also possible to give a different method for each face). Their is no verification on the fact that the given method are of discontinuous type (In fact, a method like ``FEM_HHO(FEM_PK(2,2), FEM_PK(1,2))`` will have no difference with ``FEM_PK(2,2)`` since the degree of freedom on the faces will be identified with the interior ones).
+The first argument to ``FEM_HHO(...)`` is the fem for the interior of the element. It has to be a discontinuous FEM. The method ``FEM_SIMPLEX_IPK(2,2)`` is a discontinuous method having its degrees of freedom in the strict interior of the element, which ensure that no dof identification will be done. The second argument is the fem for the faces (if only one method is given, it will be applied to all faces, but it is also possible to give a different method for each face). Their is no verification on the fact that the given method are of discontinuous type (In fact, a method like ``FEM_HHO(FEM_PK(2,2), FEM_PK(1,2))`` will have no difference with ``FEM_PK(2,2)`` since the degree of freedom on the faces will be identified with the interior ones).
 
-For the moment, the fursnished element for interior and faces are
+For the moment, the furnished element for interior and faces are
 - ``FEM_SIMPLEX_IPK(n,k)`` : interior PK element of degree k for the simplices in dimension n (equivalent to ``FEM_PK_DISCONTINUOUS(n,k,0.1)``).
 - ``FEM_QUAD_IPK(n,k)`` : interior PK element of degree k for the quadrilaterals in dimension n.
 - ``FEM_PRISM_IPK(n,k)`` : interior PK element of degree k for the prisms in dimension n.
@@ -34,7 +34,7 @@ For the moment, the fursnished element for interior and faces are
 Reconstruction operators
 ------------------------
 
-For a variable ``u``, we will note :math:`u_{T}` its value in the interior of the element :math:`T` and :math:`u_{\partial T}` its value on the boundary of :math:`T` (corresponding to the two different approximations). The reconstruction operators are implemeted in |gf| as elementary transformations, as described in the section :ref:`ud-gasm-high-elem-trans`.
+For a variable ``u``, we will note :math:`u_{T}` its value in the interior of the element :math:`T` and :math:`u_{\partial T}` its value on the boundary of :math:`T` (corresponding to the two different approximations). The reconstruction operators are implemented in |gf| as elementary transformations, as described in the section :ref:`ud-gasm-high-elem-trans`.
 
 Reconstructed gradient
 ++++++++++++++++++++++
@@ -92,7 +92,7 @@ and then be used into GWFL as ``Elementary_transformation(u, HHO_sym_grad, Gu)``
 Reconstructed variable
 ++++++++++++++++++++++
 
-A recontruction of higher order can be done using both the approximation on the interior and the approximation on the faces. The recontructed variable :math:`D(u)` will be the solution to the local Neumann problem on a chosen space :math:`V_D`
+A reconstruction of higher order can be done using both the approximation on the interior and the approximation on the faces. The reconstructed variable :math:`D(u)` will be the solution to the local Neumann problem on a chosen space :math:`V_D`
 
 .. math::
    \int_T \nabla D(u). \nabla v dx = \int_T \nabla u_T . \nabla v dx + \int_{\partial T} (u_{\partial T} - u_{T}).(\nabla v n_T) d\Gamma, ~~~ \forall v \in V_D
@@ -112,7 +112,7 @@ and used into GWFL as ``Elementary_transformation(u, HHO_val, ud)``, if ``transn
 Reconstructed variable with symmetrized gradient
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-A variant of the recontruction of a variable is the one using a symmetrized gradient. It can be used only for vector field variables and additionally when the vector field dimension is the same as the domain dimension. The recontructed variable :math:`D(u)` will be the solution to the local Neumann problem on a chosen space :math:`V_D`
+A variant of the reconstruction of a variable is the one using a symmetrized gradient. It can be used only for vector field variables and additionally when the vector field dimension is the same as the domain dimension. The reconstructed variable :math:`D(u)` will be the solution to the local Neumann problem on a chosen space :math:`V_D`
 
 .. math::
    \int_T \nabla^s D(u). \nabla^s v dx = \int_T \nabla^s u_T . \nabla^s v dx + \int_{\partial T} (u_{\partial T} - u_{T}).(\nabla^s v n_T) d\Gamma, ~~~ \forall v \in V_D

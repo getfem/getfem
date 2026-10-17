@@ -164,13 +164,13 @@ where :math:`gap` is a given initial gap in reference configuration, :math:`r` i
 
   \displaystyle \int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
 
-where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it (By convenyion, the ball reduces to the origin dor :math:`\rho \le 0`). The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
+where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it (By convention, the ball reduces to the origin for :math:`\rho \le 0`). The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
 
 .. math::
 
   (\dot{u}^h_T)^{n+1} \approx \displaystyle \frac{(u^h_T)^{n+1} - (u^h_T)^{n}}{dt}
 
-is chosen, then one has to take :math:`\alpha = 1/dt` and :math:`w^h_T = (u^h_T)^{n}`. Note that due to the symmetry of the ball, the parameter :math:`\alpha` do not play an important role in the formulation. It can simply be viewed as a scaling between the augmentation parameter for the contact condition and the one for the friction condition. Note also that contrarily to the previous formulations of contact, here there is not a strict independance of the conditions with respect to the augmentation parameter (the independance only occurs at the continuous level).
+is chosen, then one has to take :math:`\alpha = 1/dt` and :math:`w^h_T = (u^h_T)^{n}`. Note that due to the symmetry of the ball, the parameter :math:`\alpha` do not play an important role in the formulation. It can simply be viewed as a scaling between the augmentation parameter for the contact condition and the one for the friction condition. Note also that contrarily to the previous formulations of contact, here there is not a strict independence of the conditions with respect to the augmentation parameter (the independence only occurs at the continuous level).
 
 
 GetFEM bricks implement four versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
@@ -738,7 +738,7 @@ The condition is applied on the variables ``varname_u1`` and ``varname_u2``
 on the boundaries corresponding to ``region1` and ``region2`.
 The penalization parameter ``dataname_r`` should be chosen
 large enough to prescribe an approximate non-penetration condition
-but not too large not to deteriorate too much the conditionning of
+but not too large not to deteriorate too much the conditioning of
 the tangent system. ``dataname_n`` is an optional parameter used if
 option is 2. In that case, the penalization term is shifted by ``lambda_n``
 (this allows the use of an Uzawa algorithm on the corresponding augmented
@@ -761,7 +761,7 @@ The condition is applied on the variables ``varname_u1`` and ``varname_u2``
 on the boundaries corresponding to ``region1` and ``region2`.
 The penalization parameter ``dataname_r`` should be chosen
 large enough to prescribe an approximate non-penetration condition
-but not too large not to deteriorate too much the conditionning of
+but not too large not to deteriorate too much the conditioning of
 the tangent system.
 
 The parameter `dataname_friction_coeffs` contains the Coulomb friction

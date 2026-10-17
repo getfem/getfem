@@ -126,7 +126,7 @@ gf_plot_mesh
   'faces', {'off'|'on'}       : fills each 2D-face of the mesh
   'curved', {'off'|'on'}      : displays curved edges
   'refine',N                  : refine curved edges and filled faces N times
-  'deformation', Udef         : optionnal deformation applied to the mesh (M must be a mesh_fem object)
+  'deformation', Udef         : optional deformation applied to the mesh (M must be a mesh_fem object)
   'edges_color',[.6 .6 1]     : RGB values for the color of edges
   'edges_width',1             : width of edges
   'faces_color',[.75 .75 .75]): RGB values for the color of faces

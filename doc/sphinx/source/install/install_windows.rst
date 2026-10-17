@@ -35,7 +35,7 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
   - If it is not done by the installer, add to the Windows path variable the
     directories ``C:\mingw64\bin;C:\msys;C:\msys\bin``. To this aim, go in the
     start menu of Windows, search ``"system"`` and select
-    ``"edit the system environement variables"`` then edit the path variable.
+    ``"edit the system environment variables"`` then edit the path variable.
 
   - Open a Windows command console and enter ``msys``. This should open an Msys
     shell console. For who is familiar with sh/bash, you normally feel
@@ -133,7 +133,7 @@ possible with `Cygwin <https://www.cygwin.com/>`_.
 Build with the Python interface
 *******************************
 
-Additionaly to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2
+Additionally to build the Python interface, you will have first to install a 64bits version of Python 2 or 3 on your system together with Numpy and Scipy packages. The simpler way is to install Anaconda2 or 3 (it already contains Numpy and Scipy packages which are necessary). For instance with Anaconda2
 
   - Install Anaconda2 and add to windows path ``C:\install_dir\Anaconda2``
     and ``C:\install_dir\Anaconda2\Scripts`` where ``install_dir`` is the
@@ -194,7 +194,7 @@ Here follows the additional step to build the Matlab interface. You have first, 
     and try to adapt the library list in the matlab/mex call by copy/past the
     command building the interface.
 
-  - Once the interface is properly compiled, you can lauch Matlab, add the
+  - Once the interface is properly compiled, you can launch Matlab, add the
     path of the compiled interface (on the matlab command line) with::
 
       add_path('c:\msys\home\login\getfem-5.?\interface/tests/matlab')

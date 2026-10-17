@@ -94,7 +94,7 @@ For other elements than simplices, it is still possible to use
 geometric transformation.
 
 * ``bgeot::parallelepiped_geotrans(N, 1)`` describes the usual transformation for
-  parallelepipeds of dimension ``N`` (quadrilateron for ``N=2``, hexahedron for
+  parallelepipeds of dimension ``N`` (quadrilateral for ``N=2``, hexahedron for
   ``N=3``, ...)
 
 * ``bgeot::prism_geotrans(N, 1)`` describes the usual transformation for prisms of
@@ -506,7 +506,7 @@ The "cdb" format specifier is for reading meshes from `ANSYS <http://www.ansys.c
 exported in blocked format with the CDWRITE command. Currently the
 `ANSYS`_ element types 42,45,73,82,87,89,90,92,95,162,182,183,185,186,187
 and 191 can be imported, this however does not include any finite element
-techology linked to these elements but only their geometry.
+technology linked to these elements but only their geometry.
 The "noboite" format is for TetMesh-GHS3D, and the
 "am_fmt" and "emc2_mesh" are for files built with `EMC2`_ (but 2D only).
 

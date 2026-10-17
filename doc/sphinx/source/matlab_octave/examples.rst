@@ -142,7 +142,7 @@ solution! The ":envvar:`model`" is created with the ``gf_model`` (or ``gfModel``
 constructor. A model is basically an object which build a global linear system
 (tangent matrix for non-linear problems) and its associated right hand side.
 Typical modifications are insertion of the stiffness matrix for the problem
-considered (linear elasticity, laplacian, etc), handling of a set of contraints,
+considered (linear elasticity, laplacian, etc), handling of a set of constraints,
 Dirichlet condition, addition of a source term to the right hand side etc. The
 global tangent matrix and its right hand side are stored in the ":envvar:`model`"
 structure.

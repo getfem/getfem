@@ -38,7 +38,7 @@ where ``mim`` is the integration method (a |gf_mim| object), ``mf`` is the finit
 element method on which the unknown has been computed (a |gf_mf| object), ``U`` is
 the vector of degrees of freedom of the unknown, ``err`` is a sufficiently large
 vector in which the error estimate is computed for each element of the mesh, and
-``rg`` is a mesh region bulild from elements on which the error estimate should be computed (a |gf_mr| object).
+``rg`` is a mesh region built from elements on which the error estimate should be computed (a |gf_mr| object).
 
 This basic error estimate is only valid for order two problems and just compute
 the sum of the jump in normal derivative across the elements on each edge (for
