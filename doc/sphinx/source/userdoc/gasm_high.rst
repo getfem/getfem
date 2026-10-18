@@ -606,11 +606,11 @@ GWFL provides some predefined nonlinear operator. Each nonlinear operator is ava
 
   - ``Logm(m)`` gives the logarithm of a square matrix ``m``.
 
-  - ``Matrix_I2(m)`` gives the second invariants of a square matrix ``m`` which is defined by ``(sqr(Trace(m)) - Trace(m*m))/2``.
+  - ``Matrix_i2(m)`` gives the second invariant of a square matrix ``m`` which is defined by ``(sqr(Trace(m)) - Trace(m*m))/2``.
 
-  - ``Matrix_J1(m)`` gives the modified first invariant of a square matrix defined by ``Trace(m)pow(Det(m),-1/3)``.
+  - ``Matrix_j1(m)`` gives the modified first invariant of a square matrix defined by ``Trace(m)*pow(Det(m),-1/3)``.
 
-  - ``Matrix_J2(m)`` gives the modified first invariant of a square matrix defined by ``Matrix_I2(m)*pow(Det(m),-2/3)``.
+  - ``Matrix_j2(m)`` gives the modified second invariant of a square matrix defined by ``Matrix_i2(m)*pow(Det(m),-2/3)``.
 
 .. _ud-gasm-high_macros:
 

@@ -57,13 +57,13 @@ representing the |Lame| coefficients.
 The function which adds this brick to a model and parametrized with Young modulus and Poisson ratio is::
 
   ind_brick = getfem::add_isotropic_linearized_elasticity_pstrain_brick
-              (md, mim, varname, data_E, data_nu, region = size_type(-1));
+              (md, mim, varname, data_E, data_nu, region);
 
 
 This brick represent a plane strain approximation when it is applied to a 2D mesh (and a standard model on a 3D mesh). In order to obtain a plane stress approximation for 2D meshes, one can use::
 
   ind_brick = getfem::add_isotropic_linearized_elasticity_pstress_brick
-              (md, mim, varname, data_E, data_nu, region = size_type(-1));
+              (md, mim, varname, data_E, data_nu, region);
 
 For 3D meshes, the two previous bricks give the same result.
 
@@ -71,16 +71,16 @@ For 3D meshes, the two previous bricks give the same result.
 The function::
 
   getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
-    (md, varname, dataname_lambda, dataname_mu, mf_vm, VM, tresca_flag = false);
+    (md, varname, dataname_lambda, dataname_mu, mf_vm, VM, tresca_flag);
 
 compute the Von Mises criterion (or Tresca if ``tresca_flag`` is set to true) on
 the displacement field stored in ``varname``. The stress is evaluated on the |mf|
 ``mf_vm`` and stored in the vector ``VM``. It is not valid for 2D plane stress approximation and is parametrized with |Lame| coefficients. The functions::
 
-  getfem::compute_isotropic_linearized_Von_Mises
+  getfem::compute_isotropic_linearized_Von_Mises_pstrain
     (md, varname, data_E, data_nu, mf_vm, VM);
 
-  getfem::compute_isotropic_linearized_Von_Mises
+  getfem::compute_isotropic_linearized_Von_Mises_pstress
     (md, varname, data_E, data_nu, mf_vm, VM);
 
 compute the Von Mises stress, parametrized with Young modulus and Poisson ratio, the second one being valid for 2D plane stress approximation when it is applied on a 2D mesh (the two functions give the same result for 3D problems).

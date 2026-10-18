@@ -632,7 +632,7 @@ Then, :math:`u^n` and :math:`\sigma^n` contains the new values computed and one 
 The function: ::
 
       getfem::compute_elastoplasticity_Von_Mises_or_Tresca
-          (md, datasigma, mf_vm, VM, tresca=false);
+          (md, datasigma, mf_vm, VM, tresca);
 
 computes the Von Mises (or Tresca if ``tresca`` = true) criterion on the stress tensor stored in ``datasigma`` . The stress is evaluated on the `mesh_fem` ``mf_vm`` and stored into the vector ``VM``.
 Of course, this function can be used if and only if the previous function ``elastoplasticity_next_iter`` has been called earlier.

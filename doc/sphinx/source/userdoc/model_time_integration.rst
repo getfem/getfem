@@ -327,7 +327,7 @@ Assuming that `mf_u` and `mim` are valid finite element and integration methods 
   getfem::model model;
   model.add_fem_variable("u", mf_u, 2); // Main unknown of the problem
 
-  getfem::add_generic_elliptic_brick(model, mim, "u"); // Laplace term
+  getfem::add_Laplacian_brick(model, mim, "u"); // Laplace term
 
   // Volumic source term.
   getfem::add_source_term_generic_assembly_brick(model, mim, "sin(t)*Test_u");

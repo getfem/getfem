@@ -156,15 +156,16 @@ More specialized regular mesh functions are also available::
 
   getfem::parallelepiped_regular_simplex_mesh(mymesh, N, org, ivect, iref);
   getfem::parallelepiped_regular_prism_mesh(mymesh, N, org, ivect, iref);
-  getfem::parallelepiped_regular_pyramid_mesh(mymesh, N, org, ivect, iref);
+  getfem::parallelepiped_regular_pyramid_mesh(mymesh, org, ivect, iref);
   getfem::parallelepiped_regular_mesh(mymesh, N, org, ivect, iref);
 
 where ``mymesh`` is a mesh variable in which the structured mesh will be built,
 ``N`` is the dimension (limited to 4 for simplices, 5 for prisms, unlimited for
-parallelepipeds), ``org`` is of type ``bgeot::base_node`` and represents the
-origin of the mesh, ``ivect`` is an iterator on an array of ``N`` vectors to
-build the parallelepiped domain, ``iref`` is an iterator on an array of ``N``
-integers representing the number of division on each direction.
+parallelepipeds, while pyramid meshes are always three-dimensional),``org`` is
+of type ``bgeot::base_node`` and represents the origin of the mesh, ``ivect``
+is an iterator on an array of ``N`` vectors to build the parallelepiped domain,
+``iref`` is an iterator on an array of ``N`` integers representing the number
+of division on each direction.
 
 For instance, to build a mesh with tetrahedrons for a unit cube with
 :math:`10\times~10\times~10` cells one can write::

@@ -17,7 +17,7 @@ Two (very simple) bricks allow to add some explicit terms to the tangent system.
 
 The function::
 
-  indbrick = getfem::add_explicit_matrix(md, varname1, varname2, B
+  indbrick = getfem::add_explicit_matrix(md, varname1, varname2, B,
                                          issymmetric = false,
                                          iscoercive = false);
 

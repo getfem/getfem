@@ -63,7 +63,7 @@ Here is the list of available linear solvers::
   gmm::least_squares_cg(A, X, B, iter) // unpreconditionned least square CG.
 
 
-The solver ``gmm::constrained_cg(A, C, X, B, PS, PR, iter);`` solve a system with linear constraints, ``C`` is a matrix which represents the constraints. But it is still experimental.
+The solver ``gmm::constrained_cg(A, C, X, B, F, PS, PR, iter);`` solve a system with linear constraints :math:`CX \le F`, ``C`` is a matrix which represents the constraints. But it is still experimental.
 
 (Version 1.7) The solver ``gmm::bfgs(F, GRAD, X, restart, iter)`` is a BFGS quasi-Newton algorithm with a Wolfe line search for large scale problems. It minimizes the function ``F`` without constraints, be given its gradient ``GRAD``. ``restart`` is the max number of stored update vectors.
 
@@ -113,7 +113,7 @@ The additive Schwarz method is a decomposition domain method allowing the resolu
 
 For the moment, the method is not parallelized (this should be done ...). The call is the following::
 
- gmm::sequential_additive_schwarz(A, u, f, P, vB, iter, local_solver, global_solver)
+ gmm::additive_schwarz(A, u, f, P, vB, iter, local_solver, global_solver)
 
 ``A`` is the matrix of the linear system. ``u`` is the unknown vector. ``f`` is the right hand side. ``P`` is an eventual preconditioner for the local solver. ``vB`` is a vector of rectangular sparse matrices (``of type const std::vector<vBMatrix>``, where ``vBMatrix`` is a sparse matrix type), each of these matrices is of size :math:`N \times N_i` where :math:`N` is the size of ``A`` and :math:`N_i` the number of variables in the :math:`i^{th}` sub-domain ; each column of the matrix is a base vector of the sub-space representing the :math:`i^{th}` sub-domain. ``iter`` is an iteration object. ``local_solver`` has to be chosen in the list ``gmm::using_gmres(), gmm::using_bicgstab(), gmm::using_cg(), gmm::using_qmr()`` and  ``gmm::using_superlu()`` if SuperLu is installed. ``global_solver`` has to be chosen in the list ``gmm::using_gmres(), gmm::using_bicgstab(), gmm::using_cg(), gmm::using_qmr()``.
 

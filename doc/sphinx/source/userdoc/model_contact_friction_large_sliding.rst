@@ -336,7 +336,8 @@ Add of the brick::
     (model &md, const std::string &dataname_r,
      scalar_type release_distance,
      const std::string &dataname_friction_coeff = "0",
-     const std::string &dataname_alpha = "1");
+     const std::string &dataname_alpha = "1",
+     bool sym_v = false, bool frame_indifferent = false);
 
 This brick allows to deal with a multi-contact situation. It adds to the model a raytracing interpolate transformation as described in a previous section whose name can be obtained by the command::
 
@@ -348,8 +349,7 @@ Once the brick is added to the model, the master and slave contact boundaries ha
   add_contact_boundary_to_large_sliding_contact_brick(model &md,
       size_type indbrick, const mesh_im &mim, size_type region,
       bool is_master, bool is_slave, const std::string &u,
-      const std::string &lambda = "", const std::string &w = "",
-      bool frame_indifferent = false)
+      const std::string &lambda = "", const std::string &w = "")
 
 where ``region`` should be a valid mesh region number representing a boundary, ``is_master`` should be set to ``true`` if the contact detection is to be done on that contact boundary, ``is_slave`` should be set to ``true`` if the integration of contact terms is to be done on that boundary. Note that a contact boundary is allowed to be both master and slave, in particular to allow self-contact detection. ``u`` is the displacement variable. If ``is_slave`` is set to true, ``lambda`` should describe a multiplier variable with degrees of freedom on the contact boundary (typically added to the model with the ``md.add_filtered_fem_variable(...) method). Pure master contact boundary do not need the definition of a multiplier. Additionally, ``w`` is for the evolutionary case and represents the displacement at the previous time step.
 
