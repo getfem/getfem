@@ -360,7 +360,7 @@ namespace getfem {
           bool has_xshift = gmm::abs(xshift[i]) >= 1e-10;
           bool has_yshift = gmm::abs(yshift[j]) >= 1e-10;
           bool has_zshift = gmm::abs(zshift[k]) >= 1e-10;
-          if (!has_xshift && !has_yshift && !has_yshift)
+          if (!has_xshift && !has_yshift && !has_zshift)
             funcs.push_back(global_function_bspline
                             (xmin[i], xmax[i],
                              ymin[j], ymax[j],

@@ -1181,7 +1181,7 @@ namespace getfem {
         return (23./6.*t-10./3.)*t-2./3.;
       } else if (t < 3) {
         t = t-2.;
-        return -((-13./6.*t+10./3.)*t-2./3.);
+        return (-13./6.*t+10./3.)*t-2./3.;
       } else if (t < 4) {
         return 1./2.*pow(4.-t,2);
       }
