@@ -343,6 +343,10 @@ namespace getfem {
           }
           if (!lisin) continue;
           else isin--;
+          // a face between two selected sub-convexes is not on the boundary
+          // (e.g. a sub-convex with all its vertices on the level set)
+          size_type nb = msh.neighbor_of_convex(i, f);
+          if (nb != size_type(-1) && convexes_arein.is_in(nb)) continue;
         } else {
           B = gmm::mean_value(msh.points_of_face_of_convex(i, f));
           if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
