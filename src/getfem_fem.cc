@@ -3690,15 +3690,19 @@ namespace getfem {
                                     bgeot::pgeometric_trans pgt) const {
     THREAD_SAFE_STATIC bgeot::pgeotrans_precomp pgp;
     THREAD_SAFE_STATIC bgeot::pgeometric_trans pgt_stored = nullptr;
-    THREAD_SAFE_STATIC base_matrix K(1, 1);
-    THREAD_SAFE_STATIC base_vector r(1);
+    THREAD_SAFE_STATIC base_matrix K;
+    THREAD_SAFE_STATIC base_vector r;
     dim_type N = dim_type(G.nrows());
 
     if (pgt != pgt_stored) {
-      gmm::resize(r, N);
-      for (size_type i = 0; i < N; ++i) r[i] = ::exp(double(i));
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+    }
+    // K and r depend on the dimension of the real element, not determined
+    // by the geometric transformation (a segment in 1D, 2D or 3D)
+    if (gmm::vect_size(r) != N) {
+      gmm::resize(r, N);
+      for (size_type i = 0; i < N; ++i) r[i] = ::exp(double(i));
       gmm::resize(K, N, 1);
     }
     gmm::copy(gmm::identity_matrix(), M);
@@ -4117,7 +4121,9 @@ namespace getfem {
     }
     gmm::copy(gmm::identity_matrix(), M);
 
-    THREAD_SAFE_STATIC base_matrix W(n+1, nddl);
+    THREAD_SAFE_STATIC base_matrix W;
+    if (gmm::mat_nrows(W) != size_type(n+1) || gmm::mat_ncols(W) != nddl)
+      gmm::resize(W, n+1, nddl); // 2D and 3D elements
     dim_type nfd = (n == 2) ? 3 : 6;
     
     base_matrix K(n, n);
