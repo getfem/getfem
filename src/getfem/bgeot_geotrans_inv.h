@@ -63,6 +63,8 @@ namespace bgeot {
   class geotrans_inv_convex {
     size_type N, P;
     base_matrix G, pc, K, B, CS;
+    base_matrix Grel; // nodes relative to the first one, for the residual:
+                      // independent of the element position
     pgeometric_trans pgt = nullptr;
     scalar_type EPS;
 
@@ -98,18 +100,18 @@ namespace bgeot {
        given the node on the real element, returns the node on the
        reference element (even if it is outside of the ref. convex).
        
-       If the geometric transformation is not invertible at point n,
+       If the geometric transformation is not invertible at point x,
        an exception is thrown.
 
-       @return true if the n is inside the convex
+       @return true if the x is inside the convex
 
-       @param n node on the real element 
+       @param x node on the real element
 
-       @param n_ref computed node on the reference convex
+       @param xref computed node on the reference convex
 
        @param IN_EPS a threshold.
     */
-    bool invert(const base_node& n, base_node& n_ref,
+    bool invert(const base_node& x, base_node& xref,
                 scalar_type IN_EPS=1e-12, bool project_into_element=false);
 
     /**
@@ -117,24 +119,24 @@ namespace bgeot {
        on the reference element (even if it is outside of the ref. convex).
        
        This version will not throw an exception if the geometric
-       transformation is not invertible at point n. 
+       transformation is not invertible at point x.
        
-       @return true if the n is inside the convex
+       @return true if the x is inside the convex
 
-       @param n node on the real element 
+       @param x node on the real element
 
-       @param n_ref computed node on the reference convex
+       @param xref computed node on the reference convex
 
        @param converged on output, will be set to true if the
        geometric transformation could be inverted.
 
        @param IN_EPS a threshold.
     */
-    bool invert(const base_node& n, base_node& n_ref, bool &converged, 
+    bool invert(const base_node& x, base_node& xref, bool &converged,
                 scalar_type IN_EPS=1e-12, bool project_into_element=false);
   private:
-    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
-    bool invert_nonlin(const base_node& n, base_node& n_ref,
+    bool invert_lin(const base_node& x, base_node& xref, scalar_type IN_EPS);
+    bool invert_nonlin(const base_node& x, base_node& xref,
                        scalar_type IN_EPS, bool &converged, bool throw_except,
                        bool project_into_element);
     bool update_B(); // returns true if successful
@@ -158,6 +160,9 @@ namespace bgeot {
       G.resize(N, pgt->nb_points());
     }
     vectors_to_base_matrix(G, nodes);
+    Grel = G;
+    for (size_type j = 0; j < G.ncols(); ++j)
+      gmm::add(gmm::scaled(mat_col(G, 0), -1.0), mat_col(Grel, j));
     if (pgt->is_linear()) {
       if (geotrans_changed) {
         base_node Dummy(P);
