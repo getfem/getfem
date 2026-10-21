@@ -13,6 +13,9 @@
 /* defined if the cxxabi.h header file is available */
 #cmakedefine GETFEM_HAVE_CXXABI_H
 
+/* defined if GetFEM is built with Exodus II file support */
+#cmakedefine GETFEM_HAVE_EXODUS
+
 /* glibc floating point exceptions control */
 #cmakedefine GETFEM_HAVE_FEENABLEEXCEPT
 

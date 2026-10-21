@@ -997,7 +997,6 @@ fi
 dnl ---------------------------END OF MUMPS TEST--------------------------
 
 
-
 if test "x$found_superlu" != "xyes" -a "x$found_mumps" != "xyes"; then
   AC_MSG_ERROR([Neither MUMPS nor SuperLU was enabled. At least one linear solver is required.])
   exit 1
@@ -1145,6 +1144,35 @@ AC_SUBST([METIS_LIBS])
 
 
 dnl ---------------------------END OF METIS--------------------------
+
+dnl ------------------------------EXODUS TEST---------------------------
+dnl Exodus II file I/O, layered on NetCDF. Optional and OFF BY DEFAULT: unless
+dnl --enable-exodus is given, NetCDF is never probed, GETFEM_HAVE_EXODUS stays
+dnl undefined (all Exodus code compiles out) and the EXODUS automake
+dnl conditional stays false.
+useEXODUS="no"
+AC_ARG_ENABLE(exodus,
+ [AS_HELP_STRING([--enable-exodus],[enable Exodus II file I/O (requires the NetCDF library)])],
+ [ if   test "x$enableval" = "xyes" ; then useEXODUS="yes"; fi], [useEXODUS="no"])
+NETCDF_LIBS=""
+save_LIBS="$LIBS";
+
+if test "x$useEXODUS" = "xno"; then
+  echo "Building without Exodus II support (use --enable-exodus to enable it)";
+else
+  AC_CHECK_LIB(netcdf, nc_create, [NETCDF_LIBS="-lnetcdf"],
+               [AC_MSG_ERROR([NetCDF library not found (nc_create). Use --enable-exodus=no flag])])
+  AC_CHECK_HEADERS(netcdf.h, [],
+                   [AC_MSG_ERROR([header file netcdf.h not found. Use --enable-exodus=no flag])])
+  AC_DEFINE(GETFEM_HAVE_EXODUS,,[defined if GetFEM is built with Exodus II file support])
+  echo "Building with Exodus II support (use --enable-exodus=no to disable it)"
+fi;
+AM_CONDITIONAL(EXODUS, test x$useEXODUS = xyes)
+
+LIBS="$NETCDF_LIBS $save_LIBS"
+AC_SUBST([NETCDF_LIBS])
+echo "Configuration of Exodus done"
+dnl ---------------------------END OF EXODUS TEST------------------------
 
 
 AC_CHECK_HEADERS(sys/times.h)
@@ -1299,6 +1327,12 @@ if test "x$useQHULL" = "xyes"; then
   echo "- Qhull found. Using the Qhull library for delaunay triangulations."
 else
   echo "- Qhull not found. Mesh generation will be disabled."
+fi;
+
+if test "x$useEXODUS" = "xyes"; then
+  echo "- Exodus II support enabled. Using NetCDF for Exodus mesh/field I/O."
+else
+  echo "- Exodus II support disabled (use --enable-exodus to enable it)."
 fi;
 
 if test "x$found_superlu" = "xyes"; then

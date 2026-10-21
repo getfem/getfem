@@ -555,6 +555,9 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     - 'gid' for a mesh created with `GiD`
     - 'cdb' for a mesh created with `ANSYS`
     - 'am_fmt' for a mesh created with `EMC2`
+    - 'exodus' for an Exodus II mesh (requires GetFEM built with
+      --enable-exodus); side sets and element sets become face and convex
+      regions, see also MESH:GET('exodus nodal data')
     - 'structured' for a structured cartesian mesh.
       In this case `filename` is a string describing the mesh
       e.g. "GT='GT_QK(2,2)';ORG=[0,0];SIZES=[1,1];NSUBDIV=[5,10]"
