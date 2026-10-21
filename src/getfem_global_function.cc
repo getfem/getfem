@@ -775,14 +775,15 @@ namespace getfem {
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
       mls_x->hess(c.xref(), hx);
-      mls_x->hess(c.xref(), hy);
+      mls_y->hess(c.xref(), hy);
       gmm::reshape(hx, P*P, 1);
       gmm::reshape(hy, P*P, 1);
 
+      // real Hessians B3 h - B32 d (as fem_interpolation_context)
       gmm::mult(c.B3(), hx, hx_real);
-      gmm::mult(c.B32(), gmm::scaled(dx, -1.0), gmm::mat_col(hx_real, 0));
+      gmm::mult_add(c.B32(), gmm::scaled(dx, -1.0), gmm::mat_col(hx_real, 0));
       gmm::mult(c.B3(), hy, hy_real);
-      gmm::mult(c.B32(), gmm::scaled(dy, -1.0), gmm::mat_col(hy_real, 0));
+      gmm::mult_add(c.B32(), gmm::scaled(dy, -1.0), gmm::mat_col(hy_real, 0));
       gmm::mult(c.B(), dx, dx_real);
       gmm::mult(c.B(), dy, dy_real);
 
