@@ -278,10 +278,12 @@ namespace getfem {
         for (unsigned ils = 0; ils < mls->nb_level_sets(); ++ils)
           if (mls->get_level_set(ils)->has_secondary()) {
             for (unsigned ipt = 0; ipt <= n; ++ipt) {
-              if (gmm::abs((*(mesherls0[ils]))(msh.points_of_convex(i)[ipt]))
-                  < 1E-10
-                  && gmm::abs((*(mesherls1[ils]))(msh.points_of_convex(i)[ipt]))
-                  < 1E-10) {
+              // the vertex ipt (not the node ipt: curved sub-simplices
+              // have more nodes than vertices)
+              const base_node &P = msh.points_of_convex(i)
+                [msh.structure_of_convex(i)->ind_dir_points()[ipt]];
+              if (gmm::abs((*(mesherls0[ils]))(P)) < 1E-10
+                  && gmm::abs((*(mesherls1[ils]))(P)) < 1E-10) {
                 if (sing_ls == unsigned(-1)) sing_ls = ils;
                 GMM_ASSERT1(sing_ls == ils, "Two singular point in one "
                             "sub element : " << sing_ls << ", " << ils <<
