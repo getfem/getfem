@@ -801,7 +801,8 @@ namespace getfem {
 
     global_function_on_levelsets_2D_(const std::vector<level_set> &lsets_,
                                      const pxy_function &fn_)
-      : global_function(2), dummy_lsets(0, dummy_level_set()),
+      : global_function(lsets_.size() ? lsets_[0].linked_mesh().dim() : 2),
+        dummy_lsets(0, dummy_level_set()),
         lsets(lsets_), ls(dummy_level_set()), fn(fn_) {
       GMM_ASSERT1(lsets.size() > 0, "The list of level sets should"
                                     " contain at least one level set.");
@@ -812,7 +813,8 @@ namespace getfem {
 
     global_function_on_levelsets_2D_(const level_set &ls_,
                                      const pxy_function &fn_)
-      : global_function(2), dummy_lsets(0, dummy_level_set()),
+      : global_function(ls_.linked_mesh().dim()),
+        dummy_lsets(0, dummy_level_set()),
         lsets(dummy_lsets), ls(ls_), fn(fn_) {
       cv = size_type(-1);
       this->add_dependency(ls);
