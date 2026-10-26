@@ -1033,7 +1033,8 @@ namespace getfem {
         m.points_of_convex(cv, G);
         // face_pts is of type bgeot::convex<...>::ref_convex_pt_ct
         const auto face_pts = pf_s->ref_convex(cv)->points_of_face(iff);
-        const base_node &x0 = face_pts[0];
+        // Newton start: the face centre, nearest to any hit inside the face
+        const base_node x0 = gmm::mean_value(face_pts);
         fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, iff);
 
         const base_small_vector &n0 = pf_s->ref_convex(cv)->normals()[iff];
@@ -1734,7 +1735,8 @@ namespace getfem {
         m_y.points_of_convex(cv_y, G_y);
         // face_pts is of type bgeot::convex<...>::ref_convex_pt_ct
         const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
-        const base_node &Y0 = face_pts[0];
+        // Newton start: the face centre, nearest to any hit inside the face
+        const base_node Y0 = gmm::mean_value(face_pts);
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
 
         const base_small_vector &NY0
@@ -2162,7 +2164,8 @@ namespace getfem {
         bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
         // face_pts is of type bgeot::convex<...>::ref_convex_pt_ct
         const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
-        const base_node &Y0 = face_pts[0];
+        // Newton start: the face centre, nearest to any hit inside the face
+        const base_node Y0 = gmm::mean_value(face_pts);
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
 
         const base_small_vector &NY0
