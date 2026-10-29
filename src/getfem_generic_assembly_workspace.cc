@@ -92,10 +92,11 @@ namespace getfem {
    const gmm::sub_interval &I, const model_real_plain_vector &VV) {
     GMM_ASSERT1(I.first() >= nb_prim_dof,
                 "The provided interval overlaps with primary dofs");
-    nb_intern_dof += first_intern_dof - std::min(first_intern_dof, I.first());
+    // union of the internal dofs with I (I alone if there are none yet)
+    if (!nb_intern_dof) first_intern_dof = I.first();
+    nb_intern_dof = std::max(first_intern_dof + nb_intern_dof, I.last())
+                  - std::min(first_intern_dof, I.first());
     first_intern_dof = std::min(first_intern_dof, I.first());
-    nb_intern_dof += first_intern_dof + nb_intern_dof
-                   - std::min(first_intern_dof + nb_intern_dof, I.last());
     variables.emplace(name, var_description(true, 0, &imd, I, &VV, 1, true));
   }
 
