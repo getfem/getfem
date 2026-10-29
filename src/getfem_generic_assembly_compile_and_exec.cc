@@ -8256,6 +8256,10 @@ namespace getfem {
                       (std::make_shared<base_tensor>(root->tensor()));
                     GMM_ASSERT1(root->tensor().size(0) == s1, "Internal error");
                     CC.KQJ(q1,j2) = gis.condensation_tensors.back().get();
+                    if (mf2 && !mf2->is_uniform())
+                      rmi.instructions.push_back(std::make_shared
+                        <ga_instruction_second_ind_tensor>
+                        (*CC.KQJ(q1,j2), ctx2, root->qdim2, mf2, nullptr));
                     pgai = std::make_shared<ga_instruction_copy_vect>
                       (CC.KQJ(q1,j2)->as_vector(), root->tensor().as_vector());
                   } else {
@@ -8291,6 +8295,10 @@ namespace getfem {
                     GMM_ASSERT1(root->tensor().size(1) == s2,
                                 "Internal error");
                     CC.KIQ(i1,q2) = gis.condensation_tensors.back().get();
+                    if (mf1 && !mf1->is_uniform())
+                      rmi.instructions.push_back(std::make_shared
+                        <ga_instruction_first_ind_tensor>
+                        (*CC.KIQ(i1,q2), ctx1, root->qdim1, mf1, nullptr));
                     pgai = std::make_shared<ga_instruction_copy_vect>
                       (CC.KIQ(i1,q2)->as_vector(), root->tensor().as_vector());
                   } else {
