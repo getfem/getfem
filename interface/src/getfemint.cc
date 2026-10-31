@@ -1,3 +1,4 @@
+
 /*===========================================================================
 
  Copyright (C) 2001-2026 Y. Renard, J. Pommier.
@@ -334,8 +335,11 @@ namespace getfemint {
   }
 
   void mexarg_in::check_dimensions(array_dimensions &v, int expected_m, int expected_n, int expected_p, int expected_q) {
-    /* check for preference for 'row' vectors */
-    if (expected_m == -2 && expected_n == -1 && v.size() == v.getm()) {
+    /* check for preference for 'row' vectors: a vector given as a column                               
+       (as 1D arrays are seen from Python) is turned into a row vector, either                          
+       when the number of columns is free or when it matches the expected one */                        
+    if (expected_m == -2 && v.size() == v.getm() &&                                                     
+        (expected_n == -1 || int(v.getm()) == expected_n)) {
       v.reshape(1,v.getm());
     }
     if (expected_m >= 0 && int(v.getm()) != expected_m)

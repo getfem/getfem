@@ -457,8 +457,10 @@ namespace getfemint {
     darray               to_darray(int expected_dim);
     /* expect the argument to be a matrix (or possibly a 3D array)
        if any of the arguments has a value of -1, the corresponding dimension
-       is not checked
-     */
+       is not checked.
+       expected_m = -2 means "any number of rows, but a row vector is                                   
+       preferred": a column vector (e.g. a 1D array from Python) is reshaped                            
+       as a row vector when expected_n is -1 or equal to its size.      */
     darray               to_darray(int expected_m, int expected_n,
                                    int expected_k=1, int expected_q=1);
     /* convertion to a real or complex array */
