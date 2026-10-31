@@ -107,11 +107,11 @@ interpolate_convex_data(const getfem::stored_mesh_slice *sl,
   garray<T> w = out.pop().create_array(ad, T());
   size_type q = u.size() / u.dim(u.ndim()-1);
   size_type pos = 0;
+
   for (size_type i=0; i < sl->nb_convex(); ++i) {
-    for (unsigned j=0; j < q; ++j) {
-      T v = u[(sl->convex_num(i))*q + j];
-      for (unsigned k=0; k < sl->nodes(i).size(); ++k) {
-        w[pos++] = v;
+    for (unsigned k=0; k < sl->nodes(i).size(); ++k) {
+      for (unsigned j=0; j < q; ++j) {
+        w[pos++] = u[(sl->convex_num(i))*q + j];
       }
     }
   }
@@ -319,8 +319,8 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     ("interpolate_convex_data", 1, 1, 0, 1,
      in.front().check_trailing_dimension(int(sl->linked_mesh().convex_index().last_true()+1));
      if (in.front().is_complex())
-       interpolate_convex_data(sl, in.pop().to_darray(), out);
-     else interpolate_convex_data(sl, in.pop().to_carray(), out);
+       interpolate_convex_data(sl, in.pop().to_carray(), out);
+     else interpolate_convex_data(sl, in.pop().to_darray(), out);
      );
 
 
