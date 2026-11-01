@@ -16,4 +16,5 @@
    pygf
    examples
    howtos
+   plot
    cmdref

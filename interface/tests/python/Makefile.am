@@ -33,6 +33,7 @@ EXTRA_DIST=                                       \
     check_bspline_mesh_fem.py                     \
     check_secondary_domain.py                     \
     check_mixed_mesh.py                           \
+    check_plot.py                                 \
     demo_crack.py                                 \
     demo_fictitious_domains.py                    \
     demo_bilaplacian.py                           \
@@ -65,8 +66,7 @@ EXTRA_DIST=                                       \
     demo_tripod.py                                \
     demo_tripod_alt.py                            \
     demo_wave.py                                  \
-    demo_wave_equation.py                         \
-    getfem_tvtk.py
+    demo_wave_equation.py
 
 if BUILDPYTHON
 TESTS =                         \
@@ -77,6 +77,7 @@ TESTS =                         \
     check_bspline_mesh_fem.py   \
     check_secondary_domain.py   \
     check_mixed_mesh.py         \
+    check_plot.py               \
     check_mumps_ctx.py          \
     demo_truss.py               \
     demo_wave.py                \

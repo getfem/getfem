@@ -20,7 +20,7 @@
 #
 ############################################################################
 """  Demonstration for small deformations plasticty (without hardening),
-  with optional graphical vizualisation (requires tvtk).
+  with optional graphical vizualisation (requires getfem.plot).
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM.
@@ -34,11 +34,14 @@ import getfem as gf
 
 with_graphics=False
 try:
-    import getfem_tvtk
-except:
-    print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
-    import time
-    time.sleep(2)
+    import getfem.getfem_plot as gfp
+except ImportError:
+    try:  # in the build tree, getfem is the module getfem.py, not the package
+        import getfem_plot as gfp
+    except ImportError:
+        gfp = None
+if gfp is None or not gfp.available_backends():
+    print("\n** getfem.plot with pyvista or matplotlib not available -- graphical output disabled **\n")
     with_graphics=False
 
 L=100
@@ -109,7 +112,7 @@ for step in range(0, nbstep):
     ERR = gf.compute_error_estimate(mfu, U, mim)
 
     if with_graphics:
-        fig = getfem_tvtk.Figure()
-        fig.show(mfu, deformation=U, deformation_scale=1, data=(mfdu,VM))
-        print("Press Q to continue..")
-        fig.loop()
+        print("Close the window to continue..")
+        gfp.plot(mfdu, VM, name="Von Mises", deformation=U, deformation_mf=mfu,
+                 deformation_scale=1, title="Von Mises stress, step %d" % step,
+                 show=True)

@@ -19,50 +19,55 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-from numpy import *
+"""  Display of the results of demo_stokes_3D_tank.py (to be run first),
+  with the visualisation module getfem.plot (requires pyvista).
 
-import getfem
-import getfem_tvtk
+  Several slices are drawn in the same interactive scene: pressure on two
+  cuts of the tank, velocity arrows, edges of the mesh and streamlines.
 
-mfu=getfem.MeshFem('load','tank_3D.mfu')
+  $Id$
+"""
+import numpy as np
+
+import getfem as gf
+try:
+    import getfem.getfem_plot as gfp
+except ImportError:  # in the build tree, getfem is the module getfem.py, not the package
+    import getfem_plot as gfp
+
+mfu=gf.MeshFem('load','tank_3D.mfu')
 m=mfu.linked_mesh()
-mfp=getfem.MeshFem('load','tank_3D.mfp',m)
-U = fromfile('tank_3D.U', 'd')
-P = fromfile('tank_3D.P', 'd')
+mfp=gf.MeshFem('load','tank_3D.mfp',m)
+U = np.fromfile('tank_3D.U', 'd')
+P = np.fromfile('tank_3D.P', 'd')
+prange = (-40, 40)
 
-sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),('planar',+1,[0,0,0],[1,0,0]))),m,3);
+# pressure and velocity arrows on the skin of the quarter x > 0, y > 0
+sl=gf.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),
+                                        ('planar',+1,[0,0,0],[1,0,0]))),m,3)
+pl = gfp.plot_slice(sl, mfp, P, name="p", clim=prange, backend="pyvista",
+                    show_axes=False, show=False)
+gfp.plot_slice(sl, mfu, U, name="u", faces=False, quiver=True, colorbar=False,
+               show_axes=False, plotter=pl)
 
-print("importing tvtk..")
-print("import done")
+# pressure on the skin of the half y > 0, below z = 6
+sl=gf.Slice(('boundary',('intersection',('planar',+1,[0,0,6],[0,0,-1]),
+                                        ('planar',+1,[0,0,0],[0,1,0]))),m,3)
+gfp.plot_slice(sl, mfp, P, name="p", clim=prange, colorbar=False,
+               show_axes=False, plotter=pl)
 
-fig = getfem_tvtk.Figure(gui='tvtk')
+# white edges of the mesh on the outer faces, except the top ones (region 3)
+m.set_region(42, m.outer_faces())
+m.region_subtract(42, 3)
+sl2=gf.Slice(('boundary',('planar',+1,[0,0,0],[0,1,0])),m,3, m.region(42))
+gfp.plot_slice(sl2, mesh_edges=True, faces=False, edge_color="white",
+               show_axes=False, plotter=pl)
 
-fig.show(sl, data=(mfp, P), vdata=(mfu,U), edges=False)
+# streamlines starting on the axis of the tank
+hh=np.array([[1, 5, 9, 12.5, 16, 19.5]])
+H=np.concatenate((np.zeros((2,hh.size)), hh))
+tsl=gf.Slice('streamlines', mfu, U, H)
+gfp.plot_slice(tsl, line_color="white", plotter=pl,
+               title="Stokes flow in a tank: pressure, velocity, streamlines")
 
-fig.show(sl, data=(mfp, P), edges=False)
-
-
-old=fig.scalar_range()
-
-sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,6],[0,0,-1]),
-                             ('planar',+1,[0,0,0],[0,1,0]))),m,3);
-fig.show(sl, data=(mfp, P), scalar_bar=True, edges=False)
-fig.scalar_range((-40,40));
-
-#print(fig.scalar_range())
-
-m.set_region(42, m.outer_faces());
-m.region_subtract(42, 3);
-
-sl2=getfem.Slice(('boundary',('planar',+1,[0,0,0],[0,1,0])),m,3, m.region(42))
-fig.show(sl2, faces=False, edges_color=(1,1,1))
-
-
-hh=array([[1, 5, 9, 12.5, 16, 19.5]]);
-H=concatenate((zeros((2,hh.size)), hh));
-
-tsl=getfem.Slice('streamlines', mfu, U, H);
-
-fig.show(tsl, tube_color=(1,1,1));
-
-fig.loop()
+pl.show()

@@ -236,7 +236,15 @@ of the |gf| distribution.
 
 .. literalinclude:: code_samples/demo_tripod.py
    :linenos:
-   :lines: 31-129
+   :lines: 31-133
+
+The Von Mises stress is then displayed on the deformed tripod with the module
+``getfem.getfem_plot`` (see :ref:`py-plot`), in an interactive window when PyVista is
+installed
+
+.. literalinclude:: code_samples/demo_tripod.py
+   :linenos:
+   :lines: 147-150
 
 Here is the final figure, displaying the :envvar:`Von Mises` stress and
 displacements norms:

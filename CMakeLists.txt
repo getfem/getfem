@@ -708,6 +708,7 @@ if(ENABLE_PYTHON)
   install(TARGETS _getfem
           DESTINATION ${PYTHON_SITE_PACKAGES}/getfem)
   install(FILES "${PYTHON_MODULE_PATH}/getfem.py" "${CMAKE_SOURCE_DIR}/interface/src/python/__init__.py"
+                "${CMAKE_SOURCE_DIR}/interface/src/python/getfem_plot.py"
           DESTINATION ${PYTHON_SITE_PACKAGES}/getfem)
 endif()
 

@@ -34,11 +34,14 @@ import getfem as gf
 
 with_graphics=True
 try:
-    import getfem_tvtk
-except:
-    print("\n** Could NOT import getfem_tvtk -- graphical output disabled **\n")
-    import time
-    time.sleep(2)
+    import getfem.getfem_plot as gfp
+except ImportError:
+    try:  # in the build tree, getfem is the module getfem.py, not the package
+        import getfem_plot as gfp
+    except ImportError:
+        gfp = None
+if gfp is None or not gfp.available_backends():
+    print("\n** getfem.plot with pyvista or matplotlib not available -- graphical output disabled **\n")
     with_graphics=False
 
 
@@ -142,8 +145,6 @@ print('gmsh tripod.pos')
 # VM.tofile('tripod.VM')
 
 if with_graphics:
-  fig = getfem_tvtk.Figure()
-  fig.show(mfu, deformation=U, data=(mfdu,VM), deformation_scale='20%')
-  print("Press Q to continue..")
-  fig.set_colormap('tripod')
-  fig.loop()
+  print("Close the window to continue..")
+  gfp.plot(mfdu, VM, name="Von Mises", refine=2, deformation=U, deformation_mf=mfu,
+           deformation_scale='20%', title="Tripod, Von Mises stress", show=True)
