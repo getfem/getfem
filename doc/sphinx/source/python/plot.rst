@@ -9,7 +9,7 @@
 Visualisation of meshes and fields
 ==================================
 
-The module ``getfem.plot`` displays meshes and finite element fields directly
+The module ``getfem_plot`` displays meshes and finite element fields directly
 from |py|, in the same spirit as the functions ``gf_plot_mesh``, ``gf_plot``
 and ``gf_plot_slice`` of the Matlab/Octave interface. It relies on two
 optional libraries, which are only imported when they are used:
@@ -37,7 +37,7 @@ Quick start
 
   import numpy as np
   import getfem as gf
-  import getfem.plot as gfp
+  import getfem_plot as gfp
 
   m = gf.Mesh('regular simplices', np.linspace(0, 2, 21), np.linspace(0, 1, 11))
   m.set_region(1, m.outer_faces())

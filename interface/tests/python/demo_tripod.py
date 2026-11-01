@@ -41,7 +41,7 @@ except ImportError:
     except ImportError:
         gfp = None
 if gfp is None or not gfp.available_backends():
-    print("\n** getfem.plot with pyvista or matplotlib not available -- graphical output disabled **\n")
+    print("\n** getfem_plot with pyvista or matplotlib not available -- graphical output disabled **\n")
     with_graphics=False
 
 

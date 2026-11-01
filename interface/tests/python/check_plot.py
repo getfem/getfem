@@ -20,7 +20,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
-"""  Check of the visualisation module getfem.plot.
+"""  Check of the visualisation module getfem_plot.
 
   The extraction of fields on slices is checked against exact values (P2
   fields reproducing quadratic functions), then all the plotting functions

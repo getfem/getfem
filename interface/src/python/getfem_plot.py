@@ -26,7 +26,7 @@ Python counterpart of the Matlab/Octave functions gf_plot_mesh, gf_plot and
 gf_plot_slice::
 
     import getfem as gf
-    import getfem.plot as gfp
+    import getfem_plot as gfp
 
     gfp.plot_mesh(m, vertices=True, regions=[1])
     gfp.plot(mf, U, name="u", deformation=U, deformation_scale="10%")
@@ -673,9 +673,9 @@ def _install_save_key(pl, key, pattern, scale=1):
                 if not os.path.exists(fname):
                     break
         try:
-            print("getfem.plot: view saved in", _save_view(pl, fname, scale))
+            print("getfem_plot: view saved in", _save_view(pl, fname, scale))
         except Exception as e:
-            print("getfem.plot: could not save %s (%s)" % (fname, e))
+            print("getfem_plot: could not save %s (%s)" % (fname, e))
 
     try:
         pl.add_key_event(key, save)

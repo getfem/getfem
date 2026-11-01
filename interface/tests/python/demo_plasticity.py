@@ -20,7 +20,7 @@
 #
 ############################################################################
 """  Demonstration for small deformations plasticty (without hardening),
-  with optional graphical vizualisation (requires getfem.plot).
+  with optional graphical vizualisation (requires getfem_plot).
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM.
@@ -41,7 +41,7 @@ except ImportError:
     except ImportError:
         gfp = None
 if gfp is None or not gfp.available_backends():
-    print("\n** getfem.plot with pyvista or matplotlib not available -- graphical output disabled **\n")
+    print("\n** getfem_plot with pyvista or matplotlib not available -- graphical output disabled **\n")
     with_graphics=False
 
 L=100

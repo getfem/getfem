@@ -20,7 +20,7 @@
 #
 ############################################################################
 """  Display of the results of demo_stokes_3D_tank.py (to be run first),
-  with the visualisation module getfem.plot (requires pyvista).
+  with the visualisation module getfem_plot (requires pyvista).
 
   Several slices are drawn in the same interactive scene: pressure on two
   cuts of the tank, velocity arrows, edges of the mesh and streamlines.
