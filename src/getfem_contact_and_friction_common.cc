@@ -1223,6 +1223,7 @@ namespace getfem {
         base_small_vector ny0(N);
         compute_normal(ctx, iff, ref_conf, coeff, ny0, ny, grad);
         // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
+        ny0 /= gmm::vect_norm2(ny0);
         signed_dist *= gmm::sgn(gmm::vect_sp(x - y, ny));
 
         // CRITERION 5 : comparison with rigid obstacles
@@ -1837,6 +1838,7 @@ namespace getfem {
         // compute the unit normal vector at y and the signed distance.
         compute_normal(ctx_y, face_y, false, coeff_y, n0_y, n_y, grad);
         n_y /= gmm::vect_norm2(n_y);
+        n0_y /= gmm::vect_norm2(n0_y);
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles
@@ -2280,6 +2282,7 @@ namespace getfem {
         base_small_vector ny0(N);
         compute_normal(ctx_y, face_y, ref_conf, coeff_y, ny0, n_y, grad);
         n_y /= gmm::vect_norm2(n_y);
+        ny0 /= gmm::vect_norm2(ny0);
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles
