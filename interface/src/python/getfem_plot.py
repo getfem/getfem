@@ -513,6 +513,9 @@ def _render_mpl(data, ax=None, component=None, cmap="viridis", clim=None,
                 title=None, colorbar=True, axis_labels=None, show_axes=True,
                 show=False, show_faces=True, **_):
     import matplotlib.pyplot as plt
+    previous = None  # limits of what is already drawn in the given axes
+    if ax is not None and ax.has_data() and data.sdim <= 2:
+        previous = (ax.get_xlim(), ax.get_ylim())
     fig, ax = _mpl_axes(ax, data.sdim)
     X = data.points
     c = data.scalars(component)
@@ -567,8 +570,12 @@ def _render_mpl(data, ax=None, component=None, cmap="viridis", clim=None,
                       color=quiver_color, scale=quiver_scale, angles="xy")
         lo, hi = X[:, :2].min(axis=0), X[:, :2].max(axis=0)
         pad = 0.03 * (hi - lo).max()
-        ax.set_xlim(lo[0] - pad, hi[0] + pad)
-        ax.set_ylim(lo[1] - pad, hi[1] + pad)
+        lo, hi = lo - pad, hi + pad
+        if previous is not None:
+            lo = np.minimum(lo, [previous[0][0], previous[1][0]])
+            hi = np.maximum(hi, [previous[0][1], previous[1][1]])
+        ax.set_xlim(lo[0], hi[0])
+        ax.set_ylim(lo[1], hi[1])
 
     elif data.tdim == 1:  # 1D: curve u(x), or mesh edges / boundary in 2D
         from matplotlib.collections import LineCollection
@@ -812,7 +819,8 @@ def plot_mesh(mesh, slice_op=None, refine=1, cvlst=None, regions=None,
     """Plot a mesh (its surface in 3D), as Matlab gf_plot_mesh.
 
     mesh       : a Mesh, or a MeshFem (required for dof=True; its mesh is used).
-    regions    : region numbers to highlight, each with a colour and a legend entry.
+    regions    : region numbers to highlight, each with a colour and a legend
+                 entry, or a dict {region number: label for the legend}.
     vertices   : display the vertex numbers.
     convexes   : display the convex numbers.
     dof        : display the basic dof numbers at their nodes (MeshFem only);
@@ -873,11 +881,15 @@ def plot_mesh(mesh, slice_op=None, refine=1, cvlst=None, regions=None,
 def _plot_regions(mesh, regions, colors, refine, backend, out,
                   deformation, deformation_mf, deformation_scale):
     import matplotlib.pyplot as plt
-    cycle = colors or [plt.get_cmap("tab10")(i % 10) for i in range(len(regions))]
-    for r, col in zip(regions, cycle):
+    labels = dict(regions) if isinstance(regions, dict) else {r: f"region {r}"
+                                                              for r in regions}
+    # default colour given by the region number, so that the regions of
+    # several meshes drawn in the same figure have distinct colours
+    cycle = colors or [plt.get_cmap("tab10")(int(r) % 10) for r in labels]
+    for r, col in zip(labels, cycle):
         rd = slice_mesh(mesh, ("none",), refine, mesh.region(r), deformation,
                         deformation_mf, deformation_scale)
-        label = f"region {r}"
+        label = labels[r]
         d = rd.tdim
         S = rd.simplexes.get(d)
         if S is None or len(S) == 0:

@@ -21,6 +21,7 @@
 #
 ############################################################################
 
+import os
 import numpy as np
 import getfem as gf
 
@@ -82,8 +83,29 @@ alpha = 0.0039     # Resistivity-temperature coefficient
 h = 2.                    # Approximate mesh size
 elements_degree = 2       # Degree of the finite element methods
 export_mesh = False       # Export the mesh after mesh generation or not
+draw_graphics = True      # Display the mesh and the solution (getfem_plot)
 solve_in_two_steps = 2    # Solve the elasticity problem separately (1)
                           # or in a coupled way (0) or both and compare (2)
+
+#
+# Graphical output with getfem_plot (requires matplotlib). It is disabled
+# when the demo is run as a test by "make check".
+#
+gfp = None
+if draw_graphics and 'srcdir' not in os.environ:
+    try:
+        from getfem import getfem_plot as gfp   # installed getfem package
+    except ImportError:
+        try:
+            import getfem_plot as gfp           # build tree
+        except ImportError:
+            pass
+if gfp is None or 'matplotlib' not in gfp.available_backends():
+    if draw_graphics and 'srcdir' not in os.environ:
+        print('\n** getfem_plot or matplotlib not available -- graphical output disabled **\n')
+    draw_graphics = False
+else:
+    import matplotlib.pyplot as plt
 
 
 #
@@ -137,6 +159,12 @@ if (export_mesh):
     mesh.export_to_vtu('mesh.vtu');
     print('\nYou can view the mesh for instance with');
     print('mayavi2 -d mesh.vtu -f ExtractEdges -m Surface \n');
+
+if (draw_graphics):
+    gfp.plot_mesh(mesh, refine=8, title='Mesh',
+                  regions={RIGHT_BOUND: 'right', LEFT_BOUND: 'left',
+                           TOP_BOUND: 'top', BOTTOM_BOUND: 'bottom'})
+    plt.show(block=False); plt.pause(0.1)  # display the mesh without waiting
 
 
 #
@@ -242,3 +270,27 @@ print('You can view solutions with for instance:')
 print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
 print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
 print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
+
+#
+# Solution plot
+#
+
+if (draw_graphics):
+    # current density on a vector mesh_fem with the same fem as mfvm (its dofs
+    # are those of mfvm, each one with its two components consecutively)
+    mfco = gf.MeshFem(mesh, 2)
+    mfco.set_classical_discontinuous_fem(elements_degree)
+    U = md.variable('u')
+    opts = dict(deformation=U, deformation_mf=mfu, deformation_scale=100,
+                refine=4, mesh_edges=False)
+    fig, axs = plt.subplots(3, 1, figsize=(8, 9))
+    gfp.plot(mfvm, VM, name='Von Mises', ax=axs[0], **opts,
+             title='Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)')
+    gfp.plot(mft, md.variable('V'), name='V', ax=axs[1], **opts,
+             title='Electric potential in Volt (on the deformed configuration, scale factor x100)')
+    gfp.plot(mfco, CO.reshape(-1, order='F'), name='current density', faces=False,
+             quiver=True, quiver_count=150, colorbar=False, ax=axs[1], **opts)
+    gfp.plot(mft, md.variable('T'), name='T', ax=axs[2], **opts,
+             title='Temperature in °C (on the deformed configuration, scale factor x100)')
+    fig.tight_layout()
+    plt.show()

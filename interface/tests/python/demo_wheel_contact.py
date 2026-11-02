@@ -25,6 +25,7 @@
 #
 ############################################################################
 
+import os
 import numpy as np
 
 import getfem as gf
@@ -32,7 +33,28 @@ import getfem as gf
 gf.util('trace level', 1)    # No trace for mesh generation nor for assembly
 
 export_mesh = True;
+draw_graphics = True;      # Display the meshes and the solution (getfem_plot)
 Dirichlet_version = False; # Use a dirichlet condition instead of a global load
+
+#
+# Graphical output with getfem_plot (requires matplotlib). It is disabled
+# when the demo is run as a test by "make check".
+#
+gfp = None
+if draw_graphics and 'srcdir' not in os.environ:
+  try:
+    from getfem import getfem_plot as gfp   # installed getfem package
+  except ImportError:
+    try:
+      import getfem_plot as gfp             # build tree
+    except ImportError:
+      pass
+if gfp is None or 'matplotlib' not in gfp.available_backends():
+  if draw_graphics and 'srcdir' not in os.environ:
+    print('\n** getfem_plot or matplotlib not available -- graphical output disabled **\n')
+  draw_graphics = False
+else:
+  import matplotlib.pyplot as plt
 
 #
 # Physical parameters
@@ -85,6 +107,13 @@ mesh1.set_region(HOLE_BOUND, fb1)
 mesh1.set_region(CONTACT_BOUND, fb2)
 mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)
 mesh2.set_region(BOTTOM_BOUND, fb3)
+
+if (draw_graphics):
+  fig, ax = gfp.plot_mesh(mesh1, refine=4,
+                          regions={HOLE_BOUND: 'rim', CONTACT_BOUND: 'contact'})
+  gfp.plot_mesh(mesh2, regions={BOTTOM_BOUND: 'clamped'}, ax=ax,
+                title='Meshes of the wheel and of the foundation')
+  plt.show(block=False); plt.pause(0.1)  # display the meshes without waiting
 
 
 #
@@ -167,3 +196,16 @@ mfvm1.export_to_vtk('displacement_with_von_mises1.vtk', mfvm1,  VM1, 'Von Mises 
 
 mfvm2.export_to_vtk('displacement_with_von_mises2.vtk', mfvm2,  VM2, 'Von Mises Stresses', mfu2, U2, 'Displacements')
 print('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises1.vtk -f WarpVector -m Surface -d displacement_with_von_mises2.vtk -f WarpVector -m Surface')
+
+#
+# Solution plot: the two bodies in the same figure, with a common colour scale
+#
+if (draw_graphics):
+  clim = (0., max(VM1.max(), VM2.max()))
+  fig, ax = gfp.plot(mfvm1, VM1, name='Von Mises', deformation=U1,
+                     deformation_mf=mfu1, deformation_scale=1, refine=4,
+                     clim=clim, colorbar=False, mesh_edges=False)
+  gfp.plot(mfvm2, VM2, name='Von Mises', deformation=U2, deformation_mf=mfu2,
+           deformation_scale=1, refine=4, clim=clim, mesh_edges=False, ax=ax,
+           title='Von Mises stress in N/cm^2 (on the deformed configuration)')
+  plt.show()

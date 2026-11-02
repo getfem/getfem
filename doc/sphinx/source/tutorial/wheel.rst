@@ -25,6 +25,8 @@ Let us begin by loading Getfem and fixing the parameters of the problem
 
   import getfem as gf
   import numpy as np
+  from getfem import getfem_plot as gfp   # graphical output (see the Python interface)
+  import matplotlib.pyplot as plt
 
   E = 21E6                         # Young Modulus (N/cm^2)
   nu = 0.3                         # Poisson ratio
@@ -79,6 +81,16 @@ We have to select the different parts of the boundary where we will set some bou
   mesh1.set_region(CONTACT_BOUND, fb2)
   mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)
   mesh2.set_region(BOTTOM_BOUND, fb3)
+
+The two meshes and the selected boundaries can be drawn in the same figure with the module `getfem_plot` (see :ref:`py-plot`):
+
+.. code-block:: python
+
+  fig, ax = gfp.plot_mesh(mesh1, refine=4,
+                          regions={HOLE_BOUND: 'rim', CONTACT_BOUND: 'contact'})
+  gfp.plot_mesh(mesh2, regions={BOTTOM_BOUND: 'clamped'}, ax=ax,
+                title='Meshes of the wheel and of the foundation')
+  plt.show(block=False); plt.pause(0.1)   # display the meshes without waiting
 
 Note that the command `mesh1.outer_faces_with_direction([0., -1.], np.pi/4)` allows to select all the faces having a unit outward normal having an angle less or equal to `np.pi/4` with the vector `[0., -1.]`. The command `mesh1.region_subtract(CONTACT_BOUND, HOLE_BOUND)` allow to delete the faces corresponding to the rim in the contact boundary.
 
@@ -236,8 +248,8 @@ Note that in some configuration, it is preferable to use a more basic line searc
   md.solve('max_res', 1E-9, 'max_iter', 100, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8)
 
 
-Export the solution
-*******************
+Export and plot of the solution
+*******************************
 
 Now the code to export the solution with the VonMises stress:
 
@@ -255,6 +267,20 @@ Now the code to export the solution with the VonMises stress:
                       mfu2, U2, 'Displacements')
   # You can view solutions with for instance:
   # mayavi2 -d displacement_with_von_mises1.vtk -f WarpVector -m Surface -d displacement_with_von_mises2.vtk -f WarpVector -m Surface
+
+and to draw it directly, the two bodies being displayed in the same figure with a
+common colour scale:
+
+.. code-block:: python
+
+  clim = (0., max(VM1.max(), VM2.max()))
+  fig, ax = gfp.plot(mfvm1, VM1, name='Von Mises', deformation=U1,
+                     deformation_mf=mfu1, deformation_scale=1, refine=4,
+                     clim=clim, colorbar=False, mesh_edges=False)
+  gfp.plot(mfvm2, VM2, name='Von Mises', deformation=U2, deformation_mf=mfu2,
+           deformation_scale=1, refine=4, clim=clim, mesh_edges=False, ax=ax,
+           title='Von Mises stress in N/cm^2 (on the deformed configuration)')
+  plt.show()
 
 
 

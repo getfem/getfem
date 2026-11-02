@@ -109,7 +109,7 @@ Initialization
 **************
 
 First, in C++, ones has to include a certain number of headers for the model object, the generic assembly, the experimental mesher, and the export functionality.
-For Python, |gf| can just be imported globally, and typically numpy needs to be imported as well.
+For Python, |gf| can just be imported globally, and typically numpy needs to be imported as well. The module `getfem_plot` (see :ref:`py-plot`) and matplotlib are imported for the graphical output.
 For Scilab, the library has first to be loaded in the Scilab console (this is not described here) and for Matlab/Octave, it is only recommended to call `gf_workspace('clear all')` to ensure there are no leftover |gf| variables in memory.
 
 .. tabularcolumns:: |p{0.080\linewidth}|p{0.900\linewidth}|
@@ -135,6 +135,8 @@ For Scilab, the library has first to be loaded in the Scilab console (this is no
 
                              import getfem as gf
                              import numpy as np
+                             from getfem import getfem_plot as gfp
+                             import matplotlib.pyplot as plt
 
 -------------------------- ------------------------------------------------
 **Matlab, Octave, Scilab** .. code-block:: octave
@@ -348,6 +350,11 @@ In order to preview the mesh and verify its quality, the following instructions 
                              # You can view the mesh for instance with
                              # mayavi2 -d mesh.vtu -f ExtractEdges -m Surface
 
+                             gfp.plot_mesh(mesh, refine=8, title='Mesh',
+                                           regions={RIGHT_BOUND: 'right', LEFT_BOUND: 'left',
+                                                    TOP_BOUND: 'top', BOTTOM_BOUND: 'bottom'})
+                             plt.show(block=False); plt.pause(0.1)
+
 -------------------------- ------------------------------------------------
 **Matlab, Octave, Scilab** .. code-block:: octave
 
@@ -360,8 +367,8 @@ In order to preview the mesh and verify its quality, the following instructions 
 
 For Matlab/Octave call `pause(1);` and for Scilab call `sleep(1000);` just after.
 
-In C++ and with the Python interface, an external graphical post-processor has to be used (for instance, gmsh, Mayavi2, PyVista or Paraview).
-With Scilab and Matlab/Octave interfaces, the internal plot facilities can be used (see the result :ref:`tut-fig-meshthermo`).
+In C++, an external graphical post-processor has to be used (for instance, gmsh, Mayavi2, PyVista or Paraview) on the exported file.
+With the Python, Scilab and Matlab/Octave interfaces, the internal plot facilities can be used (see the result :ref:`tut-fig-meshthermo`). In Python, the mesh is drawn with the module `getfem_plot` (see :ref:`py-plot`) and `plt.show(block=False)` displays it without waiting for the window to be closed.
 
 
 Definition of finite element methods and integration method
@@ -746,7 +753,8 @@ Export/visualization of the solution
 
 The finite element problem is now solved.
 We can plot the solution as follows.
-Note that for the C++ and Python programs, it is necessary to use an external graphical post-processor.
+Note that for the C++ program, it is necessary to use an external graphical post-processor.
+In Python, the solution is both exported and drawn with the module `getfem_plot`.
 Note also that arbitrary quantities can be post-processed using the generic interpolation (see `ga_interpolation_Lagrange_fem` below).
 It is also possible to make complex exports and slices (see :ref:`ud-export`).
 
@@ -792,6 +800,24 @@ It is also possible to make complex exports and slices (see :ref:`ud-export`).
                              print('mayavi2 -d displacement_with_von_mises.vtu -f WarpVector -m Surface')
                              print('mayavi2 -d temperature.vtu -f WarpScalar -m Surface')
                              print('mayavi2 -d electric_potential.vtu -f WarpScalar -m Surface')
+
+                             # current density on a vector mesh_fem with the same fem as mfvm
+                             mfco = gf.MeshFem(mesh, 2)
+                             mfco.set_classical_discontinuous_fem(elements_degree)
+                             U = md.variable('u')
+                             opts = dict(deformation=U, deformation_mf=mfu, deformation_scale=100,
+                                         refine=4, mesh_edges=False)
+                             fig, axs = plt.subplots(3, 1, figsize=(8, 9))
+                             gfp.plot(mfvm, VM, name='Von Mises', ax=axs[0], **opts,
+                                      title='Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)')
+                             gfp.plot(mft, md.variable('V'), name='V', ax=axs[1], **opts,
+                                      title='Electric potential in Volt (on the deformed configuration, scale factor x100)')
+                             gfp.plot(mfco, CO.reshape(-1, order='F'), name='current density', faces=False,
+                                      quiver=True, quiver_count=150, colorbar=False, ax=axs[1], **opts)
+                             gfp.plot(mft, md.variable('T'), name='T', ax=axs[2], **opts,
+                                      title='Temperature in °C (on the deformed configuration, scale factor x100)')
+                             fig.tight_layout()
+                             plt.show()
 
 -------------------------- ------------------------------------------------
 **Matlab, Octave**         .. code-block:: octave
