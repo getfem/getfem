@@ -1051,6 +1051,14 @@ namespace getfem {
           ti[k] /= norm;
         }
 
+        scalar_type h(0); // estimate of element face size
+        for (size_type k = 0; k < N-1; ++k) {
+          base_small_vector Kti(N);
+          gmm::mult(ctx.K(), ti[k], Kti);
+          h += gmm::vect_norm2_sqr(Kti);
+        }
+        h = gmm::sqrt(h / scalar_type(N-1));
+
         bool converged = false;
         scalar_type residual(0);
 
@@ -1083,17 +1091,19 @@ namespace getfem {
           scalar_type residual2(0), det(0);
           bool exited = false;
           size_type nbfail = 0, niter = 0;
-          for (;residual > 2E-12 && niter <= 30; ++niter) {
+          scalar_type eps_res = 2E-12*h,
+                      eps_det = 1E-15*pow(h, scalar_type(N-1));
+          for (;residual > eps_res && niter <= 30; ++niter) {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
               det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
-              if (det > 1E-15) break;
+              if (det > eps_det) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
               if (++subiter > 4) break;
             }
-            if (det <= 1E-15) break;
+            if (det <= eps_det) break;
             // Computation of the descent direction
             gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
 
@@ -1121,7 +1131,7 @@ namespace getfem {
             if (niter > 5 && dist_ref > 8) break;
             if ((niter > 1 && dist_ref > 7) || nbfail == 3) exited = true;
           }
-          converged = (gmm::vect_norm2(res) < 2E-6);
+          converged = (gmm::vect_norm2(res) < 2E-6*h); // relaxed tolerance
           GMM_ASSERT1(!((exited && converged &&
                          pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-6)),
                       "A non conformal case !! " << gmm::vect_norm2(res)
@@ -1142,18 +1152,20 @@ namespace getfem {
           scalar_type det(0);
 
           scalar_type dist = pps(a, grada);
+          scalar_type eps_grad = 1E-12*h*h,
+                      eps_det = 1E-15*pow(h, scalar_type(2*N-2));
           for (size_type niter = 0;
-               gmm::vect_norm2(grada) > 1E-12 && niter <= 50; ++niter) {
+               gmm::vect_norm2(grada) > eps_grad && niter <= 50; ++niter) {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
               det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())),N-1, false));
-              if (det > 1E-15) break;
+              if (det > eps_det) break;
               for (size_type i = 0; i < N-1; ++i)
                 a[i] += gmm::random() * 1E-7;
               if (++subiter > 4) break;
             }
-            if (det <= 1E-15) break;
+            if (det <= eps_det) break;
             // Computation of the descent direction
             gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
 
@@ -1169,14 +1181,14 @@ namespace getfem {
             dist = pps(a, grada);
           }
 
-          converged = (gmm::vect_norm2(grada) < 2E-6);
+          converged = (gmm::vect_norm2(grada) < 2E-6*h*h); // relaxed tolerance
 
           if (!converged) { // Try with BFGS
-            gmm::iteration iter(1E-12, 0 /* noisy*/, 100 /*maxiter*/);
+            gmm::iteration iter(eps_grad, 0 /* noisy*/, 100 /*maxiter*/);
             gmm::clear(a);
             gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
             residual = gmm::abs(iter.get_res());
-            converged = (residual < 2E-5);
+            converged = (residual < 2E-5*h*h); // relaxed tolerance
           }
         }
 
@@ -1755,6 +1767,14 @@ namespace getfem {
           ti[k] /= norm;
         }
 
+        scalar_type h(0); // estimate of element face size
+        for (size_type k = 0; k < N-1; ++k) {
+          base_small_vector Kti(N);
+          gmm::mult(ctx_y.K(), ti[k], Kti);
+          h += gmm::vect_norm2_sqr(Kti);
+        }
+        h = gmm::sqrt(h / scalar_type(N-1));
+
         gmm::clear(a);
 
         for (size_type k = 0; k < N-1; ++k) {
@@ -1779,16 +1799,18 @@ namespace getfem {
         scalar_type residual2(0), det(0);
         bool exited = false;
         size_type nbfail = 0, niter = 0;
-        for (;residual > 2E-12 && niter <= 30; ++niter) {
+        scalar_type eps_res = 2E-12*h,
+                    eps_det = 1E-15*pow(h, scalar_type(N-1));
+        for (;residual > eps_res && niter <= 30; ++niter) {
 
           for (size_type subiter(0); subiter <= 4; ++subiter) {
             pps(a, hessa);
             det = gmm::abs(bgeot::lu_inverse(&(*(hessa.begin())), N-1, false));
-            if (det > 1E-15) break;
+            if (det > eps_det) break;
             for (size_type i = 0; i < N-1; ++i)
               a[i] += gmm::random() * 1E-7;
           }
-          if (det <= 1E-15) break;
+          if (det <= eps_det) break;
           // Computation of the descent direction
           gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
 
@@ -1814,11 +1836,11 @@ namespace getfem {
           if (niter > 5 && dist_ref > 8) break;
           if (/*(niter > 1 && dist_ref > 7) ||*/ nbfail == 3) exited = true;
         }
-        bool converged = (gmm::vect_norm2(res) < 2E-6);
+        bool converged = (gmm::vect_norm2(res) < 2E-6*h); // relaxed tolerance
         bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
-       // GMM_ASSERT1(!(exited && converged && is_in),
-       //             "A non conformal case !! " << gmm::vect_norm2(res)
-       //             << " : " << nbfail << " : " << niter);
+        // GMM_ASSERT1(!(exited && converged && is_in),
+        //             "A non conformal case !! " << gmm::vect_norm2(res)
+        //             << " : " << nbfail << " : " << niter);
         if (is_in) {
           ctx_y.pf()->interpolation(ctx_y, coeff_y, pt_y, dim_type(N));
           pt_y += ctx_y.xreal();
@@ -2187,57 +2209,68 @@ namespace getfem {
           }
           ti[k] /= norm;
         }
+
+        scalar_type h(0); // estimate of element face size
+        for (size_type k = 0; k < N-1; ++k) {
+          base_small_vector Kti(N);
+          gmm::mult(ctx_y.K(), ti[k], Kti);
+          h += gmm::vect_norm2_sqr(Kti);
+        }
+        h = gmm::sqrt(h / scalar_type(N-1));
+
         slice_vector_on_basic_dof_of_element(mfu_y, *(cb_y.U), cv_y, coeff_y);
         proj_pt_surf_cost_function_object pps(Y0, pt_x, ctx_y, coeff_y, ti,
-                                                1E-10, ref_conf);
-         base_small_vector grada(N-1);
-          scalar_type det(0);
-          scalar_type residual = gmm::vect_norm2(res);
-          scalar_type dist = pps(a, grada);
-          pps(a, res);
-          for (size_type niter = 0;
-               gmm::vect_norm2(grada) > 1E-7 && niter <= 50; ++niter) {
+                                              1E-10, ref_conf);
+        base_small_vector grada(N-1);
+        scalar_type det(0);
+        scalar_type residual = gmm::vect_norm2(res);
+        scalar_type dist = pps(a, grada);
+        pps(a, res);
+        scalar_type eps_grad = 1E-7*h*h,
+                    eps_det = 1E-15*pow(h, scalar_type(2*N-2));
+        for (size_type niter = 0;
+             gmm::vect_norm2(grada) > eps_grad && niter <= 50; ++niter) {
 
-            for (size_type subiter(0);;) {
-              pps(a, hessa);
-              det = gmm::abs(gmm::lu_inverse(hessa, false));
-              if (det > 1E-15) break;
-              for (size_type i = 0; i < N-1; ++i)
-                a[i] += gmm::random() * 1E-7;
-              if (++subiter > 4) break;
-            }
-            if (det <= 1E-15) break;
-            // Computation of the descent direction
-            gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
-
-            // Line search
-            for (scalar_type lambda(1);
-                 lambda >= 1E-3; lambda /= scalar_type(2)) {
-              gmm::add(a, gmm::scaled(dir, lambda), b);
-              if (pps(b) < dist) break;
-              gmm::add(a, gmm::scaled(dir, -lambda), b);
-              if (pps(b) < dist) break;
-            }
-             //cout<< "b =" << b <<endl;
-            gmm::copy(b, a);
-            dist = pps(a, grada);
+          for (size_type subiter(0);;) {
+            pps(a, hessa);
+            det = gmm::abs(gmm::lu_inverse(hessa, false));
+            if (det > eps_det) break;
+            for (size_type i = 0; i < N-1; ++i)
+              a[i] += gmm::random() * 1E-7;
+            if (++subiter > 4) break;
           }
+          if (det <= eps_det) break;
+          // Computation of the descent direction
+          gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
 
-          bool converged = (gmm::vect_norm2(grada) < 2E-6);
-          if (!converged) { // Try with BFGS
-            gmm::iteration iter(1E-10, 0 /* noisy*/, 100 /*maxiter*/);
-            gmm::clear(a);
-            gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
-            residual = gmm::abs(iter.get_res());
-            converged = (residual < 2E-5);
+          // Line search
+          for (scalar_type lambda(1);
+               lambda >= 1E-3; lambda /= scalar_type(2)) {
+            gmm::add(a, gmm::scaled(dir, lambda), b);
+            if (pps(b) < dist) break;
+            gmm::add(a, gmm::scaled(dir, -lambda), b);
+            if (pps(b) < dist) break;
           }
+           //cout<< "b =" << b <<endl;
+          gmm::copy(b, a);
+          dist = pps(a, grada);
+        }
+
+        bool converged = (gmm::vect_norm2(grada) < 2E-6*h*h); // relaxed tolerance
+        if (!converged) { // Try with BFGS
+          gmm::iteration iter(1E-10*h*h, 0 /* noisy*/, 100 /*maxiter*/);
+          gmm::clear(a);
+          gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
+          residual = gmm::abs(iter.get_res());
+          converged = (residual < 2E-5*h*h); // relaxed tolerance
+        }
 
         bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
 
-          //cout<< "y_ref =" << ctx_y.xref() <<endl;
-          //cout<< "x_ref =" << ctx_x.xref() <<endl;
-         // cout<< "y =" << ctx_y.xreal() <<endl;
-         // cout<< "x =" << ctx_x.xreal() <<endl;
+        // cout<< "y_ref =" << ctx_y.xref() <<endl;
+        // cout<< "x_ref =" << ctx_x.xref() <<endl;
+        // cout<< "y =" << ctx_y.xreal() <<endl;
+        // cout<< "x =" << ctx_x.xreal() <<endl;
         // cout<< "is_in =" << is_in <<endl;
 
         if (is_in || (!converged )) {
