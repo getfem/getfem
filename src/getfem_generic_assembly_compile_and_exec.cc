@@ -3141,6 +3141,45 @@ namespace getfem {
 
 
 
+  // Performs Ani Bmi -> Cmn where both tensors are vectorized gradients of
+  // type 2. The result has the sparsity 10: a scalar block repeated on the
+  // qdim diagonal blocks.
+  struct ga_instruction_contraction_opt2_2 : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    size_type q, n;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: contraction operation of size " << n*q <<
+                    " optimized for both vectorized tensor of type 2");
+      size_type nn = n*q, s1 = tc1.size()/nn, s2 = tc2.size()/nn;
+      size_type ss1 = s1/q, ss2 = s2/q, s1_qq = s1*q, s2_qq = s2*q;
+      size_type s2_1 = s2+1;
+      GA_DEBUG_ASSERT(t.size() == s2*s1, "Internal error");
+
+      // std::fill(t.begin(), t.end(), scalar_type(0)); // Factorized
+      for (size_type j = 0; j < ss2; ++j) {
+        auto it2 = tc2.cbegin() + j*q;
+        auto it = t.begin() + j*q;
+        for (size_type i = 0; i < ss1; ++i, it += s2_qq) {
+          auto it1 = tc1.cbegin() + i*q;
+          scalar_type a = scalar_type(0);
+          for (size_type m = 0; m < n; ++m)
+            a += it1[m*s1_qq] * it2[m*s2_qq];
+          auto itt = it;
+          *itt = a;
+          for (size_type k = 1; k < q; ++k) { itt += s2_1; *itt = a; }
+        }
+      }
+      return 0;
+    }
+    ga_instruction_contraction_opt2_2(base_tensor &t_,
+                                      const base_tensor &tc1_,
+                                      const base_tensor &tc2_,
+                                      size_type q_, size_type n_)
+      : t(t_), tc1(tc1_), tc2(tc2_), q(q_), n(n_) {}
+  };
+
+
   // Performs Ani Bmi -> Cmn. Unrolled operation.
   template<int I>
   struct ga_instruction_contraction_unrolled
@@ -3308,6 +3347,23 @@ namespace getfem {
   };
 
 
+  // Returns true if tc1 and tc2 are vectorized gradients of type 2, with the
+  // same qdim, fully contracted on their component and derivative indices.
+  static bool ga_contraction_is_opt2_2(const assembly_tensor &tc1_,
+                                       const assembly_tensor &tc2_,
+                                       size_type n) {
+    if (tc1_.sparsity() != 2 || tc2_.sparsity() != 2
+        || tc1_.qdim() != tc2_.qdim()) return false;
+    const bgeot::multi_index &sz1 = tc1_.tensor().sizes();
+    const bgeot::multi_index &sz2 = tc2_.tensor().sizes();
+    size_type q = tc1_.qdim();
+    if (sz1.size() != sz2.size() || sz1.size() < 2 || sz1.size() > 3
+        || sz1[1] != q || sz2[1] != q) return false;
+    size_type n1 = (sz1.size() > 2) ? sz1[2] : 1;
+    size_type n2 = (sz2.size() > 2) ? sz2[2] : 1;
+    return n1 == n2 && n1*q == n;
+  }
+
   pga_instruction ga_instruction_contraction_switch
   (assembly_tensor &t_, assembly_tensor &tc1_, assembly_tensor &tc2_,
    size_type n, bool &to_clear) {
@@ -3318,6 +3374,13 @@ namespace getfem {
       to_clear = true;
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_contraction_opt1_1>(t, tc1, tc2, n);
+    }
+
+    if (ga_contraction_is_opt2_2(tc1_, tc2_, n)) {
+      to_clear = true;
+      t_.set_sparsity(10, tc1_.qdim());
+      return std::make_shared<ga_instruction_contraction_opt2_2>
+        (t, tc1, tc2, tc1_.qdim(), n/tc1_.qdim());
     }
 
     if (tc2_.sparsity() == 1) {
@@ -3513,6 +3576,13 @@ namespace getfem {
       to_clear = true;
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_contraction_opt1_1>(t,tc1,tc2,n);
+    }
+
+    if (ga_contraction_is_opt2_2(tc1_, tc2_, n)) {
+      to_clear = true;
+      t_.set_sparsity(10, tc1_.qdim());
+      return std::make_shared<ga_instruction_contraction_opt2_2>
+        (t, tc1, tc2, tc1_.qdim(), n/tc1_.qdim());
     }
     if (tc2_.sparsity() == 1) {
       switch(n) {
