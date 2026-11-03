@@ -24,6 +24,7 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_mat_elem.h"
 #include "gmm/gmm.h"
+#include <functional>
 #ifdef GETFEM_HAVE_SYS_TIMES
 # include <sys/times.h>
 #endif
@@ -941,6 +942,126 @@ static void test_new_assembly(int N, int NX, int pK) {
 
 
 
+// Checks the instructions exploiting the structure of the tensors (sparsity
+// of the vectorized gradients, masks and symmetry of their combinations).
+// Each expression is compared to itself written with the dense tensors
+// Grad_Test_u*Id(meshdim), to which no structure is attached. The expressions
+// marked as traps look like symmetric ones but are not.
+static void test_tensor_structure(size_type N, size_type Q, size_type NX,
+                                  size_type pK, int mode) {
+
+  getfem::mesh m;
+  std::vector<size_type> nsubdiv(N, NX);
+  getfem::regular_unit_mesh(m, nsubdiv, bgeot::simplex_geotrans(N, 1));
+  for (dal::bv_visitor ip(m.points_index()); !ip.finished(); ++ip)
+    for (size_type d = 0; d < N; ++d)
+      m.points()[ip][d] += 0.03/scalar_type(NX) * sin(7.*scalar_type(ip+d));
+
+  auto pk = [N](size_type k) {
+    return getfem::fem_descriptor("FEM_PK(" + std::to_string(N) + ","
+                                  + std::to_string(k) + ")");
+  };
+  getfem::mesh_fem mf_u(m, bgeot::dim_type(Q)), mf_s(m);
+  mf_u.set_finite_element(m.convex_index(), pk(pK));
+  mf_s.set_finite_element(m.convex_index(), pk(1));
+  if (mode == 1) { // non uniform mesh_fem
+    size_type i = 0;
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv, ++i)
+      if (i % 2) mf_u.set_finite_element(cv, pk(pK-1));
+  } else if (mode == 2) { // reduced mesh_fem
+    dal::bit_vector kept;
+    for (size_type i = 0; i < mf_u.nb_basic_dof(); ++i)
+      if (i % (5*Q)) kept.add(i);
+    mf_u.reduce_to_basic_dof(kept);
+  }
+  getfem::mesh_im mim(m);
+  mim.set_integration_method(m.convex_index(), bgeot::dim_type(2*pK+1));
+
+  size_type nbd = mf_u.nb_dof();
+  base_vector U(nbd), F(mf_s.nb_dof());
+  for (size_type i = 0; i < F.size(); ++i) F[i] = 1. + 0.5*sin(0.37*double(i));
+
+  auto assemble = [&](const std::string &expr) {
+    getfem::model_real_sparse_matrix K(nbd, nbd);
+    getfem::ga_workspace workspace;
+    workspace.add_fem_variable("u", mf_u, gmm::sub_interval(0, nbd), U);
+    workspace.add_fem_constant("f", mf_s, F);
+    workspace.add_expression(expr, mim);
+    workspace.set_assembled_matrix(K);
+    workspace.assembly(2);
+    return K;
+  };
+
+  typedef std::string str;
+  typedef std::function<str(const str &, const str &)> form;
+  std::vector<form> forms = {
+    [](const str &a, const str &b) { return a+":"+b; },
+    [](const str &a, const str &b) { return "Test_u.Test2_u+"+a+":"+b; },
+    [](const str &a, const str &b) { return "f*"+a+":"+b; },
+    [](const str &a, const str &b) { return a+":"+b+"+"+a+":"+b+"*f"; }
+  };
+  if (Q == N) {
+    std::vector<form> sq = {
+      [](const str &a, const str &b) { return a+"':"+b+"'"; },
+      [](const str &a, const str &b) { return a+":"+b+"'"; },
+      [](const str &a, const str &b) { return "Sym("+a+"):Sym("+b+")"; },
+      [](const str &a, const str &b) { return "Sym("+a+"):"+b; },
+      [](const str &a, const str &b) { return "Sym("+a+"):"+b+"'"; },
+      [](const str &a, const str &b) { return a+"':Sym("+b+")"; },
+      [](const str &a, const str &b) { return a+"':("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "("+a+"+"+a+"'):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "("+a+"'+"+a+"):("+b+"'+"+b+")"; },
+      [](const str &a, const str &b)
+      { return "("+a+"'+"+a+"):Sym("+b+")"; },
+      [](const str &a, const str &b)
+      { return "f*("+a+"+"+a+"'):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "(Sym("+a+")+("+a+"+"+a+"')):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "(("+a+"+"+a+"')-Sym("+a+")):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b) { return "2*Sym("+a+"):Sym("+b
+          +")+3*Trace("+a+")*Trace("+b+")"; },
+      // Traps
+      [](const str &a, const str &b)
+      { return "("+a+"+2*"+a+"'):("+b+"'+"+b+")"; },
+      [](const str &a, const str &b)
+      { return "("+a+"+"+a+"'):("+b+"+2*"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "("+a+"+"+a+"'*2):("+b+"+"+b+"'*3)"; },
+      [](const str &a, const str &b)
+      { return "("+a+"+"+a+"):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "(Sym("+a+")+"+a+"'):("+b+"+"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "("+a+"-"+a+"'):("+b+"-"+b+"')"; },
+      [](const str &a, const str &b)
+      { return "("+a+"-"+a+"'):("+b+"-2*"+b+"')"; }
+    };
+    forms.insert(forms.end(), sq.begin(), sq.end());
+  }
+
+  const str a = "Grad_Test_u", b = "Grad_Test2_u";
+  const str a_dense = "(Grad_Test_u*Id(meshdim))";
+  const str b_dense = "(Grad_Test2_u*Id(meshdim))";
+  for (const form &f : forms) {
+    const str expr = f(a, b);
+    getfem::model_real_sparse_matrix K = assemble(expr);
+    getfem::model_real_sparse_matrix K2 = assemble(f(a_dense, b_dense));
+    scalar_type norm = gmm::mat_norminf(K2);
+    gmm::add(gmm::scaled(K, scalar_type(-1)), K2);
+    scalar_type error = gmm::mat_norminf(K2);
+    cout << "Structure test (N=" << N << ", Q=" << Q << ", mode=" << mode
+         << ") " << expr << ", error : " << error << endl;
+    GMM_ASSERT1(norm > 0., "Wrong test for " << expr);
+    GMM_ASSERT1(error < 1E-12 * norm, "Error in the assembly of " << expr
+                << " : " << error << " for a norm of " << norm);
+  }
+}
+
+
+
 int main(int argc, char *argv[]) {
   
   GETFEM_MPI_INIT(argc, argv);
@@ -949,6 +1070,13 @@ int main(int argc, char *argv[]) {
   
   test_new_assembly(2, 25, 2);
   test_new_assembly(3, 7, 2);
+
+  for (int mode = 0; mode < 3; ++mode) {
+    test_tensor_structure(2, 2, 4, 2, mode);
+    test_tensor_structure(3, 3, 2, 2, mode);
+    test_tensor_structure(2, 3, 4, 2, mode);
+    test_tensor_structure(3, 2, 2, 2, mode);
+  }
 
 
   // testbug();

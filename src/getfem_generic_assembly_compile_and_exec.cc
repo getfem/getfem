@@ -3364,10 +3364,23 @@ namespace getfem {
     return true;
   }
 
+  // Tests if a sum has the form A + A' or A' + A.
+  static bool ga_is_sum_with_transpose(const pga_tree_node child0,
+                                       const pga_tree_node child1,
+                                       const ga_workspace &workspace) {
+    auto is_transpose = [&workspace](const pga_tree_node a,
+                                     const pga_tree_node b) {
+      return a->node_type == GA_NODE_OP && a->op_type == GA_QUOTE
+        && sub_tree_are_equal(a->children[0], b, workspace, 1);
+    };
+    return is_transpose(child0, child1) || is_transpose(child1, child0);
+  }
+
   // A sum is nonzero where one of its terms is.
   static void ga_propagate_sum_structure(assembly_tensor &t,
                                          const assembly_tensor &tc1,
-                                         const assembly_tensor &tc2) {
+                                         const assembly_tensor &tc2,
+                                         bool symmetric = false) {
     if (tc1.sparsity() == tc2.sparsity() && tc1.qdim() == tc2.qdim()
         && tc1.sparsity() != 4) { t.copy_structure(tc1); return; }
     size_type Q1 = 0, Q2 = 0;
@@ -3376,7 +3389,7 @@ namespace getfem {
         && Q1 == Q2 && m1.size() == m2.size()) {
       for (size_type i = 0; i < m1.size(); ++i) m1[i] = m1[i] || m2[i];
       t.set_mask(Q1, std::make_shared<std::vector<bool>>(std::move(m1)),
-                 tc1.mask_symmetric() && tc2.mask_symmetric());
+                 symmetric || (tc1.mask_symmetric() && tc2.mask_symmetric()));
     }
   }
 
@@ -7352,7 +7365,10 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_add>
              (pnode->tensor(), child0->tensor(), child1->tensor());
          }
-         ga_propagate_sum_structure(pnode->t, child0->t, child1->t);
+         ga_propagate_sum_structure
+           (pnode->t, child0->t, child1->t,
+            pnode->nb_test_functions() == 1 && pnode->tensor_order() == 2
+            && ga_is_sum_with_transpose(child0, child1, workspace));
          rmi.instructions.push_back(std::move(pgai));
          break;
 
