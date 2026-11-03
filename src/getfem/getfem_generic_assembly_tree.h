@@ -223,6 +223,7 @@ namespace getfem {
     // nonzero pattern on (q, p), stored at q + Q*p where q is the component
     // of the test function and p the linearized proper index.
     std::shared_ptr<const std::vector<bool>> mask_;
+    bool mask_sym_; // For sparsity 4: symmetric in the two proper indices
     base_tensor t;
     assembly_tensor *tensor_copied;
   public:
@@ -232,10 +233,14 @@ namespace getfem {
     { return (is_copied ? tensor_copied->tensor() : t); }
 
     void set_sparsity(int sp, size_type q)
-    { sparsity_ = sp; qdim_ = q; mask_.reset(); }
+    { sparsity_ = sp; qdim_ = q; mask_.reset(); mask_sym_ = false; }
 
-    void set_mask(size_type q, std::shared_ptr<const std::vector<bool>> m)
-    { sparsity_ = 4; qdim_ = q; mask_ = std::move(m); }
+    void set_mask(size_type q, std::shared_ptr<const std::vector<bool>> m,
+                  bool symmetric = false)
+    { sparsity_ = 4; qdim_ = q; mask_ = std::move(m); mask_sym_ = symmetric; }
+
+    bool mask_symmetric() const
+    { return is_copied ? tensor_copied->mask_symmetric() : mask_sym_; }
 
     const std::vector<bool> *mask() const
     { return is_copied ? tensor_copied->mask() : mask_.get(); }
@@ -243,6 +248,7 @@ namespace getfem {
     void copy_structure(const assembly_tensor &t_) {
       sparsity_ = t_.sparsity(); qdim_ = t_.qdim();
       mask_ = t_.is_copied ? t_.tensor_copied->mask_ : t_.mask_;
+      mask_sym_ = t_.mask_symmetric();
     }
 
     size_type qdim() const { return is_copied ? tensor_copied->qdim() : qdim_; }
@@ -254,7 +260,8 @@ namespace getfem {
 
     inline void set_to_copy(assembly_tensor &t_) {
       is_copied = true; sparsity_ = t_.sparsity_; qdim_ = t_.qdim_;
-      mask_ = t_.mask_; t = t_.tensor(); tensor_copied = &(t_);
+      mask_ = t_.mask_; mask_sym_ = t_.mask_sym_;
+      t = t_.tensor(); tensor_copied = &(t_);
     }
 
     inline void adjust_sizes(const bgeot::multi_index &ssizes)
@@ -310,7 +317,8 @@ namespace getfem {
     const bgeot::multi_index &sizes() const { return t.sizes(); }
 
     assembly_tensor()
-    : is_copied(false), sparsity_(0), qdim_(0), tensor_copied(0) {}
+    : is_copied(false), sparsity_(0), qdim_(0), mask_sym_(false),
+      tensor_copied(0) {}
   };
 
   struct ga_tree_node;

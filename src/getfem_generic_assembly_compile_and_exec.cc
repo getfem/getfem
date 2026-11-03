@@ -3375,7 +3375,8 @@ namespace getfem {
     if (ga_structure_mask(tc1, Q1, m1) && ga_structure_mask(tc2, Q2, m2)
         && Q1 == Q2 && m1.size() == m2.size()) {
       for (size_type i = 0; i < m1.size(); ++i) m1[i] = m1[i] || m2[i];
-      t.set_mask(Q1, std::make_shared<std::vector<bool>>(std::move(m1)));
+      t.set_mask(Q1, std::make_shared<std::vector<bool>>(std::move(m1)),
+                 tc1.mask_symmetric() && tc2.mask_symmetric());
     }
   }
 
@@ -3426,51 +3427,99 @@ namespace getfem {
     }
   };
 
-  // Performs Ani Bmi -> Cmn for two masked tensors: for each block of
-  // components (q1, q2), only the common nonzero proper indices are visited.
+  // Performs Ani Bmi -> Cmn for two masked tensors. The nonzero slices of
+  // the tensors are first gathered in contiguous arrays, then each block of
+  // components (q1, q2) is computed in a contiguous buffer and stored in t.
+  // If both tensors are symmetric in their two proper indices of size d,
+  // only the entries i <= j are visited, with a weight 2 for i < j.
   struct ga_instruction_contraction_masked : public ga_instruction {
+    struct slice { size_type q, p; };
+    struct term { size_type k1, k2; scalar_type w; };
     struct block { size_type q1, q2, first, last; };
     base_tensor &t;
     const base_tensor &tc1, &tc2;
     size_type Q, n;
+    std::vector<slice> slices1, slices2;
+    std::vector<term> terms;
     std::vector<block> blocks;
-    std::vector<size_type> ind;
+    std::vector<scalar_type> packed1, packed2, buffer;
+
+    static void gather(const base_tensor &tc, size_type s, size_type Q_,
+                       const std::vector<slice> &slices,
+                       std::vector<scalar_type> &packed) {
+      size_type ss = s/Q_;
+      packed.resize(ss*slices.size());
+      auto it = packed.begin();
+      for (const slice &sl : slices) {
+        auto itc = tc.cbegin() + sl.q + s*sl.p;
+        for (size_type i = 0; i < ss; ++i, itc += Q_) *it++ = *itc;
+      }
+    }
+
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: contraction of size " << n
                     << " of masked tensors");
       size_type s1 = tc1.size()/n, s2 = tc2.size()/n;
       size_type ss1 = s1/Q, ss2 = s2/Q;
       GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      gather(tc1, s1, Q, slices1, packed1);
+      gather(tc2, s2, Q, slices2, packed2);
+      buffer.resize(ss1*ss2);
+
       for (const block &b : blocks) {
-        const size_type *first = ind.data() + b.first;
-        const size_type *last = ind.data() + b.last;
-        for (size_type j = 0; j < ss2; ++j) {
-          auto it = t.begin() + (b.q2 + Q*j) + s2*b.q1;
-          auto it2 = tc2.cbegin() + b.q2 + Q*j;
-          auto it1 = tc1.cbegin() + b.q1;
-          for (size_type i = 0; i < ss1; ++i, it += s2*Q, it1 += Q) {
-            scalar_type a = scalar_type(0);
-            for (const size_type *p = first; p != last; ++p)
-              a += it1[*p*s1] * it2[*p*s2];
-            *it = a;
+        std::fill(buffer.begin(), buffer.end(), scalar_type(0));
+        for (size_type l = b.first; l < b.last; ++l) {
+          const term &tm = terms[l];
+          const scalar_type *p1 = packed1.data() + tm.k1*ss1;
+          const scalar_type *p2 = packed2.data() + tm.k2*ss2;
+          scalar_type *pb = buffer.data();
+          for (size_type i = 0; i < ss1; ++i, pb += ss2) {
+            scalar_type a = tm.w * p1[i];
+            for (size_type j = 0; j < ss2; ++j) pb[j] += a * p2[j];
           }
+        }
+        const scalar_type *pb = buffer.data();
+        auto itt = t.begin() + b.q2 + s2*b.q1;
+        for (size_type i = 0; i < ss1; ++i, itt += s2*Q) {
+          auto it = itt;
+          for (size_type j = 0; j < ss2; ++j, it += Q) *it = *pb++;
         }
       }
       return 0;
     }
+
+    static size_type slice_index(std::vector<slice> &slices,
+                                 std::vector<size_type> &index,
+                                 size_type q, size_type p, size_type Q_) {
+      size_type &k = index[q + Q_*p];
+      if (k == size_type(-1)) { k = slices.size(); slices.push_back({q, p}); }
+      return k;
+    }
+
     ga_instruction_contraction_masked(base_tensor &t_, const base_tensor &tc1_,
                                       const base_tensor &tc2_, size_type Q_,
                                       size_type n_,
                                       const std::vector<bool> &m1,
-                                      const std::vector<bool> &m2)
+                                      const std::vector<bool> &m2,
+                                      size_type sym_d)
       : t(t_), tc1(tc1_), tc2(tc2_), Q(Q_), n(n_) {
+      std::vector<size_type> ind1(Q*n, size_type(-1)), ind2(Q*n, size_type(-1));
       for (size_type q2 = 0; q2 < Q; ++q2)
         for (size_type q1 = 0; q1 < Q; ++q1) {
-          size_type first = ind.size();
-          for (size_type p = 0; p < n; ++p)
-            if (m1[q1 + Q*p] && m2[q2 + Q*p]) ind.push_back(p);
-          if (ind.size() > first)
-            blocks.push_back(block{q1, q2, first, ind.size()});
+          size_type first = terms.size();
+          for (size_type p = 0; p < n; ++p) {
+            scalar_type w(1);
+            if (sym_d) {
+              size_type i = p % sym_d, j = p / sym_d;
+              if (i > j) continue;
+              if (i < j) w = scalar_type(2);
+            }
+            if (m1[q1 + Q*p] && m2[q2 + Q*p])
+              terms.push_back(term{slice_index(slices1, ind1, q1, p, Q),
+                                   slice_index(slices2, ind2, q2, p, Q), w});
+          }
+          if (terms.size() > first)
+            blocks.push_back(block{q1, q2, first, terms.size()});
         }
     }
   };
@@ -3488,9 +3537,12 @@ namespace getfem {
     if (!ga_structure_mask(tc1_, Q1, m1) || !ga_structure_mask(tc2_, Q2, m2)
         || Q1 != Q2 || m1.size() != Q1*n || m2.size() != Q1*n)
       return pga_instruction();
+    size_type sym_d = 0;
+    if (tc1_.mask_symmetric() && tc2_.mask_symmetric())
+      sym_d = size_type(round(sqrt(scalar_type(n))));
     auto pgai = std::make_shared<ga_instruction_contraction_masked>
-      (t_.tensor(), tc1_.tensor(), tc2_.tensor(), Q1, n, m1, m2);
-    if (10*pgai->ind.size() > 7*Q1*Q1*n) return pga_instruction();
+      (t_.tensor(), tc1_.tensor(), tc2_.tensor(), Q1, n, m1, m2, sym_d);
+    if (10*pgai->terms.size() > 7*Q1*Q1*n) return pga_instruction();
     to_clear = true;
     return pgai;
   }
@@ -7527,7 +7579,8 @@ namespace getfem {
              std::vector<bool> mask;
              if (ga_matrix_op_mask(child0->t, n1, false, Q, mask))
                pnode->t.set_mask
-                 (Q, std::make_shared<std::vector<bool>>(std::move(mask)));
+                 (Q, std::make_shared<std::vector<bool>>(std::move(mask)),
+                  child0->t.mask_symmetric());
            }
            rmi.instructions.push_back(std::move(pgai));
          } else {
@@ -7544,7 +7597,7 @@ namespace getfem {
              pgai = std::make_shared<ga_instruction_sym_masked>
                (pnode->tensor(), child0->tensor(), Q, d, mask);
              pnode->t.set_mask
-               (Q, std::make_shared<std::vector<bool>>(std::move(mask)));
+               (Q, std::make_shared<std::vector<bool>>(std::move(mask)), true);
              tensor_to_clear = true;
            } else
              pgai = std::make_shared<ga_instruction_sym>
