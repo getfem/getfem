@@ -18,6 +18,7 @@
 
 ===========================================================================*/
 
+#include <array>
 #include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_generic_assembly_tree.h"
 #include "getfem/getfem_generic_assembly_semantic.h"
@@ -3347,6 +3348,153 @@ namespace getfem {
   };
 
 
+  // Extracts the pattern of a single test function vectorized tensor.
+  static bool ga_structure_mask(const assembly_tensor &t, size_type &Q,
+                                std::vector<bool> &mask) {
+    if (t.sparsity() != 2 && t.sparsity() != 4) return false;
+    Q = t.qdim();
+    if (t.sparsity() == 4) { mask = *(t.mask()); return true; }
+    const bgeot::multi_index &sz = t.tensor().sizes();
+    if (sz.size() < 2 || sz.size() > 3 || sz[1] != Q) return false;
+    size_type nd = (sz.size() > 2) ? sz[2] : 1;
+    mask.assign(Q*Q*nd, false);
+    for (size_type l = 0; l < nd; ++l)
+      for (size_type q = 0; q < Q; ++q)
+        mask[q + Q*(q + Q*l)] = true;
+    return true;
+  }
+
+  // A sum is nonzero where one of its terms is.
+  static void ga_propagate_sum_structure(assembly_tensor &t,
+                                         const assembly_tensor &tc1,
+                                         const assembly_tensor &tc2) {
+    if (tc1.sparsity() == tc2.sparsity() && tc1.qdim() == tc2.qdim()
+        && tc1.sparsity() != 4) { t.copy_structure(tc1); return; }
+    size_type Q1 = 0, Q2 = 0;
+    std::vector<bool> m1, m2;
+    if (ga_structure_mask(tc1, Q1, m1) && ga_structure_mask(tc2, Q2, m2)
+        && Q1 == Q2 && m1.size() == m2.size()) {
+      for (size_type i = 0; i < m1.size(); ++i) m1[i] = m1[i] || m2[i];
+      t.set_mask(Q1, std::make_shared<std::vector<bool>>(std::move(m1)));
+    }
+  }
+
+  // Pattern of the transpose of a tensor having two proper indices of size d
+  // or, if keep_original is true, of its symmetric part (union of the two).
+  static bool ga_matrix_op_mask(const assembly_tensor &tc, size_type d,
+                                bool keep_original, size_type &Q,
+                                std::vector<bool> &res) {
+    std::vector<bool> m;
+    if (!ga_structure_mask(tc, Q, m) || m.size() != Q*d*d) return false;
+    res.assign(m.size(), false);
+    for (size_type j = 0; j < d; ++j)
+      for (size_type i = 0; i < d; ++i)
+        for (size_type q = 0; q < Q; ++q)
+          res[q + Q*(i + d*j)] = m[q + Q*(j + d*i)]
+                                 || (keep_original && m[q + Q*(i + d*j)]);
+    return true;
+  }
+
+  // Symmetric part of a masked tensor: only the stored entries are computed.
+  struct ga_instruction_sym_masked : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1;
+    size_type Q, d;
+    std::vector<std::array<size_type, 3>> entries; // q, direct, transposed
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: symmetric part with a mask");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+      size_type s = t.size() / (d*d), nb = s / Q;
+      for (const auto &e : entries) {
+        auto it = t.begin() + e[0] + s*e[1];
+        auto it1 = tc1.cbegin() + e[0] + s*e[1];
+        auto it1T = tc1.cbegin() + e[0] + s*e[2];
+        for (size_type a = 0; a < nb; ++a, it += Q, it1 += Q, it1T += Q)
+          *it = 0.5*(*it1 + *it1T);
+      }
+      return 0;
+    }
+    ga_instruction_sym_masked(base_tensor &t_, const base_tensor &tc1_,
+                              size_type Q_, size_type d_,
+                              const std::vector<bool> &mask)
+      : t(t_), tc1(tc1_), Q(Q_), d(d_) {
+      for (size_type j = 0; j < d; ++j)
+        for (size_type i = 0; i < d; ++i)
+          for (size_type q = 0; q < Q; ++q)
+            if (mask[q + Q*(i + d*j)])
+              entries.push_back({{q, i + d*j, j + d*i}});
+    }
+  };
+
+  // Performs Ani Bmi -> Cmn for two masked tensors: for each block of
+  // components (q1, q2), only the common nonzero proper indices are visited.
+  struct ga_instruction_contraction_masked : public ga_instruction {
+    struct block { size_type q1, q2, first, last; };
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    size_type Q, n;
+    std::vector<block> blocks;
+    std::vector<size_type> ind;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: contraction of size " << n
+                    << " of masked tensors");
+      size_type s1 = tc1.size()/n, s2 = tc2.size()/n;
+      size_type ss1 = s1/Q, ss2 = s2/Q;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      for (const block &b : blocks) {
+        const size_type *first = ind.data() + b.first;
+        const size_type *last = ind.data() + b.last;
+        for (size_type j = 0; j < ss2; ++j) {
+          auto it = t.begin() + (b.q2 + Q*j) + s2*b.q1;
+          auto it2 = tc2.cbegin() + b.q2 + Q*j;
+          auto it1 = tc1.cbegin() + b.q1;
+          for (size_type i = 0; i < ss1; ++i, it += s2*Q, it1 += Q) {
+            scalar_type a = scalar_type(0);
+            for (const size_type *p = first; p != last; ++p)
+              a += it1[*p*s1] * it2[*p*s2];
+            *it = a;
+          }
+        }
+      }
+      return 0;
+    }
+    ga_instruction_contraction_masked(base_tensor &t_, const base_tensor &tc1_,
+                                      const base_tensor &tc2_, size_type Q_,
+                                      size_type n_,
+                                      const std::vector<bool> &m1,
+                                      const std::vector<bool> &m2)
+      : t(t_), tc1(tc1_), tc2(tc2_), Q(Q_), n(n_) {
+      for (size_type q2 = 0; q2 < Q; ++q2)
+        for (size_type q1 = 0; q1 < Q; ++q1) {
+          size_type first = ind.size();
+          for (size_type p = 0; p < n; ++p)
+            if (m1[q1 + Q*p] && m2[q2 + Q*p]) ind.push_back(p);
+          if (ind.size() > first)
+            blocks.push_back(block{q1, q2, first, ind.size()});
+        }
+    }
+  };
+
+  // Selects the masked contraction when it visits few enough entries.
+  static pga_instruction ga_masked_contraction_switch
+  (assembly_tensor &t_, assembly_tensor &tc1_, assembly_tensor &tc2_,
+   size_type n, bool &to_clear) {
+    // With a gradient of type 2 as operand, the opt0_2 and opt2_0 instructions
+    // are faster despite visiting more entries.
+    if (tc1_.sparsity() != 4 || tc2_.sparsity() != 4)
+      return pga_instruction();
+    size_type Q1 = 0, Q2 = 0;
+    std::vector<bool> m1, m2;
+    if (!ga_structure_mask(tc1_, Q1, m1) || !ga_structure_mask(tc2_, Q2, m2)
+        || Q1 != Q2 || m1.size() != Q1*n || m2.size() != Q1*n)
+      return pga_instruction();
+    auto pgai = std::make_shared<ga_instruction_contraction_masked>
+      (t_.tensor(), tc1_.tensor(), tc2_.tensor(), Q1, n, m1, m2);
+    if (10*pgai->ind.size() > 7*Q1*Q1*n) return pga_instruction();
+    to_clear = true;
+    return pgai;
+  }
+
   // Returns true if tc1 and tc2 are vectorized gradients of type 2, with the
   // same qdim, fully contracted on their component and derivative indices.
   static bool ga_contraction_is_opt2_2(const assembly_tensor &tc1_,
@@ -3381,6 +3529,11 @@ namespace getfem {
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_contraction_opt2_2>
         (t, tc1, tc2, tc1_.qdim(), n/tc1_.qdim());
+    }
+    {
+      pga_instruction pgai_masked
+        = ga_masked_contraction_switch(t_, tc1_, tc2_, n, to_clear);
+      if (pgai_masked) return pgai_masked;
     }
 
     if (tc2_.sparsity() == 1) {
@@ -3583,6 +3736,11 @@ namespace getfem {
       t_.set_sparsity(10, tc1_.qdim());
       return std::make_shared<ga_instruction_contraction_opt2_2>
         (t, tc1, tc2, tc1_.qdim(), n/tc1_.qdim());
+    }
+    {
+      pga_instruction pgai_masked
+        = ga_masked_contraction_switch(t_, tc1_, tc2_, n, to_clear);
+      if (pgai_masked) return pgai_masked;
     }
     if (tc2_.sparsity() == 1) {
       switch(n) {
@@ -7142,9 +7300,7 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_add>
              (pnode->tensor(), child0->tensor(), child1->tensor());
          }
-         if (child0->t.sparsity() == child1->t.sparsity()
-             && child0->t.qdim() == child1->t.qdim())
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+         ga_propagate_sum_structure(pnode->t, child0->t, child1->t);
          rmi.instructions.push_back(std::move(pgai));
          break;
 
@@ -7160,9 +7316,7 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_sub>
              (pnode->tensor(), child0->tensor(), child1->tensor());
          }
-         if (child0->t.sparsity() == child1->t.sparsity()
-             && child0->t.qdim() == child1->t.qdim())
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+         ga_propagate_sum_structure(pnode->t, child0->t, child1->t);
          rmi.instructions.push_back(std::move(pgai));
          break;
 
@@ -7175,7 +7329,7 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->tensor(), child0->tensor(), minus);
          }
-         pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+         pnode->t.copy_structure(child0->t);
          rmi.instructions.push_back(std::move(pgai));
          break;
 
@@ -7199,12 +7353,12 @@ namespace getfem {
                  (pnode->tensor()[0], child0->tensor()[0], child1->tensor()[0]);
              }
              else if (child0->tensor().size() == 1) {
-               pnode->t.set_sparsity(child1->t.sparsity(), child1->t.qdim());
+               pnode->t.copy_structure(child1->t);
                pgai = std::make_shared<ga_instruction_scalar_mult>
                  (pnode->tensor(), child1->tensor(), child0->tensor()[0]);
              }
              else if (child1->tensor().size() == 1) {
-               pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+               pnode->t.copy_structure(child0->t);
                pgai = std::make_shared<ga_instruction_scalar_mult>
                  (pnode->tensor(), child0->tensor(), child1->tensor()[0]);
              }
@@ -7339,7 +7493,7 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_scalar_div>
              (pnode->tensor()[0], child0->tensor()[0], child1->tensor()[0]);
          } else if (child1->tensor().size() == 1) {
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+           pnode->t.copy_structure(child0->t);
            pgai = std::make_shared<ga_instruction_scalar_div>
              (pnode->tensor(), child0->tensor(), child1->tensor()[0]);
          } else GMM_ASSERT1(false, "Internal error");
@@ -7367,6 +7521,14 @@ namespace getfem {
            else
              pgai = std::make_shared<ga_instruction_transpose>
                (pnode->tensor(), child0->tensor(), n1, n2, nn);
+           if (child0->nb_test_functions() == 1
+               && child0->tensor_order() == 2 && n1 == n2) {
+             size_type Q = 0;
+             std::vector<bool> mask;
+             if (ga_matrix_op_mask(child0->t, n1, false, Q, mask))
+               pnode->t.set_mask
+                 (Q, std::make_shared<std::vector<bool>>(std::move(mask)));
+           }
            rmi.instructions.push_back(std::move(pgai));
          } else {
            pnode->t.set_to_copy(child0->t);
@@ -7375,8 +7537,18 @@ namespace getfem {
 
        case GA_SYM:
          if (pnode->tensor_proper_size() != 1) {
-           pgai = std::make_shared<ga_instruction_sym>
-             (pnode->tensor(), child0->tensor());
+           size_type Q = 0, d = size0.back();
+           std::vector<bool> mask;
+           if (pnode->nb_test_functions() == 1 && child0->tensor_order() == 2
+               && ga_matrix_op_mask(child0->t, d, true, Q, mask)) {
+             pgai = std::make_shared<ga_instruction_sym_masked>
+               (pnode->tensor(), child0->tensor(), Q, d, mask);
+             pnode->t.set_mask
+               (Q, std::make_shared<std::vector<bool>>(std::move(mask)));
+             tensor_to_clear = true;
+           } else
+             pgai = std::make_shared<ga_instruction_sym>
+               (pnode->tensor(), child0->tensor());
            rmi.instructions.push_back(std::move(pgai));
          } else {
            pnode->t.set_to_copy(child0->t);
@@ -7419,12 +7591,12 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
              (pnode->tensor()[0], child0->tensor()[0], child1->tensor()[0]);
          } else if (child0->tensor().size() == 1) {
-           pnode->t.set_sparsity(child1->t.sparsity(), child1->t.qdim());
+           pnode->t.copy_structure(child1->t);
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->tensor(), child1->tensor(), child0->tensor()[0]);
          }
          else if (child1->tensor().size() == 1) {
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+           pnode->t.copy_structure(child0->t);
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->tensor(), child0->tensor(), child1->tensor()[0]);
          }
@@ -7450,7 +7622,7 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_scalar_div>
              (pnode->tensor()[0], child0->tensor()[0], child1->tensor()[0]);
          } else if (child1->tensor().size() == 1) {
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+           pnode->t.copy_structure(child0->t);
            pgai = std::make_shared<ga_instruction_scalar_div>
              (pnode->tensor(), child0->tensor(), child1->tensor()[0]);
          } else if (child1->test_function_type == 0) {
@@ -7466,12 +7638,12 @@ namespace getfem {
            pgai = std::make_shared<ga_instruction_scalar_scalar_mult>
              (pnode->tensor()[0], child0->tensor()[0], child1->tensor()[0]);
          } else if (child0->tensor().size() == 1) {
-           pnode->t.set_sparsity(child1->t.sparsity(), child1->t.qdim());
+           pnode->t.copy_structure(child1->t);
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->tensor(), child1->tensor(), child0->tensor()[0]);
          }
          else if (child1->tensor().size() == 1) {
-           pnode->t.set_sparsity(child0->t.sparsity(), child0->t.qdim());
+           pnode->t.copy_structure(child0->t);
            pgai = std::make_shared<ga_instruction_scalar_mult>
              (pnode->tensor(), child0->tensor(), child1->tensor()[0]);
          }

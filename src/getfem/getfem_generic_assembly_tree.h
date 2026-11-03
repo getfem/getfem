@@ -217,7 +217,12 @@ namespace getfem {
   class assembly_tensor {
     bool is_copied;
     int sparsity_; // 0: plain, 1: vectorized base, 2: vectorised grad, ...
+                   // 4: vectorized with a mask, 10: repeated diagonal blocks
     size_type qdim_; // Dimension of the vectorization for sparsity tensors
+    // For sparsity 4: for a tensor t(Q*ndof, proper indices), the possibly
+    // nonzero pattern on (q, p), stored at q + Q*p where q is the component
+    // of the test function and p the linearized proper index.
+    std::shared_ptr<const std::vector<bool>> mask_;
     base_tensor t;
     assembly_tensor *tensor_copied;
   public:
@@ -227,7 +232,18 @@ namespace getfem {
     { return (is_copied ? tensor_copied->tensor() : t); }
 
     void set_sparsity(int sp, size_type q)
-    { sparsity_ = sp; qdim_ = q; }
+    { sparsity_ = sp; qdim_ = q; mask_.reset(); }
+
+    void set_mask(size_type q, std::shared_ptr<const std::vector<bool>> m)
+    { sparsity_ = 4; qdim_ = q; mask_ = std::move(m); }
+
+    const std::vector<bool> *mask() const
+    { return is_copied ? tensor_copied->mask() : mask_.get(); }
+
+    void copy_structure(const assembly_tensor &t_) {
+      sparsity_ = t_.sparsity(); qdim_ = t_.qdim();
+      mask_ = t_.is_copied ? t_.tensor_copied->mask_ : t_.mask_;
+    }
 
     size_type qdim() const { return is_copied ? tensor_copied->qdim() : qdim_; }
 
@@ -238,7 +254,7 @@ namespace getfem {
 
     inline void set_to_copy(assembly_tensor &t_) {
       is_copied = true; sparsity_ = t_.sparsity_; qdim_ = t_.qdim_;
-      t = t_.tensor(); tensor_copied = &(t_);
+      mask_ = t_.mask_; t = t_.tensor(); tensor_copied = &(t_);
     }
 
     inline void adjust_sizes(const bgeot::multi_index &ssizes)
