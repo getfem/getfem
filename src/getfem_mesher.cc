@@ -291,8 +291,8 @@ namespace getfem {
         else if (constraints.card() < other.constraints.card()) return false;
         else for (dal::bv_visitor i1(constraints), i2(other.constraints);
                   !i1.finished(); ++i1, ++i2) {
-          if (i1 < i2) return true;
-          else if (i2 > i1) return false;
+          if (size_type(i1) < size_type(i2)) return true;
+          else if (size_type(i1) > size_type(i2)) return false;
         }
       }
       return false;
@@ -882,7 +882,9 @@ namespace getfem {
                              const std::vector<const pt_attribute*> &attr_)
         : pts(pts_), attr(attr_) {}
       bool operator()(size_type a, size_type b) {
-        if (attr[a] != attr[b]) return attr[a] < attr[b];
+        // compare the attributes, not their addresses: the order (hence the
+        // mesh) must not depend on where they happen to be allocated
+        if (attr[a] != attr[b]) return *(attr[a]) < *(attr[b]);
         return pts[a] < pts[b];
       }
     };
