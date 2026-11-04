@@ -85,6 +85,22 @@ namespace getfem {
     using pb_base<PLSOLVER>::state_vector;
     using pb_base<PLSOLVER>::linear_solve;
     void compute_all() { md.assembly(model::BUILD_ALL); }
+
+    // Normwise backward error |K x - b| / (|K| |x| + |b|) (infinity norms) of
+    // the computed state: a solver independent check that the linear solver
+    // did not fail (e.g. leaving a zero state after a zero pivot). It does
+    // not detect numerically singular matrices: a stable direct solver keeps
+    // a small backward error on them.
+    R backward_error() const {
+      const VECTOR &x = state_vector();
+      VECTOR r(gmm::vect_size(this->rhs));
+      gmm::mult(this->K, x, r);
+      gmm::add(gmm::scaled(this->rhs, typename pb_base<PLSOLVER>::T(-1)), r);
+      R den = gmm::mat_norminf(this->K) * gmm::vect_norminf(x)
+            + gmm::vect_norminf(this->rhs);
+      return (den > R(0)) ? gmm::vect_norminf(r) / den : R(0);
+    }
+
     lin_model_pb(model &, PLSOLVER) = delete;
   };
 
@@ -391,6 +407,17 @@ namespace getfem {
       lin_model_pb<PLSOLVER> mdpb(md, lsolver);
       mdpb.compute_all();
       mdpb.linear_solve(mdpb.state_vector(), iter);
+      // A failed linear solve must not go unnoticed: on a singular system
+      // some direct solvers only print a warning and leave a zero state.
+      // Report it through iter.converged().
+      double berr = double(mdpb.backward_error());
+      if (iter.get_noisy())
+        cout << "backward error of the linear solve: " << berr << endl;
+      if (!(berr <= std::max(iter.get_resmax(), 1E-8))) { // also catches NaN
+        GMM_WARNING1("the linear system has not been solved accurately "
+                     "(backward error " << berr << "): singular matrix?");
+        iter.enforce_converged(false);
+      }
       md.to_variables(mdpb.state_vector()); // copy the state vector into the model variables
     } else {
       std::unique_ptr<nonlin_model_pb<PLSOLVER>> mdpb;

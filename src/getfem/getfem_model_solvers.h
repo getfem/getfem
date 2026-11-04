@@ -165,8 +165,15 @@ namespace getfem {
       typedef typename gmm::linalg_traits<MAT>::value_type T;
       gmm::dense_matrix<T> MM(gmm::mat_nrows(M),gmm::mat_ncols(M));
       gmm::copy(M, MM);
-      gmm::lu_solve(MM, x, b);
-      iter.enforce_converged(true);
+      // Report a singular matrix through iter, as the sparse direct solvers
+      // do, instead of throwing.
+      gmm::lapack_ipvt ipvt(gmm::mat_nrows(MM));
+      size_type info = gmm::lu_factor(MM, ipvt);
+      if (info == 0)
+        gmm::lu_solve(MM, ipvt, x, b);
+      else
+        GMM_WARNING1("dense LU solve failed: singular matrix (pivot " << info << ")");
+      iter.enforce_converged(info == 0);
     }
   };
 

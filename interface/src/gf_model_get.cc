@@ -425,7 +425,16 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
        default value is 'default').
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
 
-      Return the number of iterations, if an iterative method is used.
+      Return the number of iterations, if an iterative method is used, and
+      whether the solver converged. For a linear problem, `converged` is 0
+      when the linear solver failed: singular matrix detected by the solver
+      (zero pivot), or computed solution whose normwise backward error
+      |K U - F| / (|K| |U| + |F|) exceeds max(`max_res`, 1e-8) (for instance
+      a solver leaving a zero solution). On a singular but compatible
+      system, a solution may be found while `converged` is 0: it is then not
+      unique. A numerically singular or very ill-conditioned matrix is not
+      always detected, since the backward error of a stable direct solver
+      remains small: check |K U - F| / |F| if needed.
 
       Note that it is possible to disable some variables
       (see MODEL:SET('disable variable') ) in order to
