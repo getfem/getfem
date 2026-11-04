@@ -103,7 +103,7 @@ namespace gmm {
     for (i = 0; i+1 < NN; ++i) ipvt[i] = INT(i);
 
     if (M || N) {
-      for (j = 0; j+1 < NN; ++j) {
+      for (j = 0; j < NN; ++j) { // the last column needs a pivot test too
         R max = gmm::abs(A(j,j)); jp = j;
         for (i = j+1; i < M; ++i)                   /* find pivot.          */
           if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
@@ -114,10 +114,10 @@ namespace gmm {
 
         for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
         for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
-        rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
-                                 sub_interval(j+1, N-j-1)), c, conjugated(r));
+        if (j+1 < NN)
+          rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
+                                     sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
-      ipvt[NN-1] = INT(NN);
     }
     return info;
   }
