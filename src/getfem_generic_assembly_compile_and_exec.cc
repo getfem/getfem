@@ -3537,7 +3537,55 @@ namespace getfem {
     }
   };
 
-  // Selects the masked contraction when it visits few enough entries.
+#if defined(GA_USES_BLAS)
+  // Performs Ani Bmi -> Cmn for two tensors symmetric in their two proper
+  // indices of size d, keeping only the entries i <= j (with a weight 2 for
+  // i < j). A single dgemm is much faster here than a loop on the nonzero
+  // entries, the number of which is not small enough to compensate.
+  struct ga_instruction_contraction_sym : public ga_instruction {
+    base_tensor &t;
+    const base_tensor &tc1, &tc2;
+    size_type n;
+    std::vector<size_type> ind;
+    std::vector<scalar_type> weight, packed1, packed2;
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: contraction of size " << n
+                    << " of symmetric tensors");
+      size_type s1 = tc1.size()/n, s2 = tc2.size()/n, nb = ind.size();
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      packed1.resize(s1*nb);
+      packed2.resize(s2*nb);
+      auto it1 = packed1.begin(), it2 = packed2.begin();
+      for (size_type k = 0; k < nb; ++k) {
+        auto itc1 = tc1.cbegin() + s1*ind[k], itc2 = tc2.cbegin() + s2*ind[k];
+        scalar_type w = weight[k];
+        for (size_type i = 0; i < s1; ++i) *it1++ = w * itc1[i];
+        it2 = std::copy(itc2, itc2 + s2, it2);
+      }
+      BLAS_INT N_ = BLAS_INT(s1), M_ = BLAS_INT(s2), K_ = BLAS_INT(nb);
+      char notrans = 'N', trans = 'T';
+      static const scalar_type one(1), zero(0);
+      gmm::dgemm_(&notrans, &trans, &M_, &N_, &K_, &one, packed2.data(), &M_,
+                  packed1.data(), &N_, &zero, &(t[0]), &M_);
+      return 0;
+    }
+    ga_instruction_contraction_sym(base_tensor &t_, const base_tensor &tc1_,
+                                   const base_tensor &tc2_, size_type n_,
+                                   size_type d)
+      : t(t_), tc1(tc1_), tc2(tc2_), n(n_) {
+      for (size_type j = 0; j < d; ++j)
+        for (size_type i = 0; i <= j; ++i) {
+          ind.push_back(i + d*j);
+          weight.push_back(i == j ? scalar_type(1) : scalar_type(2));
+        }
+    }
+  };
+#endif
+
+  // Selects the instruction for two masked tensors. The masked loop has to
+  // compete with dgemm when a BLAS is used, which requires a very small
+  // proportion of visited entries (11% for the transpose of a gradient in 3D
+  // wins, 19% for a symmetrized gradient loses).
   static pga_instruction ga_masked_contraction_switch
   (assembly_tensor &t_, assembly_tensor &tc1_, assembly_tensor &tc2_,
    size_type n, bool &to_clear) {
@@ -3545,6 +3593,8 @@ namespace getfem {
     // are faster despite visiting more entries.
     if (tc1_.sparsity() != 4 || tc2_.sparsity() != 4)
       return pga_instruction();
+    // In dimension 2, the unrolled dense instructions are faster.
+    if (n <= 4) return pga_instruction();
     size_type Q1 = 0, Q2 = 0;
     std::vector<bool> m1, m2;
     if (!ga_structure_mask(tc1_, Q1, m1) || !ga_structure_mask(tc2_, Q2, m2)
@@ -3553,9 +3603,18 @@ namespace getfem {
     size_type sym_d = 0;
     if (tc1_.mask_symmetric() && tc2_.mask_symmetric())
       sym_d = size_type(round(sqrt(scalar_type(n))));
+#if defined(GA_USES_BLAS)
+    if (sym_d)
+      return std::make_shared<ga_instruction_contraction_sym>
+        (t_.tensor(), tc1_.tensor(), tc2_.tensor(), n, sym_d);
+    const size_type max_percent = 15;
+#else
+    const size_type max_percent = 70;
+#endif
     auto pgai = std::make_shared<ga_instruction_contraction_masked>
       (t_.tensor(), tc1_.tensor(), tc2_.tensor(), Q1, n, m1, m2, sym_d);
-    if (10*pgai->terms.size() > 7*Q1*Q1*n) return pga_instruction();
+    if (100*pgai->terms.size() > max_percent*Q1*Q1*n)
+      return pga_instruction();
     to_clear = true;
     return pgai;
   }
