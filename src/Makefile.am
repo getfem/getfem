@@ -116,6 +116,7 @@ nobase_include_HEADERS =                                   \
   getfem/getfem_config.h                                   \
   getfem/getfem_interpolation.h                            \
   getfem/getfem_export.h                                   \
+  getfem/getfem_exodus.h                                   \
   getfem/getfem_import.h                                   \
   getfem/getfem_derivatives.h                              \
   getfem/getfem_global_function.h                          \
@@ -241,13 +242,14 @@ SRC =                                                      \
   getfem_omp.cc                                            \
   getfem_level_set_contact.cc                              \
   getfem_im_data.cc                                        \
-  getfem_continuation.cc
+  getfem_continuation.cc                                   \
+  getfem_exodus.cc
 #  getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
-libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@
+libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@ @NETCDF_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
 CLEANFILES = ii_files/* *.o.d getfem/getfem_im_list.h
