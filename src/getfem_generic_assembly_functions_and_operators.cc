@@ -558,6 +558,7 @@ namespace getfem {
     SPEC_OP.insert("element_size");
     SPEC_OP.insert("element_K");
     SPEC_OP.insert("element_B");
+    SPEC_OP.insert("element_curvature");
     SPEC_OP.insert("Normal");
     SPEC_OP.insert("Sym");
     SPEC_OP.insert("Skew");

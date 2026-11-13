@@ -435,6 +435,76 @@ namespace getfem {
       : t(t_), ctx(ct)  {}
   };
 
+  // Curvature tensor of a hypersurface (curve in 2D, surface in 3D)
+  // computed elementwise from the geometric transformation:
+  //   element_curvature = grad_s n = - B b B^T,
+  // where n is the unit normal oriented by the element parametrization
+  // (n = K_1 x K_2 in 3D, n = (K_12, -K_11) in 2D) and
+  // b_ab = n . d^2x/dxi_a dxi_b is the second fundamental form.
+  // The result is a symmetric N x N matrix with n in its kernel; its
+  // nonzero eigenvalues are the principal curvatures (positive for a
+  // sphere/circle with outward normal). Vanishes for linear transformations.
+  struct ga_instruction_element_curvature : public ga_instruction {
+    base_tensor &t;
+    const fem_interpolation_context &ctx;
+    base_matrix PC, Htau, bB;
+    base_small_vector n, bab;
+
+    virtual int exec() {
+      GA_DEBUG_INFO("Instruction: element_curvature");
+      bgeot::pgeometric_trans pgt = ctx.pgt();
+      size_type N = ctx.N(), P = pgt->dim();
+      GMM_ASSERT1(P+1 == N && (N == 2 || N == 3), "element_curvature is "
+                  "only defined for curves in 2D and surfaces in 3D");
+      GMM_ASSERT1(t.size() == N*N, "Invalid tensor size.");
+      gmm::clear(t.as_vector());
+      if (pgt->is_linear()) return 0;
+
+      const base_matrix &K = ctx.K(), &B = ctx.B();
+      n.resize(N);
+      if (N == 2) {
+        n[0] = K(1,0); n[1] = -K(0,0);
+      } else {
+        n[0] = K(1,0)*K(2,1) - K(2,0)*K(1,1);
+        n[1] = K(2,0)*K(0,1) - K(0,0)*K(2,1);
+        n[2] = K(0,0)*K(1,1) - K(1,0)*K(0,1);
+      }
+      gmm::scale(n, scalar_type(1)/gmm::vect_norm2(n));
+
+      // Second derivatives of the geometric transformation (N x P*P)
+      Htau.base_resize(N, P*P);
+      if (ctx.have_pgp() && ctx.ii() != size_type(-1))
+        gmm::mult(ctx.G(), ctx.pgp()->hessian(ctx.ii()), Htau);
+      else {
+        PC.base_resize(pgt->nb_points(), P*P);
+        pgt->poly_vector_hess(ctx.xref(), PC);
+        gmm::mult(ctx.G(), PC, Htau);
+      }
+
+      // b_ab = n . Htau(:, a + P*b)
+      bab.resize(P*P);
+      gmm::mult(gmm::transposed(Htau), n, bab);
+
+      // t = - B b B^T
+      bB.base_resize(P, N);
+      gmm::clear(bB);
+      for (size_type a = 0; a < P; ++a)
+        for (size_type c = 0; c < P; ++c)
+          for (size_type j = 0; j < N; ++j)
+            bB(a, j) += bab[a + P*c] * B(j, c);
+      for (size_type j = 0; j < N; ++j)
+        for (size_type i = 0; i < N; ++i) {
+          scalar_type s(0);
+          for (size_type a = 0; a < P; ++a) s += B(i, a) * bB(a, j);
+          t[i + N*j] = -s;
+        }
+      return 0;
+    }
+    ga_instruction_element_curvature(base_tensor &t_,
+                                     const fem_interpolation_context &ct)
+      : t(t_), ctx(ct)  {}
+  };
+
   struct ga_instruction_val_base : public ga_instruction {
     base_tensor &t;
     fem_interpolation_context &ctx;
@@ -6404,6 +6474,14 @@ namespace getfem {
                   "No use of element_B is allowed in functions");
       pgai = std::make_shared<ga_instruction_element_B>(pnode->tensor(),
                                                         gis.ctx);
+      rmi.instructions.push_back(std::move(pgai));
+      break;
+
+    case GA_NODE_ELT_CURVATURE:
+      GMM_ASSERT1(!function_case,
+                  "No use of element_curvature is allowed in functions");
+      pgai = std::make_shared<ga_instruction_element_curvature>
+        (pnode->tensor(), gis.ctx);
       rmi.instructions.push_back(std::move(pgai));
       break;
 

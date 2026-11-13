@@ -1004,6 +1004,7 @@ namespace getfem {
     case GA_NODE_ELT_SIZE: str << "element_size"; break;
     case GA_NODE_ELT_K: str << "element_K"; break;
     case GA_NODE_ELT_B: str << "element_B"; break;
+    case GA_NODE_ELT_CURVATURE: str << "element_curvature"; break;
     case GA_NODE_NORMAL: str << "Normal"; break;
     case GA_NODE_INTERPOLATE_FILTER:
       str << "Interpolate_filter(" << pnode->interpolate_name << ",";

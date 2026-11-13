@@ -138,6 +138,7 @@ namespace getfem {
     GA_NODE_ELT_SIZE,
     GA_NODE_ELT_K,
     GA_NODE_ELT_B,
+    GA_NODE_ELT_CURVATURE,
     GA_NODE_NORMAL,
     GA_NODE_VAL,
     GA_NODE_GRAD,
