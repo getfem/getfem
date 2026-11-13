@@ -601,7 +601,10 @@ namespace getfem {
       if (pnode->name.compare("element_B") == 0) {
         if (pnode->node_type == GA_NODE_INTERPOLATE) {
           pnode->node_type = GA_NODE_INTERPOLATE_ELT_B;
-          pnode->init_matrix_tensor(ref_elt_dim, meshdim);
+          if (ref_elt_dim == 1)
+            pnode->init_vector_tensor(meshdim);
+          else
+            pnode->init_matrix_tensor(meshdim, ref_elt_dim);
         }
         break;
       }
@@ -1689,7 +1692,10 @@ namespace getfem {
         }
         if (!(name.compare("element_B"))) {
           pnode->node_type = GA_NODE_ELT_B;
-          pnode->init_matrix_tensor(ref_elt_dim, meshdim);
+          if (ref_elt_dim == 1)
+            pnode->init_vector_tensor(meshdim);
+          else
+            pnode->init_matrix_tensor(meshdim, ref_elt_dim);
           break;
         }
         if (!(name.compare("Normal"))) {
