@@ -469,7 +469,7 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
     P0 element.
     The name is the name given to the elementary transformation.@*/
   sub_command
-    ("add P0 projection", 1, 1, 0, 0,
+    ("add elementary P0 projection", 1, 1, 0, 0,
      std::string transname = in.pop().to_string();
      add_P0_projection(*md, transname);
      );
