@@ -1810,7 +1810,7 @@ namespace getfem {
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
     gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
-    for (unsigned j = 0; j <= nb_dof(0); ++j) {
+    for (unsigned j = 0; j < nb_dof(0); ++j) {
       
       if (faces_of_dof(0, j).size()) {
         unsigned nf = faces_of_dof(0, j)[0];
@@ -2188,7 +2188,7 @@ namespace getfem {
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
     gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
-    for (unsigned j = 0; j <= nb_dof(0); ++j) {
+    for (unsigned j = 0; j < nb_dof(0); ++j) {
       
       if (faces_of_dof(0, j).size()) {
         unsigned nf = faces_of_dof(0, j)[0];
