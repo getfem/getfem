@@ -302,7 +302,7 @@ elseif (Contact_option == 0)
   end
 elseif (Contact_option == 2)
     gf_model_set(md, 'add initialized data', 'penalty_coeff', [penalty_coeff]);
-    gf_model_set(md, 'add nonlinear term', mim_friction, 'penalty_coeff*sqr(neg_part(obstacle + u.(Normalized(Grad_obstacle))))', GAMMAC);
+    gf_model_set(md, 'add nonlinear term', mim_friction, 'penalty_coeff*sqr_neg_part(obstacle + u.(Normalized(Grad_obstacle)))', GAMMAC);
     if (friction ~= 0)
         error('Sorry friction to be taken into account for penalty method')
     end
