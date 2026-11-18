@@ -223,6 +223,9 @@ namespace getfem {
 
       // Obtaining a convenient integration method
       size_type degree = pf1->estimated_degree() + pf2->estimated_degree();
+      if (simplex)
+        degree = std::max(degree, size_type(2 * std::max(pf1->estimated_degree(),
+                                                         pf2->estimated_degree())));
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       papprox_integration pim
         = classical_approx_im(pgt, dim_type(degree))->approx_method();
@@ -326,6 +329,9 @@ namespace getfem {
 
       // Obtaining a convenient integration method
       size_type degree = pf1->estimated_degree() + pf2->estimated_degree();
+      if (simplex)
+        degree = std::max(degree, size_type(2 * std::max(pf1->estimated_degree(),
+                                                         pf2->estimated_degree())));
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       papprox_integration pim
         = classical_approx_im(pgt, dim_type(degree))->approx_method();
