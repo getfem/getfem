@@ -977,7 +977,7 @@ namespace getfem {
     if (n == 1)
       name << "FEM_PK_HIERARCHICAL(1," << k << ")";
     else
-      name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
+      name << "FEM_PRODUCT(FEM_QK_HIERARCHICAL(" << n-1 << "," << k
            << "),FEM_PK_HIERARCHICAL(1," << k << "))";
     return fem_descriptor(name.str());
   }
