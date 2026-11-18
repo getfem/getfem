@@ -146,7 +146,7 @@ namespace getfem {
       ms.nodes[i].pt.resize(defdata->pmf->get_qdim());
       ctx.set_ii(cnt);
       pf->interpolation(ctx, coeff, val, defdata->pmf->get_qdim());
-      gmm::add(val, ms.nodes[cnt].pt);
+      gmm::add(val, ms.nodes[i].pt);
     }
   }
 
