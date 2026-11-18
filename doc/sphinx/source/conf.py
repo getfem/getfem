@@ -146,7 +146,7 @@ add_module_names = False
 # -----------------------
 
 # The "theme" that the HTML output should use.
-#html_theme = 'default'
+html_theme = 'default'
 
 # A dictionary of options that influence the look and feel of the selected
 # theme. These are theme-specific.
