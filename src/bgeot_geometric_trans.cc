@@ -641,7 +641,7 @@ namespace bgeot {
                 "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
+    GMM_ASSERT1(n >= 0 && n < 100 && (k > 0 || n == 0) && k <= 150 &&
                 double(n) == params[0].num() && double(k) == params[1].num(),
                 "Bad parameters");
     dependencies.push_back(simplex_of_reference(dim_type(n), dim_type(k)));
