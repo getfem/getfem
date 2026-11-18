@@ -127,7 +127,8 @@ namespace getfem {
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i) {
       ref_pts2.push_back(ms.nodes[i].pt_ref);
       if (ref_pts2.size() > ref_pts.size()
-          || gmm::vect_dist2_sqr(ref_pts2[i],ref_pts[i])>1e-20) 
+          || gmm::vect_dist2_sqr(ref_pts2.back(),
+                                 ref_pts[ref_pts2.size()-1])>1e-20)
         ref_pts_changed = true;
     }
     if (ref_pts2.size() != ref_pts.size()) ref_pts_changed = true;
