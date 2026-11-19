@@ -441,10 +441,11 @@ namespace bgeot {
       if (comment == 0)
         return default_val;
       else {
-        double f;
+        double f = 0;
         getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> f;
+        GMM_ASSERT1(cin, "Parameter " << name << " could not be read");
         parameters[name] = param_value(f);
       }
     }
@@ -460,10 +461,11 @@ namespace bgeot {
       if (comment == 0)
         return default_val;
       else {
-        long f;
+        long f = 0;
         getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> f;
+        GMM_ASSERT1(cin, "Parameter " << name << " could not be read");
         parameters[name] = param_value(double(f));
       }
     }
@@ -484,6 +486,7 @@ namespace bgeot {
         getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> s;
+        GMM_ASSERT1(cin, "Parameter " << name << " could not be read");
         parameters[name] = param_value(s);
       }
     }
@@ -504,6 +507,7 @@ namespace bgeot {
         getfem::standard_locale sl;
         cout << "No parameter " << name << " found, please enter its value\n";
         cout << comment << " : "; cin >> s;
+        GMM_ASSERT1(cin, "Parameter " << name << " could not be read");
         parameters[name] = param_value(s);
       }
     }
