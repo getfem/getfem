@@ -2340,8 +2340,8 @@ namespace getfem {
     GMM_ASSERT1(params[1].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
-                "Bad parameter n for BDM element");
+    GMM_ASSERT1(n == 2 && double(n) == params[0].num(),
+                "BDM element only available in dimension 2");
     GMM_ASSERT1(k >= 1 && k < 100 && double(k) == params[1].num(),
                 "Bad parameter k for BDM element");
     pfem p = std::make_shared<BDMk_>(dim_type(n), dim_type(k));

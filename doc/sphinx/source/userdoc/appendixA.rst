@@ -705,7 +705,7 @@ Raviart-Thomas elements
 Brezzi-Douglas-Marini element on simplices
 ++++++++++++++++++++++++++++++++++++++++++
 
-BDM elements on simplices of dimension :math:`P \ge 1` and degree :math:`K \ge 1` has :math:`\dfrac{(K+P-1)!}{K!(P-1)!}` normal component degrees of freedom on each face and :math:`\dfrac{(K-1)(K+P-1)!}{K!(P-1)!}` internal degrees of freedom. Not yet implemented for quadrilateral.
+BDM elements on simplices of dimension :math:`P \ge 1` and degree :math:`K \ge 1` has :math:`\dfrac{(K+P-1)!}{K!(P-1)!}` normal component degrees of freedom on each face and :math:`\dfrac{(K-1)(K+P-1)!}{K!(P-1)!}` internal degrees of freedom. Only implemented for :math:`P = 2`, not yet for quadrilateral.
 
 :math:`.\\`
 
