@@ -463,7 +463,7 @@ namespace getfem {
       res[1] =-cos2*((4*cos2*cos2)-3.)/(2*sqrt(r)*r);
       break;
     case 9 :
-      res[0] =-cos2*((2*cos2*cos2) - 3.)/(2*sqrt(r)*r);
+      res[0] =-cos2*((4*cos2*cos2) - 3.)/(2*sqrt(r)*r);
       res[1] =-sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r);
       break;
 
@@ -480,8 +480,8 @@ namespace getfem {
  /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
 
     case 12 :
-      res[0] = sin2*sin2;
-      res[1] = 0.5*cos2*sin2;
+      res[0] = -sin2*sin2;
+      res[1] = cos2*sin2;
       break;
     case 13 :
       res[0] = -sin2/(2*sqrt(r));
@@ -492,12 +492,12 @@ namespace getfem {
 
 
     case 14 :
-      res[0] = -sin2/r;
-      res[1] = cos2/(2*r);
+      res[0] = -sin2*((3*cos2*cos2) - 1.)/(r*r);
+      res[1] = cos2*((6*cos2*cos2) - 5.)/(2*r*r);
       break;
     case 15 :
-      res[0] = -cos2/r;
-      res[1] = -sin2/(2*r);
+      res[0] = -cos2*((3*cos2*cos2) - 2.)/(r*r);
+      res[1] = -sin2*((6*cos2*cos2) - 1.)/(2*r*r);
       break;
 
 
@@ -550,6 +550,78 @@ namespace getfem {
       res(1,0) = res(0, 1);
       res(1,1) = (-4.0*sin2*x*x*x - 7.0*cos2*y*x*x + 2.0*sin2*y*y*x - cos2*y*y*y)
         / (4*pow(r, 4.5));
+      break;
+    case 4 :
+      res(0,0) = (sin2*(-4*cos2*cos2*cos2*cos2 + 3*cos2*cos2 + 0.75))/sqrt(r);
+      res(0,1) = (cos2*(4*cos2*cos2*cos2*cos2 - 5*cos2*cos2 + 1.25))/sqrt(r);
+      res(1,1) = (sin2*(4*cos2*cos2*cos2*cos2 - 3*cos2*cos2 + 1.25))/sqrt(r);
+      res(1,0) = res(0,1);
+      break;
+    case 5 :
+      res(0,0) = (cos2*(-4*cos2*cos2*cos2*cos2 + 5*cos2*cos2 - 0.25))/sqrt(r);
+      res(0,1) = (sin2*(-4*cos2*cos2*cos2*cos2 + 3*cos2*cos2 - 0.25))/sqrt(r);
+      res(1,1) = (cos2*(4*cos2*cos2*cos2*cos2 - 5*cos2*cos2 + 2.25))/sqrt(r);
+      res(1,0) = res(0,1);
+      break;
+    case 6 :
+      res(0,0) = (cos2*cos2*sin2*(0.75 - cos2*cos2))/sqrt(r);
+      res(0,1) = (cos2*(cos2*cos2*cos2*cos2 - 1.25*cos2*cos2 + 0.5))/sqrt(r);
+      res(1,1) = (sin2*(cos2*cos2*cos2*cos2 - 0.75*cos2*cos2 + 0.5))/sqrt(r);
+      res(1,0) = res(0,1);
+      break;
+    case 7 :
+      res(0,0) = (3*cos2*cos2*cos2*(1.25 - cos2*cos2))/sqrt(r);
+      res(0,1) = (3*cos2*cos2*sin2*(0.75 - cos2*cos2))/sqrt(r);
+      res(1,1) = (3*cos2*(cos2*cos2*cos2*cos2 - 1.25*cos2*cos2 + 0.5))/sqrt(r);
+      res(1,0) = res(0,1);
+      break;
+    case 8 :
+      res(0,0) = (3*sin2*(-4*cos2*cos2*cos2*cos2 + 3*cos2*cos2 - 0.25))/(r*r*sqrt(r));
+      res(0,1) = (3*cos2*(4*cos2*cos2*cos2*cos2 - 5*cos2*cos2 + 1.25))/(r*r*sqrt(r));
+      res(1,1) = (3*sin2*(4*cos2*cos2*cos2*cos2 - 3*cos2*cos2 + 0.25))/(r*r*sqrt(r));
+      res(1,0) = res(0,1);
+      break;
+    case 9 :
+      res(0,0) = (3*cos2*(4*cos2*cos2*cos2*cos2 - 5*cos2*cos2 + 1.25))/(r*r*sqrt(r));
+      res(0,1) = (3*sin2*(4*cos2*cos2*cos2*cos2 - 3*cos2*cos2 + 0.25))/(r*r*sqrt(r));
+      res(1,1) = (3*cos2*(-4*cos2*cos2*cos2*cos2 + 5*cos2*cos2 - 1.25))/(r*r*sqrt(r));
+      res(1,0) = res(0,1);
+      break;
+    case 10 :
+      res(0,0) = (sin2*(cos2*cos2 - 0.25))/(r*sqrt(r));
+      res(0,1) = (cos2*(0.75 - cos2*cos2))/(r*sqrt(r));
+      res(1,1) = (sin2*(0.25 - cos2*cos2))/(r*sqrt(r));
+      res(1,0) = res(0,1);
+      break;
+    case 11 :
+      res(0,0) = (cos2*(0.75 - cos2*cos2))/(r*sqrt(r));
+      res(0,1) = (sin2*(0.25 - cos2*cos2))/(r*sqrt(r));
+      res(1,1) = (cos2*(cos2*cos2 - 0.75))/(r*sqrt(r));
+      res(1,0) = res(0,1);
+      break;
+    case 12 :
+      res(0,0) = (2*cos2*cos2*(1 - cos2*cos2))/r;
+      res(0,1) = (cos2*sin2*(1 - 2*cos2*cos2))/r;
+      res(1,1) = (2*cos2*cos2*cos2*cos2 - 2*cos2*cos2 + 0.5)/r;
+      res(1,0) = res(0,1);
+      break;
+    case 13 :
+      res(0,0) = (sin2*(cos2*cos2 - 0.25))/(r*sqrt(r));
+      res(0,1) = (cos2*(0.75 - cos2*cos2))/(r*sqrt(r));
+      res(1,1) = (sin2*(0.25 - cos2*cos2))/(r*sqrt(r));
+      res(1,0) = res(0,1);
+      break;
+    case 14 :
+      res(0,0) = (sin2*(21*cos2*cos2*cos2*cos2 - 17*cos2*cos2 + 2))/(r*r*r);
+      res(0,1) = (cos2*(-21*cos2*cos2*cos2*cos2 + 27.5*cos2*cos2 - 7.5))/(r*r*r);
+      res(1,1) = (sin2*(-21*cos2*cos2*cos2*cos2 + 17*cos2*cos2 - 1.25))/(r*r*r);
+      res(1,0) = res(0,1);
+      break;
+    case 15 :
+      res(0,0) = (cos2*(21*cos2*cos2*cos2*cos2 - 25*cos2*cos2 + 6))/(r*r*r);
+      res(0,1) = (sin2*(21*cos2*cos2*cos2*cos2 - 14.5*cos2*cos2 + 1))/(r*r*r);
+      res(1,1) = (cos2*(-21*cos2*cos2*cos2*cos2 + 25*cos2*cos2 - 5.25))/(r*r*r);
+      res(1,0) = res(0,1);
       break;
     default: GMM_ASSERT2(false, "oups");
     }
