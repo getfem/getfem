@@ -353,7 +353,7 @@ namespace getfem {
       no[N-1] = -1.0;
       org[N-1] = 1.0;
       hfs[N] = mesher_half_space(org, no);
-      std::fill(org.begin(), org.end(), 1.0/N);
+      std::fill(org.begin(), org.end(), 1.0/(N-1)); // face x_1+..+x_{N-1} = 1
       org[N-1] = 0.0;
       no = -org;
       hfs[N+1] = mesher_half_space(org, no);    
