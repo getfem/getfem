@@ -145,7 +145,7 @@ namespace bgeot {
       else if (s == "t" && n > 6) result = base_poly(n, 1, 6);
       else if (s == "sqrt") {
         base_poly p = read_expression(n, f);
-        if (p.degree() > 0) parse_error(1);
+        if (p.real_degree() > 0) parse_error(1);
         result.one();  result *= sqrt(p[0]);
       }
       else { parse_error(2); }
@@ -186,12 +186,12 @@ namespace bgeot {
       base_poly &p1 = *(value_list.rbegin()+1);
       switch (op_list.back()) {
         case 1  : p1 *= p2; break;
-        case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
+        case 2  : if (p2.real_degree() > 0) parse_error(6); p1 /= p2[0]; break;
         case 3  : p1 += p2; break;
         case 4  : p1 -= p2; break;
         case 5  :
           {
-            if (p2.degree() > 0) parse_error(7);
+            if (p2.real_degree() > 0) parse_error(7);
             int pow = int(to_scalar(p2[0]));
             if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
             base_poly p = p1; p1.one();

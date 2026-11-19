@@ -296,7 +296,7 @@ namespace bgeot
     size_type l = this->size();
     for ( ; it != ite; ++it, --l) { if (*it != T(0)) break; }
     short_type dd = degree();
-    while (dd > 0 && alpha(n, short_type(dd-1)) > l) --dd;
+    while (dd > 0 && alpha(n, short_type(dd-1)) >= l) --dd;
     return dd;
   }
 
