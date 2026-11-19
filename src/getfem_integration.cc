@@ -1273,7 +1273,8 @@ namespace getfem {
                   << " of degree >= " << int(degree));
     } else if (bgeot::basic_structure(cvs) == bgeot::pyramid_QK_structure(1)) {
       GMM_ASSERT1(n == 3, "Wrong dimension");
-      name << "IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3," << degree << "))";
+      // the map from the cube adds degree 2 (Jacobian (1-z)^2)
+      name << "IM_PYRAMID(IM_GAUSS_PARALLELEPIPED(3," << degree + 2 << "))";
     } else if (cvs->is_product(&a,&b) ||
                (bgeot::basic_structure(cvs).get() &&
                 bgeot::basic_structure(cvs)->is_product(&a,&b))) {
