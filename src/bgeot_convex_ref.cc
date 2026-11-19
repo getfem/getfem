@@ -737,7 +737,7 @@ namespace bgeot {
   pconvex_ref parallelepiped_of_reference(dim_type nc, dim_type k) {
     if (nc <= 1) return simplex_of_reference(nc,k);
     return convex_ref_product(parallelepiped_of_reference(dim_type(nc-1),k),
-                              simplex_of_reference(k));
+                              simplex_of_reference(1, k));
   }
 
   pconvex_ref prism_of_reference(dim_type nc) {
