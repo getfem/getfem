@@ -574,7 +574,7 @@ namespace getfem {
                         var.varname, var.transname, 1);
           pwi.workspace().clear_expressions();
           const std::string der_expr=ga_tree_to_string(der_tree);
-          pwi.workspace().add_interpolation_expression(der_expr, target_mesh);
+          pwi.workspace().add_interpolation_expression(der_expr, source_mesh);
           ga_compile_interpolation(pwi.workspace(), pwi.gis());
         }
       }
@@ -632,6 +632,20 @@ namespace getfem {
 
     std::string expression() const { return expr; }
 
+    // all instructions, also those computing the base functions
+    static void exec(ga_instruction_set &gis, const mesh &m) {
+      for (auto &&instr : gis.all_instructions) {
+        GMM_ASSERT1(instr.second.m == &m,
+                    "Incompatibility of meshes in interpolation");
+        auto &gilb = instr.second.begin_instructions;
+        for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
+        auto &gile = instr.second.elt_instructions;
+        for (size_type j = 0; j < gile.size(); ++j) j += gile[j]->exec();
+        auto &gil = instr.second.instructions;
+        for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
+      }
+    }
+
     int transform(const ga_workspace &/*workspace*/, const mesh &m,
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &Normal,
@@ -650,16 +664,7 @@ namespace getfem {
       local_gis.pai = 0;
       gmm::clear(local_workspace.assembled_tensor().as_vector());
 
-      for (auto &&instr : local_gis.all_instructions) {
-        GMM_ASSERT1(instr.second.m == &m,
-                    "Incompatibility of meshes in interpolation");
-        auto &gilb = instr.second.begin_instructions;
-        for (size_type j = 0; j < gilb.size(); ++j) j += gilb[j]->exec();
-        auto &gile = instr.second.elt_instructions;
-        for (size_type j = 0; j < gile.size(); ++j) j+=gile[j]->exec();
-        auto &gil = instr.second.instructions;
-        for (size_type j = 0; j < gil.size(); ++j) j += gil[j]->exec();
-      }
+      exec(local_gis, m);
 
       GMM_ASSERT1(local_workspace.assembled_tensor().size()==target_mesh.dim(),
                   "Wrong dimension of the transformation expression");
@@ -750,7 +755,7 @@ namespace getfem {
           pwi.gis().ipt = 0;
           pwi.gis().pai = 0;
           gmm::clear(pwi.workspace().assembled_tensor().as_vector());
-          ga_function_exec(pwi.gis());
+          exec(pwi.gis(), m);
           d.second = pwi.workspace().assembled_tensor();
         }
       }
