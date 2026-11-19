@@ -32,6 +32,8 @@ namespace getfem {
 
   void cont_struct_getfem_model::set_variables
   (const base_vector &x, double gamma) const {
+    GMM_ASSERT1(!md->has_internal_variables(), "Continuation is not "
+                "available for models with internal variables");
     md->set_real_variable(parameter_name)[0] = gamma;
     if (!currentdata_name.empty()) {
       gmm::add(gmm::scaled(md->real_variable(initdata_name), 1. - gamma),
