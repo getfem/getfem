@@ -1439,7 +1439,8 @@ namespace getfem {
             // v.f() == -1: an element of a curve in 2D or a surface in 3D
             // (a shell, two-sided)
             bool elt = (v.f() == short_type(-1));
-            GMM_ASSERT1(!elt || (pgt->dim()+1 == N && (N == 2 || N == 3)),
+            GMM_ASSERT1(!elt || (size_type(pgt->dim()+1) == N &&
+                                 (N == 2 || N == 3)),
                         "Contact boundaries are faces of elements, or "
                         "elements of curves in 2D and surfaces in 3D");
             size_type nb_pt_on_face = elt ? cvs->nb_points()

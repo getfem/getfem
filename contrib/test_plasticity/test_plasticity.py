@@ -32,7 +32,7 @@ import numpy as np
 
 import getfem as gf
 
-with_graphics=True
+with_graphics=False
 try:
     import getfem.getfem_plot as gfp
 except ImportError:

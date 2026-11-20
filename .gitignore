@@ -347,6 +347,7 @@ Makefile
 /tests/elastostatic
 /tests/geo_trans_inv
 /tests/helmholtz.vtu
+/tests/test_element_curvature
 /tests/heat_equation
 /tests/helmholtz
 /tests/integration
