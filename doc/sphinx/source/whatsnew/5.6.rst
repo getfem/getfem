@@ -1,0 +1,30 @@
+.. include:: ../replaces.txt
+
+************************
+  What's New in |gf| 5.6
+************************
+
+The main contribution of this version is a series of Bug fix and a few code optimization following an analysis of the code with Claude AI.
+
+Released version, 2026/28/11.
+
+The main changes are:
+
+   * In GWFL, the term 'Normal' now also refers to the unit normal inside an element of codimension 1 such as a 3D surface element.
+     
+   * 
+     
+   * 
+     
+   * 
+     
+   * 
+     
+   * 
+     
+   * A lot of codebase maintenance and improvements
+
+   * 
+
+   
+

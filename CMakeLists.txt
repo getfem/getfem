@@ -14,7 +14,7 @@ project(GetFEM)
 
 # Set the project version
 set(VERSION_MAJOR 5)
-set(VERSION_MINOR 5)
+set(VERSION_MINOR 6)
 set(VERSION_PATCH 0)
 # applies to both GetFEM and GMM
 set(GETFEM_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
