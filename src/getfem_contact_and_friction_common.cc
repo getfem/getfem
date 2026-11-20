@@ -802,6 +802,9 @@ namespace getfem {
       base_node xx = x0;
       for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
       ctx.set_xref(xx);
+      // N x P, with P = N-1 for an element of a curve in 2D or a surface
+      // in 3D (a shell)
+      gmm::resize(gradtot, N, gmm::mat_ncols(ctx.K()));
       if (!ref_conf) {
         ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
         gmm::add(gmm::identity_matrix(), grad);
