@@ -40,9 +40,23 @@
 
 namespace gmm {
 
-  /** computation of the condition number of dense matrices using SVD.
+  /* Scalar type used internally for the eigenvalue computation of
+     condition_number. Single precision is promoted to double precision:
+     with the default tolerance of the single precision type, the
+     symmetric QR algorithm may fail to converge on moderately large
+     matrices ("QR algorithm failed."). */
+  template <typename T> struct condition_number_work_type
+  { typedef T type; };
+  template <> struct condition_number_work_type<float>
+  { typedef double type; };
+  template <> struct condition_number_work_type<std::complex<float> >
+  { typedef std::complex<double> type; };
 
-      Uses symmetric_qr_algorithm => dense matrices only.
+  /** computation of the condition number of matrices (ratio of the
+      extreme singular values).
+
+      Uses symmetric_qr_algorithm on a dense copy of the matrix. Single
+      precision matrices are handled in double precision.
 
       @param M a matrix.
       @param emin smallest (in magnitude) eigenvalue
@@ -58,6 +72,8 @@ namespace gmm {
 	  linalg_traits<MAT>::value_type>::magnitude_type& emax) {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
+    typedef typename condition_number_work_type<T>::type TW;
+    typedef typename number_traits<TW>::magnitude_type RW;
 
     // Added because of errors in complex with zero det
     if (sizeof(T) != sizeof(R) && gmm::abs(gmm::lu_det(M)) == R(0))
@@ -65,29 +81,34 @@ namespace gmm {
       
     size_type m = mat_nrows(M), n = mat_ncols(M);
     emax = emin = R(0);
-    std::vector<R> eig(m+n);
+    std::vector<RW> eig(m+n);
 
     if (m+n == 0) return R(0);
     if (is_hermitian(M)) {
+      dense_matrix<TW> A(m, m);
+      gmm::copy(M, A);
       eig.resize(m);
-      gmm::symmetric_qr_algorithm(M, eig);
+      gmm::symmetric_qr_algorithm(A, eig);
     }
     else {
-      dense_matrix<T> B(m+n, m+n); // not very efficient ??
+      dense_matrix<TW> B(m+n, m+n); // not very efficient ??
       gmm::copy(conjugated(M), sub_matrix(B, sub_interval(m, n), sub_interval(0, m)));
       gmm::copy(M, sub_matrix(B, sub_interval(0, m),
 					  sub_interval(m, n)));
       gmm::symmetric_qr_algorithm(B, eig);
     }
-    emin = emax = gmm::abs(eig[0]);
+    RW eminw = gmm::abs(eig[0]), emaxw = eminw;
     for (size_type i = 1; i < eig.size(); ++i) {
-      R e = gmm::abs(eig[i]); 
-      emin = std::min(emin, e);
-      emax = std::max(emax, e);
+      RW e = gmm::abs(eig[i]); 
+      eminw = std::min(eminw, e);
+      emaxw = std::max(emaxw, e);
     }
-    // cout << "emin = " << emin << " emax = " << emax << endl;
-    if (emin == R(0)) return gmm::default_max(R());
-    return emax / emin;
+    emin = R(eminw); emax = R(emaxw);
+    if (eminw == RW(0)) return gmm::default_max(R());
+    RW c = emaxw / eminw;
+    // avoid an overflow when converting back to single precision
+    if (c >= RW(gmm::default_max(R()))) return gmm::default_max(R());
+    return R(c);
   }
 
   template <typename MAT> 
