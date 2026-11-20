@@ -184,6 +184,11 @@ namespace getfem
      values 1, 2 or 3 (in three dimensions) permits to respectively request
      one half, one quarter or one eighth of the ball to be meshed
      (default value SYMMETRIES=0).
+     If ORG is given as a vector of size dim(GT)+1, the sphere of radius
+     SIZES[0] itself is meshed (a circle in 2D or a sphere surface in 3D,
+     with elements of dimension dim(GT), for shells for instance); then
+     NSUBDIV and SIZES can be of size 1 (only the circumferential
+     subdivisions and the radius are used).
 
      @param m the output mesh.
   */

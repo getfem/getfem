@@ -33,6 +33,7 @@ EXTRA_DIST=                                       \
     check_bspline_mesh_fem.py                     \
     check_secondary_domain.py                     \
     check_mixed_mesh.py                           \
+    check_shell_normal.py                         \
     check_plot.py                                 \
     demo_crack.py                                 \
     demo_fictitious_domains.py                    \
@@ -63,6 +64,7 @@ EXTRA_DIST=                                       \
     demo_elasticity_HHO.py                        \
     demo_elastic_ring_contact.py                  \
     demo_wheel_contact.py                         \
+    demo_shell_solid_contact.py                   \
     demo_tripod.py                                \
     demo_tripod_alt.py                            \
     demo_wave.py                                  \
@@ -77,6 +79,7 @@ TESTS =                         \
     check_bspline_mesh_fem.py   \
     check_secondary_domain.py   \
     check_mixed_mesh.py         \
+    check_shell_normal.py       \
     check_plot.py               \
     check_mumps_ctx.py          \
     demo_truss.py               \

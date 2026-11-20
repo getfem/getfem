@@ -360,8 +360,9 @@ namespace getfem {
     virtual int exec() {
       GA_DEBUG_INFO("Instruction: unit normal vector");
       GMM_ASSERT1(t.size() == vec.size(), "Invalid outward unit normal "
-                  "vector. Possible reasons: not on boundary or "
-                  "transformation failed.");
+                  "vector. Possible reasons: not on boundary (Normal is "
+                  "defined on faces, and inside the elements of curves in "
+                  "2D and surfaces in 3D) or transformation failed.");
       gmm::copy(vec, t.as_vector());
       return 0;
     }
@@ -4889,8 +4890,8 @@ namespace getfem {
           if (face_num != short_type(-1)) {
             inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
             gmm::scale(inin.Normal, 1.0/gmm::vect_norm2(inin.Normal));
-          } else
-            inin.Normal.resize(0);
+          } else // unit normal of a curve in 2D or a surface in 3D
+            inin.Normal = bgeot::compute_unit_element_normal(inin.ctx);
           inin.pt_y = inin.ctx.xreal();
         } else {
           inin.ctx.invalid_convex_num();
@@ -5028,8 +5029,8 @@ namespace getfem {
             if (face_num != short_type(-1)) {
               inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
               gmm::scale(inin.Normal, 1.0/gmm::vect_norm2(inin.Normal));
-            } else
-              inin.Normal.resize(0);
+            } else // unit normal of a curve in 2D or a surface in 3D
+              inin.Normal = bgeot::compute_unit_element_normal(inin.ctx);
             inin.pt_y = inin.ctx.xreal();
           } else {
             inin.ctx.invalid_convex_num();
@@ -9168,7 +9169,8 @@ namespace getfem {
                 gmm::scale(up,1.0/nup);
                 gmm::clean(up, 1e-13);
                 gis.Normal = up;
-              } else gis.Normal.resize(0);
+              } else // unit normal of a curve in 2D or a surface in 3D
+                gis.Normal = bgeot::compute_unit_element_normal(gis.ctx);
             }
             gmm::clear(workspace.assembled_tensor().as_vector());
             if (ii == 0) {
@@ -9285,7 +9287,8 @@ namespace getfem {
                     J1 *= nup;
                     gmm::scale(gis.Normal, 1.0/nup);
                     gmm::clean(gis.Normal, 1e-13);
-                  } else gis.Normal.resize(0);
+                  } else // unit normal of a curve in 2D or a surface in 3D
+                    gis.Normal = bgeot::compute_unit_element_normal(gis.ctx);
                 }
                 auto ipt_coeff = pai->coeff(first_ind+gis.ipt);
                 gis.coeff = J1 * ipt_coeff;
@@ -9432,7 +9435,9 @@ namespace getfem {
                           J1 *= nup;
                           gmm::scale(gis.Normal, 1.0/nup);
                           gmm::clean(gis.Normal, 1e-13);
-                        } else gis.Normal.resize(0);
+                        } else // curve in 2D or surface in 3D
+                          gis.Normal
+                            = bgeot::compute_unit_element_normal(gis.ctx);
                       }
 
                       if (gis.ipt == 0 || !(pgt2->is_linear())) {
@@ -9446,7 +9451,9 @@ namespace getfem {
                           J2 *= nup;
                           gmm::scale(sdi.Normal, 1.0/nup);
                           gmm::clean(sdi.Normal, 1e-13);
-                        } else sdi.Normal.resize(0);
+                        } else // curve in 2D or surface in 3D
+                          sdi.Normal
+                            = bgeot::compute_unit_element_normal(sdi.ctx);
                       }
 
                       auto ipt_coeff = pai1->coeff(first_ind1+ipt1)

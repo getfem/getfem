@@ -563,7 +563,15 @@ build_sub_command_table(std::map<std::string, psub_command> &subc_tab) {
       "GT='GT_QK(2,2)';ORG=[0,0];SIZES=[4];NSUBDIV=[3,4];SYMMETRIES=1"
       The number of symmetries divides a circle into a half (1) or quarter
       of circle (2). Similarly a sphere can be divided with up to 3 symmetry
-      planes.@*/
+      planes.
+    - 'structured_ball_shell' for a structured mesh of a ball shell (a
+      ring in 2D), e.g. "GT='GT_QK(2,2)';ORG=[0,0];SIZES=[4,1];NSUBDIV=[3,2]"
+      with SIZES the outer radius and the thickness and NSUBDIV the
+      circumferential and radial subdivisions (SYMMETRIES as for
+      'structured_ball'). With an ORG of dimension dim(GT)+1, the sphere
+      (or circle) itself is meshed with elements of dimension dim(GT), for
+      shells for instance, e.g.
+      "GT='GT_QK(2,2)';ORG=[0,0,0];SIZES=[4];NSUBDIV=[3];SYMMETRIES=2"@*/
   sub_command
     ("import", 2, 2, 0, 1,
      std::string fmt = in.pop().to_string();

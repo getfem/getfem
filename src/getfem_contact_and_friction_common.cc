@@ -36,7 +36,15 @@ namespace getfem {
                       const model_real_plain_vector &coeff,
                       base_node &n0, base_node &n,
                       base_matrix &grad) {
-      n0 = bgeot::compute_normal(ctx, face);
+      if (face == size_type(short_type(-1))) {
+        // inside an element of a curve in 2D or a surface in 3D (shell):
+        // its unit normal, oriented by its parametrization
+        n0 = bgeot::compute_unit_element_normal(ctx);
+        GMM_ASSERT1(n0.size() == ctx.N(), "Contact boundaries are faces of "
+                    "elements, or elements of curves in 2D and surfaces "
+                    "in 3D");
+      } else
+        n0 = bgeot::compute_normal(ctx, face);
       if (in_reference_conf) {
         n = n0;
       } else {
@@ -814,7 +822,7 @@ namespace getfem {
      const std::vector<base_small_vector> &tii,
      const std::vector<base_small_vector> &Tii,
      bool rc)
-      : N(gmm::vect_size(x00)), x0(x00), x(xx),
+      : N(gmm::vect_size(xx)), x0(x00), x(xx),
         ctx(ctxx), coeff(coefff), ti(tii), Ti(Tii), ref_conf(rc),
         dxy(N), grad(N,N), gradtot(N,N) {}
 
@@ -1425,13 +1433,20 @@ namespace getfem {
             fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
 
             bgeot::pconvex_structure cvs = pgt->structure();
-            size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
+            // v.f() == -1: an element of a curve in 2D or a surface in 3D
+            // (a shell, two-sided)
+            bool elt = (v.f() == short_type(-1));
+            GMM_ASSERT1(!elt || (pgt->dim()+1 == N && (N == 2 || N == 3)),
+                        "Contact boundaries are faces of elements, or "
+                        "elements of curves in 2D and surfaces in 3D");
+            size_type nb_pt_on_face = elt ? cvs->nb_points()
+                                          : cvs->nb_points_of_face(v.f());
             GMM_ASSERT1(nb_pt_on_face >= 2, "This element has less than two "
                         "vertices on considered face !");
             gmm::clear(n_mean);
 
             for (size_type k = 0; k < nb_pt_on_face; ++k) {
-              size_type ip = cvs->ind_points_of_face(v.f())[k];
+              size_type ip = elt ? k : cvs->ind_points_of_face(v.f())[k];
               size_type ind = m.ind_points_of_convex(cv)[ip];
 
               // computation of transformed vertex
@@ -1596,8 +1611,8 @@ namespace getfem {
                   bool compute_derivatives) const {
       size_type cv_x = ctx_x.convex_num();
       short_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != short_type(-1), "The contact transformation can "
-                  "only be applied to a boundary");
+      // face_x == -1: inside an element of a curve in 2D or a surface in 3D
+      // (a shell), the ray along its deformed normal (oriented as Normal)
 
       //
       // Find the right (slave) contact boundary
@@ -1734,10 +1749,14 @@ namespace getfem {
         pfem pfu_y = mfu_y.fem_of_element(cv_y);
         short_type face_y = fbox_y.ind_face;
         bgeot::pgeometric_trans pgt_y= m_y.trans_of_convex(cv_y);
+        // An element of a curve in 2D or a surface in 3D: a two-sided shell
+        bool two_sided = (face_y == short_type(-1));
 
-        // CRITERION 1 : The unit normal vector are compatible
-        //               and the two points are not in the same element.
-        if (gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0) ||
+        // CRITERION 1 : The unit normal vector are compatible (not for
+        //               two-sided shells) and the two points are not in
+        //               the same element.
+        if ((!two_sided &&
+             gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0)) ||
             (cv_x == cv_y && &m_x == &m_y))
           continue;
 
@@ -1746,25 +1765,33 @@ namespace getfem {
         //
 
         m_y.points_of_convex(cv_y, G_y);
-        // face_pts is of type bgeot::convex<...>::ref_convex_pt_ct
-        const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
+        bgeot::pconvex_ref cvr_y = pfu_y->ref_convex(cv_y);
         // Newton start: the face centre, nearest to any hit inside the face
-        const base_node Y0 = gmm::mean_value(face_pts);
+        // (the element centre for a shell)
+        const base_node Y0 = two_sided
+          ? gmm::mean_value(cvr_y->points())
+          : gmm::mean_value(cvr_y->points_of_face(face_y));
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
 
-        const base_small_vector &NY0
-          = pfu_y->ref_convex(cv_y)->normals()[face_y];
-        for (size_type k = 0; k < N-1; ++k) { // A basis for the face
-          gmm::resize(ti[k], N);
-          scalar_type norm(0);
-          while(norm < 1E-5) {
-            gmm::fill_random(ti[k]);
-            ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
-            for (size_type l = 0; l < k; ++l)
-              ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
-            norm = gmm::vect_norm2(ti[k]);
+        if (two_sided) { // the N-1 reference axes of the element
+          for (size_type k = 0; k < N-1; ++k) {
+            gmm::resize(ti[k], N-1); gmm::clear(ti[k]);
+            ti[k][k] = scalar_type(1);
           }
-          ti[k] /= norm;
+        } else {
+          const base_small_vector &NY0 = cvr_y->normals()[face_y];
+          for (size_type k = 0; k < N-1; ++k) { // A basis for the face
+            gmm::resize(ti[k], N);
+            scalar_type norm(0);
+            while(norm < 1E-5) {
+              gmm::fill_random(ti[k]);
+              ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
+              for (size_type l = 0; l < k; ++l)
+                ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
+              norm = gmm::vect_norm2(ti[k]);
+            }
+            ti[k] /= norm;
+          }
         }
 
         scalar_type h(0); // estimate of element face size
@@ -1837,7 +1864,7 @@ namespace getfem {
           if (/*(niter > 1 && dist_ref > 7) ||*/ nbfail == 3) exited = true;
         }
         bool converged = (gmm::vect_norm2(res) < 2E-6*h); // relaxed tolerance
-        bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
+        bool is_in = (cvr_y->is_in(ctx_y.xref()) < 1E-6);
         // GMM_ASSERT1(!(exited && converged && is_in),
         //             "A non conformal case !! " << gmm::vect_norm2(res)
         //             << " : " << nbfail << " : " << niter);
@@ -1861,6 +1888,9 @@ namespace getfem {
         compute_normal(ctx_y, face_y, false, coeff_y, n0_y, n_y, grad);
         n_y /= gmm::vect_norm2(n_y);
         n0_y /= gmm::vect_norm2(n0_y);
+        // a two-sided shell faces the ray
+        if (two_sided && gmm::vect_sp(n_y, n_x) > scalar_type(0))
+          gmm::scale(n_y, scalar_type(-1));
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles

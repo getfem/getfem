@@ -1085,6 +1085,24 @@ namespace bgeot {
     return un;
   }
 
+  base_small_vector
+  compute_unit_element_normal(const geotrans_interpolation_context& c) {
+    size_type N = c.N(), P = c.pgt()->dim();
+    base_small_vector un;
+    if (P+1 != N || (N != 2 && N != 3)) return un;
+    const base_matrix &K = c.K();
+    un.resize(N);
+    if (N == 2) {
+      un[0] = K(1,0); un[1] = -K(0,0);
+    } else {
+      un[0] = K(1,0)*K(2,1) - K(2,0)*K(1,1);
+      un[1] = K(2,0)*K(0,1) - K(0,0)*K(2,1);
+      un[2] = K(0,0)*K(1,1) - K(1,0)*K(0,1);
+    }
+    gmm::scale(un, scalar_type(1)/gmm::vect_norm2(un));
+    return un;
+  }
+
   /*
     return the local basis (i.e. the normal in the first column, and the
     tangent vectors in the other columns

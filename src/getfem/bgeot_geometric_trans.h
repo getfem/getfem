@@ -267,6 +267,15 @@ namespace bgeot {
   base_small_vector APIDECL
   compute_normal(const geotrans_interpolation_context& c, size_type face);
 
+  /** Unit normal vector to an element of dimension N-1 in dimension N
+   *  (a curve in 2D or a surface in 3D), oriented by the parametrization
+   *  of the element: (K_21, -K_11) in 2D and K_1 x K_2 in 3D, where K_i
+   *  is the i-th column of the gradient K of the geometric transformation.
+   *  Returns an empty vector for other element and mesh dimensions.
+   */
+  base_small_vector APIDECL
+  compute_unit_element_normal(const geotrans_interpolation_context& c);
+
   /** return the local basis (i.e. the normal in the first column, and the
    *  tangent vectors in the other columns
    */

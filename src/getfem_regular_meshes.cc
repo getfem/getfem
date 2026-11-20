@@ -511,12 +511,17 @@ namespace getfem
                 "specify the geometric transformation");
     bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(GT);
 
-    size_type N = pgt->dim();
-    base_small_vector org(N);
+    // An ORG of size dim(GT)+1 requests the sphere of the given radius
+    // itself (a circle in 2D, a surface in 3D) meshed with elements of
+    // dimension dim(GT)
+    size_type P = pgt->dim(), N = P;
     const auto &o = PARAM.array_value("ORG");
+    bool surface = (o.size() == P+1);
+    if (surface) N = P+1;
+    base_small_vector org(N);
     if (o.size() > 0) {
-      GMM_ASSERT1(o.size() == N,
-                  "ORG parameter should be an array of size " << N);
+      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
+                  << P << " (or " << P+1 << " for the sphere)");
       for (size_type i = 0; i < N; ++i) {
         GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
                     "ORG should be a real array");
@@ -530,53 +535,65 @@ namespace getfem
     size_type nsubdiv0(3), nsubdiv1(2);
     const auto &ns = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
-      GMM_ASSERT1(ns.size() == 2,
-                  "NSUBDIV parameter should be an array of size 2");
-      for (size_type i = 0; i < 2; ++i)
+      GMM_ASSERT1(ns.size() == 2 || (surface && ns.size() == 1),
+                  "NSUBDIV parameter should be an array of size 2 "
+                  "(or 1 for the sphere)");
+      for (size_type i = 0; i < ns.size(); ++i)
         GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
                     "NSUBDIV should be an integer array");
       nsubdiv0 = size_type(ns[0].real()+0.5);
-      nsubdiv1 = size_type(ns[1].real()+0.5);
+      if (ns.size() > 1) nsubdiv1 = size_type(ns[1].real()+0.5);
     }
 
     scalar_type radius(1), thickness(0.5);
     const auto &si = PARAM.array_value("SIZES");
     if (si.size() > 0) {
-      GMM_ASSERT1(si.size() == 2,
-                  "SIZES parameter should be an array of size 2");
-      GMM_ASSERT1(si[0].type_of_param() == bgeot::md_param::REAL_VALUE &&
-                  si[1].type_of_param() == bgeot::md_param::REAL_VALUE ,
-                  "SIZES should be a real array");
+      GMM_ASSERT1(si.size() == 2 || (surface && si.size() == 1),
+                  "SIZES parameter should be an array of size 2 "
+                  "(or 1 for the sphere)");
+      for (size_type i = 0; i < si.size(); ++i)
+        GMM_ASSERT1(si[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+                    "SIZES should be a real array");
       radius = si[0].real();
-      thickness = si[1].real();
+      if (si.size() > 1) thickness = si[1].real();
     }
 
-    std::vector<size_type> nsubdiv(N, nsubdiv0);
-    nsubdiv[N-1] = nsubdiv1;
+    std::vector<size_type> nsubdiv(P, nsubdiv0);
+    if (!surface) nsubdiv[P-1] = nsubdiv1;
 
-    mesh m0;
-    regular_unit_mesh(m0, nsubdiv, pgt, noised);
+    mesh m1;
+    regular_unit_mesh(m1, nsubdiv, pgt, noised);
 
-    std::vector<base_node> pts(m0.points().card(), base_node(N));
+    // onto the shell (or the sphere): the first N-1 coordinates as angles,
+    // the last one across the thickness
+    std::vector<base_node> pts(m1.points().card(), base_node(N));
     size_type j(0);
-    for (dal::bv_visitor pt(m0.points().index()); !pt.finished(); ++pt, ++j) {
-      pts[j] = m0.points()[pt];
+    for (dal::bv_visitor pt(m1.points().index()); !pt.finished(); ++pt, ++j) {
+      const base_node &x = m1.points()[pt];
       scalar_type l(1);
       for (size_type k=0; k < N-1; ++k) {
-        pts[j][k] = tan(pts[j][k]*M_PI_4);
+        pts[j][k] = tan(x[k]*M_PI_4);
         l += pts[j][k]*pts[j][k];
       }
       l = sqrt(l);
-      scalar_type r(radius-thickness+thickness*pts[j][N-1]);
+      scalar_type r = surface ? radius
+                              : radius-thickness+thickness*x[N-1];
       for (size_type k=0; k < N-1; ++k)
         pts[j][k] *= r/l;
       pts[j][N-1] = r/l;
     }
 
+    mesh m0;
+    std::vector<size_type> ind(m1.points().index().last_true()+1);
     j = size_type(0);
-    for (dal::bv_visitor pt(m0.points().index()); !pt.finished(); ++pt, ++j)
-      m0.points()[pt] = pts[j];
-    m0.points().resort();
+    for (dal::bv_visitor pt(m1.points().index()); !pt.finished(); ++pt, ++j)
+      ind[pt] = j;
+    for (dal::bv_visitor cv(m1.convex_index()); !cv.finished(); ++cv) {
+      std::vector<base_node> cvpts;
+      for (size_type ip : m1.ind_points_of_convex(cv))
+        cvpts.push_back(pts[ind[ip]]);
+      m0.add_convex_by_points(m1.trans_of_convex(cv), cvpts.begin());
+    }
 
     base_matrix M(N,N);
     for (size_type i=0; i < N-1; ++i)
@@ -610,6 +627,39 @@ namespace getfem
       for (dal::bv_visitor cv(m0.convex_index()); !cv.finished(); ++cv)
 	     m.add_convex_by_points(m0.trans_of_convex(cv),
                                m0.points_of_convex(cv).begin());
+    }
+
+    if (surface) { // all the elements with the outward normal
+      mesh m2;
+      base_matrix G;
+      std::vector<base_node> cvpts;
+      for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+        bgeot::pgeometric_trans pgtcv = m.trans_of_convex(cv);
+        const bgeot::stored_point_tab &refpts = pgtcv->geometric_nodes();
+        m.points_of_convex(cv, G);
+        bgeot::geotrans_interpolation_context
+          ctx(pgtcv, gmm::mean_value(refpts), G);
+        base_small_vector un = bgeot::compute_unit_element_normal(ctx);
+        cvpts.assign(m.points_of_convex(cv).begin(),
+                     m.points_of_convex(cv).end());
+        if (gmm::vect_sp(un, ctx.xreal()) < scalar_type(0)) {
+          // reversed by a symmetry of the reference element:
+          // xi -> 1 - xi for a segment, (xi_1, xi_2) -> (xi_2, xi_1) else
+          for (size_type i = 0; i < refpts.size(); ++i) {
+            base_node xs = refpts[i];
+            if (P == 1) xs[0] = scalar_type(1) - xs[0];
+            else std::swap(xs[0], xs[1]);
+            size_type k = 0;
+            while (k < refpts.size() && gmm::vect_dist2(refpts[k], xs) > 1e-10)
+              ++k;
+            GMM_ASSERT1(k < refpts.size(), "Unable to reverse an element");
+            cvpts[i] = m.points_of_convex(cv)[k];
+          }
+        }
+        m2.add_convex_by_points(pgtcv, cvpts.begin());
+      }
+      m.clear();
+      m.copy_from(m2);
     }
 
     m.translation(org);

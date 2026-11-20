@@ -51,7 +51,7 @@ The raytracing transformation is added without any slave or master contact bound
              const std::string &dispname, size_type region)
 
 where ``dispname`` is the variable name which represents the displacement on that contact
-boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
+boundary. A contact boundary is a region of faces of elements of the mesh, or, for shells, a region of elements of a curve in 2D or of a surface in 3D (elements of dimension N-1 in a mesh of dimension N). As a slave boundary, the rays then start from the element along its deformed normal, oriented as ``Normal`` (one side only, the thickness of the shell has to be taken into account in the gap expression); as a master boundary, the element is two-sided: its normal is turned towards the ray. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
 
 It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function::
 

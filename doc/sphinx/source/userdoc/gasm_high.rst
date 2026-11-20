@@ -546,7 +546,7 @@ Special expressions linked to the current position
 
   - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its i-th component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two.
 
-  - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed.
+  - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed. Inside the elements of a curve in a 2D mesh or of a surface in a 3D mesh (elements of dimension N-1 in a mesh of dimension N, for instance for shells or membranes), ``Normal`` is the unit normal vector to the element, oriented by the parametrization of the element: :math:`K_1 \times K_2` in 3D and :math:`(K_{21}, -K_{11})` in 2D, where :math:`K_i` is the i-th column of ``element_K``. Elsewhere, ``Normal`` is not defined (an error is raised).
 
   - ``element_size`` gives an estimate of the current element diameter (using getfem::convex_radius_estimate).
 
@@ -555,6 +555,7 @@ Special expressions linked to the current position
   - ``element_B`` gives the transpose of the pseudo-inverse of the gradient of the geometric transformation (see :ref:`dp-transgeo`) from the reference (parent) element. Could be used only if the mesh do not contain elements of mixed dimensions.
 
   - ``element_curvature`` gives, on a hypersurface mesh (curve in 2D or surface in 3D, i.e. reference elements of dimension N-1 in a mesh of dimension N), the curvature tensor of the element computed from the second derivatives of the geometric transformation. It is the N x N symmetric matrix :math:`\nabla_s n = -B\, b\, B^T`, where :math:`n` is the unit normal vector oriented by the parametrization of the element (:math:`n = K_{\cdot 1} \times K_{\cdot 2}` in 3D, :math:`n = (K_{21}, -K_{11})` in 2D) and :math:`b_{\alpha\beta} = n \cdot \partial^2 x / \partial\xi_\alpha \partial\xi_\beta` is the second fundamental form. Since the components are expressed in the orthonormal Cartesian basis, this is also the tensor of mixed components of the curvature. The normal vector is in its kernel and its other eigenvalues are the principal curvatures (positive for a sphere with outward normal). For instance, on a surface in 3D, the mean curvature is ``Trace(element_curvature)/2``, the Gauss curvature is ``(sqr(Trace(element_curvature)) - Trace(element_curvature*element_curvature))/2`` and the principal curvatures are :math:`H \pm \sqrt{H^2 - K_G}`. The mixed components :math:`L^\alpha_{~\beta}` of the tensor in the local (covariant) basis of the element are given by ``element_B'*element_curvature*element_K`` (this is :math:`-a^{-1}b`, with :math:`a = K^TK` the metric tensor). The tensor vanishes for linear geometric transformations, so that meshes of degree at least two are needed. Its sign depends on the orientation of each element (the Gauss curvature does not), and it is discontinuous across elements; a projection on a finite element space can be used to obtain a continuous field.
+
 
 
 
