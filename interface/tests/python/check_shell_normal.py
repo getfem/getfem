@@ -21,8 +21,9 @@
 #
 ############################################################################
 """Normal and element_curvature inside the elements of a curve in 2D and
-of a surface in 3D, the raytracing transformation on such elements
-(shells) and the sphere and circle meshes of 'structured_ball_shell'."""
+of a surface in 3D, the raytracing and projection transformations on such
+elements (shells) and the sphere and circle meshes of
+'structured_ball_shell'."""
 import numpy as np
 
 import getfem as gf
@@ -68,7 +69,7 @@ for N in [2, 3]:
         gf.asm_generic(gf.MeshIm(ml, 2), 0, "Norm(element_curvature)", -1,
                        md), 0., 1e-12)
 
-# Raytracing in 3D: rays from a sphere surface of radius 1 (slave shell)
+# Raytracing and projection in 3D: from a sphere surface of radius 1 (slave shell)
 # towards the inner face of a solid ball shell of inner radius 1.5 (master),
 # and from a solid ball of radius 1 (slave faces) towards a sphere surface
 # of radius 1.5 (master shell, two-sided); distances 0.5.
@@ -88,33 +89,55 @@ shell2 = gf.Mesh('import', 'structured_ball_shell',
                  "GT='GT_QK(2,2)';ORG=[0,0,0];SIZES=[%g];NSUBDIV=[4]" % R2)
 shell2.set_region(MASTER, np.array([shell2.cvid()]))
 
-for ms, mm, what in [(shell1, solid2, "shell slave"),
-                     (solid1, shell2, "shell master")]:
-  md = gf.Model('real')
-  mfs = gf.MeshFem(ms, 3); mfs.set_classical_fem(2)
-  mfm = gf.MeshFem(mm, 3); mfm.set_classical_fem(2)
-  md.add_fem_variable("us", mfs)
-  md.add_fem_variable("um", mfm)
-  md.add_raytracing_transformation("ray", 1.)
-  md.add_slave_contact_boundary_to_raytracing_transformation("ray", ms, "us", SLAVE)
-  md.add_master_contact_boundary_to_raytracing_transformation("ray", mm, "um", MASTER)
-  mim = gf.MeshIm(ms, 6)
-  meas = 4*np.pi*R1*R1
-  check("raytracing, %s: int 1" % what, gf.asm_generic(
-        mim, 0, "Interpolate_filter(ray, 1, 1)", SLAVE, md), meas, 1e-3)
-  check("raytracing, %s: int distance" % what, gf.asm_generic(
-        mim, 0, "Interpolate_filter(ray, Norm(Interpolate(X,ray)-X), 1)",
-        SLAVE, md), (R2-R1)*meas, 2e-3)
-  # the target normal faces the ray
-  check("raytracing, %s: int Interpolate(Normal).Normal" % what,
-        gf.asm_generic(mim, 0, "Interpolate_filter(ray, "
-                       "Interpolate(Normal,ray).Normal, 1)", SLAVE, md),
-        -meas if what == "shell slave" else meas, 2e-3)
-  # tangent terms (derivatives of the transformation) can be assembled
-  K = gf.asm_generic(mim, 2, "Interpolate_filter(ray, (Interpolate(X,ray)"
-                     "+Interpolate(um,ray)-X-us).Normal"
-                     "*(Interpolate(Test_um,ray)-Test_us).Normal, 1)",
-                     SLAVE, md)
-  assert K.size()[0] == md.nbdof()
+for kind in ["raytracing", "projection"]:
+  for ms, mm, what in [(shell1, solid2, "shell slave"),
+                       (solid1, shell2, "shell master")]:
+    md = gf.Model('real')
+    mfs = gf.MeshFem(ms, 3); mfs.set_classical_fem(2)
+    mfm = gf.MeshFem(mm, 3); mfm.set_classical_fem(2)
+    md.add_fem_variable("us", mfs)
+    md.add_fem_variable("um", mfm)
+    getattr(md, "add_%s_transformation" % kind)("t", 1.)
+    getattr(md, "add_slave_contact_boundary_to_%s_transformation"
+            % kind)("t", ms, "us", SLAVE)
+    getattr(md, "add_master_contact_boundary_to_%s_transformation"
+            % kind)("t", mm, "um", MASTER)
+    mim = gf.MeshIm(ms, 6)
+    meas = 4*np.pi*R1*R1
+    # (the projection misses a few points near the edges of the elements)
+    tol = 1e-3 if kind == "raytracing" else 5e-3
+    check("%s, %s: int 1" % (kind, what), gf.asm_generic(
+          mim, 0, "Interpolate_filter(t, 1, 1)", SLAVE, md), meas, tol)
+    check("%s, %s: int distance" % (kind, what), gf.asm_generic(
+          mim, 0, "Interpolate_filter(t, Norm(Interpolate(X,t)-X), 1)",
+          SLAVE, md), (R2-R1)*meas, tol)
+    # the target normal faces the slave point
+    check("%s, %s: int Interpolate(Normal).Normal" % (kind, what),
+          gf.asm_generic(mim, 0, "Interpolate_filter(t, "
+                         "Interpolate(Normal,t).Normal, 1)", SLAVE, md),
+          -meas if what == "shell slave" else meas, tol)
+    # derivatives of the transformation: gradient of
+    # E = int |y - x|^2/2 against finite differences, with a smooth
+    # displacement of both bodies
+    for v, mf in [("us", mfs), ("um", mfm)]:
+      P = mf.basic_dof_nodes()
+      f = [lambda p: np.sin(2*p[1]+p[2]), lambda p: np.cos(p[0]-p[2]),
+           lambda p: np.sin(p[0]*p[1])]
+      md.set_variable(v, np.array([0.02*f[i % 3](P[:, i])
+                                   for i in range(mf.nbdof())]))
+    E = ("Interpolate_filter(t, Norm_sqr(Interpolate(X,t)+Interpolate(um,t)"
+         "-X-us)/2, 1)")
+    X0 = md.from_variables()
+    G = gf.asm_generic(mim, 1, E, SLAVE, md)
+    dX = np.random.default_rng(0).standard_normal(len(X0))*1e-2
+    h = 1e-5
+    md.to_variables(X0 + h*dX); Ep = gf.asm_generic(mim, 0, E, SLAVE, md)
+    md.to_variables(X0 - h*dX); Em = gf.asm_generic(mim, 0, E, SLAVE, md)
+    check("%s, %s: gradient, relative error" % (kind, what),
+          abs((Ep - Em)/(2*h) - G @ dX)/abs(G @ dX), 0., 1e-4)
+    md.to_variables(X0)
+    # tangent terms can be assembled
+    K = gf.asm_generic(mim, 2, E, SLAVE, md)
+    assert K.size()[0] == md.nbdof()
 
 print("check_shell_normal: ok")

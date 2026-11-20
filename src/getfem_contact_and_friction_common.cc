@@ -732,6 +732,9 @@ namespace getfem {
       base_node xx = x0;
       for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
       ctx.set_xref(xx);
+      // N x P, with P = N-1 for an element of a curve in 2D or a surface
+      // in 3D (a shell)
+      gmm::resize(gradtot, N, gmm::mat_ncols(ctx.K()));
       if (!ref_conf) {
         ctx.pf()->interpolation(ctx, coeff, dxy, dim_type(N));
         dxy += ctx.xreal() - x;
@@ -766,7 +769,7 @@ namespace getfem {
      const model_real_plain_vector &coefff,
      const std::vector<base_small_vector> &tii,
      scalar_type EPSS, bool rc)
-      : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), x(xx),
+      : N(gmm::vect_size(xx)), EPS(EPSS), x0(x00), x(xx),
         ctx(ctxx), coeff(coefff), ti(tii), ref_conf(rc),
         dxy(N), grad(N,N), gradtot(N,N) {}
 
@@ -2076,8 +2079,8 @@ namespace getfem {
                   bool compute_derivatives) const {
       size_type cv_x = ctx_x.convex_num();
       short_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != short_type(-1), "The contact transformation can "
-                  "only be applied to a boundary");
+      // face_x == -1: inside an element of a curve in 2D or a surface in 3D
+      // (a shell), n_x its deformed normal (oriented as Normal)
 
       //
       // Find the right (slave) contact boundary
@@ -2209,10 +2212,14 @@ namespace getfem {
         pfem pfu_y = mfu_y.fem_of_element(cv_y);
         short_type face_y = fbox_y.ind_face;
         bgeot::pgeometric_trans pgt_y= m_y.trans_of_convex(cv_y);
+        // An element of a curve in 2D or a surface in 3D: a two-sided shell
+        bool two_sided = (face_y == short_type(-1));
 
-        // CRITERION 1 : The unit normal vectors are compatible
-        //               and the two points are not in the same element.
-        if (gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0) ||
+        // CRITERION 1 : The unit normal vectors are compatible (not for
+        //               two-sided shells) and the two points are not in
+        //               the same element.
+        if ((!two_sided &&
+             gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0)) ||
             (cv_x == cv_y && &m_x == &m_y))
           continue;
 
@@ -2220,28 +2227,35 @@ namespace getfem {
         // Classical projection for y by quasi Newton algorithm
         //
         bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
-        // face_pts is of type bgeot::convex<...>::ref_convex_pt_ct
-        const auto face_pts = pfu_y->ref_convex(cv_y)->points_of_face(face_y);
+        bgeot::pconvex_ref cvr_y = pfu_y->ref_convex(cv_y);
         // Newton start: the face centre, nearest to any hit inside the face
-        const base_node Y0 = gmm::mean_value(face_pts);
+        // (the element centre for a shell)
+        const base_node Y0 = two_sided
+          ? gmm::mean_value(cvr_y->points())
+          : gmm::mean_value(cvr_y->points_of_face(face_y));
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
 
-        const base_small_vector &NY0
-          = pfu_y->ref_convex(cv_y)->normals()[face_y];
+        gmm::clear(a);
 
-         gmm::clear(a);
-
-        for (size_type k = 0; k < N-1; ++k) { // A basis for the face
-          gmm::resize(ti[k], N);
-          scalar_type norm(0);
-          while(norm < 1E-5) {
-            gmm::fill_random(ti[k]);
-            ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
-            for (size_type l = 0; l < k; ++l)
-              ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
-            norm = gmm::vect_norm2(ti[k]);
+        if (two_sided) { // the N-1 reference axes of the element
+          for (size_type k = 0; k < N-1; ++k) {
+            gmm::resize(ti[k], N-1); gmm::clear(ti[k]);
+            ti[k][k] = scalar_type(1);
           }
-          ti[k] /= norm;
+        } else {
+          const base_small_vector &NY0 = cvr_y->normals()[face_y];
+          for (size_type k = 0; k < N-1; ++k) { // A basis for the face
+            gmm::resize(ti[k], N);
+            scalar_type norm(0);
+            while(norm < 1E-5) {
+              gmm::fill_random(ti[k]);
+              ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
+              for (size_type l = 0; l < k; ++l)
+                ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
+              norm = gmm::vect_norm2(ti[k]);
+            }
+            ti[k] /= norm;
+          }
         }
 
         scalar_type h(0); // estimate of element face size
@@ -2299,7 +2313,7 @@ namespace getfem {
           converged = (residual < 2E-5*h*h); // relaxed tolerance
         }
 
-        bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
+        bool is_in = (cvr_y->is_in(ctx_y.xref()) < 1E-6);
 
         // cout<< "y_ref =" << ctx_y.xref() <<endl;
         // cout<< "x_ref =" << ctx_x.xref() <<endl;
@@ -2350,6 +2364,9 @@ namespace getfem {
         compute_normal(ctx_y, face_y, ref_conf, coeff_y, ny0, n_y, grad);
         n_y /= gmm::vect_norm2(n_y);
         ny0 /= gmm::vect_norm2(ny0);
+        // a two-sided shell faces the slave point
+        if (two_sided && gmm::vect_sp(n_y, n_x) > scalar_type(0))
+          gmm::scale(n_y, scalar_type(-1));
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles
