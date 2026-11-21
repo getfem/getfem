@@ -566,6 +566,15 @@ if test x"$FC" = "x"; then
 else
   AC_FC_FUNC(sgemm)
   AC_FC_FUNC(dgemm)
+  # The name mangling cannot be determined when the Fortran and C/C++
+  # compilers are not compatible (e.g. different architectures or
+  # versions on macOS). Fall back to the most common convention instead
+  # of looking for a function called "unknown" in the BLAS libraries.
+  if test "x$sgemm" = xunknown || test "x$dgemm" = xunknown; then
+    AC_MSG_WARN([could not determine the Fortran name mangling with $FC, assuming sgemm_ and dgemm_ for the BLAS. Check that $FC and $CXX are compatible.])
+    sgemm=sgemm_
+    dgemm=dgemm_
+  fi
 fi
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
