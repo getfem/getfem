@@ -30,5 +30,8 @@
 /* defined if the BLAS fortran ABI does not return complex values directly (e.g. Intel's MKL) */
 #undef GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT
 
+/* defined if the BLAS returns single precision real function values as double (f2c ABI, e.g. Apple Accelerate) */
+#undef GMM_BLAS_RETURN_REAL_AS_DOUBLE
+
 /* GMM version */
 #undef GMM_VERSION

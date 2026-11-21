@@ -353,6 +353,32 @@ if test x$acx_blas_fortan_abi = xIntel; then
   AC_DEFINE(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT,,[defined if the BLAS fortran ABI does not return complex values directly (e.g. Intel's MKL)])
 fi
 
+# check fortran ABI with regard to single precision real functions in BLAS
+# (f2c/g77 ABI, e.g. Apple Accelerate: sdot, snrm2, scnrm2 return a double)
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <cmath>
+#if defined(GMM_USE_BLAS64_INTERFACE)
+  #define INT long
+#else
+  #define INT int
+#endif
+extern "C" {
+double sdot_(const INT*, const float*, const INT*, const float*, const INT*);
+double snrm2_(const INT*, const float*, const INT*);
+}
+int main() {
+    const INT two=2, one=1;
+    float x[2] = {1., 2.}, y[2] = {3., 2.}, z[2] = {3., 4.};
+    double d = sdot_(&two, x, &one, y, &one), n = snrm2_(&two, z, &one);
+    return (std::fabs(d-7.) < 1e-5 && std::fabs(n-5.) < 1e-5) ? 0 : 1;
+}
+  ]])],[ acx_blas_real_as_double=yes ], [ acx_blas_real_as_double=no ], [ acx_blas_real_as_double=no ])
+
+if test x$acx_blas_real_as_double = xyes; then
+  echo "BLAS found to return single precision real function values as double (f2c ABI, e.g. Apple Accelerate)";
+  AC_DEFINE(GMM_BLAS_RETURN_REAL_AS_DOUBLE,,[defined if the BLAS returns single precision real function values as double (f2c ABI, e.g. Apple Accelerate)])
+fi
+
 dnl ------------------------------LAPACK TEST--------------------------------
 
 if test x"$acx_blas_ok" = xyes; then

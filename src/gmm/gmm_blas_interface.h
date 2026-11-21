@@ -153,6 +153,15 @@ namespace gmm {
 typedef struct{float r,i;} FORTRAN_BLAS_C;
 typedef struct{double r,i;} FORTRAN_BLAS_Z;
 
+// Some BLAS implementations (Apple Accelerate/vecLib, f2c translated BLAS)
+// follow the f2c/g77 ABI where Fortran REAL functions (sdot, snrm2, scnrm2)
+// return a C double instead of a C float.
+#if defined(GMM_BLAS_RETURN_REAL_AS_DOUBLE)
+# define BLAS_S_RET double
+#else
+# define BLAS_S_RET float
+#endif
+
 // Hack due to BLAS ABI mess
 #if defined(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT)
 # define BLAS_CPLX_FUNC_CALL(blasname, ftype, res, ...) \
@@ -177,7 +186,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
     void sgemm_(...); /*void dgemm_(...);*/ void cgemm_(...); void zgemm_(...);
     void sgemv_(...); void dgemv_(...); void cgemv_(...); void zgemv_(...);
     void strsv_(...); void dtrsv_(...); void ctrsv_(...); void ztrsv_(...);
-    BLAS_S sdot_ (...); BLAS_D ddot_ (...);
+    BLAS_S_RET sdot_ (...); BLAS_D ddot_ (...);
 #if defined(GMM_BLAS_RETURN_COMPLEX_AS_ARGUMENT)
     void cdotu_(...); void zdotu_(...); void cdotc_(...); void zdotc_(...);
 #else
@@ -185,8 +194,8 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
     // Hermitian product in {c,z}dotc is defined in reverse order than usually
     FORTRAN_BLAS_C cdotc_(...); FORTRAN_BLAS_Z zdotc_(...);
 #endif
-    BLAS_S snrm2_(...); BLAS_D dnrm2_(...);
-    BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
+    BLAS_S_RET snrm2_(...); BLAS_D dnrm2_(...);
+    BLAS_S_RET scnrm2_(...); BLAS_D dznrm2_(...);
     void sger_(...); void dger_(...); void cgerc_(...); void zgerc_(...);
   }
 
@@ -200,7 +209,8 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
   vect_norm2(const std::vector<base_type> &x) {           \
     GMMLAPACK_TRACE("nrm2_interface");                    \
     const BLAS_INT n=BLAS_INT(vect_size(x)), inc(1);      \
-    return blas_name(&n, x.data(), &inc);                 \
+    return number_traits<base_type>::magnitude_type       \
+      (blas_name(&n, x.data(), &inc));                    \
   }
 
   nrm2_interface(snrm2_,  BLAS_S)
@@ -217,7 +227,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
                             const std::vector<base_type> &y) {             \
     GMMLAPACK_TRACE(msg);                                                  \
     const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
-    return blas_name(&n, x.data(), &inc, y.data(), &inc);                  \
+    return base_type(blas_name(&n, x.data(), &inc, y.data(), &inc));       \
   }                                                                        \
   inline base_type funcname                                                \
    (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,   \
@@ -226,7 +236,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
     const std::vector<base_type> &x = *(linalg_origin(x_));                \
     base_type a(x_.r);                                                     \
     const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
-    return a * blas_name(&n, x.data(), &inc, y.data(), &inc);              \
+    return a * base_type(blas_name(&n, x.data(), &inc, y.data(), &inc));   \
   }                                                                        \
   inline base_type funcname                                                \
     (const std::vector<base_type> &x,                                      \
@@ -235,7 +245,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type b(y_.r);                                                     \
     const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
-    return b * blas_name(&n, x.data(), &inc, y.data(), &inc);              \
+    return b * base_type(blas_name(&n, x.data(), &inc, y.data(), &inc));   \
   }                                                                        \
   inline base_type funcname                                                \
     (const scaled_vector_const_ref<std::vector<base_type>,base_type> &x_,  \
@@ -245,7 +255,7 @@ typedef struct{double r,i;} FORTRAN_BLAS_Z;
     const std::vector<base_type> &y = *(linalg_origin(y_));                \
     base_type a(x_.r), b(y_.r);                                            \
     const BLAS_INT n=BLAS_INT(vect_size(y)), inc(1);                       \
-    return a*b * blas_name(&n, x.data(), &inc, y.data(), &inc);            \
+    return a*b * base_type(blas_name(&n, x.data(), &inc, y.data(), &inc)); \
   }
 
   dot_interface(vect_sp, "dot_interface", sdot_,  BLAS_S)
