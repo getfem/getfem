@@ -100,6 +100,23 @@ struct CG {
   { gmm::cg(m, v1, v2, P, iter); }
 };
 
+template <typename T> struct to_double { typedef double type; };
+template <typename T> struct to_double<std::complex<T> >
+{ typedef std::complex<double> type; };
+
+// Conditionnement calculé en double précision sur une copie dense
+template <typename MAT>
+double condest_double(const MAT &M) {
+  typedef typename gmm::linalg_traits<MAT>::value_type T;
+  typedef typename to_double<T>::type TD;
+  size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
+  gmm::dense_matrix<TD> D(m, n);
+  for (size_type i = 0; i < m; ++i)
+    for (size_type j = 0; j < n; ++j)
+      D(i, j) = TD(M(i, j));
+  return gmm::condest(D);
+}
+
 template <typename SOLVER, typename PRECOND, typename MAT, typename VECT1,
 	  typename VECT2, typename Rcond>
 void do_test(const SOLVER &solver, const MAT &m1, VECT1 &v1,
@@ -164,7 +181,8 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   
   R det = gmm::abs(gmm::lu_det(m1));
   if (det < sqrt(prec)*R(10)) return false;
-  R cond = gmm::condest(m1);
+  double cd = condest_double(m1);
+  R cond = R(std::min(cd, double(gmm::default_max(R()))));
   if (print_debug)
     cout << "condition number = " << cond << " det = " << det << endl;
   if (det == R(0) && cond < R(1) / prec && cond != R(0))
