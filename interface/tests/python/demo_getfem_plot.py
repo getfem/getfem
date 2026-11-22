@@ -32,8 +32,6 @@ import numpy as np
 
 import getfem as gf
 
-import getfem.getfem_plot as gfp
-
 try:
   import getfem.getfem_plot as gfp
 except ImportError:

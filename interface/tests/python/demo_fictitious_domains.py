@@ -28,8 +28,7 @@
   $Id$
 """
 import numpy as np
-from scipy import rand, setdiff1d
-
+from numpy import setdiff1d, random
 import getfem as gf
 
 eps = 1.0/40

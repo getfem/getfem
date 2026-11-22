@@ -234,9 +234,9 @@ for fact in [0,0.2,0.4,0.6,0.8,1.]:
   U = md.variable("u")
   theta = md.variable("theta")
   T = md.variable("T")
-  print("Gas temperature %g C" % (T-273))
+  print("Gas temperature %g C" % (T[0]-273))
   P = md.variable("P")
-  print("Gas pressure %g MPa" % P)
+  print("Gas pressure %g MPa" % P[0])
 
   V  = gf.compute_interpolate_on(mf_u, U, mfv)
   Th = gf.compute_interpolate_on(mf_theta, theta, mfw)
