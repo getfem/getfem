@@ -139,14 +139,74 @@ template <class T> void test_logm(T) {
   //assert (full (logm (eye (3))), logm (full (eye (3))))
   //assert (full (logm (10*eye (3))), logm (full (10*eye (3))), 8*eps)
   //assert (logm (expm ([0 1i; -1i 0])), [0 1i; -1i 0], 10 * eps)
+
+  // negative eigenvalue at any position of the diagonal must be detected
+  for (size_type k = 0; k < 3; ++k) {
+    gmm::dense_matrix<T> U(3, 3);
+    U(0,0) = U(1,1) = U(2,2) = T(2); U(0,1) = U(1,2) = T(1);
+    U(k,k) = T(-1);
+    bool detected = false;
+    try { gmm::logm_utri_inplace(U); }
+    catch (const gmm::gmm_error &) { detected = true; }
+    assert(detected);
+  }
+}
+
+
+template <class T> void check_schur(const gmm::dense_matrix<T> &A) {
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  size_type n = gmm::mat_nrows(A);
+  gmm::dense_matrix<T> S, Q, E(n, n), F(n, n);
+  gmm::schur(A, S, Q); // A = Q * S * Q^H
+
+  R tol = R(20*n) * gmm::default_tol(R());
+  gmm::mult(gmm::conjugated(Q), Q, E);
+  for (size_type i = 0; i < n; ++i) E(i,i) -= T(1);
+  assert(gmm::mat_maxnorm(E) < tol);
+  gmm::mult(Q, S, E);
+  gmm::mult(E, gmm::conjugated(Q), F);
+  gmm::add(gmm::scaled(A, T(-1)), F);
+  assert(gmm::mat_maxnorm(F) <= tol * gmm::mat_maxnorm(A));
+  for (size_type j = 0; j < n; ++j)
+    for (size_type i = j+1; i < n; ++i)
+      if (i > j+1 || gmm::is_complex(T()))
+        assert(gmm::abs(S(i,j)) <= tol * gmm::mat_maxnorm(A));
+      else if (i+1 < n && gmm::abs(S(i,j)) > tol * gmm::mat_maxnorm(A))
+        assert(gmm::abs(S(i+1,j+1)) <= tol * gmm::mat_maxnorm(A));
+}
+
+template <class T> void test_schur(T) {
+  for (size_type n = 1; n < 20; ++n) {
+    gmm::dense_matrix<T> A(n, n);
+    gmm::fill_random(A);
+    check_schur(A);                                // general matrix
+    gmm::dense_matrix<T> B(n, n);
+    gmm::copy(gmm::conjugated(A), B); gmm::add(A, B);
+    check_schur(B);                                // hermitian matrix
+    gmm::clear(B);
+    for (size_type i = 0; i < n; ++i) B(i, (i+1)%n) = T(1);
+    check_schur(B);                                // permutation matrix
+    gmm::copy(A, B); gmm::scale(B, T(1E-30));
+    check_schur(B);                                // badly scaled matrix
+  }
+  // 2x2 block close to triangular (needs an accurate block reduction)
+  gmm::dense_matrix<T> C(3, 3);
+  C(0,0) = T(-2.5); C(0,1) = T(0.7);  C(0,2) = T(0.6);
+  C(1,1) = T(-0.5); C(1,2) = T(0.3);
+  C(2,1) = T(1E-6); C(2,2) = T(1.5);
+  check_schur(C);
 }
 
 
 int main(void)
 {
 
-#if defined(GMM_USES_LAPACK) && !defined(GMM_MATLAB_INTERFACE)
   srand(1459);
+
+  test_schur(float());
+  test_schur(double());
+  test_schur(std::complex<float>());
+  test_schur(std::complex<double>());
 
   test_sqrtm(float());
   test_sqrtm(double());
@@ -157,8 +217,6 @@ int main(void)
   test_logm(double());
   test_logm(std::complex<float>());
   test_logm(std::complex<double>());
-
-#endif
  
   return 0;
 }

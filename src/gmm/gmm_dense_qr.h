@@ -387,31 +387,46 @@ namespace gmm {
 
     size_type n = mat_nrows(H), nq = mat_nrows(Q);
     if (n < 2) return;
-    sub_interval SUBQ(0, nq);
-    std::vector<T> v(2), w(std::max(n, nq)); v[0] = T(1);
     tol *= Ttol(2);
-    Ttol tol_i = tol * gmm::abs(H(0,0)), tol_cplx = tol_i;
     for (size_type i = 0; i < n-1; ++i) {
-      tol_i = (gmm::abs(H(i,i))+gmm::abs(H(i+1,i+1)))*tol;
-      tol_cplx = std::max(tol_cplx, tol_i);
+      Ttol tol_i = (gmm::abs(H(i,i))+gmm::abs(H(i+1,i+1)))*tol;
 
       if (gmm::abs(H(i+1,i)) > tol_i) { // 2x2 block detected
-        T tr = (H(i+1, i+1) - H(i,i)) / T(2);
-        T delta = tr*tr + H(i,i+1)*H(i+1, i);
+        T a = H(i,i), b = H(i,i+1), c = H(i+1,i), d = H(i+1,i+1);
+        T tr = (d - a) / T(2);
+        T delta = tr*tr + b*c;
 
         // For real T, blocks with complex eigenvalues are left unreduced.
         if (is_complex(T()) || gmm::real(delta) >= R(0)) {
-          sub_interval SUBI(i, 2);
-          T theta = (tr - gmm::sqrt(delta)) / H(i+1,i);
-          R a = gmm::abs(theta);
-          v[1] = (a == R(0)) ? T(-1)
-            : gmm::conj(theta) * (R(1) - gmm::sqrt(a*a + R(1)) / a);
-          sub_interval SUBR(i, n-i), SUBC(0, i+2);
-          row_house_update(sub_matrix(H, SUBI, SUBR), v,
-                           sub_vector(w, sub_interval(0, n-i)));
-          col_house_update(sub_matrix(H, SUBC, SUBI), v,
-                           sub_vector(w, SUBC));
-          col_house_update(sub_matrix(Q, SUBQ, SUBI), v, sub_vector(w, SUBQ));
+          // Eigenvalue lambda = a + p with the sign of the square root
+          // chosen such that p = tr +/- sqrt(delta) involves no
+          // cancellation. (b, p) is then an accurate eigenvector.
+          T s = gmm::sqrt(delta);
+          if (gmm::real(gmm::conj(tr)*s) < R(0)) s = -s;
+          T x1 = b, x2 = tr + s;
+          if (x1 == T(0) && x2 == T(0)) { x2 = T(1); } // [a 0; c a]
+          R nx = std::max(gmm::abs(x1), gmm::abs(x2));
+          x1 /= nx; x2 /= nx;
+          nx = gmm::sqrt(gmm::abs_sqr(x1) + gmm::abs_sqr(x2));
+          x1 /= nx; x2 /= nx;
+          // Unitary G = [x1 -conj(x2); x2 conj(x1)], H <- G^H H G, Q <- Q G
+          T cx1 = gmm::conj(x1), cx2 = gmm::conj(x2);
+          for (size_type j = i; j < n; ++j) {
+            T h1 = H(i,j), h2 = H(i+1,j);
+            H(i,j)   =  cx1*h1 + cx2*h2;
+            H(i+1,j) = -x2*h1  + x1*h2;
+          }
+          for (size_type j = 0; j < i+2; ++j) {
+            T h1 = H(j,i), h2 = H(j,i+1);
+            H(j,i)   = h1*x1 + h2*x2;
+            H(j,i+1) = -h1*cx2 + h2*cx1;
+          }
+          for (size_type j = 0; j < nq; ++j) {
+            T q1 = Q(j,i), q2 = Q(j,i+1);
+            Q(j,i)   = q1*x1 + q2*x2;
+            Q(j,i+1) = -q1*cx2 + q2*cx1;
+          }
+          H(i+1,i) = T(0);
         }
         ++i;
       }
@@ -634,6 +649,80 @@ namespace gmm {
                                tol_type_for_qr tol = default_tol_for_qr) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(1,1);
     implicit_qr_algorithm(a, eigval, m, tol, false);
+  }
+
+  /* ********************************************************************* */
+  /*    Schur decomposition based on the implicit QR algorithm.            */
+  /* ********************************************************************* */
+
+  // Computes A = Q*S*Q^H with Q unitary and S upper quasi-triangular
+  // (1x1 and 2x2 diagonal blocks, the 2x2 blocks corresponding to pairs of
+  // complex conjugate eigenvalues) for real matrices, or upper triangular
+  // for complex matrices. Native replacement for the Lapack based
+  // gmm::schur (?geesx) when Lapack is not available.
+  // The QR steps of implicit_qr_algorithm only update the active diagonal
+  // window of the Hessenberg matrix, so that S is recomputed as Q^H*A*Q
+  // and the negligible part below the (block) diagonal is set to zero.
+  template <typename MAT1>
+  void implicit_qr_schur(const MAT1 &A,
+                         dense_matrix<typename linalg_traits<MAT1>::value_type> &S,
+                         dense_matrix<typename linalg_traits<MAT1>::value_type> &Q,
+                         tol_type_for_qr tol = default_tol_for_qr) {
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    const size_type n = mat_nrows(A);
+    GMM_ASSERT1(n == mat_ncols(A), "Schur decomposition requires square matrix");
+    resize(S, n, n); resize(Q, n, n);
+    if (n == 0) return;
+
+    // The QR iterations are done on A scaled by a power of 2 (exact) close
+    // to 1/max|A(i,j)| to avoid overflow/underflow. Q is not affected.
+    dense_matrix<T> H(n, n);
+    gmm::copy(A, H);
+    R nrm = mat_maxnorm(A);
+    if (nrm > R(0) && nrm < std::numeric_limits<R>::infinity()) {
+      int e; std::frexp(nrm, &e);
+      gmm::scale(H, T(std::ldexp(R(1), -e)));
+    }
+    Hessenberg_reduction(H, Q, true);
+
+    size_type q(0), p(0), ite(0), its(0);
+    qr_stop_criterion(H, p, q, tol);
+    while (q < n) {
+      sub_interval SUBI(p, n-p-q), SUBJ(0, n);
+      Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI),
+                                     sub_matrix(Q, SUBJ, SUBI),
+                                     tol, (its == 10 || its == 20), true);
+      size_type q_old(q);
+      qr_stop_criterion(H, p, q, tol*R(2));
+      if (q != q_old) its = 0;
+      ++its; ++ite;
+      GMM_ASSERT1(ite < n*100, "Schur decomposition: QR algorithm failed");
+    }
+    // Triangularizes the 2x2 blocks with real eigenvalues (all the 2x2
+    // blocks in the complex case).
+    block2x2_reduction(H, Q, tol);
+
+    // S = Q^H * A * Q
+    dense_matrix<T> AQ(n, n);
+    gmm::mult(A, Q, AQ);
+    gmm::mult(conjugated(Q), AQ, S);
+
+    // Clean the part below the (block) diagonal, using the block structure
+    // of H (same criterion as in block2x2_reduction for remaining blocks).
+    for (size_type j = 0; j < n; ++j)
+      for (size_type i = j+2; i < n; ++i)
+        S(i, j) = T(0);
+    for (size_type i = 0; i+1 < n; ++i) {
+      R tol_i = (gmm::abs(H(i,i)) + gmm::abs(H(i+1,i+1))) * tol * R(2);
+      if (!is_complex(T()) && gmm::abs(H(i+1,i)) > tol_i) {
+        // remaining 2x2 block (complex conjugate eigenvalues)
+        if (i+2 < n) S(i+2, i+1) = T(0);
+        ++i;
+      } else
+        S(i+1, i) = T(0);
+    }
   }
 
   /* ********************************************************************* */

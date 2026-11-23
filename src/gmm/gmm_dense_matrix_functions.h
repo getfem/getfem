@@ -92,12 +92,7 @@ namespace gmm {
                 "Matrix square root requires a square matrix");
     gmm::resize(SQRTMA, gmm::mat_nrows(A), gmm::mat_ncols(A));
     dense_matrix<std::complex<T> > S(A), Q(A), TMP(A);
-    #if defined(GMM_USES_LAPACK)
     schur(TMP, S, Q);
-    #else
-    GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
-                "to use sqrtm matrix function.");
-    #endif
     sqrtm_utri_inplace(S);
     gmm::mult(Q, S, TMP);
     gmm::mult(TMP, gmm::conjugated(Q), SQRTMA);
@@ -140,12 +135,12 @@ namespace gmm {
     size_type n = gmm::mat_nrows(S);
     GMM_ASSERT1(n == gmm::mat_ncols(S),
                 "Matrix logarithm is not defined for non-square matrices");
-    for (size_type i=0; i < n-1; ++i)
+    for (size_type i=0; i+1 < n; ++i)
       if (gmm::abs(S(i+1,i)) > default_tol(T())) {
         GMM_ASSERT1(false, "An upper triangular matrix is expected");
         break;
       }
-    for (size_type i=0; i < n-1; ++i)
+    for (size_type i=0; i < n; ++i)
       if (gmm::real(S(i,i)) <= -default_tol(R()) &&
           gmm::abs(gmm::imag(S(i,i))) <= default_tol(R())) {
         GMM_ASSERT1(false, "Principal matrix logarithm is not defined "
@@ -255,12 +250,7 @@ namespace gmm {
     GMM_ASSERT1(n == gmm::mat_ncols(A),
                 "Matrix logarithm is not defined for non-square matrices");
     dense_matrix<T> S(A), Q(A);
-    #if defined(GMM_USES_LAPACK)
     schur(A, S, Q); // A = Q * S * Q^H
-    #else
-    GMM_ASSERT1(false, "Please recompile with lapack and blas libraries "
-                "to use logm matrix function.");
-    #endif
 
     bool convert_to_complex(false);
     if (!is_complex(T()))

@@ -420,12 +420,11 @@ namespace gmm {
 
 namespace gmm
 {
-template <typename MAT>
-void schur(const MAT &, MAT &, MAT &)
-{
-  GMM_ASSERT1(false, "Use of function schur(A,S,Q) requires GetFEM "
-                     "to be built with Lapack");
-}
+// Native (slower) replacement of the Lapack ?geesx based Schur decomposition
+template <typename T>
+inline void schur(const dense_matrix<T> &A, dense_matrix<T> &S,
+                  dense_matrix<T> &Q)
+{ implicit_qr_schur(A, S, Q); }
 
 template <typename BLAS_TYPE>
 inline void svd(dense_matrix<BLAS_TYPE> &, dense_matrix<BLAS_TYPE> &,
