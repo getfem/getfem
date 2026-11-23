@@ -56,14 +56,15 @@ jobs:
         cd mumps
         cmake -B build ^
           -DMUMPS_parallel=OFF ^
-          -DBUILD_COMPLEX=ON ^
-          -DBUILD_COMPLEX16=ON ^
+          -DMUMPS_BUILD_COMPLEX=ON ^
+          -DMUMPS_BUILD_COMPLEX16=ON ^
           -G Ninja ^
           -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" ^
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" ^
           -DCMAKE_Fortran_COMPILER=ifx ^
           -DCMAKE_Fortran_STANDARD_LIBRARIES="" ^
-          -DMKL_LINK=static
+          -DMKL_LINK=static ^
+          -DLAPACK_DETERMINE_LIBRARY_VERSION=OFF
         cmake --build build
         cmake --install build
 
@@ -152,7 +153,7 @@ jobs:
         cd /d C:\opt
         (
         echo [build-system]
-        echo requires = ["setuptools>=61.0", "wheel"]
+        echo requires = ["setuptools>=77.0", "wheel"]
         echo build-backend = "setuptools.build_meta"
         echo.
         echo [project]
@@ -160,8 +161,14 @@ jobs:
         echo version = "${{ env.GF_VERSION }}"
         echo description = "GetFEM python interface"
         echo authors = [{name="Konstantinos Poulios", email="poulios.konstantinos@gmail.com"}]
+        echo license = "LGPL-3.0-or-later WITH GCC-exception-3.1"
         echo requires-python = ">=3.9"
         echo dependencies = ["numpy"]
+        echo.
+        echo [project.urls]
+        echo Homepage = "https://getfem.org"
+        echo Documentation = "https://getfem.org/python/index.html"
+        echo Source = "https://git.savannah.nongnu.org/cgit/getfem.git"
         echo.
         echo [tool.setuptools]
         echo package-dir = { "getfem" = "lib/site-packages/getfem" }
