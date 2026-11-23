@@ -8,8 +8,8 @@ include(CheckLibraryExists)
 string(ASCII 27 ESC)
 message("${ESC}[33m"
         "The cmake build system for GetFEM is an alternative to the "
-        "autotools build. It is a work in progress and it does not "
-        "support all options supported by the autotools system."
+        "autotools build. It does not support all options supported "
+        "by the autotools system."
         "${ESC}[0m")
 project(GetFEM)
 
