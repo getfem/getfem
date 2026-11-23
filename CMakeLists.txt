@@ -489,7 +489,7 @@ else()
 endif()
 
 
-if(BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS OR ENABLE_PYTHON)
   set_property(TARGET libgetfem PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 
