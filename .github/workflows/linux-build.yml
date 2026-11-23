@@ -20,9 +20,11 @@ jobs:
     steps:
     - name: Set up Python and build tools
       run: |
-        echo "/opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin" >> "$GITHUB_PATH"
-        /opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin/python -m pip install --upgrade pip
-        /opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin/python -m pip install numpy build
+        /opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin/python -m venv /opt/venv
+        echo "VIRTUAL_ENV=/opt/venv" >> "$GITHUB_ENV"
+        echo "/opt/venv/bin" >> "$GITHUB_PATH"
+        /opt/venv/bin/python -m pip install --upgrade pip
+        /opt/venv/bin/python -m pip install numpy build
         dnf install -y openblas-devel
 
     - name: Build MUMPS
@@ -56,7 +58,7 @@ jobs:
           -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}"
-        cmake --build build --parallel
+        cmake --build build --parallel $(nproc)
         cmake --install build
 
     - name: Checkout GetFEM code
@@ -77,7 +79,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" \
           -DCMAKE_CXX_STANDARD_LIBRARIES="-lgfortran" \
           -DBLA_VENDOR=OpenBLAS
-        cmake --build build --parallel
+        cmake --build build --parallel $(nproc)
         cmake --install build
         mkdir -p /opt/wheel
         cp -r "$(python -c "import sysconfig; print(sysconfig.get_path('purelib', 'posix_prefix', vars={'base': '${{ env.INSTALL_PREFIX }}'}))")/getfem" /opt/wheel/
