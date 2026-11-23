@@ -583,7 +583,7 @@ if(ENABLE_PYTHON)
       target_include_directories(libgetfemint PRIVATE ${MUMPS_INCLUDE_PATH})
     endif()
 
-    find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
     # create a folder to build the python extension from
     set(PYTHON_MODULE_PATH ${CMAKE_BINARY_DIR}/python_module)
