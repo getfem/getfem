@@ -90,7 +90,9 @@ static void check(const std::string &name, size_type N, size_type K,
   GMM_ASSERT1(err < tol, "Error too large for " << name << ": " << err);
 }
 
-int main(int /* argc */, char * /* argv */[]) {
+int main(int argc, char * argv[]) {
+
+  GETFEM_MPI_INIT(argc, argv); // For parallelized version
 
   scalar_type R = 2.;
 
@@ -150,6 +152,8 @@ int main(int /* argc */, char * /* argv */[]) {
     });
   check("Plane, curvature tensor", 3, 1, m4, "Norm_sqr(element_curvature)",
         1E-12);
+
+  GETFEM_MPI_FINALIZE;
 
   return 0;
 }
