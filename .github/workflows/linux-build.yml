@@ -1,0 +1,131 @@
+name: Linux Build
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  INSTALL_PREFIX: /opt/getfem
+  BUILD_TYPE: Release
+  GF_VERSION: 5.6rc1
+  PYTAG: cp314
+  MUMPS_VERSION: 5.9.2
+
+jobs:
+  build:
+    # gcc, g++, gfortran and auditwheel for wheels accepted by PyPI
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_28_x86_64
+
+    steps:
+    - name: Set up Python and build tools
+      run: |
+        echo "/opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin" >> "$GITHUB_PATH"
+        /opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin/python -m pip install --upgrade pip
+        /opt/python/${{ env.PYTAG }}-${{ env.PYTAG }}/bin/python -m pip install numpy build
+        dnf install -y openblas-devel
+
+    - name: Build MUMPS
+      run: |
+        echo Building MUMPS...
+        curl -sSfL --retry 5 -O https://mumps-solver.org/MUMPS_${{ env.MUMPS_VERSION }}.tar.gz
+        tar xzf MUMPS_${{ env.MUMPS_VERSION }}.tar.gz
+        cd MUMPS_${{ env.MUMPS_VERSION }}
+        sed -e 's/^CC .*/CC      = gcc/' \
+            -e 's/^FC .*/FC      = gfortran/' \
+            -e 's/^FL .*/FL      = gfortran/' \
+            -e 's/^LAPACK = .*/LAPACK = -lopenblas/' \
+            -e 's/^LIBBLAS = .*/LIBBLAS = -lopenblas/' \
+            -e 's/^OPTF .*/OPTF    = -O2 -fPIC -fallow-argument-mismatch/' \
+            -e 's/^OPTC .*/OPTC    = -O2 -fPIC -I./' \
+            -e 's/^OPTL .*/OPTL    = -O2/' \
+            Make.inc/Makefile.inc.generic.SEQ > Makefile.inc
+        make -j$(nproc) all
+        mkdir -p "${{ env.INSTALL_PREFIX }}/lib" "${{ env.INSTALL_PREFIX }}/include"
+        cp lib/*.a "${{ env.INSTALL_PREFIX }}/lib/"
+        cp include/*.h "${{ env.INSTALL_PREFIX }}/include/"
+
+    - name: Build Qhull
+      run: |
+        echo Building Qhull...
+        git clone https://github.com/qhull/qhull.git
+        cd qhull
+        git checkout 2020.2
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+          -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}"
+        cmake --build build --parallel
+        cmake --install build
+
+    - name: Checkout GetFEM code
+      uses: actions/checkout@v7
+
+    - name: Build and install GetFEM
+      run: |
+        echo Building GetFEM...
+        cmake -B build \
+          -DENABLE_PYTHON=ON \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DGENERATE_GETFEM_IM_LIST_H=OFF \
+          -DENABLE_FORCE_SINGLETHREAD_BLAS=OFF \
+          -DMUMPS_LIB_DIR="${{ env.INSTALL_PREFIX }}/lib" \
+          -DMUMPS_INC_DIR="${{ env.INSTALL_PREFIX }}/include" \
+          -DQHULL_LIB=qhullstatic_r \
+          -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" \
+          -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" \
+          -DCMAKE_CXX_STANDARD_LIBRARIES="-lgfortran" \
+          -DBLA_VENDOR=OpenBLAS
+        cmake --build build --parallel
+        cmake --install build
+        mkdir -p /opt/wheel
+        cp -r "$(python -c "import sysconfig; print(sysconfig.get_path('purelib', 'posix_prefix', vars={'base': '${{ env.INSTALL_PREFIX }}'}))")/getfem" /opt/wheel/
+
+    - name: Upload built libraries as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: getfem-${{ env.GF_VERSION }}-${{ env.PYTAG }}-linux_x86_64-raw
+        path: /opt/wheel
+
+    - name: Create wheel package
+      run: |
+        cd /opt/wheel
+        cat > pyproject.toml << 'EOF'
+        [build-system]
+        requires = ["setuptools>=77.0", "wheel"]
+        build-backend = "setuptools.build_meta"
+
+        [project]
+        name = "getfem"
+        version = "${{ env.GF_VERSION }}"
+        description = "GetFEM python interface"
+        authors = [{name="Konstantinos Poulios", email="poulios.konstantinos@gmail.com"}]
+        license = "LGPL-3.0-or-later WITH GCC-exception-3.1"
+        requires-python = ">=3.9"
+        dependencies = ["numpy"]
+
+        [project.urls]
+        Homepage = "https://getfem.org"
+        Documentation = "https://getfem.org/python/index.html"
+        Source = "https://git.savannah.nongnu.org/cgit/getfem.git"
+
+        [tool.setuptools]
+        packages = ["getfem"]
+
+        [tool.setuptools.package-data]
+        getfem = ["*.so", "*.py"]
+        EOF
+        python -m build --wheel
+        wheel tags \
+          --python-tag ${{ env.PYTAG }} \
+          --abi-tag ${{ env.PYTAG }} \
+          --platform-tag linux_x86_64 \
+          --remove dist/getfem-${{ env.GF_VERSION }}-py3-none-any.whl
+        auditwheel repair -w wheelhouse dist/*.whl
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: getfem-${{ env.GF_VERSION }}-${{ env.PYTAG }}-manylinux_x86_64-whl
+        path: /opt/wheel/wheelhouse/*.whl
