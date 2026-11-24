@@ -8,7 +8,7 @@ on:
 env:
   INSTALL_PREFIX: 'C:\opt'
   BUILD_TYPE: Release
-  GF_VERSION: 5.6rc1
+  GF_VERSION: 5.6rc2
 
 jobs:
   build:
@@ -162,6 +162,7 @@ jobs:
         echo license = "LGPL-3.0-or-later WITH GCC-exception-3.1"
         echo requires-python = ">=3.9"
         echo dependencies = ["numpy"]
+        echo readme = {text = "GetFEM is an open-source finite element library written in C++, with interfaces to Python, Scilab and Octave/Matlab. This package is its Python interface.\n\nIt offers a large set of finite element and integration methods, the generic weak form language GWFL for describing models, and solvers for linear and nonlinear problems, among them contact, XFEM and level-set methods.\n\nThe wheels include the sparse direct solver MUMPS and Qhull.\n\nDocumentation: https://getfem.org/python/index.html", content-type = "text/markdown"}
         echo.
         echo [project.urls]
         echo Homepage = "https://getfem.org"
