@@ -6,7 +6,7 @@
 
 The main contribution of this version is a series of corrections and a few optimizations following an analysis of the code with Claude AI.
 
-Released version, 2026/11/28.
+Released version, 2026/11/24.
 
 The main changes are:
 
