@@ -88,6 +88,7 @@ jobs:
           -DMUMPS_LIB_DIR="${{ env.INSTALL_PREFIX }}/lib" \
           -DMUMPS_INC_DIR="${{ env.INSTALL_PREFIX }}/include" \
           -DQHULL_LIB=qhullstatic_r \
+          -DPython3_EXECUTABLE="$VIRTUAL_ENV/bin/python" \
           -DCMAKE_PREFIX_PATH="$OPENBLAS_PREFIX" \
           -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" \
           -DCMAKE_INSTALL_PREFIX="${{ env.INSTALL_PREFIX }}" \
