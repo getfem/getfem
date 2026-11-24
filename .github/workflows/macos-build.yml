@@ -15,6 +15,11 @@ jobs:
   build:
     # Apple Silicon (arm64), clang, cmake, make
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # all versions only when run manually
+        python: ${{ github.event_name == 'workflow_dispatch' && fromJSON('["3.12", "3.13", "3.14", "3.15"]') || fromJSON('["3.14"]') }}
 
     steps:
     - name: Install gfortran and OpenBLAS
@@ -28,7 +33,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
-        python-version: '3.14'
+        python-version: ${{ matrix.python }}
 
     - name: Set up Python build tools
       run: |
