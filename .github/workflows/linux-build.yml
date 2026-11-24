@@ -3,12 +3,12 @@ name: Linux Build
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 env:
   INSTALL_PREFIX: /opt/getfem
   BUILD_TYPE: Release
   GF_VERSION: 5.6rc1
-  PYTAG: cp314
   MUMPS_VERSION: 5.9.2
 
 jobs:
@@ -16,6 +16,13 @@ jobs:
     # gcc, g++, gfortran and auditwheel for wheels accepted by PyPI
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
+    strategy:
+      fail-fast: false
+      matrix:
+        # all versions only when run manually
+        pytag: ${{ github.event_name == 'workflow_dispatch' && fromJSON('["cp312", "cp313", "cp314", "cp315"]') || fromJSON('["cp314"]') }}
+    env:
+      PYTAG: ${{ matrix.pytag }}
 
     steps:
     - name: Set up Python and build tools
