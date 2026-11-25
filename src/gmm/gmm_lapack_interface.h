@@ -83,16 +83,107 @@ namespace gmm {
   /* ********************************************************************** */
 
   extern "C" {
-    void sgetrf_(...); void dgetrf_(...); void cgetrf_(...); void zgetrf_(...);
-    void sgetrs_(...); void dgetrs_(...); void cgetrs_(...); void zgetrs_(...);
-    void sgetri_(...); void dgetri_(...); void cgetri_(...); void zgetri_(...);
-    void sgeqrf_(...); void dgeqrf_(...); void cgeqrf_(...); void zgeqrf_(...);
-    void sorgqr_(...); void dorgqr_(...); void cungqr_(...); void zungqr_(...);
-    void sormqr_(...); void dormqr_(...); void cunmqr_(...); void zunmqr_(...);
-    void sgees_ (...); void dgees_ (...); void cgees_ (...); void zgees_ (...);
-    void sgeev_ (...); void dgeev_ (...); void cgeev_ (...); void zgeev_ (...);
-    void sgeesx_(...); void dgeesx_(...); void cgeesx_(...); void zgeesx_(...);
-    void sgesvd_(...); void dgesvd_(...); void cgesvd_(...); void zgesvd_(...);
+    void sgetrf_(const BLAS_INT *m, const BLAS_INT *n, BLAS_S *A,
+                 const BLAS_INT *ldA, BLAS_INT *ipiv, BLAS_INT *info);
+    void dgetrf_(const BLAS_INT *m, const BLAS_INT *n, BLAS_D *A,
+                 const BLAS_INT *ldA, BLAS_INT *ipiv, BLAS_INT *info);
+    void cgetrf_(const BLAS_INT *m, const BLAS_INT *n, BLAS_C *A,
+                 const BLAS_INT *ldA, BLAS_INT *ipiv, BLAS_INT *info);
+    void zgetrf_(const BLAS_INT *m, const BLAS_INT *n, BLAS_Z *A,
+                 const BLAS_INT *ldA, BLAS_INT *ipiv, BLAS_INT *info);
+#   define GMM_LAPACK_GETRS_(name, T)                                       \
+    void name(const char *t, const BLAS_INT *n, const BLAS_INT *nrhs,      \
+              const T *A, const BLAS_INT *ldA, const BLAS_INT *ipiv,       \
+              T *b, const BLAS_INT *ldb, BLAS_INT *info);
+    GMM_LAPACK_GETRS_(sgetrs_, BLAS_S) GMM_LAPACK_GETRS_(dgetrs_, BLAS_D)
+    GMM_LAPACK_GETRS_(cgetrs_, BLAS_C) GMM_LAPACK_GETRS_(zgetrs_, BLAS_Z)
+#   define GMM_LAPACK_GETRI_(name, T)                                       \
+    void name(const BLAS_INT *n, T *A, const BLAS_INT *ldA,                \
+              const BLAS_INT *ipiv, T *work, const BLAS_INT *lwork,        \
+              BLAS_INT *info);
+    GMM_LAPACK_GETRI_(sgetri_, BLAS_S) GMM_LAPACK_GETRI_(dgetri_, BLAS_D)
+    GMM_LAPACK_GETRI_(cgetri_, BLAS_C) GMM_LAPACK_GETRI_(zgetri_, BLAS_Z)
+#   define GMM_LAPACK_GEQRF_(name, T)                                       \
+    void name(const BLAS_INT *m, const BLAS_INT *n, T *A,                  \
+              const BLAS_INT *ldA, T *tau, T *work, const BLAS_INT *lwork, \
+              BLAS_INT *info);
+    GMM_LAPACK_GEQRF_(sgeqrf_, BLAS_S) GMM_LAPACK_GEQRF_(dgeqrf_, BLAS_D)
+    GMM_LAPACK_GEQRF_(cgeqrf_, BLAS_C) GMM_LAPACK_GEQRF_(zgeqrf_, BLAS_Z)
+#   define GMM_LAPACK_ORGQR_(name, T)                                       \
+    void name(const BLAS_INT *m, const BLAS_INT *n, const BLAS_INT *k,     \
+              T *A, const BLAS_INT *ldA, const T *tau, T *work,            \
+              const BLAS_INT *lwork, BLAS_INT *info);
+    GMM_LAPACK_ORGQR_(sorgqr_, BLAS_S) GMM_LAPACK_ORGQR_(dorgqr_, BLAS_D)
+    GMM_LAPACK_ORGQR_(cungqr_, BLAS_C) GMM_LAPACK_ORGQR_(zungqr_, BLAS_Z)
+#   define GMM_LAPACK_GEES_(name, T)                                        \
+    void name(const char *jobvs, const char *sort, void *select,           \
+              const BLAS_INT *n, T *A, const BLAS_INT *ldA, BLAS_INT *sdim, \
+              T *wr, T *wi, T *vs, const BLAS_INT *ldvs, T *work,          \
+              const BLAS_INT *lwork, BLAS_INT *bwork, BLAS_INT *info);
+#   define GMM_LAPACK_GEES_CPLX_(name, T, R)                                \
+    void name(const char *jobvs, const char *sort, void *select,           \
+              const BLAS_INT *n, T *A, const BLAS_INT *ldA, BLAS_INT *sdim, \
+              T *w, T *vs, const BLAS_INT *ldvs, T *work,                  \
+              const BLAS_INT *lwork, R *rwork, BLAS_INT *bwork,            \
+              BLAS_INT *info);
+    GMM_LAPACK_GEES_(sgees_, BLAS_S) GMM_LAPACK_GEES_(dgees_, BLAS_D)
+    GMM_LAPACK_GEES_CPLX_(cgees_, BLAS_C, BLAS_S)
+    GMM_LAPACK_GEES_CPLX_(zgees_, BLAS_Z, BLAS_D)
+#   define GMM_LAPACK_GEEV_(name, T)                                        \
+    void name(const char *jobvl, const char *jobvr, const BLAS_INT *n,     \
+              T *A, const BLAS_INT *ldA, T *wr, T *wi, T *vl,              \
+              const BLAS_INT *ldvl, T *vr, const BLAS_INT *ldvr, T *work,  \
+              const BLAS_INT *lwork, BLAS_INT *info);
+#   define GMM_LAPACK_GEEV_CPLX_(name, T, R)                                \
+    void name(const char *jobvl, const char *jobvr, const BLAS_INT *n,     \
+              T *A, const BLAS_INT *ldA, T *w, T *vl, const BLAS_INT *ldvl, \
+              T *vr, const BLAS_INT *ldvr, T *work, const BLAS_INT *lwork, \
+              R *rwork, BLAS_INT *info);
+    GMM_LAPACK_GEEV_(sgeev_, BLAS_S) GMM_LAPACK_GEEV_(dgeev_, BLAS_D)
+    GMM_LAPACK_GEEV_CPLX_(cgeev_, BLAS_C, BLAS_S)
+    GMM_LAPACK_GEEV_CPLX_(zgeev_, BLAS_Z, BLAS_D)
+#   define GMM_LAPACK_GEESX_(name, T)                                       \
+    void name(const char *jobvs, const char *sort, void *select,           \
+              const char *sense, const BLAS_INT *n, T *A,                  \
+              const BLAS_INT *ldA, BLAS_INT *sdim, T *wr, T *wi, T *vs,    \
+              const BLAS_INT *ldvs, T *rconde, T *rcondv, T *work,         \
+              const BLAS_INT *lwork, BLAS_INT *iwork,                      \
+              const BLAS_INT *liwork, BLAS_INT *bwork, BLAS_INT *info);
+#   define GMM_LAPACK_GEESX_CPLX_(name, T, R)                               \
+    void name(const char *jobvs, const char *sort, void *select,           \
+              const char *sense, const BLAS_INT *n, T *A,                  \
+              const BLAS_INT *ldA, BLAS_INT *sdim, T *w, T *vs,            \
+              const BLAS_INT *ldvs, R *rconde, R *rcondv, T *work,         \
+              const BLAS_INT *lwork, R *rwork, BLAS_INT *bwork,            \
+              BLAS_INT *info);
+    GMM_LAPACK_GEESX_(sgeesx_, BLAS_S) GMM_LAPACK_GEESX_(dgeesx_, BLAS_D)
+    GMM_LAPACK_GEESX_CPLX_(cgeesx_, BLAS_C, BLAS_S)
+    GMM_LAPACK_GEESX_CPLX_(zgeesx_, BLAS_Z, BLAS_D)
+#   define GMM_LAPACK_GESVD_(name, T)                                       \
+    void name(const char *jobu, const char *jobvt, const BLAS_INT *m,      \
+              const BLAS_INT *n, T *A, const BLAS_INT *ldA, T *s, T *u,    \
+              const BLAS_INT *ldu, T *vt, const BLAS_INT *ldvt, T *work,   \
+              const BLAS_INT *lwork, BLAS_INT *info);
+#   define GMM_LAPACK_GESVD_CPLX_(name, T, R)                               \
+    void name(const char *jobu, const char *jobvt, const BLAS_INT *m,      \
+              const BLAS_INT *n, T *A, const BLAS_INT *ldA, R *s, T *u,    \
+              const BLAS_INT *ldu, T *vt, const BLAS_INT *ldvt, T *work,   \
+              const BLAS_INT *lwork, R *rwork, BLAS_INT *info);
+    GMM_LAPACK_GESVD_(sgesvd_, BLAS_S) GMM_LAPACK_GESVD_(dgesvd_, BLAS_D)
+    GMM_LAPACK_GESVD_CPLX_(cgesvd_, BLAS_C, BLAS_S)
+    GMM_LAPACK_GESVD_CPLX_(zgesvd_, BLAS_Z, BLAS_D)
+#   undef GMM_LAPACK_GETRS_
+#   undef GMM_LAPACK_GETRI_
+#   undef GMM_LAPACK_GEQRF_
+#   undef GMM_LAPACK_ORGQR_
+#   undef GMM_LAPACK_GEES_
+#   undef GMM_LAPACK_GEES_CPLX_
+#   undef GMM_LAPACK_GEEV_
+#   undef GMM_LAPACK_GEEV_CPLX_
+#   undef GMM_LAPACK_GEESX_
+#   undef GMM_LAPACK_GEESX_CPLX_
+#   undef GMM_LAPACK_GESVD_
+#   undef GMM_LAPACK_GESVD_CPLX_
   }
 
   /* ********************************************************************** */
@@ -223,26 +314,28 @@ namespace gmm {
   /* QR algorithm for eigenvalues search.                                   */
   /* ********************************************************************** */
 
+  // select: a LOGICAL FUNCTION, never called (sort='N'), passed as nullptr.
 # define gees_interface(lapack_name, base_type)                            \
   template <typename VECT> inline void implicit_qr_algorithm(              \
          const dense_matrix<base_type> &A, VECT &eigval_,                  \
          dense_matrix<base_type> &Q,                                       \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface");                                     \
-    typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     const size_type nn(mat_nrows(A));                                      \
     if (!nn) return;                                                       \
     dense_matrix<base_type> H(nn,nn); gmm::copy(A, H);                     \
     const char jobvs=(compvect ? 'V' : 'N'), sort='N';                     \
     const BLAS_INT n=BLAS_INT(nn);                                         \
-    std::vector<double> rwork(nn), eigv1(nn), eigv2(nn);                   \
+    std::vector<base_type> eigv1(nn), eigv2(nn); BLAS_INT bwork(0);        \
     BLAS_INT info(0), lwork(-1), sdim; base_type work1;                    \
-    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
-                &eigv2[0], &Q(0,0), &n, &work1, &lwork, &rwork[0], &info); \
+    lapack_name(&jobvs, &sort, nullptr, &n, &H(0,0), &n, &sdim,            \
+                &eigv1[0], &eigv2[0], &Q(0,0), &n, &work1, &lwork,         \
+                &bwork, &info);                                            \
     const size_type worksize=size_type(gmm::real(work1));                  \
     std::vector<base_type> work(worksize); lwork=BLAS_INT(worksize);       \
-    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
-                &eigv2[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],&info);\
+    lapack_name(&jobvs, &sort, nullptr, &n, &H(0,0), &n, &sdim,            \
+                &eigv1[0], &eigv2[0], &Q(0,0), &n, &work[0], &lwork,       \
+                &bwork, &info);                                            \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
     extract_eig(H, eigval_, tol);                                          \
   }
@@ -253,20 +346,22 @@ namespace gmm {
          dense_matrix<base_type> &Q,                                       \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface2");                                    \
-    typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     const size_type nn(mat_nrows(A));                                      \
     if (!nn) return;                                                       \
     dense_matrix<base_type> H(nn,nn); gmm::copy(A, H);                     \
     const char jobvs=(compvect ? 'V' : 'N'), sort='N';                     \
     const BLAS_INT n=BLAS_INT(nn);                                         \
-    std::vector<double> rwork(nn), eigvv(nn*2);                            \
+    std::vector<number_traits<base_type>::magnitude_type> rwork(nn);       \
+    std::vector<base_type> eigvv(nn); BLAS_INT bwork(0);                   \
     BLAS_INT info(0), lwork(-1), sdim; base_type work1;                    \
-    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
-                &Q(0,0), &n, &work1, &lwork, &rwork[0], &rwork[0], &info); \
+    lapack_name(&jobvs, &sort, nullptr, &n, &H(0,0), &n, &sdim,            \
+                &eigvv[0], &Q(0,0), &n, &work1, &lwork, &rwork[0],         \
+                &bwork, &info);                                            \
     const size_type worksize=size_type(gmm::real(work1));                  \
     std::vector<base_type> work(worksize); lwork=BLAS_INT(worksize);       \
-    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
-                &Q(0,0), &n, &work[0], &lwork, &rwork[0], &rwork[0],&info);\
+    lapack_name(&jobvs, &sort, nullptr, &n, &H(0,0), &n, &sdim,            \
+                &eigvv[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],       \
+                &bwork, &info);                                            \
     GMM_ASSERT1(!info, "QR algorithm failed");                             \
     extract_eig(H, eigval_, tol);                                          \
   }
@@ -286,7 +381,7 @@ namespace gmm {
     const size_type nn(mat_nrows(A));                                      \
     if (!nn) return;                                                       \
     dense_matrix<base_type> H(nn,nn); gmm::copy(A, H);                     \
-    const char jobvl=_jobvl, jobvr=_jobvl;                                 \
+    const char jobvl=_jobvl, jobvr=_jobvr;                                 \
     const BLAS_INT n=BLAS_INT(nn); BLAS_INT info(0), lwork(-1);            \
     std::vector<base_type> eigvr(nn), eigvi(nn);                           \
     base_type work1;                                                       \
@@ -307,12 +402,12 @@ namespace gmm {
     const size_type nn(mat_nrows(A));                                      \
     if (!nn) return;                                                       \
     dense_matrix<cplx_type> H(nn,nn); gmm::copy(A, H);                     \
-    const char jobvl=_jobvl, jobvr=_jobvl;                                 \
+    const char jobvl=_jobvl, jobvr=_jobvr;                                 \
     const BLAS_INT n=BLAS_INT(nn); BLAS_INT info(0), lwork(-1);            \
     std::vector<cplx_type> eigv(nn); std::vector<base_type> rwork(2*nn);   \
     cplx_type work1;                                                       \
-    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
-                &Q(0,0), &n, &work1, &lwork, &rwork[0], &info);            \
+    lapack_name_cplx(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0),   \
+                     &n, &Q(0,0), &n, &work1, &lwork, &rwork[0], &info);   \
     const size_type worksize=size_type(gmm::real(work1));                  \
     std::vector<cplx_type> work(worksize); lwork=BLAS_INT(worksize);       \
     lapack_name_cplx(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0),   \
@@ -340,12 +435,12 @@ namespace gmm {
     const size_type mm(mat_nrows(A)), nn(mat_ncols(A)), worksize(8*nn); \
     GMM_ASSERT1(mm==nn, "Schur decomposition requires square matrix");  \
     resize(S, nn, nn); copy(A, S); resize(Q, nn, nn);                   \
-    const char jobvs='V', sort='N', sense='N'; const bool select=false; \
+    const char jobvs='V', sort='N', sense='N';                          \
     const BLAS_INT n=BLAS_INT(nn), lwork=BLAS_INT(worksize), liwork(1); \
     BLAS_INT info(0), sdim(0); base_type rconde(0), rcondv(0);          \
     std::vector<base_type> work(worksize), wr(nn), wi(nn);              \
     std::vector<BLAS_INT> iwork(1), bwork(1);                           \
-    lapack_name(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,        \
+    lapack_name(&jobvs, &sort, nullptr, &sense, &n, &S(0,0), &n,        \
                 &sdim, &wr[0], &wi[0], &Q(0,0), &n, &rconde, &rcondv,   \
                 &work[0], &lwork, &iwork[0], &liwork, &bwork[0], &info);\
     GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
@@ -357,13 +452,13 @@ namespace gmm {
     const size_type mm(mat_nrows(A)), nn(mat_ncols(A)), worksize(8*nn); \
     GMM_ASSERT1(mm==nn, "Schur decomposition requires square matrix");  \
     resize(S, nn, nn); copy(A, S); resize(Q, nn, nn);                   \
-    const char jobvs='V', sort='N', sense='N'; const bool select=false; \
+    const char jobvs='V', sort='N', sense='N';                          \
     const BLAS_INT n=BLAS_INT(nn), lwork=BLAS_INT(worksize);            \
     BLAS_INT info(0), sdim(0); base_type rconde(0), rcondv(0);          \
     std::vector<cplx_type> work(worksize), w(nn);                       \
     std::vector<base_type> rwork(worksize);                             \
     std::vector<BLAS_INT> bwork(1);                                     \
-    lapack_name_cplx(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,   \
+    lapack_name_cplx(&jobvs, &sort, nullptr, &sense, &n, &S(0,0), &n,   \
                      &sdim, &w[0], &Q(0,0), &n, &rconde, &rcondv,       \
                      &work[0], &lwork, &rwork[0], &bwork[0], &info);    \
     GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
@@ -391,7 +486,8 @@ namespace gmm {
     const char job='A'; const BLAS_INT m=BLAS_INT(mm), n=BLAS_INT(nn),    \
                                        lwork=BLAS_INT(worksize);          \
     std::vector<base_type> work(worksize); BLAS_INT info(0);              \
-    lapack_name(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0),      \
+    dense_matrix<base_type> A(X); /* ?gesvd overwrites A */               \
+    lapack_name(&job, &job, &m, &n, &A(0,0), &m, &sigma[0], &U(0,0),      \
                 &m, &Vtransposed(0,0), &n, &work[0], &lwork, &info);      \
   }                                                                       \
   inline void svd(const dense_matrix<cplx_type> &X,                       \
@@ -406,7 +502,8 @@ namespace gmm {
                                        lwork=BLAS_INT(worksize);          \
     std::vector<cplx_type> work(worksize);                                \
     std::vector<base_type> rwork(5*mn_min); BLAS_INT info(0);             \
-    lapack_name_cplx(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0), \
+    dense_matrix<cplx_type> A(X); /* ?gesvd overwrites A */               \
+    lapack_name_cplx(&job, &job, &m, &n, &A(0,0), &m, &sigma[0], &U(0,0), \
                      &m, &Vtransposed(0,0), &n, &work[0], &lwork,         \
                      &rwork[0], &info);                                   \
   }
